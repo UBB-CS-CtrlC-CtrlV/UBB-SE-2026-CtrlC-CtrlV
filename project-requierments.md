@@ -1,43 +1,45 @@
 ## 1. Event browsing (home screen)
 
-- R1. The system shall display a list of movie events when the user opens the application.
-- R2. The system shall group events into sections and display them in horizontally scrollable rows (Netflix-style layout).
-- R3. The system shall allow the user to select a section.
-- R4. When a section is selected, the system shall display all events belonging to that section.
+- 1.1 The system shall display a list of movie events when the user opens the application.
+- 1.2 The system shall group events into sections and display them in horizontally scrollable rows.
+- 1.3 The system shall allow the user to select a section, by clicking the section's title.
+- 1.4 When a section is selected, the system shall display all events belonging to that section.
+- 1.5 The system shall allow the user to navigate to MyEvents Section.
+- 1.6 The event card will contain the event's poster.
 
 ## 2. Sorting
 
-- R5. The system shall allow users to sort events by price.
-- R6. The system shall allow users to sort events by rating.
-- R7. The system shall update the displayed list immediately after a sorting option is selected.
+- 2.1 The system shall allow users to sort events by price.
+- 2.2 The system shall allow users to sort events by past ratings rating.
+- 2.3 The system shall update the displayed list immediately after a sorting option is selected.
 
 ## 3. Filtering
 
-- R8. The system shall allow users to filter events by price range.
-- R9. The system shall allow users to filter events by genre.
-- R10. The system shall allow users to filter events by location.
-- R11. The system shall allow users to filter events by minimum rating.
-- R12. The system shall allow users to filter events by actor.
-- R13. The system shall allow users to filter events by director.
-- R14. The system shall update the event list according to the selected filters.
+- 3.1 The system shall allow users to filter events by price range.
+- 3.2 The system shall allow users to filter events by type.
+- 3.3 The system shall allow users to filter events by location.
+- 3.4 The system shall allow users to filter events by minimum past ratings rating.
+- 3.5 The system shall update the event list according to the selected filters.
 
 ## 4. Searching
 
-- R15. The system shall allow users to search for events by name.
-- R16. The system shall display events whose titles match the search query.
+- 4.1 The system shall allow users to search for events by name.
+- 4.2 The system shall display events whose titles/type match the search query.
 
 ## 5. Event details
 
-- R17. The system shall allow users to select an event from the event list.
-- R18. When an event is selected, the system shall display the event details page.
-- R19. The event details page shall display the event rating.
-- R20. The event details page shall display event information including title, description, location, date, and price.
-- R21. The system shall allow users to join an event (e.g., by purchasing a ticket or registering).
-- R22. After joining an event, the system shall record the user's participation.
+- 5.1 The system shall allow users to select an event from the event list by clicking on the event card.
+- 5.2 When an event is selected, the system shall display the event details page.
+- 5.3 The event details page shall display event information including title, description, past rating, location, date, and price.
+- 5.4 The system shall allow users to mark the event as "Will attend" if it is free.
+- 5.5 The system shall allow users to purchase a ticket(the purchasing action will redirect the user to the buy&sell view), if it is not free.
+- 5.6 If the user triggered R21 or R22 the system shall record the user's participation.
 
 ## 6. My Events section
 
-- R23. The system shall provide a "My Events" section accessible to the user.
-- R24. The system shall allow the user to create a new event.
-- R25. The system shall allow the user to view events that they have joined.
-- R26. The system shall display events created by the user.
+- 6.1 The system shall display 2 lists of events.
+- 6.2 The first one will be the events created by that user.
+- 6.3 The second one will be the events that the user is participating in.
+- 6.4 The system shall allow the user to create/edit/delete events.
+- 6.5 The system shall allow the user to view events that they have joined.
+- 6.6 The system shall update the event lists according to the the user's changes.
