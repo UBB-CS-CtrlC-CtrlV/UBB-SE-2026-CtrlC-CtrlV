@@ -8614,24 +8614,6 @@
 					]
 				}
 			]
-		},
-		{
-			"_type": "UMLCollaboration",
-			"_id": "AAAAAAF/p1RyGCEfS1k=",
-			"_parent": {
-				"$ref": "AAAAAAFF+h6SjaM2Hec="
-			},
-			"name": "Collaboration1",
-			"ownedElements": [
-				{
-					"_type": "UMLCompositeStructureDiagram",
-					"_id": "AAAAAAF/p1RyGSEgWYo=",
-					"_parent": {
-						"$ref": "AAAAAAF/p1RyGCEfS1k="
-					},
-					"name": "Composite Structures1"
-				}
-			]
 		}
 	],
 	"documentVersion": 1
