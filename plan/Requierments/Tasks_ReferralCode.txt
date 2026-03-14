@@ -1,0 +1,17 @@
+Task DB-1: Create the AmbassadorProfile table to store the UserId, the unique referral_code, and a reward_balance counter.
+Task DB-2: Create the ReferralLog table to record each individual code usage (AmbassadorID, FriendID, EventID).
+Task DB-3: Implement the AmbassadorRepository with a query to check if a referral_code exists in the database.
+Task DB-4: Write a SQL query to count how many unique users have used a specific code for a specific event.
+
+Task Logic-1: Create a CodeGenerator that runs once when a user first visits your page to create a permanent code (e.g., NAME2026).
+Task Logic-2: Implement the ReferralValidator to ensure the person entering the code is not the owner (Anti-Fraud).
+Task Logic-3: Create the LogAction service that saves a new entry in ReferralLog whenever an enrollment with a code is finalized.
+Task Logic-4: Implement the Threshold Check: If count(ReferralLog) >= 3 for a user, increment their reward_balance and clear the log or mark entries as "processed."
+
+Task UI-1: Add the "Your Ambassador Code" display in the User Profile section.
+Task UI-2: Add an optional "Referral Code" text input to the Enrollment Form.
+Task UI-3: Create a simple "Referral History" list that pulls data from the ReferralLog table to show who used the code.
+Task Integration-1: Modify the "Enroll" button logic: if reward_balance > 0, show a "Use Free Pass" option and decrement the balance upon successful enrollment.
+
+
+
