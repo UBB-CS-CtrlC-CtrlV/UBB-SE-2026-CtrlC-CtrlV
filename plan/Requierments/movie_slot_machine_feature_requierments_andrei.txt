@@ -1,0 +1,46 @@
+SM. Movie Slot Machine
+The system shall provide a feature named “Movie Slot Machine” that allows users to randomly discover movie events using a slot-machine style interface.
+SM.1. The system shall provide a “Movie Slot Machine” button on the home screen.
+SM.2. When the user selects the Movie Slot Machine button, the system shall navigate the user to the Movie Slot Machine page.
+SM.3. The Movie Slot Machine page shall contain a slot-machine style interface with three vertical reels.
+SM.4. The reels shall represent the following categories: Genre, Actor, and Director.
+SM.5. Each reel shall display one value at a time.
+SM.6. The values displayed in each reel shall be selected from the corresponding database tables: Genre, Actor, and Director.
+SM.7. The Movie Slot Machine page shall contain a “Spin” button.
+SM.8. When the user presses the Spin button, the system shall initiate a slot-machine spin animation.
+SM.9. During the spin animation, each reel shall display multiple values from its category sequentially.
+SM.10. Each reel shall stop spinning independently.
+SM.11. The reels shall stop in the following order: Genre, Actor, Director.
+SM.12. The final values shall represent the generated roulette combination.
+SM.13. The system shall select reel values using random selection from the corresponding tables.
+SM.14. The system shall only select values that are associated with at least one currently available event screening.
+SM.15. The system shall ensure that the generated combination produces at least one matching movie event.
+SM.16. The system shall retrieve events containing screenings of matching movies.
+SM.17. The system shall retrieve only future or active screenings.
+SM.18. The system shall retrieve the following information for each matching event:
+- movie title
+- event name
+- event location
+- ticket price
+- movie rating
+SM.19. After the reels stop, the system shall display a results section below the slot machine.
+SM.20. The results section shall display all events that match the generated combination.
+SM.21. Each event card shall contain a “View Event” button.
+SM.22. When the user selects the View Event button, the system shall navigate to the event details page.
+SM.23. The system shall allow users to trigger the spin using keyboard input.
+SM.24. The system shall provide each user with one free Movie Slot Machine spin per day.
+SM.25. The system shall reset the user's daily free spin at 00:00 server time each day.
+SM.26. The system shall prevent the user from initiating a spin when the user has zero available spins.
+SM.27. The system shall display the number of available spins on the Movie Slot Machine page.
+SM.28. The system shall grant the user one additional spin when the user joins an event.
+SM.29. The system shall limit bonus spins earned from event participation to a maximum of two spins per user per day.
+SM.30. The system shall immediately update the user’s available spin count after a bonus spin is awarded.
+SM.31. The system shall track the number of consecutive days a user logs into the application.
+SM.32. The system shall grant the user one additional spin when the user reaches a three-day consecutive login streak.
+SM.33. After awarding the streak spin, the system shall reset the login streak counter.
+SM.34. The system shall determine whether the generated Genre, Actor, and Director combination corresponds to an existing movie in the database.
+SM.35. If a movie exists that matches the generated Genre, Actor, and Director combination, the system shall trigger a Movie Slot Machine Jackpot.
+SM.36. When a Movie Slot Machine Jackpot occurs, the system shall grant the user a discount for all events containing a screening of the matching movie.
+SM.37. The system shall highlight the event containing the matching movie in the results section.
+SM.38. The highlighted event shall visually indicate that a discount has been awarded.
+SM.39. The system shall apply the discount when the user joins the highlighted event.

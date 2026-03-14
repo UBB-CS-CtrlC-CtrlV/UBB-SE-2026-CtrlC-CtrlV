@@ -1,0 +1,12 @@
+Mv PW. Price Watcher Feature
+General Description Price Watcher is a monitoring tool that enables users to track ticket price fluctuations for specific events. To remain compatible with the fixed database schema, this feature utilizes client-side storage to manage user preferences and target prices without requiring backend database modifications.
+1. Navigation and Interface
+    • PW.1: Each event card displayed in the main list must include a "bell" icon to allow users to toggle price monitoring.
+    • PW.2: The "My Events" section of the application must be expanded to include a "Price Watchlist" tab or category.
+    • PW.3: Upon activating the watcher, a prompt must appear for the user to define a "Target Price."
+2. Price Comparison Logic
+    • PW.4: The system continuously compares the real-time event price (Event.price) with the user-defined target price.
+    • PW.5: A synchronization check occurs automatically whenever the application initializes (following Requirement 8.4), performing a full refresh of the Price Watchlist by querying the EventRepository.
+    • PW.6: If the current event price is less than or equal to the target price, the system applies a "PRICE DROP DETECTED" banner to the event card.
+3. Business Logic and Constraints
+    • PW.7: Resource Management: To ensure optimal performance on the client device, users are limited to a maximum of 3 active price watchers at any given time.

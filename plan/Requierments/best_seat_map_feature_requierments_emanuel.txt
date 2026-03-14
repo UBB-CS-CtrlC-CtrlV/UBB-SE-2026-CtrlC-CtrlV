@@ -1,0 +1,13 @@
+BS. Best Seat Map Feature
+General Description Best Seat Map is a visualization feature designed to assist users in choosing the optimal seat in a cinema hall. It generates a mathematical map overlay based on the event's location. Since the existing database structure does not store individual hall layouts for each cinema, the feature utilizes a standard algorithmic template to approximate the "Sweet Spot"—the area offering the best balance of acoustics and visual perspective.
+1. Navigation and Interface
+    • BS.1: The event detail page must include a "Visual Seat Guide" button positioned near the event's location and price information.
+    • BS.2: Clicking the "Visual Seat Guide" button opens a modal interface displaying an interactive grid representing the virtual layout of the selected location.
+    • BS.3: The interface must include:
+        ◦ A graphical representation of the screen at the top of the grid.
+        ◦ A seat grid color-coded by quality: Green (Optimal), Yellow (Standard), and Red (Poor).
+        ◦ A distinct "Sweet Spot" marker highlighting the most recommended seats.
+2. Optimal Seat Logic
+    • BS.4: As the database lacks specific row and seat records, the system generates a default virtual grid (e.g., 10 rows by 15 columns) for any selected location.
+    • BS.5: Sweet Spot Identification: The algorithm automatically identifies seats at the intersection of middle rows (e.g., rows 6-8) and central columns (e.g., columns 7-9) as "optimal." This area represents the geometric center where surround sound is most balanced.
+    • BS.6: Visual Angle Analysis: The first two rows of the virtual grid are marked in red to signify a visual angle that may cause neck strain or distortion.
