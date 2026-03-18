@@ -4,15 +4,14 @@ namespace MovieApp.Services;
 
 public sealed class CurrentUserService : ICurrentUserService
 {
-    public const string DummyAuthProvider = "dummy";
-    public const string DummyAuthSubject = "default-user";
-
     private readonly IUserRepository _userRepository;
+    private readonly BootstrapUserOptions _bootstrapUserOptions;
     private User? _currentUser;
 
-    public CurrentUserService(IUserRepository userRepository)
+    public CurrentUserService(IUserRepository userRepository, BootstrapUserOptions bootstrapUserOptions)
     {
         _userRepository = userRepository;
+        _bootstrapUserOptions = bootstrapUserOptions;
     }
 
     public User CurrentUser =>
@@ -26,14 +25,14 @@ public sealed class CurrentUserService : ICurrentUserService
         }
 
         _currentUser = await _userRepository.FindByAuthIdentityAsync(
-            DummyAuthProvider,
-            DummyAuthSubject,
+            _bootstrapUserOptions.AuthProvider,
+            _bootstrapUserOptions.AuthSubject,
             cancellationToken);
 
         if (_currentUser is null)
         {
             throw new InvalidOperationException(
-                $"The seeded dummy user '{DummyAuthProvider}:{DummyAuthSubject}' could not be found.");
+                $"The seeded dummy user '{_bootstrapUserOptions.AuthProvider}:{_bootstrapUserOptions.AuthSubject}' could not be found.");
         }
     }
 }
