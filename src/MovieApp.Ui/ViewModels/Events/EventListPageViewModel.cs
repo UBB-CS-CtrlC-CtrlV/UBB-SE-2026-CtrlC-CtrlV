@@ -96,10 +96,26 @@ public abstract class EventListPageViewModel : ViewModelBase
         RefreshVisibleEvents();
     }
 
+    /// <summary>
+    /// Applies a caller-provided update to <see cref="EventListState.ActiveFilters"/>
+    /// and refreshes <see cref="VisibleEvents"/>.
+    /// </summary>
+    /// <param name="updateFilters">
+    /// A delegate that mutates the current filter state for the current screen.
+    /// </param>
+    /// <remarks>
+    /// Use this method to keep all filter changes centralized so the derived
+    /// event list is always recomputed after filter state changes.
+    /// </remarks>
+    /// <exception cref="ArgumentNullException">
+    /// Thrown when <paramref name="updateFilters"/> is <see langword="null"/>.
+    /// </exception>
     public void UpdateFilters(Action<EventFilterState> updateFilters)
     {
-        // TODO: 4 Apply the provided filter mutation to ListState.ActiveFilters and refresh VisibleEvents.
-        throw new NotImplementedException();
+        ArgumentNullException.ThrowIfNull(updateFilters);
+        
+        updateFilters(EventListState.ActiveFilters);
+        RefreshVisibleEvents();
     }
 
     public void ResetListState()
