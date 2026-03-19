@@ -4,7 +4,7 @@ using System.IO;
 using System.Numerics;
 using System.Text;
 
-namespace MovieApp.Models.Movie
+namespace MovieApp.Models.Movie.Movie
 {
     public class Movie
     {
