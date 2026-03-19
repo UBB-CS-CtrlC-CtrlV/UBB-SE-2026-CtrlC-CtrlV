@@ -52,11 +52,15 @@ public abstract class EventListPageViewModel : ViewModelBase
 
     /// <summary>
     /// Updates <see cref="EventListState.SearchText"/> and refreshes
-    /// <see cref="VisibleEvents"/> when the effective search text changes.
+    /// <see cref="VisibleEvents"/>.
     /// </summary>
     /// <param name="searchText">
     /// The new search text. A <see langword="null"/> value is treated as an empty string.
     /// </param>
+    /// <remarks>
+    /// If the effective value of <see cref="searchText"/> is not different from
+    /// <see cref="EventListState.SearchText"/> the refresh will not be performed.
+    /// </remarks>
     public void SetSearchText(string? searchText)
     {
         // Passing in a null value must allow the user to reset search.
@@ -70,10 +74,26 @@ public abstract class EventListPageViewModel : ViewModelBase
         RefreshVisibleEvents();
     }
 
+    /// <summary>
+    /// Updates <see cref="EventListState.SelectedSortOption"/> and refreshes
+    /// <see cref="VisibleEvents"/>.
+    /// </summary>
+    /// <param name="sortOption">
+    /// The new sort option.
+    /// </param>
+    /// <remarks>
+    /// If the effective value of <see cref="sortOption"/> is not different from
+    /// <see cref="EventListState.SelectedSortOption"/> the refresh will not be performed.
+    /// </remarks>
     public void SetSortOption(EventSortOption sortOption)
     {
-        // TODO: 3 Update ListState.SelectedSortOption and refresh VisibleEvents.
-        throw new NotImplementedException();
+        if (EventListState.SelectedSortOption == sortOption)
+        {
+            // Refresh not needed if the sort option did not change.
+            return;
+        }
+        EventListState.SelectedSortOption = sortOption;
+        RefreshVisibleEvents();
     }
 
     public void UpdateFilters(Action<EventFilterState> updateFilters)
