@@ -5,29 +5,40 @@
     xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
     xmlns:d="http://schemas.microsoft.com/expression/blend/2008"
     xmlns:mc="http://schemas.openxmlformats.org/markup-compatibility/2006"
+    xmlns:controls="using:Microsoft.UI.Xaml.Controls"
     mc:Ignorable="d">
 
     <Grid Background="{ThemeResource ApplicationPageBackgroundThemeBrush}">
-        <StackPanel
-            MaxWidth="520"
-            Spacing="12"
-            HorizontalAlignment="Center"
-            VerticalAlignment="Center">
-            <TextBlock
-                HorizontalAlignment="Center"
-                Style="{ThemeResource TitleTextBlockStyle}"
-                Text="{x:Bind ViewModel.AppTitle, Mode=OneWay}" />
-            <TextBlock
-                HorizontalAlignment="Center"
-                FontSize="32"
-                FontWeight="SemiBold"
-                Text="{x:Bind ViewModel.Greeting, Mode=OneWay}" />
-            <TextBlock
-                HorizontalAlignment="Center"
-                Opacity="0.75"
-                Text="{x:Bind ViewModel.Description, Mode=OneWay}"
-                TextAlignment="Center"
-                TextWrapping="WrapWholeWords" />
-        </StackPanel>
+        <controls:NavigationView
+            x:Name="AppNavigationView"
+            IsBackButtonVisible="Collapsed"
+            IsSettingsVisible="False"
+            PaneDisplayMode="Left"
+            SelectionChanged="AppNavigationView_SelectionChanged">
+
+            <controls:NavigationView.Header>
+                <StackPanel Spacing="4">
+                    <TextBlock
+                        Style="{ThemeResource TitleTextBlockStyle}"
+                        Text="{x:Bind ViewModel.AppTitle, Mode=OneWay}" />
+                    <TextBlock
+                        Opacity="0.75"
+                        Text="{x:Bind ViewModel.Greeting, Mode=OneWay}" />
+                </StackPanel>
+            </controls:NavigationView.Header>
+
+            <controls:NavigationView.MenuItems>
+                <controls:NavigationViewItem Content="Home" Tag="Home" Icon="Home" />
+                <controls:NavigationViewItem Content="My Events" Tag="MyEvents" Icon="Calendar" />
+                <controls:NavigationViewItem Content="Event Management" Tag="EventManagement" Icon="Edit" />
+                <controls:NavigationViewItem Content="Favorites" Tag="Favorites" Icon="Favorite" />
+                <controls:NavigationViewItem Content="Referral Area" Tag="ReferralArea" Icon="Share" />
+                <controls:NavigationViewItem Content="Slot Machine" Tag="SlotMachine" Icon="Shop" />
+                <controls:NavigationViewItem Content="Trivia Wheel" Tag="TriviaWheel" Icon="Help" />
+                <controls:NavigationViewItem Content="Marathons" Tag="Marathons" Icon="Play" />
+            </controls:NavigationView.MenuItems>
+
+            <Frame x:Name="ContentFrame" />
+        </controls:NavigationView>
     </Grid>
 </Window>
