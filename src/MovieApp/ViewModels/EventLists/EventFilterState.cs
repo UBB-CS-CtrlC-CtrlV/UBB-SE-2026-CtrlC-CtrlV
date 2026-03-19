@@ -14,13 +14,22 @@ public sealed class EventFilterState
 
     public bool HasActiveFilters()
     {
-        // TODO: Return true when at least one filter property is meaningfully set.
-        throw new NotImplementedException();
+        return !string.IsNullOrWhiteSpace(EventType) ||
+               !string.IsNullOrWhiteSpace(LocationReference) ||
+               MinimumTicketPrice != null || 
+               MaximumTicketPrice != null ||
+               OnlyAvailableEvents;
     }
 
     public EventFilterState Clone()
     {
-        // TODO: Return a defensive copy so each screen can manage its own filter state.
-        throw new NotImplementedException();
+        return new EventFilterState
+        {
+            EventType = EventType,
+            LocationReference = LocationReference,
+            MinimumTicketPrice = MinimumTicketPrice,
+            MaximumTicketPrice = MaximumTicketPrice,
+            OnlyAvailableEvents = OnlyAvailableEvents
+        };
     }
 }
