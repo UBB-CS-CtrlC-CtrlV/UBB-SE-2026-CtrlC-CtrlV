@@ -8,13 +8,7 @@ public sealed class EventManagementViewModel : EventListPageViewModel
 
     protected override Task<IReadOnlyList<Event>> LoadEventsAsync()
     {
-        // TODO: 7 Load the event-management list or temporarily fall back to BuildSampleEvents().
-        throw new NotImplementedException();
-    }
-
-    protected override IReadOnlyList<Event> BuildSampleEvents()
-    {
-        // TODO: 8 Seed representative events that exercise search, sort, and filter behavior on this screen.
+        // TODO: 7 Load the event-management list when data wiring is added.
         throw new NotImplementedException();
     }
 }

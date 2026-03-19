@@ -8,13 +8,7 @@ public sealed class MyEventsViewModel : EventListPageViewModel
 
     protected override Task<IReadOnlyList<Event>> LoadEventsAsync()
     {
-        // TODO: 7 Load only the current user's events or temporarily fall back to BuildSampleEvents().
-        throw new NotImplementedException();
-    }
-
-    protected override IReadOnlyList<Event> BuildSampleEvents()
-    {
-        // TODO: 8 Seed representative user-owned or user-joined events for this screen.
+        // TODO: 7 Load only the current user's events when data wiring is added.
         throw new NotImplementedException();
     }
 }

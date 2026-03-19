@@ -147,10 +147,4 @@ public abstract class EventListPageViewModel : ViewModelBase
     }
 
     protected abstract Task<IReadOnlyList<Event>> LoadEventsAsync();
-
-    protected virtual IReadOnlyList<Event> BuildSampleEvents()
-    {
-        // TODO: 8 Return sample events for this screen while the real data source is not wired up yet.
-        throw new NotImplementedException();
-    }
 }
