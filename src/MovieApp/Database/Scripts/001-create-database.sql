@@ -1,0 +1,5 @@
+IF DB_ID(N'MovieApp') IS NULL
+BEGIN
+    EXEC(N'CREATE DATABASE [MovieApp];');
+END;
+GO
