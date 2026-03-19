@@ -118,15 +118,23 @@ public abstract class EventListPageViewModel : ViewModelBase
         RefreshVisibleEvents();
     }
 
-    public void ResetListState()
+    /// <summary>
+    /// Resets the <see cref="EventListState"/> to its default values and refreshes
+    /// <see cref="VisibleEvents"/>.
+    /// </summary>
+    /// <remarks>
+    /// This clears the current search text, selected sort option and active filters
+    /// for the current screen.
+    /// </remarks>
+    public void ResetEventListState()
     {
-        // TODO: 5 Reset the per-screen state and refresh VisibleEvents.
-        throw new NotImplementedException();
+        EventListState.Reset();
+        RefreshVisibleEvents();
     }
 
     /// <summary>
-    /// Rebuild the visible event list by applying the current search, filter,
-    /// and sort state to <see cref="AllEvents"/>
+    /// Rebuilds the visible event list by applying the current search, filter,
+    /// and sort state to <see cref="AllEvents"/>.
     /// </summary>
     /// <remarks>
     /// This method must be called after any change to <see cref="EventListState"/>
