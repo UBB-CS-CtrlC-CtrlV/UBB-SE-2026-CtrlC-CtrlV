@@ -11,14 +11,14 @@ public sealed partial class HomePage : Page
         InitializeComponent();
         DataContext = ViewModel;
 
-        // TODO: Trigger InitializeViewModelAsync from the page lifecycle once the screen is ready.
+        // TODO: Wire page lifecycle initialization here when this screen is connected to real data/loading UX.
     }
 
     public HomeEventsViewModel ViewModel { get; }
 
     private Task InitializeViewModelAsync()
     {
-        // TODO: 9 Call ViewModel.InitializeAsync() and decide how this page should handle loading and errors.
+        // TODO: Call ViewModel.InitializeAsync() here once page lifecycle, loading, and error handling are implemented.
         throw new NotImplementedException();
     }
 }

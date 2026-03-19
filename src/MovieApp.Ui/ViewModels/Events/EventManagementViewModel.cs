@@ -8,7 +8,7 @@ public sealed class EventManagementViewModel : EventListPageViewModel
 
     protected override Task<IReadOnlyList<Event>> LoadEventsAsync()
     {
-        // TODO: 7 Load the event-management list when data wiring is added.
+        // TODO: Retrieve the raw event-management list here once data wiring exists.
         throw new NotImplementedException();
     }
 }

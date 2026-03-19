@@ -48,7 +48,7 @@ public abstract class EventListPageViewModel : ViewModelBase
     /// Asynchronously initializes the event list for this screen.
     /// </summary>
     /// <remarks>
-    /// This method retries the screen's source events through
+    /// This method retrieves the screen's source events through
     /// <see cref="LoadEventsAsync"/>, assigns <see cref="AllEvents"/>,
     /// and rebuilds <see cref="VisibleEvents"/> using the current
     /// <see cref="EventListState"/>.
@@ -164,7 +164,7 @@ public abstract class EventListPageViewModel : ViewModelBase
     /// A task that produces the source events used to populate <see cref="AllEvents"/>.
     /// </returns>
     /// <remarks>
-    /// Thi method is responsible only for retrieving the source data for the screen.
+    /// This method is responsible only for retrieving the source data for the screen.
     /// It should not update <see cref="VisibleEvents"/> directly.
     /// </remarks>
     protected abstract Task<IReadOnlyList<Event>> LoadEventsAsync();

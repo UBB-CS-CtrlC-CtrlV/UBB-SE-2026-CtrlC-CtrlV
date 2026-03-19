@@ -8,7 +8,7 @@ public sealed class HomeEventsViewModel : EventListPageViewModel
 
     protected override Task<IReadOnlyList<Event>> LoadEventsAsync()
     {
-        // TODO: 7 Load the home screen event feed when data wiring is added.
+        // TODO: Retrieve the raw home-page events here once data wiring exists.
         throw new NotImplementedException();
     }
 }
