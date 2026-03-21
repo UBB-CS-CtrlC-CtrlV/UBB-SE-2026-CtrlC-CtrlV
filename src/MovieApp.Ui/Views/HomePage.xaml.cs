@@ -1,4 +1,6 @@
+using Microsoft.UI.Xaml;
 using Microsoft.UI.Xaml.Controls;
+using MovieApp.Core.Repositories;
 using MovieApp.Ui.ViewModels.Events;
 
 namespace MovieApp.Ui.Views;
@@ -7,18 +9,15 @@ public sealed partial class HomePage : Page
 {
     public HomePage()
     {
-        ViewModel = new HomeEventsViewModel();
+        ViewModel = new HomeEventsViewModel(App.EventRepository!);
         InitializeComponent();
-        DataContext = ViewModel;
-
-        // TODO: Wire page lifecycle initialization here when this screen is connected to real data/loading UX.
+        Loaded += HomePage_Loaded;
     }
 
     public HomeEventsViewModel ViewModel { get; }
 
-    private Task InitializeViewModelAsync()
+    private async void HomePage_Loaded(object sender, RoutedEventArgs e)
     {
-        // TODO: Call ViewModel.InitializeAsync() here once page lifecycle, loading, and error handling are implemented.
-        throw new NotImplementedException();
+        await ViewModel.InitializeAsync();
     }
 }

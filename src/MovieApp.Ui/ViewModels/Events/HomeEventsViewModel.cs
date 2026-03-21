@@ -1,14 +1,22 @@
 using MovieApp.Core.Models;
+using MovieApp.Core.Repositories;
 
 namespace MovieApp.Ui.ViewModels.Events;
 
 public sealed class HomeEventsViewModel : EventListPageViewModel
 {
+    private readonly IEventRepository _eventRepository;
+
+    public HomeEventsViewModel(IEventRepository eventRepository)
+    {
+        _eventRepository = eventRepository;
+    }
+
     public override string PageTitle => "Home Events";
 
-    protected override Task<IReadOnlyList<Event>> LoadEventsAsync()
+    protected override async Task<IReadOnlyList<Event>> LoadEventsAsync()
     {
-        // TODO: Retrieve the raw home-page events here once data wiring exists.
-        throw new NotImplementedException();
+        var events = await _eventRepository.GetAllAsync();
+        return events.ToList();
     }
 }

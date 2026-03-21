@@ -1,9 +1,11 @@
-﻿using MovieApp.Core.Models;
+using MovieApp.Core.Models;
 
 namespace MovieApp.Core.Repositories;
 
 public interface IEventRepository
 {
+    Task<IEnumerable<Event>> GetAllAsync(CancellationToken cancellationToken = default);
+
     Task<IEnumerable<Event>> GetAllByTypeAsync(string eventType, CancellationToken cancellationToken = default);
 
     Task<Event?> FindByIdAsync(int id, CancellationToken cancellationToken = default);

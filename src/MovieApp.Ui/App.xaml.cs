@@ -1,5 +1,6 @@
 using Microsoft.UI.Xaml;
 using Microsoft.Extensions.Configuration;
+using MovieApp.Core.Repositories;
 using MovieApp.Infrastructure;
 using MovieApp.Ui.Services;
 using MovieApp.Ui.ViewModels;
@@ -11,6 +12,8 @@ public partial class App : Application
 {
     private Window? _window;
     private ICurrentUserService? _currentUserService;
+
+    public static IEventRepository? EventRepository { get; private set; }
 
     public App()
     {
@@ -38,9 +41,11 @@ public partial class App : Application
             };
 
             var userRepository = new SqlUserRepository(databaseOptions);
+            var eventRepository = new SqlEventRepository(databaseOptions);
             _currentUserService = new CurrentUserService(userRepository, bootstrapUserOptions);
             await _currentUserService.InitializeAsync();
 
+            EventRepository = eventRepository;
             viewModel = new MainViewModel(_currentUserService.CurrentUser);
         }
         catch (Exception exception)

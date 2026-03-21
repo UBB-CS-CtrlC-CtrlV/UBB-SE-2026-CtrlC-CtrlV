@@ -1,4 +1,4 @@
-﻿using Microsoft.Data.SqlClient;
+using Microsoft.Data.SqlClient;
 using MovieApp.Core.Models;
 using MovieApp.Core.Repositories;
 using System.Data;
@@ -12,6 +12,30 @@ public sealed class SqlEventRepository : IEventRepository
     public SqlEventRepository(DatabaseOptions databaseOptions)
     {
         _connectionString = databaseOptions.ConnectionString;
+    }
+
+    public async Task<IEnumerable<Event>> GetAllAsync(CancellationToken cancellationToken = default)
+    {
+        const string sql = """
+            SELECT Id, Title, Description, PosterUrl, EventDateTime, LocationReference, 
+                   TicketPrice, HistoricalRating, EventType, MaxCapacity, CurrentEnrollment, CreatorUserId
+            FROM dbo.Events;
+            """;
+
+        var events = new List<Event>();
+
+        await using var connection = new SqlConnection(_connectionString);
+        await connection.OpenAsync(cancellationToken);
+
+        await using var command = new SqlCommand(sql, connection);
+
+        await using var reader = await command.ExecuteReaderAsync(cancellationToken);
+        while (await reader.ReadAsync(cancellationToken))
+        {
+            events.Add(MapEvent(reader));
+        }
+
+        return events;
     }
 
     public async Task<IEnumerable<Event>> GetAllByTypeAsync(string eventType, CancellationToken cancellationToken = default)
@@ -122,9 +146,10 @@ public sealed class SqlEventRepository : IEventRepository
             LocationReference = reader.GetString(5),
             TicketPrice = reader.GetDecimal(6),
             HistoricalRating = reader.GetDouble(7),
-            MaxCapacity = reader.GetInt32(8),
-            CurrentEnrollment = reader.GetInt32(9),
-            CreatorUserId = reader.GetInt32(10)
+            EventType = reader.GetString(8),
+            MaxCapacity = reader.GetInt32(9),
+            CurrentEnrollment = reader.GetInt32(10),
+            CreatorUserId = reader.GetInt32(11)
         };
     }
 }

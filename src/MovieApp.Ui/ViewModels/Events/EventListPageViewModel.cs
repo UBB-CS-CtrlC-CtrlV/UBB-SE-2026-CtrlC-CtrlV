@@ -19,6 +19,8 @@ public abstract class EventListPageViewModel : ViewModelBase
 {
     private IReadOnlyList<Event> _allEvents = [];
     private IReadOnlyList<Event> _visibleEvents = [];
+    private bool _isLoading;
+    private bool _hasNoEvents;
 
     public abstract string PageTitle { get; }
 
@@ -45,6 +47,41 @@ public abstract class EventListPageViewModel : ViewModelBase
     }
 
     /// <summary>
+    /// Indicates whether the event list is currently being loaded.
+    /// </summary>
+    public bool IsLoading
+    {
+        get => _isLoading;
+        private set
+        {
+            if (SetProperty(ref _isLoading, value))
+            {
+                OnPropertyChanged(nameof(ShowEventList));
+            }
+        }
+    }
+
+    /// <summary>
+    /// Indicates whether no events exist after initialization completes.
+    /// </summary>
+    public bool HasNoEvents
+    {
+        get => _hasNoEvents;
+        private set
+        {
+            if (SetProperty(ref _hasNoEvents, value))
+            {
+                OnPropertyChanged(nameof(ShowEventList));
+            }
+        }
+    }
+
+    /// <summary>
+    /// Indicates whether the event list should be shown in the UI.
+    /// </summary>
+    public bool ShowEventList => !IsLoading && !HasNoEvents;
+
+    /// <summary>
     /// Asynchronously initializes the event list for this screen.
     /// </summary>
     /// <remarks>
@@ -57,8 +94,19 @@ public abstract class EventListPageViewModel : ViewModelBase
     /// </remarks>
     public async Task InitializeAsync()
     {
-        AllEvents = await LoadEventsAsync();
-        RefreshVisibleEvents();
+        IsLoading = true;
+        HasNoEvents = false;
+
+        try
+        {
+            AllEvents = await LoadEventsAsync();
+            RefreshVisibleEvents();
+            HasNoEvents = AllEvents.Count == 0;
+        }
+        finally
+        {
+            IsLoading = false;
+        }
     }
 
     /// <summary>

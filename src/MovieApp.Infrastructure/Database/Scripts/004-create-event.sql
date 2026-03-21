@@ -13,6 +13,8 @@ BEGIN
         EventDateTime DATETIME2 NOT NULL,              
         LocationReference NVARCHAR(255) NOT NULL,      
         TicketPrice DECIMAL(18, 2) NOT NULL,           
+        EventType NVARCHAR(100) NOT NULL
+            CONSTRAINT DF_Events_Type DEFAULT 'Screening',
         
         HistoricalRating FLOAT NOT NULL 
             CONSTRAINT DF_Events_Rating DEFAULT 0.0,            

@@ -5,3 +5,4 @@
 :r .\005-create-participation.sql
 :r .\006-create-favorite-events.sql
 :r .\007-create-notifications.sql
+:r .\010-seed-events.sql
