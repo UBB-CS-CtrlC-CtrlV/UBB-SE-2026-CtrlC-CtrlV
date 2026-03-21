@@ -35,7 +35,6 @@ public static class EventListTransformer
 
         return events.Where(e =>
             (!filters.OnlyAvailableEvents || e.IsAvailable)
-            && (eventType is null || string.Equals(e.EventType, eventType, StringComparison.OrdinalIgnoreCase))
             && (locationReference is null
                 || string.Equals(e.LocationReference, locationReference, StringComparison.OrdinalIgnoreCase))
             && (!filters.MinimumTicketPrice.HasValue || e.TicketPrice >= filters.MinimumTicketPrice.Value)
@@ -56,8 +55,7 @@ public static class EventListTransformer
         return events.Where(e =>
             e.Title.Contains(query, StringComparison.OrdinalIgnoreCase)
             || (e.Description?.Contains(query, StringComparison.OrdinalIgnoreCase) ?? false)
-            || e.LocationReference.Contains(query, StringComparison.OrdinalIgnoreCase)
-            || e.EventType.Contains(query, StringComparison.OrdinalIgnoreCase));
+            || e.LocationReference.Contains(query, StringComparison.OrdinalIgnoreCase));
     }
 
     public static IOrderedEnumerable<Event> ApplySorting(IEnumerable<Event> events, EventSortOption sortOption)

@@ -18,8 +18,6 @@ public sealed class Event
 
     public double HistoricalRating { get; set; }
 
-    public required string EventType { get; set; }
-
     public int MaxCapacity { get; set; } = 50;
 
     public int CurrentEnrollment { get; set; }

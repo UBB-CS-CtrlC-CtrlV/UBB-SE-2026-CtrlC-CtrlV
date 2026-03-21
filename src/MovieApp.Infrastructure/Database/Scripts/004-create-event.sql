@@ -15,8 +15,7 @@ BEGIN
         TicketPrice DECIMAL(18, 2) NOT NULL,           
         
         HistoricalRating FLOAT NOT NULL 
-            CONSTRAINT DF_Events_Rating DEFAULT 0.0,
-        EventType NVARCHAR(64) NOT NULL,             
+            CONSTRAINT DF_Events_Rating DEFAULT 0.0,            
         MaxCapacity INT NOT NULL 
             CONSTRAINT DF_Events_Capacity DEFAULT 50,
         CurrentEnrollment INT NOT NULL 
