@@ -63,7 +63,7 @@
             Visibility="{x:Bind ViewModel.ShowEventList, Mode=OneWay}">
             <ListView.ItemTemplate>
                 <DataTemplate x:DataType="models:Event">
-                    <Grid Padding="12" ColumnSpacing="16">
+                    <Grid Padding="12" ColumnSpacing="16" RowSpacing="8">
                         <Grid.ColumnDefinitions>
                             <ColumnDefinition Width="*" />
                             <ColumnDefinition Width="Auto" />
@@ -72,34 +72,45 @@
                         <Grid.RowDefinitions>
                             <RowDefinition Height="Auto" />
                             <RowDefinition Height="Auto" />
+                            <RowDefinition Height="Auto" />
                         </Grid.RowDefinitions>
 
-                        <TextBlock
-                            Grid.Row="0" Grid.Column="0"
-                            Style="{ThemeResource BodyStrongTextBlockStyle}"
-                            Text="{x:Bind Title}"
-                            TextTrimming="CharacterEllipsis" />
-                        <TextBlock
-                            Grid.Row="1" Grid.Column="0"
-                            Opacity="0.6"
-                            Text="{x:Bind LocationReference}"
-                            TextTrimming="CharacterEllipsis" />
+                        <!-- Row 0: Title, Type & Date -->
+                        <StackPanel Grid.Row="0" Grid.Column="0" Orientation="Horizontal" Spacing="8">
+                            <TextBlock Style="{ThemeResource BodyStrongTextBlockStyle}" Text="{x:Bind Title}" TextTrimming="CharacterEllipsis" VerticalAlignment="Center" />
+                            <Border Background="{ThemeResource SystemControlBackgroundBaseLowBrush}" CornerRadius="4" Padding="6,2" VerticalAlignment="Center">
+                                <TextBlock FontSize="12" Opacity="0.8" Text="{x:Bind EventType}" />
+                            </Border>
+                        </StackPanel>
 
-                        <TextBlock
-                            Grid.Row="0" Grid.Column="1"
-                            HorizontalAlignment="Right"
-                            Text="{x:Bind TicketPrice}" />
-                        <TextBlock
-                            Grid.Row="1" Grid.Column="1"
-                            HorizontalAlignment="Right"
-                            Opacity="0.6"
-                            Text="{x:Bind AvailableSpots}" />
+                        <TextBlock Grid.Row="0" Grid.Column="1" HorizontalAlignment="Right" Style="{ThemeResource BodyStrongTextBlockStyle}" Text="{x:Bind TicketPrice}" VerticalAlignment="Center" />
+                        <TextBlock Grid.Row="0" Grid.Column="2" VerticalAlignment="Center" Opacity="0.6" Text="{x:Bind EventDateTime}" />
 
-                        <TextBlock
-                            Grid.Row="0" Grid.RowSpan="2" Grid.Column="2"
-                            VerticalAlignment="Center"
-                            Opacity="0.6"
-                            Text="{x:Bind EventDateTime}" />
+                        <!-- Row 1: Location & Rating -->
+                        <StackPanel Grid.Row="1" Grid.Column="0" Grid.ColumnSpan="3" Orientation="Horizontal" Spacing="16" Opacity="0.7">
+                            <StackPanel Orientation="Horizontal" Spacing="4">
+                                <FontIcon FontSize="14" Glyph="&#xE707;" />
+                                <TextBlock Text="{x:Bind LocationReference}" TextTrimming="CharacterEllipsis" />
+                            </StackPanel>
+                            <StackPanel Orientation="Horizontal" Spacing="4">
+                                <FontIcon FontSize="14" Glyph="&#xE734;" Foreground="Orange" />
+                                <TextBlock Text="{x:Bind HistoricalRating}" />
+                            </StackPanel>
+                        </StackPanel>
+
+                        <!-- Row 2: Enrollment & Availability -->
+                        <StackPanel Grid.Row="2" Grid.Column="0" Grid.ColumnSpan="3" Orientation="Horizontal" Spacing="16" Opacity="0.7">
+                            <StackPanel Orientation="Horizontal" Spacing="4">
+                                <FontIcon FontSize="14" Glyph="&#xE716;" />
+                                <TextBlock Text="{x:Bind CurrentEnrollment}" />
+                                <TextBlock Text="enrolled" />
+                            </StackPanel>
+                            <StackPanel Orientation="Horizontal" Spacing="4">
+                                <FontIcon FontSize="14" Glyph="&#xE8D5;" />
+                                <TextBlock Text="{x:Bind AvailableSpots}" />
+                                <TextBlock Text="spots left" />
+                            </StackPanel>
+                        </StackPanel>
                     </Grid>
                 </DataTemplate>
             </ListView.ItemTemplate>
