@@ -1,7 +1,7 @@
 using Microsoft.UI.Xaml;
 using Microsoft.Extensions.Configuration;
 using MovieApp.Infrastructure;
-using MovieApp.Ui.Services;
+using MovieApp.Core.Services;
 using MovieApp.Ui.ViewModels;
 using MovieApp.Ui.Views;
 
