@@ -1,0 +1,38 @@
+<UserControl
+    x:Class="MovieApp.Ui.Controls.EventCard"
+    xmlns="http://schemas.microsoft.com/winfx/2006/xaml/presentation"
+    xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
+    xmlns:d="http://schemas.microsoft.com/expression/blend/2008"
+    xmlns:mc="http://schemas.openxmlformats.org/markup-compatibility/2006"
+    mc:Ignorable="d">
+
+    <Border
+        Width="240"
+        Padding="12"
+        CornerRadius="10"
+        BorderThickness="1"
+        BorderBrush="{ThemeResource SystemControlForegroundBaseLowBrush}">
+        <StackPanel Spacing="6">
+            <TextBlock
+                Style="{ThemeResource BodyStrongTextBlockStyle}"
+                Text="{Binding Title}"
+                TextTrimming="CharacterEllipsis" />
+
+            <TextBlock
+                Opacity="0.75"
+                Text="{Binding EventType}" />
+
+            <TextBlock
+                Opacity="0.75"
+                Text="{Binding EventDateTime}" />
+
+            <TextBlock
+                Opacity="0.75"
+                Text="{Binding LocationReference}" />
+
+            <TextBlock
+                Opacity="0.75"
+                Text="{Binding TicketPrice}" />
+        </StackPanel>
+    </Border>
+</UserControl>

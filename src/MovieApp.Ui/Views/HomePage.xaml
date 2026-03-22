@@ -4,16 +4,49 @@
     xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
     xmlns:d="http://schemas.microsoft.com/expression/blend/2008"
     xmlns:mc="http://schemas.openxmlformats.org/markup-compatibility/2006"
+    xmlns:ui="using:MovieApp.Ui.Controls"
     mc:Ignorable="d">
 
-    <Grid Padding="32">
-        <StackPanel Spacing="12">
+    <ScrollViewer
+        Padding="32"
+        VerticalScrollBarVisibility="Auto">
+
+        <StackPanel Spacing="16">
             <TextBlock
                 Style="{ThemeResource HeaderTextBlockStyle}"
-                Text="Home" />
-            <TextBlock
-                Text="Placeholder page for the Home area."
-                TextWrapping="WrapWholeWords" />
+                Text="{Binding PageTitle}" />
+
+            <ItemsControl ItemsSource="{Binding Sections}">
+                <ItemsControl.ItemTemplate>
+                    <DataTemplate>
+                        <StackPanel Spacing="8" Margin="0,8,0,0">
+                            <ui:SectionHeader Title="{Binding Title}" />
+
+                            <ScrollViewer
+                                HorizontalScrollBarVisibility="Auto"
+                                VerticalScrollBarVisibility="Disabled">
+
+                                <!-- ItemsControl + DataTemplate: standard pentru randare listă -->
+                                <ItemsControl ItemsSource="{Binding Events}">
+                                    <ItemsControl.ItemsPanel>
+                                        <ItemsPanelTemplate>
+                                            <!-- Panel orizontal pentru „row of cards” -->
+                                            <StackPanel Orientation="Horizontal" Spacing="12" />
+                                        </ItemsPanelTemplate>
+                                    </ItemsControl.ItemsPanel>
+
+                                    <ItemsControl.ItemTemplate>
+                                        <DataTemplate>
+                                            <ui:EventCard />
+                                        </DataTemplate>
+                                    </ItemsControl.ItemTemplate>
+                                </ItemsControl>
+                            </ScrollViewer>
+
+                        </StackPanel>
+                    </DataTemplate>
+                </ItemsControl.ItemTemplate>
+            </ItemsControl>
         </StackPanel>
-    </Grid>
+    </ScrollViewer>
 </Page>
