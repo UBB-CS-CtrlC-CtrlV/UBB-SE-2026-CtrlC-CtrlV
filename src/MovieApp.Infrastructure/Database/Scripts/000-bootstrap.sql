@@ -4,5 +4,9 @@
 :r .\004-create-event.sql
 :r .\005-create-participation.sql
 :r .\006-create-favorite-events.sql
+:r .\006-user-spins.sql
+:r .\007-create-movies.sql
 :r .\007-create-notifications.sql
+:r .\008-create-user-movie-discounts.sql
+:r .\009-create-marathon.sql
 :r .\010-seed-events.sql

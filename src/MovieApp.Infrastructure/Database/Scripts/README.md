@@ -17,6 +17,15 @@ Otherwise, run these files in order:
 4. `004-create-event.sql`
 5. `005-create-participation.sql`
 6. `006-create-favorite-events.sql`
-7. `007-create-notifications.sql`
+7. `006-user-spins.sql`
+8. `007-create-movies.sql`
+9. `007-create-notifications.sql`
+10. `008-create-user-movie-discounts.sql`
+11. `009-create-marathon.sql`
+12. `010-seed-events.sql`
 
-The scripts are safe to rerun.
+Notes:
+
+- `000-bootstrap.sql` is the canonical local setup path and includes all current scripts.
+- Some script numbers are duplicated because they were added in separate PRs. Follow the filenames exactly as listed above.
+- `010-seed-events.sql` is idempotent and safe to rerun.

@@ -53,4 +53,25 @@ public sealed class EventSqlQueriesTests
         var filePath = Path.Combine([currentDirectory!.FullName, .. pathSegments]);
         return File.ReadAllText(filePath);
     }
+
+    [Fact]
+    public void BootstrapScript_IncludesAllCurrentDatabaseScripts()
+    {
+        var bootstrapFile = ReadRepoFile("src", "MovieApp.Infrastructure", "Database", "Scripts", "000-bootstrap.sql");
+
+        Assert.Contains(@":r .\006-user-spins.sql", bootstrapFile);
+        Assert.Contains(@":r .\007-create-movies.sql", bootstrapFile);
+        Assert.Contains(@":r .\008-create-user-movie-discounts.sql", bootstrapFile);
+        Assert.Contains(@":r .\009-create-marathon.sql", bootstrapFile);
+        Assert.Contains(@":r .\010-seed-events.sql", bootstrapFile);
+    }
+
+    [Fact]
+    public void SeedEventsScript_IsGuardedAgainstDuplicateSeedData()
+    {
+        var seedScript = ReadRepoFile("src", "MovieApp.Infrastructure", "Database", "Scripts", "010-seed-events.sql");
+
+        Assert.Contains("IF NOT EXISTS", seedScript);
+        Assert.Contains("WHERE Title = 'Cannes Winner Screening'", seedScript);
+    }
 }
