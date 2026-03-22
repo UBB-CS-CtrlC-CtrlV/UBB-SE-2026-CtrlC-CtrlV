@@ -6,19 +6,40 @@ namespace MovieApp.Ui.ViewModels.Events;
 
 public sealed class HomeEventsViewModel : EventListPageViewModel
 {
+    // TODO: consider removing FallbackSectionTitle
+    private const string FallbackSectionTitle = "Other events";
+
     private readonly IEventRepository _eventRepository;
+    private IReadOnlyList<EventSection> _sections = [];
 
     public HomeEventsViewModel(IEventRepository eventRepository)
     {
+        ArgumentNullException.ThrowIfNull(eventRepository);
+
         _eventRepository = eventRepository;
+        PropertyChanged += OnBasePropertyChanged;
     }
 
     public override string PageTitle => "Home Events";
+
+    public IReadOnlyList<EventSection> Sections
+    {
+        get => _sections;
+        private set => SetProperty(ref _sections, value);
+    }
 
     protected override async Task<IReadOnlyList<Event>> LoadEventsAsync()
     {
         var events = await _eventRepository.GetAllAsync();
         return events.ToList();
+    }
+
+    private void OnBasePropertyChanged(object? sender, PropertyChangedEventArgs e)
+    {
+        if (e.PropertyName == nameof(VisibleEvents))
+        {
+            RebuildSections();
+        }
     }
 
     private void RebuildSections()
