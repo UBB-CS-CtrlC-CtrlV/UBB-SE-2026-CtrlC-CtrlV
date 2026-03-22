@@ -74,4 +74,15 @@ public sealed class EventSqlQueriesTests
         Assert.Contains("IF NOT EXISTS", seedScript);
         Assert.Contains("WHERE Title = 'Cannes Winner Screening'", seedScript);
     }
+
+    [Fact]
+    public void SqlMarathonRepository_UsesDatabaseOptionsLikeOtherSqlRepositories()
+    {
+        var repositoryFile = ReadRepoFile("src", "MovieApp.Infrastructure", "SqlMarathonRepository.cs");
+
+        Assert.Contains("public SqlMarathonRepository(DatabaseOptions databaseOptions)", repositoryFile);
+        Assert.Contains("ArgumentNullException.ThrowIfNull(databaseOptions);", repositoryFile);
+        Assert.Contains("_connectionString = databaseOptions.ConnectionString;", repositoryFile);
+        Assert.DoesNotContain("public SqlMarathonRepository(string connectionString)", repositoryFile);
+    }
 }

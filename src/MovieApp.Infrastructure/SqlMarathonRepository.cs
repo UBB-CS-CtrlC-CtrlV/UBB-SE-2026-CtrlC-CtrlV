@@ -4,13 +4,18 @@ using MovieApp.Core.Models;
 
 namespace MovieApp.Infrastructure;
 
+/// <summary>
+/// SQL Server-backed marathon repository.
+/// </summary>
 public sealed class SqlMarathonRepository : IMarathonRepository
 {
     private readonly string _connectionString;
 
-    public SqlMarathonRepository(string connectionString)
+    public SqlMarathonRepository(DatabaseOptions databaseOptions)
     {
-        _connectionString = connectionString;
+        ArgumentNullException.ThrowIfNull(databaseOptions);
+
+        _connectionString = databaseOptions.ConnectionString;
     }
 
     public async Task<IEnumerable<Marathon>> GetActiveMarathonsAsync()
