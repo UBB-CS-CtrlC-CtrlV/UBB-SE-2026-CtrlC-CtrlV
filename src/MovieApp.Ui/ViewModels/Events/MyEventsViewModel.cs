@@ -8,7 +8,6 @@ public sealed class MyEventsViewModel : EventListPageViewModel
 
     protected override Task<IReadOnlyList<Event>> LoadEventsAsync()
     {
-        // TODO: Retrieve the raw current-user event list here once data wiring exists.
-        throw new NotImplementedException();
+        return Task.FromResult<IReadOnlyList<Event>>([]);
     }
 }

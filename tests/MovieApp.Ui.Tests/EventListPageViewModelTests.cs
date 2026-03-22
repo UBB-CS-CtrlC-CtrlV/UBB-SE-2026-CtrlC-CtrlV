@@ -132,6 +132,16 @@ public sealed class EventListPageViewModelTests
         Assert.Equal(nameof(EventListPageViewModel.VisibleEvents), changedProperty);
     }
 
+    [Fact]
+    public void UpdateFilters_FiltersVisibleEventsByEventType()
+    {
+        var viewModel = CreateInitializedViewModel();
+
+        viewModel.UpdateFilters(filters => filters.EventType = "Festival");
+
+        Assert.Equal([2], viewModel.VisibleEvents.Select(e => e.Id));
+    }
+
     private static TestEventListPageViewModel CreateInitializedViewModel()
     {
         var viewModel = new TestEventListPageViewModel(BuildSampleEvents());

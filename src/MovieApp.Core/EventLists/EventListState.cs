@@ -1,5 +1,8 @@
 namespace MovieApp.Core.EventLists;
 
+/// <summary>
+/// Current search, sort, and filter state for an event list screen.
+/// </summary>
 public sealed class EventListState
 {
     public string SearchText { get; set; } = string.Empty;
@@ -17,6 +20,9 @@ public sealed class EventListState
         EventSortOption.HistoricalRatingDescending,
     ];
 
+    /// <summary>
+    /// Creates a deep-enough copy for UI workflows that need to compare or edit state.
+    /// </summary>
     public EventListState Clone()
     {
         return new EventListState
@@ -27,6 +33,9 @@ public sealed class EventListState
         };
     }
 
+    /// <summary>
+    /// Restores the search, sort, and filter state to the screen defaults.
+    /// </summary>
     public void Reset()
     {
         SearchText = string.Empty;

@@ -106,6 +106,33 @@ public sealed class HomeEventsViewModelTests
         Assert.Contains(nameof(EventListPageViewModel.HasNoEvents), changedProperties);
     }
 
+    [Fact]
+    public async Task InitializeAsync_BuildsSectionsGroupedByEventType()
+    {
+        var repository = new StubEventRepository(BuildSectionSampleEvents());
+        var viewModel = new HomeEventsViewModel(repository);
+
+        await viewModel.InitializeAsync();
+
+        Assert.Equal(["Festival", "Premiere", "Other events"], viewModel.Sections.Select(s => s.Title));
+        Assert.Equal([3], viewModel.Sections[0].Events.Select(e => e.Id));
+        Assert.Equal([2, 1], viewModel.Sections[1].Events.Select(e => e.Id));
+        Assert.Equal([4], viewModel.Sections[2].Events.Select(e => e.Id));
+    }
+
+    [Fact]
+    public async Task SetSearchText_RebuildsSectionsFromVisibleEvents()
+    {
+        var repository = new StubEventRepository(BuildSectionSampleEvents());
+        var viewModel = new HomeEventsViewModel(repository);
+
+        await viewModel.InitializeAsync();
+        viewModel.SetSearchText("premiere");
+
+        Assert.Equal(["Premiere"], viewModel.Sections.Select(s => s.Title));
+        Assert.Equal([2, 1], viewModel.Sections[0].Events.Select(e => e.Id));
+    }
+
     private static IReadOnlyList<Event> BuildSampleEvents()
     {
         return
@@ -154,6 +181,73 @@ public sealed class HomeEventsViewModelTests
                 MaxCapacity = 50,
                 CurrentEnrollment = 50,
                 CreatorUserId = 12,
+            },
+        ];
+    }
+
+    private static IReadOnlyList<Event> BuildSectionSampleEvents()
+    {
+        return
+        [
+            new Event
+            {
+                Id = 1,
+                Title = "Premiere A",
+                Description = "First premiere",
+                PosterUrl = string.Empty,
+                EventDateTime = new DateTime(2030, 1, 2, 18, 0, 0),
+                LocationReference = "Hall A",
+                TicketPrice = 20,
+                HistoricalRating = 4.5,
+                EventType = " Premiere ",
+                MaxCapacity = 100,
+                CurrentEnrollment = 10,
+                CreatorUserId = 1,
+            },
+            new Event
+            {
+                Id = 2,
+                Title = "Premiere B",
+                Description = "Second premiere",
+                PosterUrl = string.Empty,
+                EventDateTime = new DateTime(2030, 1, 1, 18, 0, 0),
+                LocationReference = "Hall B",
+                TicketPrice = 25,
+                HistoricalRating = 4.0,
+                EventType = "Premiere",
+                MaxCapacity = 100,
+                CurrentEnrollment = 10,
+                CreatorUserId = 1,
+            },
+            new Event
+            {
+                Id = 3,
+                Title = "Festival Night",
+                Description = "Festival event",
+                PosterUrl = string.Empty,
+                EventDateTime = new DateTime(2030, 1, 3, 18, 0, 0),
+                LocationReference = "Hall C",
+                TicketPrice = 30,
+                HistoricalRating = 4.9,
+                EventType = "Festival",
+                MaxCapacity = 100,
+                CurrentEnrollment = 10,
+                CreatorUserId = 1,
+            },
+            new Event
+            {
+                Id = 4,
+                Title = "Mystery Event",
+                Description = "No event type",
+                PosterUrl = string.Empty,
+                EventDateTime = new DateTime(2030, 1, 4, 18, 0, 0),
+                LocationReference = "Hall D",
+                TicketPrice = 15,
+                HistoricalRating = 3.5,
+                EventType = "   ",
+                MaxCapacity = 100,
+                CurrentEnrollment = 10,
+                CreatorUserId = 1,
             },
         ];
     }

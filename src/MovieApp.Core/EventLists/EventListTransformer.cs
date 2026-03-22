@@ -4,6 +4,10 @@ namespace MovieApp.Core.EventLists;
 
 public static class EventListTransformer
 {
+    /// <summary>
+    /// Applies the full event-list pipeline in a stable order:
+    /// filters first, then search, then sorting.
+    /// </summary>
     public static IReadOnlyList<Event> Apply(IEnumerable<Event> events, EventListState state)
     {
         ArgumentNullException.ThrowIfNull(events);
@@ -21,8 +25,7 @@ public static class EventListTransformer
         ArgumentNullException.ThrowIfNull(events);
         ArgumentNullException.ThrowIfNull(filters);
 
-        if (filters.MinimumTicketPrice.HasValue
-            && filters.MaximumTicketPrice.HasValue
+        if (filters is { MinimumTicketPrice: not null, MaximumTicketPrice: not null }
             && filters.MinimumTicketPrice.Value > filters.MaximumTicketPrice.Value)
         {
             return [];
@@ -35,12 +38,18 @@ public static class EventListTransformer
 
         return events.Where(e =>
             (!filters.OnlyAvailableEvents || e.IsAvailable)
+            && (eventType is null
+                || string.Equals(e.EventType, eventType, StringComparison.OrdinalIgnoreCase))
             && (locationReference is null
                 || string.Equals(e.LocationReference, locationReference, StringComparison.OrdinalIgnoreCase))
             && (!filters.MinimumTicketPrice.HasValue || e.TicketPrice >= filters.MinimumTicketPrice.Value)
             && (!filters.MaximumTicketPrice.HasValue || e.TicketPrice <= filters.MaximumTicketPrice.Value));
     }
 
+    /// <summary>
+    /// Searches across the user-visible text fields for an event,
+    /// including its title, description, location and type.
+    /// </summary>
     public static IEnumerable<Event> ApplySearch(IEnumerable<Event> events, string? searchText)
     {
         ArgumentNullException.ThrowIfNull(events);
@@ -55,7 +64,8 @@ public static class EventListTransformer
         return events.Where(e =>
             e.Title.Contains(query, StringComparison.OrdinalIgnoreCase)
             || (e.Description?.Contains(query, StringComparison.OrdinalIgnoreCase) ?? false)
-            || e.LocationReference.Contains(query, StringComparison.OrdinalIgnoreCase));
+            || e.LocationReference.Contains(query, StringComparison.OrdinalIgnoreCase)
+            || e.EventType.Contains(query, StringComparison.OrdinalIgnoreCase));
     }
 
     public static IOrderedEnumerable<Event> ApplySorting(IEnumerable<Event> events, EventSortOption sortOption)

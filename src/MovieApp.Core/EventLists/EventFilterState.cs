@@ -1,5 +1,8 @@
 namespace MovieApp.Core.EventLists;
 
+/// <summary>
+/// Mutable filter criteria applied to an event list screen.
+/// </summary>
 public sealed class EventFilterState
 {
     public string? EventType { get; set; }
@@ -12,6 +15,9 @@ public sealed class EventFilterState
 
     public bool OnlyAvailableEvents { get; set; }
 
+    /// <summary>
+    /// Indicates whether any filter currently changes the visible event list.
+    /// </summary>
     public bool HasActiveFilters()
     {
         return !string.IsNullOrWhiteSpace(EventType)
@@ -21,6 +27,9 @@ public sealed class EventFilterState
             || OnlyAvailableEvents;
     }
 
+    /// <summary>
+    /// Creates a copy so callers can snapshot or branch filter state safely.
+    /// </summary>
     public EventFilterState Clone()
     {
         return new EventFilterState
@@ -33,6 +42,9 @@ public sealed class EventFilterState
         };
     }
 
+    /// <summary>
+    /// Restores all filters to their default unset values.
+    /// </summary>
     public void Reset()
     {
         EventType = null;

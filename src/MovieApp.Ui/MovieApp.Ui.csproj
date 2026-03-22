@@ -22,13 +22,8 @@
     <None Remove="Views\ReferralAreaPage.xaml" />
     <None Remove="Views\SlotMachinePage.xaml" />
     <None Remove="Views\TriviaWheelPage.xaml" />
-	<None Remove="Controls\EventCard.xaml" />
-	<None Remove="Controls\SectionHeader.xaml" />
-
-  </ItemGroup>
-  <ItemGroup>
-    <Page Remove="controls\EventCard.xaml" />
-    <Page Remove="controls\SectionHeader.xaml" />
+    <None Remove="Controls\EventCard.xaml" />
+    <None Remove="Controls\SectionHeader.xaml" />
   </ItemGroup>
 
   <ItemGroup>
@@ -54,17 +49,16 @@
     </Content>
   </ItemGroup>
 
-    <ItemGroup>
-		<Page Update="Controls\EventCard.xaml">
-			<Generator>MSBuild:Compile</Generator>
-		</Page>
-		<Page Update="Controls\SectionHeader.xaml">
-			<Generator>MSBuild:Compile</Generator>
-		</Page>
-	</ItemGroup>
+  <ItemGroup>
+    <Page Update="Controls\EventCard.xaml">
+      <Generator>MSBuild:Compile</Generator>
+    </Page>
+    <Page Update="Controls\SectionHeader.xaml">
+      <Generator>MSBuild:Compile</Generator>
+    </Page>
+  </ItemGroup>
 
-
-	<ItemGroup>
+  <ItemGroup>
     <Page Update="Views\MarathonsPage.xaml">
       <Generator>MSBuild:Compile</Generator>
     </Page>
@@ -111,16 +105,6 @@
       <Generator>MSBuild:Compile</Generator>
     </Page>
   </ItemGroup>
-
-  <ItemGroup>
-    <None Update="Controls\EventCard.xaml">
-      <Generator>MSBuild:Compile</Generator>
-    </None>
-    <None Update="Controls\SectionHeader.xaml">
-      <Generator>MSBuild:Compile</Generator>
-    </None>
-  </ItemGroup>
-
   <!-- Publish Properties -->
   <PropertyGroup>
     <PublishReadyToRun Condition="'$(Configuration)' == 'Debug'">False</PublishReadyToRun>

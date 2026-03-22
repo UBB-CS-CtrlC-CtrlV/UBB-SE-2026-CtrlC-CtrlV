@@ -4,25 +4,30 @@ using MovieApp.Core.Models;
 
 namespace MovieApp.Infrastructure;
 
+/// <summary>
+/// SQL Server-backed marathon repository.
+/// </summary>
 public sealed class SqlMarathonRepository : IMarathonRepository
 {
     private readonly string _connectionString;
 
-    public SqlMarathonRepository(string connectionString)
+    public SqlMarathonRepository(DatabaseOptions databaseOptions)
     {
-        _connectionString = connectionString;
+        ArgumentNullException.ThrowIfNull(databaseOptions);
+
+        _connectionString = databaseOptions.ConnectionString;
     }
 
     public async Task<IEnumerable<Marathon>> GetActiveMarathonsAsync()
     {
         var marathons = new List<Marathon>();
-        using var connection = new SqlConnection(_connectionString);
-        using var command = new SqlCommand(
+        await using var connection = new SqlConnection(_connectionString);
+        await using var command = new SqlCommand(
             "SELECT Id, Title, Description, PosterUrl, Theme, PrerequisiteMarathonId, WeekScoping " +
             "FROM dbo.Marathons WHERE IsActive = 1", connection);
 
         await connection.OpenAsync();
-        using var reader = await command.ExecuteReaderAsync();
+        await using var reader = await command.ExecuteReaderAsync();
         while (await reader.ReadAsync())
         {
             marathons.Add(new Marathon
@@ -42,8 +47,8 @@ public sealed class SqlMarathonRepository : IMarathonRepository
     public async Task<IEnumerable<MarathonProgress>> GetLeaderboardAsync(int marathonId)
     {
         var rankings = new List<MarathonProgress>();
-        using var connection = new SqlConnection(_connectionString);
-        using var command = new SqlCommand(
+        await using var connection = new SqlConnection(_connectionString);
+        await using var command = new SqlCommand(
             "SELECT UserId, MarathonId, TriviaAccuracy, CompletedMoviesCount, FinishedAt " +
             "FROM dbo.MarathonProgress WHERE MarathonId = @MarathonId " +
             "ORDER BY TriviaAccuracy DESC, FinishedAt ASC", connection);
@@ -51,7 +56,7 @@ public sealed class SqlMarathonRepository : IMarathonRepository
         command.Parameters.AddWithValue("@MarathonId", marathonId);
 
         await connection.OpenAsync();
-        using var reader = await command.ExecuteReaderAsync();
+        await using var reader = await command.ExecuteReaderAsync();
         while (await reader.ReadAsync())
         {
             rankings.Add(new MarathonProgress
@@ -68,8 +73,8 @@ public sealed class SqlMarathonRepository : IMarathonRepository
 
     public async Task<MarathonProgress?> GetUserProgressAsync(int userId, int marathonId)
     {
-        using var connection = new SqlConnection(_connectionString);
-        using var command = new SqlCommand(
+        await using var connection = new SqlConnection(_connectionString);
+        await using var command = new SqlCommand(
             "SELECT UserId, MarathonId, TriviaAccuracy, CompletedMoviesCount, FinishedAt " +
             "FROM dbo.MarathonProgress WHERE UserId = @UserId AND MarathonId = @MarathonId", connection);
 
@@ -77,7 +82,7 @@ public sealed class SqlMarathonRepository : IMarathonRepository
         command.Parameters.AddWithValue("@MarathonId", marathonId);
 
         await connection.OpenAsync();
-        using var reader = await command.ExecuteReaderAsync();
+        await using var reader = await command.ExecuteReaderAsync();
         if (await reader.ReadAsync())
         {
             return new MarathonProgress
@@ -94,8 +99,8 @@ public sealed class SqlMarathonRepository : IMarathonRepository
 
     public async Task<bool> JoinMarathonAsync(int userId, int marathonId)
     {
-        using var connection = new SqlConnection(_connectionString);
-        using var command = new SqlCommand(
+        await using var connection = new SqlConnection(_connectionString);
+        await using var command = new SqlCommand(
             "INSERT INTO dbo.MarathonProgress (UserId, MarathonId, JoinedAt) " +
             "VALUES (@UserId, @MarathonId, @JoinedAt)", connection);
 
@@ -109,8 +114,8 @@ public sealed class SqlMarathonRepository : IMarathonRepository
 
     public async Task<bool> UpdateProgressAsync(MarathonProgress progress)
     {
-        using var connection = new SqlConnection(_connectionString);
-        using var command = new SqlCommand(
+        await using var connection = new SqlConnection(_connectionString);
+        await using var command = new SqlCommand(
             "UPDATE dbo.MarathonProgress SET " +
             "TriviaAccuracy = @Accuracy, CompletedMoviesCount = @Count, FinishedAt = @FinishedAt " +
             "WHERE UserId = @UserId AND MarathonId = @MarathonId", connection);

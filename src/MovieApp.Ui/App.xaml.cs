@@ -3,6 +3,7 @@ using Microsoft.Extensions.Configuration;
 using MovieApp.Core.Repositories;
 using MovieApp.Infrastructure;
 using MovieApp.Core.Services;
+using MovieApp.Ui.Services;
 using MovieApp.Ui.ViewModels;
 using MovieApp.Ui.Views;
 
@@ -23,6 +24,7 @@ public partial class App : Application
     protected override async void OnLaunched(LaunchActivatedEventArgs args)
     {
         MainViewModel viewModel;
+        EventRepository = UnavailableEventRepository.Instance;
 
         try
         {
@@ -50,6 +52,8 @@ public partial class App : Application
         }
         catch (Exception exception)
         {
+            // Keep the shell alive in a safe degraded state so the startup error
+            // can be shown without HomePage crashing on a missing repository.
             viewModel = MainViewModel.CreateStartupError(BuildStartupErrorMessage(exception));
         }
 
