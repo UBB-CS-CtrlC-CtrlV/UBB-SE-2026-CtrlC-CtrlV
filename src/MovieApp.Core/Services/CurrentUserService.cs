@@ -1,7 +1,7 @@
 using MovieApp.Core.Models;
 using MovieApp.Core.Repositories;
 
-namespace MovieApp.Ui.Services;
+namespace MovieApp.Core.Services;
 
 public sealed class CurrentUserService : ICurrentUserService
 {

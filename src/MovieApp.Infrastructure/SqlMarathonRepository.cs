@@ -1,7 +1,6 @@
 ﻿using Microsoft.Data.SqlClient;
-using MovieApp.Core.Interfaces;
-using MovieApp.Core.Models;
 using MovieApp.Core.Repositories;
+using MovieApp.Core.Models;
 
 namespace MovieApp.Infrastructure;
 

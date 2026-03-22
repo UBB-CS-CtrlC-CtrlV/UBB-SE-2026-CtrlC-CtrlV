@@ -1,4 +1,4 @@
-﻿namespace MovieApp.Core.Interfaces;
+﻿namespace MovieApp.Core.Repositories;
 
 using MovieApp.Core.Models;
 

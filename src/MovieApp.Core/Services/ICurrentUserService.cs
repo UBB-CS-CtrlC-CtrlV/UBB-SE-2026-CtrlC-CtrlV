@@ -1,6 +1,6 @@
 using MovieApp.Core.Models;
 
-namespace MovieApp.Ui.Services;
+namespace MovieApp.Core.Services;
 
 public interface ICurrentUserService
 {

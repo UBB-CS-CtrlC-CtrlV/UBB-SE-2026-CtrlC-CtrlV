@@ -22,6 +22,8 @@ public sealed class Event
 
     public int CurrentEnrollment { get; set; }
 
+    public string EventType { get; set; } = string.Empty;
+
     public required int CreatorUserId { get; init; }
 
     public int AvailableSpots => MaxCapacity - CurrentEnrollment;

@@ -1,100 +1,24 @@
 using System.ComponentModel;
 using MovieApp.Core.Models;
+using MovieApp.Core.Repositories;
 
 namespace MovieApp.Ui.ViewModels.Events;
 
 public sealed class HomeEventsViewModel : EventListPageViewModel
 {
-    private const string FallbackSectionTitle = "Other events";
+    private readonly IEventRepository _eventRepository;
 
-    private IReadOnlyList<EventSection> _sections = [];
-
-    public HomeEventsViewModel()
+    public HomeEventsViewModel(IEventRepository eventRepository)
     {
-        PropertyChanged += OnBasePropertyChanged;
+        _eventRepository = eventRepository;
     }
 
-    public override string PageTitle => "Home";
+    public override string PageTitle => "Home Events";
 
-    public IReadOnlyList<EventSection> Sections
+    protected override async Task<IReadOnlyList<Event>> LoadEventsAsync()
     {
-        get => _sections;
-        private set => SetProperty(ref _sections, value);
-    }
-
-    protected override Task<IReadOnlyList<Event>> LoadEventsAsync()
-    {
-        // NOTE: Projectul NU are încă wiring complet pentru events din DB.
-        // Pentru a putea valida UI + grouping, folosim o listă demo.
-        // Poți înlocui ulterior cu query din dbo.Events.
-        IReadOnlyList<Event> demoEvents =
-        [
-            new Event
-            {
-                Id = 1,
-                Title = "Action Night",
-                Description = "Explosions and thrills.",
-                EventDateTime = DateTime.Now.AddDays(2),
-                LocationReference = "Cinema A",
-                TicketPrice = 25m,
-                EventType = "Action",
-                CreatorUserId = 1,
-            },
-            new Event
-            {
-                Id = 2,
-                Title = "Horror Marathon",
-                Description = "Bring courage.",
-                EventDateTime = DateTime.Now.AddDays(5),
-                LocationReference = "Cinema B",
-                TicketPrice = 30m,
-                EventType = "Horror",
-                CreatorUserId = 1,
-            },
-            new Event
-            {
-                Id = 3,
-                Title = "Comedy Evening",
-                Description = "Laughs guaranteed.",
-                EventDateTime = DateTime.Now.AddDays(1),
-                LocationReference = "Cinema A",
-                TicketPrice = 18m,
-                EventType = "Comedy",
-                CreatorUserId = 1,
-            },
-            new Event
-            {
-                Id = 4,
-                Title = "Mystery Special",
-                Description = "Detective vibes.",
-                EventDateTime = DateTime.Now.AddDays(3),
-                LocationReference = "Cinema C",
-                TicketPrice = 22m,
-                EventType = "Mystery",
-                CreatorUserId = 1,
-            },
-            new Event
-            {
-                Id = 5,
-                Title = "Uncategorized event",
-                Description = "No type set (fallback demo).",
-                EventDateTime = DateTime.Now.AddDays(4),
-                LocationReference = "Cinema D",
-                TicketPrice = 20m,
-                EventType = "   ", // fallback
-                CreatorUserId = 1,
-            },
-        ];
-
-        return Task.FromResult(demoEvents);
-    }
-
-    private void OnBasePropertyChanged(object? sender, PropertyChangedEventArgs e)
-    {
-        if (e.PropertyName == nameof(VisibleEvents))
-        {
-            RebuildSections();
-        }
+        var events = await _eventRepository.GetAllAsync();
+        return events.ToList();
     }
 
     private void RebuildSections()
