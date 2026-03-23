@@ -4,16 +4,219 @@
     xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
     xmlns:d="http://schemas.microsoft.com/expression/blend/2008"
     xmlns:mc="http://schemas.openxmlformats.org/markup-compatibility/2006"
+    xmlns:controls="using:Microsoft.UI.Xaml.Controls"
     mc:Ignorable="d">
 
-    <Grid Padding="32">
-        <StackPanel Spacing="12">
-            <TextBlock
-                Style="{ThemeResource HeaderTextBlockStyle}"
-                Text="My Events" />
-            <TextBlock
-                Text="Placeholder page for the My Events area."
-                TextWrapping="WrapWholeWords" />
+    <ScrollViewer
+        Padding="32"
+        VerticalScrollBarVisibility="Auto">
+        <StackPanel Spacing="24">
+            <StackPanel Spacing="6">
+                <TextBlock
+                    Style="{ThemeResource TitleTextBlockStyle}"
+                    Text="{Binding PageTitle}" />
+                <TextBlock
+                    Style="{StaticResource SectionCaptionTextStyle}"
+                    Text="Created events, joined events, and the price-watchlist live together here so lifecycle actions stay in one workspace." />
+            </StackPanel>
+
+            <Border Style="{StaticResource SurfaceCardStyle}">
+                <StackPanel Spacing="16">
+                    <TextBlock
+                        Style="{StaticResource SectionTitleTextStyle}"
+                        Text="Shared event-list toolbar" />
+                    <Grid ColumnSpacing="12">
+                        <Grid.ColumnDefinitions>
+                            <ColumnDefinition Width="2*" />
+                            <ColumnDefinition Width="*" />
+                            <ColumnDefinition Width="*" />
+                            <ColumnDefinition Width="Auto" />
+                        </Grid.ColumnDefinitions>
+
+                        <AutoSuggestBox PlaceholderText="Search created, joined, or watched events" />
+                        <ComboBox
+                            Grid.Column="1"
+                            PlaceholderText="Sort">
+                            <x:String>Price</x:String>
+                            <x:String>Historical rating</x:String>
+                        </ComboBox>
+                        <ComboBox
+                            Grid.Column="2"
+                            PlaceholderText="Filter">
+                            <x:String>All locations</x:String>
+                            <x:String>Free events</x:String>
+                            <x:String>Paid events</x:String>
+                        </ComboBox>
+                        <Button
+                            Grid.Column="3"
+                            Content="Reset" />
+                    </Grid>
+                </StackPanel>
+            </Border>
+
+            <controls:TabView>
+                <controls:TabViewItem Header="Created events">
+                    <Grid
+                        Padding="0,16,0,0"
+                        ColumnSpacing="16">
+                        <Grid.ColumnDefinitions>
+                            <ColumnDefinition Width="2*" />
+                            <ColumnDefinition Width="*" />
+                        </Grid.ColumnDefinitions>
+
+                        <Border Style="{StaticResource SurfaceCardStyle}">
+                            <StackPanel Spacing="16">
+                                <TextBlock
+                                    Style="{ThemeResource SubtitleTextBlockStyle}"
+                                    Text="Creator-owned event list host" />
+                                <TextBlock
+                                    Style="{StaticResource SectionCaptionTextStyle}"
+                                    Text="Replace the sample rows with a bound list that supports create, edit, delete, and event-status refresh." />
+                                <ListView>
+                                    <ListViewItem Content="Premiere Night | Draft poster path | Edit and delete actions mount here" />
+                                    <ListViewItem Content="Retro Marathon | Validation state and attendance count mount here" />
+                                    <ListViewItem Content="Open Air Screening | Seat-capacity status mount here" />
+                                </ListView>
+                            </StackPanel>
+                        </Border>
+
+                        <StackPanel
+                            Grid.Column="1"
+                            Spacing="16">
+                            <Border Style="{StaticResource SurfaceCardStyle}">
+                                <StackPanel Spacing="10">
+                                    <TextBlock
+                                        Style="{ThemeResource SubtitleTextBlockStyle}"
+                                        Text="Create or edit surface" />
+                                    <TextBlock
+                                        Style="{StaticResource SectionCaptionTextStyle}"
+                                        Text="This panel is the plug-in point for the event editor used from My Events." />
+                                    <TextBox Header="Title" PlaceholderText="Event title" />
+                                    <TextBox Header="Location" PlaceholderText="Venue or hall" />
+                                    <controls:NumberBox Header="Price" PlaceholderText="0.00" />
+                                    <controls:NumberBox Header="Capacity" PlaceholderText="120" />
+                                    <Button Content="Save event" />
+                                </StackPanel>
+                            </Border>
+
+                            <Border Style="{StaticResource StrongSurfaceCardStyle}">
+                                <StackPanel Spacing="10">
+                                    <TextBlock
+                                        Style="{ThemeResource SubtitleTextBlockStyle}"
+                                        Text="Lifecycle notes" />
+                                    <TextBlock
+                                        Style="{StaticResource SectionCaptionTextStyle}"
+                                        Text="List refresh after create, edit, delete, join, and cancel participation should be wired from this page-level state owner." />
+                                </StackPanel>
+                            </Border>
+                        </StackPanel>
+                    </Grid>
+                </controls:TabViewItem>
+
+                <controls:TabViewItem Header="Joined events">
+                    <Grid
+                        Padding="0,16,0,0"
+                        ColumnSpacing="16">
+                        <Grid.ColumnDefinitions>
+                            <ColumnDefinition Width="2*" />
+                            <ColumnDefinition Width="*" />
+                        </Grid.ColumnDefinitions>
+
+                        <Border Style="{StaticResource SurfaceCardStyle}">
+                            <StackPanel Spacing="16">
+                                <TextBlock
+                                    Style="{ThemeResource SubtitleTextBlockStyle}"
+                                    Text="Joined-event history host" />
+                                <TextBlock
+                                    Style="{StaticResource SectionCaptionTextStyle}"
+                                    Text="This list becomes the joined-events source, including cancellation and reward-aware purchase outcomes." />
+                                <ListView>
+                                    <ListViewItem Content="Dune Double Feature | Joined | Cancellation action host" />
+                                    <ListViewItem Content="Student Film Night | Will attend | Participation confirmation host" />
+                                    <ListViewItem Content="Paid IMAX Event | Checkout state and applied rewards host" />
+                                </ListView>
+                            </StackPanel>
+                        </Border>
+
+                        <Border
+                            Grid.Column="1"
+                            Style="{StaticResource SurfaceCardStyle}">
+                            <StackPanel Spacing="10">
+                                <TextBlock
+                                    Style="{ThemeResource SubtitleTextBlockStyle}"
+                                    Text="Participation detail panel" />
+                                <TextBlock
+                                    Style="{StaticResource SectionCaptionTextStyle}"
+                                    Text="Mount cancellation rules, duplicate-join messaging, and attendance metadata here." />
+                                <TextBox Header="Selected event" Text="Bind selected joined event here" />
+                                <TextBox
+                                    AcceptsReturn="True"
+                                    Header="Participation notes"
+                                    Height="140"
+                                    Text="Seat or ticket metadata, checkout trace, and reward usage belong in this panel." />
+                                <Button Content="Cancel participation" />
+                            </StackPanel>
+                        </Border>
+                    </Grid>
+                </controls:TabViewItem>
+
+                <controls:TabViewItem Header="Price watchlist">
+                    <Grid
+                        Padding="0,16,0,0"
+                        ColumnSpacing="16">
+                        <Grid.ColumnDefinitions>
+                            <ColumnDefinition Width="2*" />
+                            <ColumnDefinition Width="*" />
+                        </Grid.ColumnDefinitions>
+
+                        <Border Style="{StaticResource SurfaceCardStyle}">
+                            <StackPanel Spacing="16">
+                                <TextBlock
+                                    Style="{ThemeResource SubtitleTextBlockStyle}"
+                                    Text="Local watchlist host" />
+                                <TextBlock
+                                    Style="{StaticResource SectionCaptionTextStyle}"
+                                    Text="The watchlist is intentionally called out as a dedicated tab because the requirements cap active watches at three and store them in local client persistence." />
+                                <ListView>
+                                    <ListViewItem Content="Event A | Target 30.00 | Current 28.00 | PRICE DROP DETECTED" />
+                                    <ListViewItem Content="Event B | Target 45.00 | Current 45.00 | Threshold met" />
+                                    <ListViewItem Content="Event C | Target 22.00 | Current 35.00 | Watching" />
+                                </ListView>
+                            </StackPanel>
+                        </Border>
+
+                        <StackPanel
+                            Grid.Column="1"
+                            Spacing="16">
+                            <Border Style="{StaticResource SurfaceCardStyle}">
+                                <StackPanel Spacing="10">
+                                    <TextBlock
+                                        Style="{ThemeResource SubtitleTextBlockStyle}"
+                                        Text="Watcher editor" />
+                                    <TextBlock
+                                        Style="{StaticResource SectionCaptionTextStyle}"
+                                        Text="Use this form to plug in add, edit, and remove actions for a watched event." />
+                                    <TextBox Header="Event reference" PlaceholderText="Event id or selected card" />
+                                    <controls:NumberBox Header="Target price" PlaceholderText="19.99" />
+                                    <ToggleSwitch Header="Monitoring active" IsOn="True" />
+                                    <Button Content="Save watch" />
+                                </StackPanel>
+                            </Border>
+
+                            <Border Style="{StaticResource StrongSurfaceCardStyle}">
+                                <StackPanel Spacing="10">
+                                    <TextBlock
+                                        Style="{ThemeResource SubtitleTextBlockStyle}"
+                                        Text="Startup synchronization" />
+                                    <TextBlock
+                                        Style="{StaticResource SectionCaptionTextStyle}"
+                                        Text="Refresh the local watchlist against persisted event prices here during application initialization." />
+                                </StackPanel>
+                            </Border>
+                        </StackPanel>
+                    </Grid>
+                </controls:TabViewItem>
+            </controls:TabView>
         </StackPanel>
-    </Grid>
+    </ScrollViewer>
 </Page>

@@ -2,12 +2,70 @@
 <Application
     x:Class="MovieApp.Ui.App"
     xmlns="http://schemas.microsoft.com/winfx/2006/xaml/presentation"
-    xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml">
+    xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
+    xmlns:controls="using:Microsoft.UI.Xaml.Controls">
     <Application.Resources>
         <ResourceDictionary>
             <ResourceDictionary.MergedDictionaries>
-                <XamlControlsResources xmlns="using:Microsoft.UI.Xaml.Controls" />
+                <controls:XamlControlsResources />
             </ResourceDictionary.MergedDictionaries>
+
+            <LinearGradientBrush x:Key="ShellBackdropBrush" EndPoint="1,1" StartPoint="0,0">
+                <GradientStop Color="#FFF4EBD9" Offset="0" />
+                <GradientStop Color="#FFF8F6F0" Offset="0.48" />
+                <GradientStop Color="#FFE6EEF5" Offset="1" />
+            </LinearGradientBrush>
+
+            <LinearGradientBrush x:Key="ShellHeroBrush" EndPoint="1,1" StartPoint="0,0">
+                <GradientStop Color="#FF0F2433" Offset="0" />
+                <GradientStop Color="#FF175A6D" Offset="0.55" />
+                <GradientStop Color="#FFDE7D47" Offset="1" />
+            </LinearGradientBrush>
+
+            <SolidColorBrush x:Key="ShellCardBrush" Color="#F7FFFDFC" />
+            <SolidColorBrush x:Key="ShellStrongCardBrush" Color="#FFF5EEE0" />
+            <SolidColorBrush x:Key="ShellBorderBrush" Color="#1F173042" />
+            <SolidColorBrush x:Key="ShellMutedBrush" Color="#FF5A6B78" />
+            <SolidColorBrush x:Key="ShellPositiveBrush" Color="#FF27724B" />
+            <SolidColorBrush x:Key="ShellWarningBrush" Color="#FFB85E28" />
+            <SolidColorBrush x:Key="ShellCriticalBrush" Color="#FFB23A48" />
+
+            <Style x:Key="SurfaceCardStyle" TargetType="Border">
+                <Setter Property="Background" Value="{StaticResource ShellCardBrush}" />
+                <Setter Property="BorderBrush" Value="{StaticResource ShellBorderBrush}" />
+                <Setter Property="BorderThickness" Value="1" />
+                <Setter Property="CornerRadius" Value="24" />
+                <Setter Property="Padding" Value="20" />
+            </Style>
+
+            <Style x:Key="StrongSurfaceCardStyle" TargetType="Border">
+                <Setter Property="Background" Value="{StaticResource ShellStrongCardBrush}" />
+                <Setter Property="BorderBrush" Value="{StaticResource ShellBorderBrush}" />
+                <Setter Property="BorderThickness" Value="1" />
+                <Setter Property="CornerRadius" Value="24" />
+                <Setter Property="Padding" Value="20" />
+            </Style>
+
+            <Style x:Key="SectionTitleTextStyle" TargetType="TextBlock">
+                <Setter Property="FontSize" Value="22" />
+                <Setter Property="FontWeight" Value="SemiBold" />
+            </Style>
+
+            <Style x:Key="SectionCaptionTextStyle" TargetType="TextBlock">
+                <Setter Property="Foreground" Value="{StaticResource ShellMutedBrush}" />
+                <Setter Property="TextWrapping" Value="WrapWholeWords" />
+            </Style>
+
+            <Style x:Key="StatValueTextStyle" TargetType="TextBlock">
+                <Setter Property="FontSize" Value="28" />
+                <Setter Property="FontWeight" Value="SemiBold" />
+            </Style>
+
+            <Style x:Key="MiniLabelTextStyle" TargetType="TextBlock">
+                <Setter Property="Foreground" Value="{StaticResource ShellMutedBrush}" />
+                <Setter Property="FontSize" Value="12" />
+                <Setter Property="TextWrapping" Value="WrapWholeWords" />
+            </Style>
         </ResourceDictionary>
     </Application.Resources>
 </Application>

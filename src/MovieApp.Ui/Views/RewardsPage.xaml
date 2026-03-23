@@ -1,0 +1,128 @@
+<Page
+    x:Class="MovieApp.Ui.Views.RewardsPage"
+    xmlns="http://schemas.microsoft.com/winfx/2006/xaml/presentation"
+    xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
+    xmlns:d="http://schemas.microsoft.com/expression/blend/2008"
+    xmlns:mc="http://schemas.openxmlformats.org/markup-compatibility/2006"
+    xmlns:controls="using:Microsoft.UI.Xaml.Controls"
+    mc:Ignorable="d">
+
+    <ScrollViewer
+        Padding="32"
+        VerticalScrollBarVisibility="Auto">
+        <StackPanel Spacing="24">
+            <StackPanel Spacing="6">
+                <TextBlock
+                    Style="{ThemeResource TitleTextBlockStyle}"
+                    Text="Rewards" />
+                <TextBlock
+                    Style="{StaticResource SectionCaptionTextStyle}"
+                    Text="This inventory page centralizes the rewards created by referrals, trivia, slot-machine jackpots, and checkout-specific benefits." />
+            </StackPanel>
+
+            <Border Style="{StaticResource StrongSurfaceCardStyle}">
+                <Grid ColumnSpacing="16">
+                    <Grid.ColumnDefinitions>
+                        <ColumnDefinition Width="*" />
+                        <ColumnDefinition Width="*" />
+                        <ColumnDefinition Width="*" />
+                    </Grid.ColumnDefinitions>
+
+                    <StackPanel Spacing="4">
+                        <TextBlock Style="{StaticResource MiniLabelTextStyle}" Text="Active rewards" />
+                        <TextBlock Style="{StaticResource StatValueTextStyle}" Text="4" />
+                    </StackPanel>
+                    <StackPanel Grid.Column="1" Spacing="4">
+                        <TextBlock Style="{StaticResource MiniLabelTextStyle}" Text="Redeemed rewards" />
+                        <TextBlock Style="{StaticResource StatValueTextStyle}" Text="7" />
+                    </StackPanel>
+                    <StackPanel Grid.Column="2" Spacing="4">
+                        <TextBlock Style="{StaticResource MiniLabelTextStyle}" Text="Price floor" />
+                        <TextBlock Style="{StaticResource StatValueTextStyle}" Text="0.00" />
+                    </StackPanel>
+                </Grid>
+            </Border>
+
+            <Grid ColumnSpacing="16">
+                <Grid.ColumnDefinitions>
+                    <ColumnDefinition Width="1.8*" />
+                    <ColumnDefinition Width="*" />
+                </Grid.ColumnDefinitions>
+
+                <controls:TabView>
+                    <controls:TabViewItem Header="Checkout stack">
+                        <StackPanel Padding="0,16,0,0" Spacing="12">
+                            <TextBlock
+                                Style="{StaticResource SectionCaptionTextStyle}"
+                                Text="Mount active rewards that affect the current checkout calculation here." />
+                            <ListView>
+                                <ListViewItem Content="Free enrollment reward | Event-scoped | Available" />
+                                <ListViewItem Content="Movie discount reward | Movie-scoped | Available" />
+                            </ListView>
+                        </StackPanel>
+                    </controls:TabViewItem>
+                    <controls:TabViewItem Header="Referral rewards">
+                        <StackPanel Padding="0,16,0,0" Spacing="12">
+                            <TextBlock
+                                Style="{StaticResource SectionCaptionTextStyle}"
+                                Text="Show ambassador rewards earned after three successful event-specific referrals." />
+                            <ListView>
+                                <ListViewItem Content="Premiere Night | Free enrollment reward | Not redeemed" />
+                            </ListView>
+                        </StackPanel>
+                    </controls:TabViewItem>
+                    <controls:TabViewItem Header="Trivia rewards">
+                        <StackPanel Padding="0,16,0,0" Spacing="12">
+                            <TextBlock
+                                Style="{StaticResource SectionCaptionTextStyle}"
+                                Text="Show free movie-event tickets earned by perfect trivia sessions." />
+                            <ListView>
+                                <ListViewItem Content="Universal movie ticket | Never expires until redeemed" />
+                            </ListView>
+                        </StackPanel>
+                    </controls:TabViewItem>
+                    <controls:TabViewItem Header="Slot jackpots">
+                        <StackPanel Padding="0,16,0,0" Spacing="12">
+                            <TextBlock
+                                Style="{StaticResource SectionCaptionTextStyle}"
+                                Text="Show jackpot-triggered movie discounts that apply to all events with the matching movie." />
+                            <ListView>
+                                <ListViewItem Content="Blade Runner screenings | 20% jackpot discount | Available" />
+                            </ListView>
+                        </StackPanel>
+                    </controls:TabViewItem>
+                </controls:TabView>
+
+                <StackPanel
+                    Grid.Column="1"
+                    Spacing="16">
+                    <Border Style="{StaticResource SurfaceCardStyle}">
+                        <StackPanel Spacing="10">
+                            <TextBlock
+                                Style="{ThemeResource SubtitleTextBlockStyle}"
+                                Text="Reward detail and redemption" />
+                            <TextBlock
+                                Style="{StaticResource SectionCaptionTextStyle}"
+                                Text="Use this panel for scope, owner, redemption status, and any linked event or movie metadata." />
+                            <TextBox Header="Reward type" Text="Bind selected reward type" />
+                            <TextBox Header="Applicability" Text="Bind scope here" />
+                            <TextBox Header="Redeemed" Text="Bind redemption state here" />
+                            <Button Content="Mark as redeemed" />
+                        </StackPanel>
+                    </Border>
+
+                    <Border Style="{StaticResource StrongSurfaceCardStyle}">
+                        <StackPanel Spacing="10">
+                            <TextBlock
+                                Style="{ThemeResource SubtitleTextBlockStyle}"
+                                Text="Stacking rule" />
+                            <TextBlock
+                                Style="{StaticResource SectionCaptionTextStyle}"
+                                Text="Rewards may stack, but the checkout pipeline must clamp the final ticket price to zero instead of allowing negative totals." />
+                        </StackPanel>
+                    </Border>
+                </StackPanel>
+            </Grid>
+        </StackPanel>
+    </ScrollViewer>
+</Page>

@@ -10,27 +10,216 @@
     <ScrollViewer
         Padding="32"
         VerticalScrollBarVisibility="Auto">
+        <StackPanel Spacing="24">
+            <Border
+                Padding="28"
+                Background="{StaticResource ShellHeroBrush}"
+                CornerRadius="28">
+                <Grid ColumnSpacing="24">
+                    <Grid.ColumnDefinitions>
+                        <ColumnDefinition Width="*" />
+                        <ColumnDefinition Width="340" />
+                    </Grid.ColumnDefinitions>
 
-        <StackPanel Spacing="16">
-            <TextBlock
-                Style="{ThemeResource HeaderTextBlockStyle}"
-                Text="{Binding PageTitle}" />
+                    <StackPanel Spacing="14">
+                        <TextBlock
+                            Style="{ThemeResource TitleTextBlockStyle}"
+                            Foreground="White"
+                            Text="{Binding PageTitle}" />
+                        <TextBlock
+                            Foreground="#E6FFFFFF"
+                            Text="Browse horizontally grouped movie-event sections, launch feature areas, and keep discovery actions visible from the first screen." />
+                        <StackPanel Orientation="Horizontal" Spacing="12">
+                            <Button Content="Open details shell" />
+                            <Button Content="Jump to My Events" />
+                            <Button Content="Launch marathons" />
+                            <Button Content="Open game surfaces" />
+                        </StackPanel>
+                    </StackPanel>
+
+                    <Grid
+                        Grid.Column="1"
+                        ColumnSpacing="12"
+                        RowSpacing="12">
+                        <Grid.RowDefinitions>
+                            <RowDefinition Height="Auto" />
+                            <RowDefinition Height="Auto" />
+                        </Grid.RowDefinitions>
+                        <Grid.ColumnDefinitions>
+                            <ColumnDefinition Width="*" />
+                            <ColumnDefinition Width="*" />
+                        </Grid.ColumnDefinitions>
+
+                        <Border
+                            Padding="16"
+                            Background="#1FFFFFFF"
+                            BorderBrush="#33FFFFFF"
+                            BorderThickness="1"
+                            CornerRadius="18">
+                            <StackPanel Spacing="4">
+                                <TextBlock
+                                    Foreground="#CCFFFFFF"
+                                    Style="{StaticResource MiniLabelTextStyle}"
+                                    Text="Favorite alerts" />
+                                <TextBlock
+                                    Foreground="White"
+                                    Style="{StaticResource StatValueTextStyle}"
+                                    Text="2" />
+                                <TextBlock
+                                    Foreground="#D9FFFFFF"
+                                    Text="Reserved space for favorite price and seat notifications." />
+                            </StackPanel>
+                        </Border>
+
+                        <Border
+                            Grid.Column="1"
+                            Padding="16"
+                            Background="#1FFFFFFF"
+                            BorderBrush="#33FFFFFF"
+                            BorderThickness="1"
+                            CornerRadius="18">
+                            <StackPanel Spacing="4">
+                                <TextBlock
+                                    Foreground="#CCFFFFFF"
+                                    Style="{StaticResource MiniLabelTextStyle}"
+                                    Text="Available rewards" />
+                                <TextBlock
+                                    Foreground="White"
+                                    Style="{StaticResource StatValueTextStyle}"
+                                    Text="4" />
+                                <TextBlock
+                                    Foreground="#D9FFFFFF"
+                                    Text="Checkout, referral, trivia, and jackpot rewards surface here." />
+                            </StackPanel>
+                        </Border>
+
+                        <Border
+                            Grid.Row="1"
+                            Padding="16"
+                            Background="#1FFFFFFF"
+                            BorderBrush="#33FFFFFF"
+                            BorderThickness="1"
+                            CornerRadius="18">
+                            <StackPanel Spacing="4">
+                                <TextBlock
+                                    Foreground="#CCFFFFFF"
+                                    Style="{StaticResource MiniLabelTextStyle}"
+                                    Text="Daily spins" />
+                                <TextBlock
+                                    Foreground="White"
+                                    Style="{StaticResource StatValueTextStyle}"
+                                    Text="3" />
+                                <TextBlock
+                                    Foreground="#D9FFFFFF"
+                                    Text="Shared entry point for slot-machine and trivia-wheel economy." />
+                            </StackPanel>
+                        </Border>
+
+                        <Border
+                            Grid.Row="1"
+                            Grid.Column="1"
+                            Padding="16"
+                            Background="#1FFFFFFF"
+                            BorderBrush="#33FFFFFF"
+                            BorderThickness="1"
+                            CornerRadius="18">
+                            <StackPanel Spacing="4">
+                                <TextBlock
+                                    Foreground="#CCFFFFFF"
+                                    Style="{StaticResource MiniLabelTextStyle}"
+                                    Text="Marathon cycle" />
+                                <TextBlock
+                                    Foreground="White"
+                                    Style="{StaticResource StatValueTextStyle}"
+                                    Text="Week 12" />
+                                <TextBlock
+                                    Foreground="#D9FFFFFF"
+                                    Text="Weekly sprint status and reset timing belong here." />
+                            </StackPanel>
+                        </Border>
+                    </Grid>
+                </Grid>
+            </Border>
+
+            <Border Style="{StaticResource SurfaceCardStyle}">
+                <StackPanel Spacing="16">
+                    <StackPanel Spacing="6">
+                        <TextBlock
+                            Style="{StaticResource SectionTitleTextStyle}"
+                            Text="Discovery toolbar" />
+                        <TextBlock
+                            Style="{StaticResource SectionCaptionTextStyle}"
+                            Text="The toolbar mirrors the shared search, sort, and filter contract used across event lists." />
+                    </StackPanel>
+
+                    <!-- Shared search, sorting, and filter controls can be bound here without changing the rest of the page composition. -->
+                    <Grid ColumnSpacing="12" RowSpacing="12">
+                        <Grid.RowDefinitions>
+                            <RowDefinition Height="Auto" />
+                            <RowDefinition Height="Auto" />
+                        </Grid.RowDefinitions>
+                        <Grid.ColumnDefinitions>
+                            <ColumnDefinition Width="2*" />
+                            <ColumnDefinition Width="*" />
+                            <ColumnDefinition Width="*" />
+                            <ColumnDefinition Width="Auto" />
+                        </Grid.ColumnDefinitions>
+
+                        <AutoSuggestBox PlaceholderText="Search by title or event type" />
+                        <ComboBox
+                            Grid.Column="1"
+                            PlaceholderText="Sort by">
+                            <x:String>Price</x:String>
+                            <x:String>Historical rating</x:String>
+                        </ComboBox>
+                        <ComboBox
+                            Grid.Column="2"
+                            PlaceholderText="Browse section">
+                            <x:String>All sections</x:String>
+                            <x:String>Premieres</x:String>
+                            <x:String>Marathons</x:String>
+                            <x:String>Outdoor screenings</x:String>
+                        </ComboBox>
+                        <Button
+                            Grid.Column="3"
+                            Content="Clear filters" />
+
+                        <StackPanel
+                            Grid.Row="1"
+                            Grid.ColumnSpan="4"
+                            Orientation="Horizontal"
+                            Spacing="10">
+                            <Button Content="Price range" />
+                            <Button Content="Type" />
+                            <Button Content="Location" />
+                            <Button Content="Minimum rating" />
+                            <Button Content="Price watcher bell on cards" />
+                        </StackPanel>
+                    </Grid>
+                </StackPanel>
+            </Border>
+
+            <StackPanel Spacing="12">
+                <TextBlock
+                    Style="{StaticResource SectionTitleTextStyle}"
+                    Text="Horizontal event sections" />
+                <TextBlock
+                    Style="{StaticResource SectionCaptionTextStyle}"
+                    Text="This ItemsControl remains the live mount point for the grouped home rows." />
+            </StackPanel>
 
             <ItemsControl ItemsSource="{Binding Sections}">
                 <ItemsControl.ItemTemplate>
                     <DataTemplate>
-                        <StackPanel Spacing="8" Margin="0,8,0,0">
+                        <StackPanel Margin="0,8,0,0" Spacing="8">
                             <ui:SectionHeader Title="{Binding Title}" />
 
                             <ScrollViewer
                                 HorizontalScrollBarVisibility="Auto"
                                 VerticalScrollBarVisibility="Disabled">
-
-                                <!-- ItemsControl + DataTemplate: standard pentru randare listă -->
                                 <ItemsControl ItemsSource="{Binding Events}">
                                     <ItemsControl.ItemsPanel>
                                         <ItemsPanelTemplate>
-                                            <!-- Panel orizontal pentru „row of cards” -->
                                             <StackPanel Orientation="Horizontal" Spacing="12" />
                                         </ItemsPanelTemplate>
                                     </ItemsControl.ItemsPanel>
@@ -42,11 +231,89 @@
                                     </ItemsControl.ItemTemplate>
                                 </ItemsControl>
                             </ScrollViewer>
-
                         </StackPanel>
                     </DataTemplate>
                 </ItemsControl.ItemTemplate>
             </ItemsControl>
+
+            <Border Style="{StaticResource StrongSurfaceCardStyle}">
+                <StackPanel Spacing="16">
+                    <StackPanel Spacing="6">
+                        <TextBlock
+                            Style="{StaticResource SectionTitleTextStyle}"
+                            Text="Feature launch pads" />
+                        <TextBlock
+                            Style="{StaticResource SectionCaptionTextStyle}"
+                            Text="These cards keep non-browsing requirement areas visible from Home without forcing those flows into the discovery rows." />
+                    </StackPanel>
+
+                    <Grid ColumnSpacing="16" RowSpacing="16">
+                        <Grid.RowDefinitions>
+                            <RowDefinition Height="Auto" />
+                            <RowDefinition Height="Auto" />
+                        </Grid.RowDefinitions>
+                        <Grid.ColumnDefinitions>
+                            <ColumnDefinition Width="*" />
+                            <ColumnDefinition Width="*" />
+                        </Grid.ColumnDefinitions>
+
+                        <Border Style="{StaticResource SurfaceCardStyle}">
+                            <StackPanel Spacing="10">
+                                <TextBlock
+                                    Style="{ThemeResource SubtitleTextBlockStyle}"
+                                    Text="Details and checkout" />
+                                <TextBlock
+                                    Style="{StaticResource SectionCaptionTextStyle}"
+                                    Text="Event details, seat guidance, rewards, duplicate-join protection, and referral entry all plug into the dedicated checkout shell." />
+                                <Button Content="Use details shell" />
+                            </StackPanel>
+                        </Border>
+
+                        <Border
+                            Grid.Column="1"
+                            Style="{StaticResource SurfaceCardStyle}">
+                            <StackPanel Spacing="10">
+                                <TextBlock
+                                    Style="{ThemeResource SubtitleTextBlockStyle}"
+                                    Text="Favorites and alerts" />
+                                <TextBlock
+                                    Style="{StaticResource SectionCaptionTextStyle}"
+                                    Text="Favorites, favorite-event notifications, and price-watcher handoff regions stay separated but linked." />
+                                <Button Content="Open engagement pages" />
+                            </StackPanel>
+                        </Border>
+
+                        <Border
+                            Grid.Row="1"
+                            Style="{StaticResource SurfaceCardStyle}">
+                            <StackPanel Spacing="10">
+                                <TextBlock
+                                    Style="{ThemeResource SubtitleTextBlockStyle}"
+                                    Text="Referral and reward economy" />
+                                <TextBlock
+                                    Style="{StaticResource SectionCaptionTextStyle}"
+                                    Text="Referral code generation, ambassador progress, and redeemable reward inventory all have dedicated pages in the shell." />
+                                <Button Content="Open referral area" />
+                            </StackPanel>
+                        </Border>
+
+                        <Border
+                            Grid.Row="1"
+                            Grid.Column="1"
+                            Style="{StaticResource SurfaceCardStyle}">
+                            <StackPanel Spacing="10">
+                                <TextBlock
+                                    Style="{ThemeResource SubtitleTextBlockStyle}"
+                                    Text="Games and weekly challenges" />
+                                <TextBlock
+                                    Style="{StaticResource SectionCaptionTextStyle}"
+                                    Text="Slot machine, trivia wheel, and marathons each expose their own stateful surfaces instead of being hidden in modal flows." />
+                                <Button Content="Open challenge pages" />
+                            </StackPanel>
+                        </Border>
+                    </Grid>
+                </StackPanel>
+            </Border>
         </StackPanel>
     </ScrollViewer>
 </Page>

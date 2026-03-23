@@ -6,14 +6,92 @@
     xmlns:mc="http://schemas.openxmlformats.org/markup-compatibility/2006"
     mc:Ignorable="d">
 
-    <Grid Padding="32">
-        <StackPanel Spacing="12">
-            <TextBlock
-                Style="{ThemeResource HeaderTextBlockStyle}"
-                Text="Trivia Wheel" />
-            <TextBlock
-                Text="Placeholder page for the Trivia Wheel area."
-                TextWrapping="WrapWholeWords" />
+    <ScrollViewer
+        Padding="32"
+        VerticalScrollBarVisibility="Auto">
+        <StackPanel Spacing="24">
+            <StackPanel Spacing="6">
+                <TextBlock
+                    Style="{ThemeResource TitleTextBlockStyle}"
+                    Text="Movie Trivia Wheel" />
+                <TextBlock
+                    Style="{StaticResource SectionCaptionTextStyle}"
+                    Text="The wheel, category selection, twenty-question session, hint token, and reward result all get dedicated screen space here." />
+            </StackPanel>
+
+            <Grid ColumnSpacing="16">
+                <Grid.ColumnDefinitions>
+                    <ColumnDefinition Width="1.3*" />
+                    <ColumnDefinition Width="*" />
+                </Grid.ColumnDefinitions>
+
+                <Border Style="{StaticResource SurfaceCardStyle}">
+                    <StackPanel Spacing="16">
+                        <TextBlock
+                            Style="{ThemeResource SubtitleTextBlockStyle}"
+                            Text="Wheel stage" />
+                        <TextBlock
+                            Style="{StaticResource SectionCaptionTextStyle}"
+                            Text="Replace the circular placeholder with the spinning category wheel and transition logic." />
+                        <Border
+                            Width="280"
+                            Height="280"
+                            HorizontalAlignment="Center"
+                            Background="#FFEDE2CF"
+                            CornerRadius="140">
+                            <StackPanel
+                                HorizontalAlignment="Center"
+                                VerticalAlignment="Center"
+                                Spacing="6">
+                                <TextBlock Text="Actors" />
+                                <TextBlock Text="Directors" />
+                                <TextBlock Text="Movie Quotes" />
+                                <TextBlock Text="Oscars and Awards" />
+                                <TextBlock Text="General Movie Trivia" />
+                            </StackPanel>
+                        </Border>
+                        <StackPanel Orientation="Horizontal" Spacing="10">
+                            <Button Content="Spin the wheel" />
+                            <Button Content="Spins left: 1" />
+                        </StackPanel>
+                    </StackPanel>
+                </Border>
+
+                <StackPanel
+                    Grid.Column="1"
+                    Spacing="16">
+                    <Border Style="{StaticResource SurfaceCardStyle}">
+                        <StackPanel Spacing="10">
+                            <TextBlock
+                                Style="{ThemeResource SubtitleTextBlockStyle}"
+                                Text="Question stage" />
+                            <TextBlock
+                                Style="{StaticResource SectionCaptionTextStyle}"
+                                Text="The selected category's twenty-question session and one-time hint token should plug into this card." />
+                            <TextBox Header="Question" Text="Bind current question text here" />
+                            <Button Content="Answer option A" />
+                            <Button Content="Answer option B" />
+                            <Button Content="Answer option C" />
+                            <Button Content="Answer option D" />
+                            <StackPanel Orientation="Horizontal" Spacing="8">
+                                <Button Content="Use hint" />
+                                <Button Content="Score: 0 / 20" />
+                            </StackPanel>
+                        </StackPanel>
+                    </Border>
+
+                    <Border Style="{StaticResource StrongSurfaceCardStyle}">
+                        <StackPanel Spacing="10">
+                            <TextBlock
+                                Style="{ThemeResource SubtitleTextBlockStyle}"
+                                Text="Results and reward surface" />
+                            <TextBlock
+                                Style="{StaticResource SectionCaptionTextStyle}"
+                                Text="Display the session result, reward-earned state, and next daily spin time here after the question flow ends." />
+                        </StackPanel>
+                    </Border>
+                </StackPanel>
+            </Grid>
         </StackPanel>
-    </Grid>
+    </ScrollViewer>
 </Page>

@@ -4,16 +4,211 @@
     xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
     xmlns:d="http://schemas.microsoft.com/expression/blend/2008"
     xmlns:mc="http://schemas.openxmlformats.org/markup-compatibility/2006"
+    xmlns:controls="using:Microsoft.UI.Xaml.Controls"
     mc:Ignorable="d">
 
-    <Grid Padding="32">
-        <StackPanel Spacing="12">
-            <TextBlock
-                Style="{ThemeResource HeaderTextBlockStyle}"
-                Text="Event Management" />
-            <TextBlock
-                Text="Placeholder page for the Event Management area."
-                TextWrapping="WrapWholeWords" />
+    <ScrollViewer
+        Padding="32"
+        VerticalScrollBarVisibility="Auto">
+        <StackPanel Spacing="24">
+            <StackPanel Spacing="6">
+                <TextBlock
+                    Style="{ThemeResource TitleTextBlockStyle}"
+                    Text="{Binding PageTitle}" />
+                <TextBlock
+                    Style="{StaticResource SectionCaptionTextStyle}"
+                    Text="This page reserves the CRUD table, selected-row detail view, pagination, and validation workflow required by the plan." />
+            </StackPanel>
+
+            <Border Style="{StaticResource SurfaceCardStyle}">
+                <Grid ColumnSpacing="12">
+                    <Grid.ColumnDefinitions>
+                        <ColumnDefinition Width="2*" />
+                        <ColumnDefinition Width="*" />
+                        <ColumnDefinition Width="*" />
+                        <ColumnDefinition Width="Auto" />
+                    </Grid.ColumnDefinitions>
+
+                    <AutoSuggestBox PlaceholderText="Search event rows" />
+                    <ComboBox
+                        Grid.Column="1"
+                        PlaceholderText="Sort">
+                        <x:String>Price</x:String>
+                        <x:String>Historical rating</x:String>
+                    </ComboBox>
+                    <ComboBox
+                        Grid.Column="2"
+                        PlaceholderText="Filter">
+                        <x:String>Location</x:String>
+                        <x:String>Type</x:String>
+                        <x:String>Minimum rating</x:String>
+                    </ComboBox>
+                    <Button
+                        Grid.Column="3"
+                        Content="Clear" />
+                </Grid>
+            </Border>
+
+            <Grid ColumnSpacing="16">
+                <Grid.ColumnDefinitions>
+                    <ColumnDefinition Width="2.2*" />
+                    <ColumnDefinition Width="1.2*" />
+                </Grid.ColumnDefinitions>
+
+                <Border Style="{StaticResource SurfaceCardStyle}">
+                    <StackPanel Spacing="16">
+                        <Grid>
+                            <Grid.ColumnDefinitions>
+                                <ColumnDefinition Width="*" />
+                                <ColumnDefinition Width="Auto" />
+                            </Grid.ColumnDefinitions>
+
+                            <StackPanel Spacing="6">
+                                <TextBlock
+                                    Style="{ThemeResource SubtitleTextBlockStyle}"
+                                    Text="Paginated event table host" />
+                                <TextBlock
+                                    Style="{StaticResource SectionCaptionTextStyle}"
+                                    Text="Swap the sample rows for a bound table-like list with selection, paging, and command wiring." />
+                            </StackPanel>
+
+                            <StackPanel
+                                Grid.Column="1"
+                                Orientation="Horizontal"
+                                Spacing="8">
+                                <Button Content="Create" />
+                                <Button Content="Refresh" />
+                            </StackPanel>
+                        </Grid>
+
+                        <!-- Table host: plug a virtualized list or data grid here if the team later brings one in. -->
+                        <ListView Height="440">
+                            <ListViewItem Content="001 | Film Premiere | 2026-04-02 | Downtown Hall | 49.99" />
+                            <ListViewItem Content="002 | Weekend Marathon | 2026-04-04 | Central Cinema | 59.99" />
+                            <ListViewItem Content="003 | Student Screening | 2026-04-05 | Campus Hall | Free" />
+                            <ListViewItem Content="004 | Mystery Preview | 2026-04-08 | Grand Theater | 35.00" />
+                        </ListView>
+
+                        <Grid HorizontalAlignment="Right" ColumnSpacing="8">
+                            <Grid.ColumnDefinitions>
+                                <ColumnDefinition Width="Auto" />
+                                <ColumnDefinition Width="Auto" />
+                                <ColumnDefinition Width="Auto" />
+                            </Grid.ColumnDefinitions>
+                            <Button Content="Previous" />
+                            <Button Grid.Column="1" Content="Page 1 of 8" />
+                            <Button Grid.Column="2" Content="Next" />
+                        </Grid>
+                    </StackPanel>
+                </Border>
+
+                <StackPanel
+                    Grid.Column="1"
+                    Spacing="16">
+                    <Border Style="{StaticResource SurfaceCardStyle}">
+                        <StackPanel Spacing="10">
+                            <TextBlock
+                                Style="{ThemeResource SubtitleTextBlockStyle}"
+                                Text="Selected event detail view" />
+                            <TextBlock
+                                Style="{StaticResource SectionCaptionTextStyle}"
+                                Text="This is the separate selected-row detail surface required by the CRUD requirements." />
+                            <TextBox Header="Title" Text="Bind selected event title here" />
+                            <TextBox Header="Location" Text="Bind selected event location here" />
+                            <TextBox Header="Type" Text="Bind selected event type here" />
+                            <TextBox
+                                AcceptsReturn="True"
+                                Header="Description"
+                                Height="120"
+                                Text="Mount the selected event description, poster, and screening summary here." />
+                            <StackPanel Orientation="Horizontal" Spacing="8">
+                                <Button Content="Edit selected" />
+                                <Button Content="Delete selected" />
+                            </StackPanel>
+                        </StackPanel>
+                    </Border>
+
+                    <Border Style="{StaticResource StrongSurfaceCardStyle}">
+                        <StackPanel Spacing="10">
+                            <TextBlock
+                                Style="{ThemeResource SubtitleTextBlockStyle}"
+                                Text="Validation contract" />
+                            <TextBlock
+                                Style="{StaticResource SectionCaptionTextStyle}"
+                                Text="Required field validation, invalid date checks, and negative-price prevention should flow through this panel and the editor form below." />
+                            <ListView>
+                                <ListViewItem Content="Title cannot be empty" />
+                                <ListViewItem Content="Location cannot be empty" />
+                                <ListViewItem Content="Date must be valid and in the expected range" />
+                                <ListViewItem Content="Ticket price cannot be negative" />
+                            </ListView>
+                        </StackPanel>
+                    </Border>
+                </StackPanel>
+            </Grid>
+
+            <Border Style="{StaticResource SurfaceCardStyle}">
+                <StackPanel Spacing="16">
+                    <TextBlock
+                        Style="{StaticResource SectionTitleTextStyle}"
+                        Text="Editor form mount" />
+                    <Grid ColumnSpacing="16" RowSpacing="12">
+                        <Grid.ColumnDefinitions>
+                            <ColumnDefinition Width="*" />
+                            <ColumnDefinition Width="*" />
+                            <ColumnDefinition Width="*" />
+                        </Grid.ColumnDefinitions>
+                        <Grid.RowDefinitions>
+                            <RowDefinition Height="Auto" />
+                            <RowDefinition Height="Auto" />
+                            <RowDefinition Height="Auto" />
+                        </Grid.RowDefinitions>
+
+                        <TextBox Header="Title" PlaceholderText="Event title" />
+                        <TextBox
+                            Grid.Column="1"
+                            Header="Location"
+                            PlaceholderText="Venue and hall" />
+                        <ComboBox
+                            Grid.Column="2"
+                            Header="Event type"
+                            PlaceholderText="Choose type">
+                            <x:String>Premiere</x:String>
+                            <x:String>Marathon</x:String>
+                            <x:String>Outdoor screening</x:String>
+                        </ComboBox>
+
+                        <CalendarDatePicker
+                            Grid.Row="1"
+                            Header="Date" />
+                        <TimePicker
+                            Grid.Row="1"
+                            Grid.Column="1"
+                            Header="Time" />
+                        <controls:NumberBox
+                            Grid.Row="1"
+                            Grid.Column="2"
+                            Header="Ticket price"
+                            PlaceholderText="0.00" />
+
+                        <TextBox
+                            Grid.Row="2"
+                            Grid.ColumnSpan="2"
+                            AcceptsReturn="True"
+                            Header="Description"
+                            Height="120"
+                            TextWrapping="Wrap" />
+                        <StackPanel
+                            Grid.Row="2"
+                            Grid.Column="2"
+                            Spacing="10">
+                            <controls:NumberBox Header="Capacity" PlaceholderText="150" />
+                            <TextBox Header="Poster path" PlaceholderText="assets/posters/..." />
+                            <Button Content="Submit editor data" />
+                        </StackPanel>
+                    </Grid>
+                </StackPanel>
+            </Border>
         </StackPanel>
-    </Grid>
+    </ScrollViewer>
 </Page>

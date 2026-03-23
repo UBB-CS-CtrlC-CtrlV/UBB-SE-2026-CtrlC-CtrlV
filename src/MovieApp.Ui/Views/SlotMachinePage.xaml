@@ -6,14 +6,127 @@
     xmlns:mc="http://schemas.openxmlformats.org/markup-compatibility/2006"
     mc:Ignorable="d">
 
-    <Grid Padding="32">
-        <StackPanel Spacing="12">
-            <TextBlock
-                Style="{ThemeResource HeaderTextBlockStyle}"
-                Text="Slot Machine" />
-            <TextBlock
-                Text="Placeholder page for the Slot Machine area."
-                TextWrapping="WrapWholeWords" />
+    <ScrollViewer
+        Padding="32"
+        VerticalScrollBarVisibility="Auto">
+        <StackPanel Spacing="24">
+            <StackPanel Spacing="6">
+                <TextBlock
+                    Style="{ThemeResource TitleTextBlockStyle}"
+                    Text="Movie Slot Machine" />
+                <TextBlock
+                    Style="{StaticResource SectionCaptionTextStyle}"
+                    Text="The reel animation, daily spin economy, matching-event results, and jackpot reward path are all reserved on this page." />
+            </StackPanel>
+
+            <Grid ColumnSpacing="16">
+                <Grid.ColumnDefinitions>
+                    <ColumnDefinition Width="1.6*" />
+                    <ColumnDefinition Width="*" />
+                </Grid.ColumnDefinitions>
+
+                <StackPanel Spacing="16">
+                    <Border Style="{StaticResource SurfaceCardStyle}">
+                        <StackPanel Spacing="16">
+                            <TextBlock
+                                Style="{ThemeResource SubtitleTextBlockStyle}"
+                                Text="Slot-machine surface" />
+                            <TextBlock
+                                Style="{StaticResource SectionCaptionTextStyle}"
+                                Text="Replace the static reel placeholders with animated vertical reels for Genre, Actor, and Director." />
+
+                            <Grid ColumnSpacing="12">
+                                <Grid.ColumnDefinitions>
+                                    <ColumnDefinition Width="*" />
+                                    <ColumnDefinition Width="*" />
+                                    <ColumnDefinition Width="*" />
+                                </Grid.ColumnDefinitions>
+
+                                <Border
+                                    Padding="24"
+                                    Background="#FFEFE6D5"
+                                    CornerRadius="18">
+                                    <StackPanel HorizontalAlignment="Center" Spacing="8">
+                                        <TextBlock Style="{StaticResource MiniLabelTextStyle}" Text="Genre" />
+                                        <TextBlock FontSize="28" FontWeight="SemiBold" Text="Sci-fi" />
+                                    </StackPanel>
+                                </Border>
+                                <Border
+                                    Grid.Column="1"
+                                    Padding="24"
+                                    Background="#FFEFE6D5"
+                                    CornerRadius="18">
+                                    <StackPanel HorizontalAlignment="Center" Spacing="8">
+                                        <TextBlock Style="{StaticResource MiniLabelTextStyle}" Text="Actor" />
+                                        <TextBlock FontSize="28" FontWeight="SemiBold" Text="Lead actor" />
+                                    </StackPanel>
+                                </Border>
+                                <Border
+                                    Grid.Column="2"
+                                    Padding="24"
+                                    Background="#FFEFE6D5"
+                                    CornerRadius="18">
+                                    <StackPanel HorizontalAlignment="Center" Spacing="8">
+                                        <TextBlock Style="{StaticResource MiniLabelTextStyle}" Text="Director" />
+                                        <TextBlock FontSize="28" FontWeight="SemiBold" Text="Director" />
+                                    </StackPanel>
+                                </Border>
+                            </Grid>
+
+                            <StackPanel Orientation="Horizontal" Spacing="10">
+                                <Button Content="Spin" />
+                                <Button Content="Keyboard shortcut: Space" />
+                                <Button Content="Open jackpot rules" />
+                            </StackPanel>
+                        </StackPanel>
+                    </Border>
+
+                    <Border Style="{StaticResource SurfaceCardStyle}">
+                        <StackPanel Spacing="16">
+                            <TextBlock
+                                Style="{ThemeResource SubtitleTextBlockStyle}"
+                                Text="Matching-event results host" />
+                            <TextBlock
+                                Style="{StaticResource SectionCaptionTextStyle}"
+                                Text="This list should show future or active screenings that match the final reel combination." />
+                            <ListView Height="240">
+                                <ListViewItem Content="Matching event card | View Event action | Movie rating" />
+                                <ListViewItem Content="Matching event card | Location | Ticket price" />
+                                <ListViewItem Content="Jackpot highlight state belongs in this result list" />
+                            </ListView>
+                        </StackPanel>
+                    </Border>
+                </StackPanel>
+
+                <StackPanel
+                    Grid.Column="1"
+                    Spacing="16">
+                    <Border Style="{StaticResource SurfaceCardStyle}">
+                        <StackPanel Spacing="10">
+                            <TextBlock
+                                Style="{ThemeResource SubtitleTextBlockStyle}"
+                                Text="Spin economy" />
+                            <TextBlock
+                                Style="{StaticResource SectionCaptionTextStyle}"
+                                Text="Track the daily free spin, bonus spins from joined events, and the three-day open streak here." />
+                            <TextBox Header="Available spins" Text="3" />
+                            <TextBox Header="Bonus spins earned today" Text="1 of 2" />
+                            <TextBox Header="Open streak" Text="2 days" />
+                        </StackPanel>
+                    </Border>
+
+                    <Border Style="{StaticResource StrongSurfaceCardStyle}">
+                        <StackPanel Spacing="10">
+                            <TextBlock
+                                Style="{ThemeResource SubtitleTextBlockStyle}"
+                                Text="Jackpot reward mount" />
+                            <TextBlock
+                                Style="{StaticResource SectionCaptionTextStyle}"
+                                Text="Wire the low-probability jackpot outcome and the resulting movie-scoped discount reward into this panel and the Rewards page." />
+                        </StackPanel>
+                    </Border>
+                </StackPanel>
+            </Grid>
         </StackPanel>
-    </Grid>
+    </ScrollViewer>
 </Page>

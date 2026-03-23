@@ -6,14 +6,129 @@
     xmlns:mc="http://schemas.openxmlformats.org/markup-compatibility/2006"
     mc:Ignorable="d">
 
-    <Grid Padding="32">
-        <StackPanel Spacing="12">
-            <TextBlock
-                Style="{ThemeResource HeaderTextBlockStyle}"
-                Text="Referral Area" />
-            <TextBlock
-                Text="Placeholder page for the Referral Area."
-                TextWrapping="WrapWholeWords" />
+    <ScrollViewer
+        Padding="32"
+        VerticalScrollBarVisibility="Auto">
+        <StackPanel Spacing="24">
+            <Border
+                Padding="24"
+                Background="{StaticResource ShellHeroBrush}"
+                CornerRadius="28">
+                <Grid ColumnSpacing="24">
+                    <Grid.ColumnDefinitions>
+                        <ColumnDefinition Width="*" />
+                        <ColumnDefinition Width="320" />
+                    </Grid.ColumnDefinitions>
+
+                    <StackPanel Spacing="10">
+                        <TextBlock
+                            Style="{ThemeResource TitleTextBlockStyle}"
+                            Foreground="White"
+                            Text="Referral Area" />
+                        <TextBlock
+                            Foreground="#E6FFFFFF"
+                            Text="This feature area owns permanent referral-code visibility, ambassador progress, per-event success tracking, and reward threshold messaging." />
+                        <Border
+                            Padding="14"
+                            Background="#1FFFFFFF"
+                            BorderBrush="#33FFFFFF"
+                            BorderThickness="1"
+                            CornerRadius="18">
+                            <StackPanel Spacing="4">
+                                <TextBlock
+                                    Foreground="#CCFFFFFF"
+                                    Style="{StaticResource MiniLabelTextStyle}"
+                                    Text="Permanent code" />
+                                <TextBlock
+                                    FontSize="28"
+                                    FontWeight="SemiBold"
+                                    Foreground="White"
+                                    Text="CTRLC2026" />
+                                <TextBlock
+                                    Foreground="#D9FFFFFF"
+                                    Text="Expose the persisted unique alphanumeric code here." />
+                            </StackPanel>
+                        </Border>
+                    </StackPanel>
+
+                    <Border
+                        Grid.Column="1"
+                        Padding="18"
+                        Background="#1FFFFFFF"
+                        BorderBrush="#33FFFFFF"
+                        BorderThickness="1"
+                        CornerRadius="18">
+                        <StackPanel Spacing="8">
+                            <TextBlock
+                                Foreground="#CCFFFFFF"
+                                Style="{StaticResource MiniLabelTextStyle}"
+                                Text="Reward threshold" />
+                            <TextBlock
+                                FontSize="18"
+                                FontWeight="SemiBold"
+                                Foreground="White"
+                                Text="3 successful uses on the same event" />
+                            <ProgressBar Value="66" />
+                            <TextBlock
+                                Foreground="#D9FFFFFF"
+                                Text="This progress card is where teams can wire event-scoped reward eligibility." />
+                        </StackPanel>
+                    </Border>
+                </Grid>
+            </Border>
+
+            <Grid ColumnSpacing="16">
+                <Grid.ColumnDefinitions>
+                    <ColumnDefinition Width="1.5*" />
+                    <ColumnDefinition Width="*" />
+                </Grid.ColumnDefinitions>
+
+                <Border Style="{StaticResource SurfaceCardStyle}">
+                    <StackPanel Spacing="16">
+                        <TextBlock
+                            Style="{ThemeResource SubtitleTextBlockStyle}"
+                            Text="Referral usage log host" />
+                        <TextBlock
+                            Style="{StaticResource SectionCaptionTextStyle}"
+                            Text="Plug the successful ReferralInteraction records into this list, grouped by event when needed." />
+                        <ListView Height="360">
+                            <ListViewItem Content="Premiere Night | 2 successful code uses | 1 more needed for reward" />
+                            <ListViewItem Content="Retro Marathon | 3 successful code uses | Reward earned" />
+                            <ListViewItem Content="Indie Showcase | 1 successful code use | Tracking started" />
+                        </ListView>
+                    </StackPanel>
+                </Border>
+
+                <StackPanel
+                    Grid.Column="1"
+                    Spacing="16">
+                    <Border Style="{StaticResource SurfaceCardStyle}">
+                        <StackPanel Spacing="10">
+                            <TextBlock
+                                Style="{ThemeResource SubtitleTextBlockStyle}"
+                                Text="Enrollment-side validation" />
+                            <TextBlock
+                                Style="{StaticResource SectionCaptionTextStyle}"
+                                Text="Use this form to wire referral-code entry during enrollment or checkout." />
+                            <TextBox Header="Entered code" PlaceholderText="Enter referral code" />
+                            <TextBox Header="Selected event" PlaceholderText="Event id" />
+                            <CheckBox Content="Reject self-referral" IsChecked="True" />
+                            <Button Content="Validate code" />
+                        </StackPanel>
+                    </Border>
+
+                    <Border Style="{StaticResource StrongSurfaceCardStyle}">
+                        <StackPanel Spacing="10">
+                            <TextBlock
+                                Style="{ThemeResource SubtitleTextBlockStyle}"
+                                Text="Reward inventory hook" />
+                            <TextBlock
+                                Style="{StaticResource SectionCaptionTextStyle}"
+                                Text="When the three-use threshold is met for an event, push the redeemable reward into the Rewards page and checkout flow from here." />
+                        </StackPanel>
+                    </Border>
+                </StackPanel>
+            </Grid>
         </StackPanel>
-    </Grid>
+    </ScrollViewer>
 </Page>

@@ -8,35 +8,166 @@
     xmlns:controls="using:Microsoft.UI.Xaml.Controls"
     mc:Ignorable="d">
 
-    <Grid Background="{ThemeResource ApplicationPageBackgroundThemeBrush}">
+    <Grid Background="{StaticResource ShellBackdropBrush}">
+        <Grid.RowDefinitions>
+            <RowDefinition Height="Auto" />
+            <RowDefinition Height="*" />
+        </Grid.RowDefinitions>
+
+        <Border
+            Padding="24"
+            Background="{StaticResource ShellHeroBrush}">
+            <Grid ColumnSpacing="24">
+                <Grid.ColumnDefinitions>
+                    <ColumnDefinition Width="*" />
+                    <ColumnDefinition Width="Auto" />
+                </Grid.ColumnDefinitions>
+
+                <StackPanel Spacing="6">
+                    <TextBlock
+                        Style="{ThemeResource TitleTextBlockStyle}"
+                        Foreground="White"
+                        Text="{x:Bind ViewModel.AppTitle, Mode=OneWay}" />
+                    <TextBlock
+                        Foreground="#E6FFFFFF"
+                        Text="{x:Bind ViewModel.Greeting, Mode=OneWay}" />
+                    <TextBlock
+                        Foreground="#CCFFFFFF"
+                        TextWrapping="WrapWholeWords"
+                        Text="{x:Bind ViewModel.Description, Mode=OneWay}" />
+                </StackPanel>
+
+                <Grid
+                    Grid.Column="1"
+                    ColumnSpacing="12">
+                    <Grid.ColumnDefinitions>
+                        <ColumnDefinition Width="Auto" />
+                        <ColumnDefinition Width="Auto" />
+                    </Grid.ColumnDefinitions>
+
+                    <Border
+                        Padding="16"
+                        Background="#1FFFFFFF"
+                        BorderBrush="#33FFFFFF"
+                        BorderThickness="1"
+                        CornerRadius="18">
+                        <StackPanel Spacing="4">
+                            <TextBlock
+                                Foreground="#CCFFFFFF"
+                                Style="{StaticResource MiniLabelTextStyle}"
+                                Text="User context" />
+                            <TextBlock
+                                FontSize="18"
+                                FontWeight="SemiBold"
+                                Foreground="White"
+                                Text="Dummy authenticated user" />
+                            <TextBlock
+                                Foreground="#D9FFFFFF"
+                                Text="All features are surfaced in-app with no login flow." />
+                        </StackPanel>
+                    </Border>
+
+                    <Border
+                        Grid.Column="1"
+                        Padding="16"
+                        Background="#1FFFFFFF"
+                        BorderBrush="#33FFFFFF"
+                        BorderThickness="1"
+                        CornerRadius="18">
+                        <StackPanel Spacing="4">
+                            <TextBlock
+                                Foreground="#CCFFFFFF"
+                                Style="{StaticResource MiniLabelTextStyle}"
+                                Text="Layout status" />
+                            <TextBlock
+                                FontSize="18"
+                                FontWeight="SemiBold"
+                                Foreground="White"
+                                Text="Implementation-ready shell" />
+                            <TextBlock
+                                Foreground="#D9FFFFFF"
+                                Text="Each screen exposes stable mount points for feature teams." />
+                        </StackPanel>
+                    </Border>
+                </Grid>
+            </Grid>
+        </Border>
+
         <controls:NavigationView
             x:Name="AppNavigationView"
+            Grid.Row="1"
             IsBackButtonVisible="Collapsed"
             IsSettingsVisible="False"
             PaneDisplayMode="Left"
             SelectionChanged="AppNavigationView_SelectionChanged">
 
-            <controls:NavigationView.Header>
-                <StackPanel Spacing="4">
-                    <TextBlock
-                        Style="{ThemeResource TitleTextBlockStyle}"
-                        Text="{x:Bind ViewModel.AppTitle, Mode=OneWay}" />
-                    <TextBlock
-                        Opacity="0.75"
-                        Text="{x:Bind ViewModel.Greeting, Mode=OneWay}" />
-                </StackPanel>
-            </controls:NavigationView.Header>
-
             <controls:NavigationView.MenuItems>
-                <controls:NavigationViewItem Content="Home" Tag="Home" Icon="Home" />
-                <controls:NavigationViewItem Content="My Events" Tag="MyEvents" Icon="Calendar" />
-                <controls:NavigationViewItem Content="Event Management" Tag="EventManagement" Icon="Edit" />
-                <controls:NavigationViewItem Content="Favorites" Tag="Favorites" Icon="Favorite" />
-                <controls:NavigationViewItem Content="Referral Area" Tag="ReferralArea" Icon="Share" />
-                <controls:NavigationViewItem Content="Slot Machine" Tag="SlotMachine" Icon="Shop" />
-                <controls:NavigationViewItem Content="Trivia Wheel" Tag="TriviaWheel" Icon="Help" />
-                <controls:NavigationViewItem Content="Marathons" Tag="Marathons" Icon="Play" />
+                <controls:NavigationViewItemHeader Content="Browse" />
+                <controls:NavigationViewItem
+                    x:Name="HomeNavigationItem"
+                    Content="Home"
+                    Icon="Home"
+                    Tag="Home" />
+                <controls:NavigationViewItem
+                    Content="Details and Checkout"
+                    Icon="Preview"
+                    Tag="DetailsCheckout" />
+                <controls:NavigationViewItem
+                    Content="My Events"
+                    Icon="Calendar"
+                    Tag="MyEvents" />
+                <controls:NavigationViewItem
+                    Content="Event Management"
+                    Icon="Edit"
+                    Tag="EventManagement" />
+                <controls:NavigationViewItemSeparator />
+                <controls:NavigationViewItemHeader Content="Engagement" />
+                <controls:NavigationViewItem
+                    Content="Favorites"
+                    Icon="Favorite"
+                    Tag="Favorites" />
+                <controls:NavigationViewItem
+                    Content="Notifications"
+                    Icon="Message"
+                    Tag="Notifications" />
+                <controls:NavigationViewItem
+                    Content="Rewards"
+                    Icon="Like"
+                    Tag="Rewards" />
+                <controls:NavigationViewItem
+                    Content="Referral Area"
+                    Icon="Share"
+                    Tag="ReferralArea" />
+                <controls:NavigationViewItemSeparator />
+                <controls:NavigationViewItemHeader Content="Games and Challenges" />
+                <controls:NavigationViewItem
+                    Content="Slot Machine"
+                    Icon="Shop"
+                    Tag="SlotMachine" />
+                <controls:NavigationViewItem
+                    Content="Trivia Wheel"
+                    Icon="Help"
+                    Tag="TriviaWheel" />
+                <controls:NavigationViewItem
+                    Content="Marathons"
+                    Icon="Play"
+                    Tag="Marathons" />
             </controls:NavigationView.MenuItems>
+
+            <controls:NavigationView.PaneFooter>
+                <Border
+                    Margin="12,0,12,12"
+                    Style="{StaticResource StrongSurfaceCardStyle}">
+                    <StackPanel Spacing="8">
+                        <TextBlock
+                            Style="{StaticResource SectionTitleTextStyle}"
+                            Text="Handoff note" />
+                        <TextBlock
+                            Style="{StaticResource SectionCaptionTextStyle}"
+                            Text="The shell intentionally separates details, rewards, notifications, and game surfaces so each feature owner can wire behavior without reshaping navigation." />
+                    </StackPanel>
+                </Border>
+            </controls:NavigationView.PaneFooter>
 
             <Frame x:Name="ContentFrame" />
         </controls:NavigationView>

@@ -14,12 +14,15 @@
     <Nullable>enable</Nullable>
   </PropertyGroup>
   <ItemGroup>
+    <None Remove="Views\DetailsCheckoutPage.xaml" />
     <None Remove="Views\EventManagementPage.xaml" />
     <None Remove="Views\FavoritesPage.xaml" />
     <None Remove="Views\HomePage.xaml" />
     <None Remove="Views\MarathonsPage.xaml" />
     <None Remove="Views\MyEventsPage.xaml" />
+    <None Remove="Views\NotificationsPage.xaml" />
     <None Remove="Views\ReferralAreaPage.xaml" />
+    <None Remove="Views\RewardsPage.xaml" />
     <None Remove="Views\SlotMachinePage.xaml" />
     <None Remove="Views\TriviaWheelPage.xaml" />
     <None Remove="Controls\EventCard.xaml" />
@@ -59,6 +62,12 @@
   </ItemGroup>
 
   <ItemGroup>
+    <Page Update="Views\DetailsCheckoutPage.xaml">
+      <Generator>MSBuild:Compile</Generator>
+    </Page>
+  </ItemGroup>
+
+  <ItemGroup>
     <Page Update="Views\MarathonsPage.xaml">
       <Generator>MSBuild:Compile</Generator>
     </Page>
@@ -72,6 +81,18 @@
 
   <ItemGroup>
     <Page Update="Views\SlotMachinePage.xaml">
+      <Generator>MSBuild:Compile</Generator>
+    </Page>
+  </ItemGroup>
+
+  <ItemGroup>
+    <Page Update="Views\RewardsPage.xaml">
+      <Generator>MSBuild:Compile</Generator>
+    </Page>
+  </ItemGroup>
+
+  <ItemGroup>
+    <Page Update="Views\NotificationsPage.xaml">
       <Generator>MSBuild:Compile</Generator>
     </Page>
   </ItemGroup>

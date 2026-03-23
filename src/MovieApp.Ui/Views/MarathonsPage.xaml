@@ -6,14 +6,127 @@
     xmlns:mc="http://schemas.openxmlformats.org/markup-compatibility/2006"
     mc:Ignorable="d">
 
-    <Grid Padding="32">
-        <StackPanel Spacing="12">
-            <TextBlock
-                Style="{ThemeResource HeaderTextBlockStyle}"
-                Text="Marathons" />
-            <TextBlock
-                Text="Placeholder page for the Marathons area."
-                TextWrapping="WrapWholeWords" />
+    <ScrollViewer
+        Padding="32"
+        VerticalScrollBarVisibility="Auto">
+        <StackPanel Spacing="24">
+            <Border
+                Padding="24"
+                Background="{StaticResource ShellHeroBrush}"
+                CornerRadius="28">
+                <Grid ColumnSpacing="24">
+                    <Grid.ColumnDefinitions>
+                        <ColumnDefinition Width="*" />
+                        <ColumnDefinition Width="320" />
+                    </Grid.ColumnDefinitions>
+
+                    <StackPanel Spacing="8">
+                        <TextBlock
+                            Style="{ThemeResource TitleTextBlockStyle}"
+                            Foreground="White"
+                            Text="Movie Marathons" />
+                        <TextBlock
+                            Foreground="#E6FFFFFF"
+                            Text="The marathon area stays separate from normal event browsing and owns the weekly sprint reset, themed runs, and ranking logic." />
+                    </StackPanel>
+
+                    <Border
+                        Grid.Column="1"
+                        Padding="18"
+                        Background="#1FFFFFFF"
+                        BorderBrush="#33FFFFFF"
+                        BorderThickness="1"
+                        CornerRadius="18">
+                        <StackPanel Spacing="6">
+                            <TextBlock
+                                Foreground="#CCFFFFFF"
+                                Style="{StaticResource MiniLabelTextStyle}"
+                                Text="Weekly cycle" />
+                            <TextBlock
+                                FontSize="18"
+                                FontWeight="SemiBold"
+                                Foreground="White"
+                                Text="Reset every Monday at 00:00" />
+                            <TextBlock
+                                Foreground="#D9FFFFFF"
+                                Text="Use this card for the active week range and countdown." />
+                        </StackPanel>
+                    </Border>
+                </Grid>
+            </Border>
+
+            <Grid ColumnSpacing="16">
+                <Grid.ColumnDefinitions>
+                    <ColumnDefinition Width="1.25*" />
+                    <ColumnDefinition Width="1.1*" />
+                    <ColumnDefinition Width="*" />
+                </Grid.ColumnDefinitions>
+
+                <Border Style="{StaticResource SurfaceCardStyle}">
+                    <StackPanel Spacing="16">
+                        <TextBlock
+                            Style="{ThemeResource SubtitleTextBlockStyle}"
+                            Text="Active marathon boards" />
+                        <TextBlock
+                            Style="{StaticResource SectionCaptionTextStyle}"
+                            Text="Mount the active weekly marathon definitions here, including Standard and Elite tiers." />
+                        <ListView Height="340">
+                            <ListViewItem Content="Standard | Space Opera Sprint | 4 / 6 movies verified" />
+                            <ListViewItem Content="Elite | Award Winners | Locked until Standard is completed" />
+                            <ListViewItem Content="Standard | Director Spotlight | 1 / 5 movies verified" />
+                        </ListView>
+                    </StackPanel>
+                </Border>
+
+                <Border
+                    Grid.Column="1"
+                    Style="{StaticResource SurfaceCardStyle}">
+                    <StackPanel Spacing="16">
+                        <TextBlock
+                            Style="{ThemeResource SubtitleTextBlockStyle}"
+                            Text="Rapid-fire verification host" />
+                        <TextBlock
+                            Style="{StaticResource SectionCaptionTextStyle}"
+                            Text="When a user logs a movie, inject the three-question verification flow here before counting progress." />
+                        <TextBox Header="Movie being logged" Text="Bind selected marathon movie here" />
+                        <Button Content="Question 1 placeholder" />
+                        <Button Content="Question 2 placeholder" />
+                        <Button Content="Question 3 placeholder" />
+                        <Button Content="Submit verification" />
+                    </StackPanel>
+                </Border>
+
+                <StackPanel
+                    Grid.Column="2"
+                    Spacing="16">
+                    <Border Style="{StaticResource SurfaceCardStyle}">
+                        <StackPanel Spacing="10">
+                            <TextBlock
+                                Style="{ThemeResource SubtitleTextBlockStyle}"
+                                Text="Leaderboard host" />
+                            <TextBlock
+                                Style="{StaticResource SectionCaptionTextStyle}"
+                                Text="Rank by verified movie count, then trivia accuracy, then completion speed." />
+                            <ListView>
+                                <ListViewItem Content="#1 User | 5 verified | 100% accuracy | 3h 12m" />
+                                <ListViewItem Content="#2 User | 5 verified | 92% accuracy | 2h 58m" />
+                                <ListViewItem Content="#3 User | 4 verified | 100% accuracy | 2h 40m" />
+                            </ListView>
+                        </StackPanel>
+                    </Border>
+
+                    <Border Style="{StaticResource StrongSurfaceCardStyle}">
+                        <StackPanel Spacing="10">
+                            <TextBlock
+                                Style="{ThemeResource SubtitleTextBlockStyle}"
+                                Text="Tier and prerequisite notes" />
+                            <TextBlock
+                                Style="{StaticResource SectionCaptionTextStyle}"
+                                Text="Use this card for prerequisite descriptions, lock reasons, and the weekly reset message." />
+                        </StackPanel>
+                    </Border>
+                </StackPanel>
+            </Grid>
         </StackPanel>
-    </Grid>
+    </ScrollViewer>
 </Page>

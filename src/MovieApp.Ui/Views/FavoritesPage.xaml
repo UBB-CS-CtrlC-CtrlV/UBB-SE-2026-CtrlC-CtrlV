@@ -6,14 +6,102 @@
     xmlns:mc="http://schemas.openxmlformats.org/markup-compatibility/2006"
     mc:Ignorable="d">
 
-    <Grid Padding="32">
-        <StackPanel Spacing="12">
-            <TextBlock
-                Style="{ThemeResource HeaderTextBlockStyle}"
-                Text="Favorites" />
-            <TextBlock
-                Text="Placeholder page for the Favorites area."
-                TextWrapping="WrapWholeWords" />
+    <ScrollViewer
+        Padding="32"
+        VerticalScrollBarVisibility="Auto">
+        <StackPanel Spacing="24">
+            <StackPanel Spacing="6">
+                <TextBlock
+                    Style="{ThemeResource TitleTextBlockStyle}"
+                    Text="Favorites" />
+                <TextBlock
+                    Style="{StaticResource SectionCaptionTextStyle}"
+                    Text="This page keeps the saved-event inventory separate from alerts while still exposing the hooks needed for add and remove actions." />
+            </StackPanel>
+
+            <Border Style="{StaticResource SurfaceCardStyle}">
+                <Grid ColumnSpacing="12">
+                    <Grid.ColumnDefinitions>
+                        <ColumnDefinition Width="2*" />
+                        <ColumnDefinition Width="*" />
+                        <ColumnDefinition Width="*" />
+                        <ColumnDefinition Width="Auto" />
+                    </Grid.ColumnDefinitions>
+
+                    <AutoSuggestBox PlaceholderText="Search favorites" />
+                    <ComboBox
+                        Grid.Column="1"
+                        PlaceholderText="Sort">
+                        <x:String>Price</x:String>
+                        <x:String>Historical rating</x:String>
+                    </ComboBox>
+                    <ComboBox
+                        Grid.Column="2"
+                        PlaceholderText="Filter">
+                        <x:String>Location</x:String>
+                        <x:String>Type</x:String>
+                    </ComboBox>
+                    <Button
+                        Grid.Column="3"
+                        Content="Clear" />
+                </Grid>
+            </Border>
+
+            <Grid ColumnSpacing="16">
+                <Grid.ColumnDefinitions>
+                    <ColumnDefinition Width="2*" />
+                    <ColumnDefinition Width="*" />
+                </Grid.ColumnDefinitions>
+
+                <Border Style="{StaticResource SurfaceCardStyle}">
+                    <StackPanel Spacing="16">
+                        <TextBlock
+                            Style="{ThemeResource SubtitleTextBlockStyle}"
+                            Text="Favorite-event list host" />
+                        <TextBlock
+                            Style="{StaticResource SectionCaptionTextStyle}"
+                            Text="Only persisted events should be addable, duplicates must be blocked, and the list should remain user-specific." />
+                        <ListView Height="420">
+                            <ListViewItem Content="Sci-fi Premiere | 2026-04-03 | Downtown Hall | 39.99" />
+                            <ListViewItem Content="Classic Marathon | 2026-04-06 | Grand Theater | 44.99" />
+                            <ListViewItem Content="Indie Showcase | 2026-04-09 | Campus Hall | Free" />
+                        </ListView>
+                    </StackPanel>
+                </Border>
+
+                <StackPanel
+                    Grid.Column="1"
+                    Spacing="16">
+                    <Border Style="{StaticResource SurfaceCardStyle}">
+                        <StackPanel Spacing="10">
+                            <TextBlock
+                                Style="{ThemeResource SubtitleTextBlockStyle}"
+                                Text="Selected favorite detail" />
+                            <TextBlock
+                                Style="{StaticResource SectionCaptionTextStyle}"
+                                Text="Use this side panel for current price, seat state, and quick actions such as remove-from-favorites or jump-to-details." />
+                            <TextBox Header="Selected title" Text="Bind selected favorite here" />
+                            <TextBox Header="Current price" Text="Bind live price here" />
+                            <TextBox Header="Seat availability" Text="Bind current seat status here" />
+                            <StackPanel Orientation="Horizontal" Spacing="8">
+                                <Button Content="Open details" />
+                                <Button Content="Remove favorite" />
+                            </StackPanel>
+                        </StackPanel>
+                    </Border>
+
+                    <Border Style="{StaticResource StrongSurfaceCardStyle}">
+                        <StackPanel Spacing="10">
+                            <TextBlock
+                                Style="{ThemeResource SubtitleTextBlockStyle}"
+                                Text="Monitoring boundaries" />
+                            <TextBlock
+                                Style="{StaticResource SectionCaptionTextStyle}"
+                                Text="Favorite-event notifications are displayed elsewhere in the shell and remain distinct from price-watcher alerts by design." />
+                        </StackPanel>
+                    </Border>
+                </StackPanel>
+            </Grid>
         </StackPanel>
-    </Grid>
+    </ScrollViewer>
 </Page>
