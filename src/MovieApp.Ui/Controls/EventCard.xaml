@@ -7,32 +7,173 @@
     mc:Ignorable="d">
 
     <Border
-        Width="240"
-        Padding="12"
-        CornerRadius="10"
+        Width="284"
+        Padding="0"
+        Background="{ThemeResource CardBackgroundFillColorDefaultBrush}"
+        BorderBrush="{ThemeResource CardStrokeColorDefaultBrush}"
         BorderThickness="1"
-        BorderBrush="{ThemeResource SystemControlForegroundBaseLowBrush}">
-        <StackPanel Spacing="6">
-            <TextBlock
-                Style="{ThemeResource BodyStrongTextBlockStyle}"
-                Text="{Binding Title}"
-                TextTrimming="CharacterEllipsis" />
+        CornerRadius="20">
+        <Grid RowSpacing="0">
+            <Grid.RowDefinitions>
+                <RowDefinition Height="156" />
+                <RowDefinition Height="*" />
+            </Grid.RowDefinitions>
 
-            <TextBlock
-                Opacity="0.75"
-                Text="{Binding EventType}" />
+            <Border
+                Grid.Row="0"
+                CornerRadius="20,20,0,0">
+                <Grid>
+                    <Rectangle>
+                        <Rectangle.Fill>
+                            <LinearGradientBrush StartPoint="0,0" EndPoint="1,1">
+                                <GradientStop Color="#FF091B2A" Offset="0" />
+                                <GradientStop Color="#FF214B6B" Offset="0.55" />
+                                <GradientStop Color="#FFF17C45" Offset="1" />
+                            </LinearGradientBrush>
+                        </Rectangle.Fill>
+                    </Rectangle>
 
-            <TextBlock
-                Opacity="0.75"
-                Text="{Binding EventDateTime}" />
+                    <Rectangle
+                        VerticalAlignment="Bottom"
+                        Height="72">
+                        <Rectangle.Fill>
+                            <LinearGradientBrush StartPoint="0,0" EndPoint="0,1">
+                                <GradientStop Color="#00FFFFFF" Offset="0" />
+                                <GradientStop Color="#D9000000" Offset="1" />
+                            </LinearGradientBrush>
+                        </Rectangle.Fill>
+                    </Rectangle>
 
-            <TextBlock
-                Opacity="0.75"
-                Text="{Binding LocationReference}" />
+                    <Grid Padding="16">
+                        <Grid.RowDefinitions>
+                            <RowDefinition Height="Auto" />
+                            <RowDefinition Height="*" />
+                            <RowDefinition Height="Auto" />
+                        </Grid.RowDefinitions>
 
-            <TextBlock
-                Opacity="0.75"
-                Text="{Binding TicketPrice}" />
-        </StackPanel>
+                        <Border
+                            HorizontalAlignment="Left"
+                            Padding="10,4"
+                            Background="#26FFFFFF"
+                            BorderBrush="#33FFFFFF"
+                            BorderThickness="1"
+                            CornerRadius="999">
+                            <TextBlock
+                                FontSize="12"
+                                FontWeight="SemiBold"
+                                Foreground="White"
+                                Text="{x:Bind EventTypeText, Mode=OneWay}" />
+                        </Border>
+
+                        <TextBlock
+                            Grid.Row="2"
+                            FontSize="28"
+                            FontWeight="SemiBold"
+                            Foreground="#F2FFFFFF"
+                            Text="{x:Bind DateBadgeDay, Mode=OneWay}" />
+                    </Grid>
+                </Grid>
+            </Border>
+
+            <StackPanel
+                Grid.Row="1"
+                Padding="16"
+                Spacing="12">
+                <StackPanel Spacing="8">
+                    <TextBlock
+                        Style="{ThemeResource SubtitleTextBlockStyle}"
+                        Text="{x:Bind TitleText, Mode=OneWay}"
+                        TextTrimming="CharacterEllipsis"
+                        TextWrapping="WrapWholeWords" />
+
+                    <TextBlock
+                        Foreground="{ThemeResource TextFillColorSecondaryBrush}"
+                        MaxLines="2"
+                        Text="{x:Bind DescriptionText, Mode=OneWay}"
+                        TextTrimming="CharacterEllipsis"
+                        TextWrapping="WrapWholeWords" />
+                </StackPanel>
+
+                <Grid ColumnSpacing="12">
+                    <Grid.ColumnDefinitions>
+                        <ColumnDefinition Width="*" />
+                        <ColumnDefinition Width="Auto" />
+                    </Grid.ColumnDefinitions>
+
+                    <StackPanel Spacing="6">
+                        <StackPanel Orientation="Horizontal" Spacing="8">
+                            <FontIcon Glyph="&#xE787;" />
+                            <TextBlock
+                                Foreground="{ThemeResource TextFillColorSecondaryBrush}"
+                                Text="{x:Bind ScheduleText, Mode=OneWay}"
+                                TextWrapping="WrapWholeWords" />
+                        </StackPanel>
+
+                        <StackPanel Orientation="Horizontal" Spacing="8">
+                            <FontIcon Glyph="&#xE707;" />
+                            <TextBlock
+                                Foreground="{ThemeResource TextFillColorSecondaryBrush}"
+                                Text="{x:Bind LocationText, Mode=OneWay}"
+                                TextTrimming="CharacterEllipsis" />
+                        </StackPanel>
+                    </StackPanel>
+
+                    <Border
+                        Grid.Column="1"
+                        HorizontalAlignment="Right"
+                        VerticalAlignment="Top"
+                        Padding="10,6"
+                        Background="{x:Bind StatusBackgroundBrush, Mode=OneWay}"
+                        CornerRadius="999">
+                        <TextBlock
+                            FontSize="12"
+                            FontWeight="SemiBold"
+                            Text="{x:Bind StatusText, Mode=OneWay}" />
+                    </Border>
+                </Grid>
+
+                <Grid ColumnSpacing="12">
+                    <Grid.ColumnDefinitions>
+                        <ColumnDefinition Width="*" />
+                        <ColumnDefinition Width="*" />
+                        <ColumnDefinition Width="*" />
+                    </Grid.ColumnDefinitions>
+
+                    <StackPanel Spacing="2">
+                        <TextBlock
+                            Foreground="{ThemeResource TextFillColorSecondaryBrush}"
+                            Style="{ThemeResource CaptionTextBlockStyle}"
+                            Text="Price" />
+                        <TextBlock
+                            FontWeight="SemiBold"
+                            Text="{x:Bind PriceText, Mode=OneWay}" />
+                    </StackPanel>
+
+                    <StackPanel
+                        Grid.Column="1"
+                        Spacing="2">
+                        <TextBlock
+                            Foreground="{ThemeResource TextFillColorSecondaryBrush}"
+                            Style="{ThemeResource CaptionTextBlockStyle}"
+                            Text="Rating" />
+                        <TextBlock
+                            FontWeight="SemiBold"
+                            Text="{x:Bind RatingText, Mode=OneWay}" />
+                    </StackPanel>
+
+                    <StackPanel
+                        Grid.Column="2"
+                        Spacing="2">
+                        <TextBlock
+                            Foreground="{ThemeResource TextFillColorSecondaryBrush}"
+                            Style="{ThemeResource CaptionTextBlockStyle}"
+                            Text="Capacity" />
+                        <TextBlock
+                            FontWeight="SemiBold"
+                            Text="{x:Bind CapacityText, Mode=OneWay}" />
+                    </StackPanel>
+                </Grid>
+            </StackPanel>
+        </Grid>
     </Border>
 </UserControl>

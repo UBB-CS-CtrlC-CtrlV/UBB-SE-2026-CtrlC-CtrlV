@@ -37,7 +37,7 @@
 
                                     <ItemsControl.ItemTemplate>
                                         <DataTemplate>
-                                            <ui:EventCard />
+                                            <ui:EventCard Model="{Binding}" />
                                         </DataTemplate>
                                     </ItemsControl.ItemTemplate>
                                 </ItemsControl>
