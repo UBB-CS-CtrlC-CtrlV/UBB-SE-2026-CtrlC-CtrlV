@@ -6,39 +6,162 @@
     xmlns:mc="http://schemas.openxmlformats.org/markup-compatibility/2006"
     mc:Ignorable="d">
 
-    <ScrollViewer Padding="20">
+    <ScrollViewer Padding="20" VerticalScrollBarVisibility="Auto">
         <Grid ColumnSpacing="16">
             <Grid.ColumnDefinitions>
                 <ColumnDefinition Width="1.3*" />
                 <ColumnDefinition Width="*" />
             </Grid.ColumnDefinitions>
 
+            <!-- LEFT PANEL — Wheel -->
             <Border Style="{StaticResource SurfaceCardStyle}">
-                <StackPanel Spacing="12">
-                    <Border
-                        Width="260"
-                        Height="260"
+                <StackPanel
+                    Spacing="16"
+                    HorizontalAlignment="Center">
+
+                    <TextBlock
+                        Style="{ThemeResource TitleTextBlockStyle}"
+                        Text="Movie Trivia Wheel"
+                        HorizontalAlignment="Center" />
+
+                    <TextBlock
+                        x:Name="RemainingSpinsText"
                         HorizontalAlignment="Center"
-                        Style="{StaticResource StrongSurfaceCardStyle}" />
-                    <Button HorizontalAlignment="Left" Content="Spin" />
+                        Style="{StaticResource SectionCaptionTextStyle}" />
+
+                    <TextBlock
+                        Text="▼"
+                        FontSize="24"
+                        HorizontalAlignment="Center"
+                        Foreground="{ThemeResource AccentTextFillColorPrimaryBrush}" />
+
+                    <Canvas
+                        x:Name="WheelCanvas"
+                        Width="280"
+                        Height="280"
+                        HorizontalAlignment="Center">
+                        <Canvas.RenderTransform>
+                            <RotateTransform
+                                x:Name="WheelRotation"
+                                CenterX="140"
+                                CenterY="140" />
+                        </Canvas.RenderTransform>
+                    </Canvas>
+
+                    <TextBlock
+                        x:Name="SelectedCategoryText"
+                        HorizontalAlignment="Center"
+                        FontWeight="SemiBold"
+                        FontSize="16" />
+
+                    <Button
+                        x:Name="SpinButton"
+                        Content="Spin the Wheel"
+                        HorizontalAlignment="Center"
+                        Click="SpinButton_Click" />
+
+                    <Border
+                        Style="{StaticResource StrongSurfaceCardStyle}"
+                        Padding="12">
+                        <StackPanel Spacing="4">
+                            <TextBlock
+                                Text="How to win"
+                                FontWeight="SemiBold" />
+                            <TextBlock
+                                Text="Answer all 20 questions correctly to earn a free movie ticket reward. One spin per day."
+                                TextWrapping="WrapWholeWords"
+                                Style="{StaticResource SectionCaptionTextStyle}" />
+                        </StackPanel>
+                    </Border>
+
                 </StackPanel>
             </Border>
 
+            <!-- RIGHT PANEL -->
             <Border
                 Grid.Column="1"
                 Style="{StaticResource SurfaceCardStyle}">
-                <StackPanel Spacing="10">
-                    <TextBox Header="Question" />
-                    <Button Content="Answer A" />
-                    <Button Content="Answer B" />
-                    <Button Content="Answer C" />
-                    <Button Content="Answer D" />
-                    <StackPanel Orientation="Horizontal" Spacing="8">
-                        <Button Content="Hint" />
-                        <Button Content="Score" />
+                <Grid>
+
+                    <!-- STATE 1: Idle -->
+                    <StackPanel
+                        x:Name="IdlePanel"
+                        Spacing="12"
+                        VerticalAlignment="Center"
+                        HorizontalAlignment="Center">
+                        <TextBlock
+                            Text="Spin the wheel to begin!"
+                            Style="{ThemeResource TitleTextBlockStyle}"
+                            HorizontalAlignment="Center" />
+                        <TextBlock
+                            Text="A category will be selected and you'll answer 20 trivia questions."
+                            TextWrapping="WrapWholeWords"
+                            HorizontalAlignment="Center"
+                            Style="{StaticResource SectionCaptionTextStyle}" />
                     </StackPanel>
-                </StackPanel>
+
+                    <!-- STATE 2: Playing -->
+                    <StackPanel
+                        x:Name="PlayingPanel"
+                        Spacing="12"
+                        Visibility="Collapsed">
+
+                        <StackPanel Spacing="4">
+                            <TextBlock x:Name="ProgressText" />
+                            <ProgressBar
+                                x:Name="ProgressBar"
+                                Minimum="0"
+                                Maximum="100" />
+                        </StackPanel>
+
+                        <TextBlock
+                            x:Name="QuestionText"
+                            TextWrapping="WrapWholeWords"
+                            FontWeight="SemiBold"
+                            FontSize="16" />
+
+                        <RadioButton x:Name="OptionA" GroupName="Answers" />
+                        <RadioButton x:Name="OptionB" GroupName="Answers" />
+                        <RadioButton x:Name="OptionC" GroupName="Answers" />
+                        <RadioButton x:Name="OptionD" GroupName="Answers" />
+
+                        <StackPanel
+                            Orientation="Horizontal"
+                            Spacing="8">
+                            <Button
+                                x:Name="HintButton"
+                                Content="Use Hint"
+                                Click="HintButton_Click" />
+                            <Button
+                                Content="Submit Answer"
+                                Click="SubmitAnswer_Click" />
+                        </StackPanel>
+
+                    </StackPanel>
+
+                    <!-- STATE 3: Results -->
+                    <StackPanel
+                        x:Name="ResultsPanel"
+                        Spacing="16"
+                        Visibility="Collapsed"
+                        VerticalAlignment="Center"
+                        HorizontalAlignment="Center">
+                        <TextBlock
+                            x:Name="ResultsTitleText"
+                            Style="{ThemeResource TitleTextBlockStyle}"
+                            HorizontalAlignment="Center" />
+                        <TextBlock
+                            x:Name="ResultsScoreText"
+                            HorizontalAlignment="Center" />
+                        <TextBlock
+                            x:Name="ResultsRewardText"
+                            HorizontalAlignment="Center"
+                            FontWeight="SemiBold" />
+                    </StackPanel>
+
+                </Grid>
             </Border>
+
         </Grid>
     </ScrollViewer>
 </Page>
