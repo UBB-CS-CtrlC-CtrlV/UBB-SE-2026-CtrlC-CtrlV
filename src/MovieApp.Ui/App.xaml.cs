@@ -15,6 +15,7 @@ public partial class App : Application
     private ICurrentUserService? _currentUserService;
 
     public static IEventRepository? EventRepository { get; private set; }
+    public static ITriviaRepository? TriviaRepository { get; private set; }
 
     public App()
     {
@@ -25,6 +26,7 @@ public partial class App : Application
     {
         MainViewModel viewModel;
         EventRepository = UnavailableEventRepository.Instance;
+        TriviaRepository = null;
 
         try
         {
@@ -44,16 +46,18 @@ public partial class App : Application
 
             var userRepository = new SqlUserRepository(databaseOptions);
             var eventRepository = new SqlEventRepository(databaseOptions);
+            var triviaRepository = new SqlTriviaRepository(databaseOptions);
+
             _currentUserService = new CurrentUserService(userRepository, bootstrapUserOptions);
             await _currentUserService.InitializeAsync();
 
             EventRepository = eventRepository;
+            TriviaRepository = triviaRepository;
+
             viewModel = new MainViewModel(_currentUserService.CurrentUser);
         }
         catch (Exception exception)
         {
-            // Keep the shell alive in a safe degraded state so the startup error
-            // can be shown without HomePage crashing on a missing repository.
             viewModel = MainViewModel.CreateStartupError(BuildStartupErrorMessage(exception));
         }
 
