@@ -1,0 +1,52 @@
+<Page
+    x:Class="MovieApp.Ui.Views.RewardsPage"
+    xmlns="http://schemas.microsoft.com/winfx/2006/xaml/presentation"
+    xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
+    xmlns:d="http://schemas.microsoft.com/expression/blend/2008"
+    xmlns:mc="http://schemas.openxmlformats.org/markup-compatibility/2006"
+    xmlns:controls="using:Microsoft.UI.Xaml.Controls"
+    mc:Ignorable="d">
+
+    <ScrollViewer Padding="20">
+        <Grid ColumnSpacing="16">
+            <Grid.ColumnDefinitions>
+                <ColumnDefinition Width="1.8*" />
+                <ColumnDefinition Width="*" />
+            </Grid.ColumnDefinitions>
+
+            <controls:TabView>
+                <controls:TabViewItem Header="Checkout">
+                    <StackPanel Padding="0,16,0,0">
+                        <ListView Height="420" />
+                    </StackPanel>
+                </controls:TabViewItem>
+                <controls:TabViewItem Header="Referral">
+                    <StackPanel Padding="0,16,0,0">
+                        <ListView Height="420" />
+                    </StackPanel>
+                </controls:TabViewItem>
+                <controls:TabViewItem Header="Trivia">
+                    <StackPanel Padding="0,16,0,0">
+                        <ListView Height="420" />
+                    </StackPanel>
+                </controls:TabViewItem>
+                <controls:TabViewItem Header="Slots">
+                    <StackPanel Padding="0,16,0,0">
+                        <ListView Height="420" />
+                    </StackPanel>
+                </controls:TabViewItem>
+            </controls:TabView>
+
+            <Border
+                Grid.Column="1"
+                Style="{StaticResource SurfaceCardStyle}">
+                <StackPanel Spacing="10">
+                    <TextBox Header="Type" />
+                    <TextBox Header="Scope" />
+                    <TextBox Header="Redeemed" />
+                    <Button Content="Mark redeemed" />
+                </StackPanel>
+            </Border>
+        </Grid>
+    </ScrollViewer>
+</Page>

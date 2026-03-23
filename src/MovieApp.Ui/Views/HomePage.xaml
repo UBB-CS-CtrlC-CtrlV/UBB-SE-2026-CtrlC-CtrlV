@@ -4,45 +4,83 @@
     xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
     xmlns:d="http://schemas.microsoft.com/expression/blend/2008"
     xmlns:mc="http://schemas.openxmlformats.org/markup-compatibility/2006"
+    xmlns:models="using:MovieApp.Core.Models"
     xmlns:ui="using:MovieApp.Ui.Controls"
     mc:Ignorable="d">
 
     <ScrollViewer
-        Padding="32"
+        Padding="20"
         VerticalScrollBarVisibility="Auto">
+        <StackPanel Spacing="20">
+            <Border Style="{StaticResource SurfaceCardStyle}">
+                <Grid ColumnSpacing="12" RowSpacing="12">
+                    <Grid.RowDefinitions>
+                        <RowDefinition Height="Auto" />
+                        <RowDefinition Height="Auto" />
+                    </Grid.RowDefinitions>
+                    <Grid.ColumnDefinitions>
+                        <ColumnDefinition Width="2*" />
+                        <ColumnDefinition Width="*" />
+                        <ColumnDefinition Width="*" />
+                        <ColumnDefinition Width="Auto" />
+                    </Grid.ColumnDefinitions>
 
-        <StackPanel Spacing="16">
-            <TextBlock
-                Style="{ThemeResource HeaderTextBlockStyle}"
-                Text="{Binding PageTitle}" />
+                    <AutoSuggestBox PlaceholderText="Search" />
+                    <ComboBox
+                        Grid.Column="1"
+                        PlaceholderText="Sort">
+                        <x:String>Price</x:String>
+                        <x:String>Historical rating</x:String>
+                    </ComboBox>
+                    <ComboBox
+                        Grid.Column="2"
+                        PlaceholderText="Section" />
+                    <Button
+                        Grid.Column="3"
+                        Content="Clear" />
+
+                    <StackPanel
+                        Grid.Row="1"
+                        Grid.ColumnSpan="4"
+                        Orientation="Horizontal"
+                        Spacing="10">
+                        <Button Content="Price" />
+                        <Button Content="Type" />
+                        <Button Content="Location" />
+                        <Button Content="Rating" />
+                    </StackPanel>
+                </Grid>
+            </Border>
 
             <ItemsControl ItemsSource="{Binding Sections}">
                 <ItemsControl.ItemTemplate>
                     <DataTemplate>
-                        <StackPanel Spacing="8" Margin="0,8,0,0">
+                        <StackPanel Margin="0,8,0,0" Spacing="8">
                             <ui:SectionHeader Title="{Binding Title}" />
 
                             <ScrollViewer
                                 HorizontalScrollBarVisibility="Auto"
                                 VerticalScrollBarVisibility="Disabled">
-
-                                <!-- ItemsControl + DataTemplate: standard pentru randare listă -->
                                 <ItemsControl ItemsSource="{Binding Events}">
                                     <ItemsControl.ItemsPanel>
                                         <ItemsPanelTemplate>
-                                            <!-- Panel orizontal pentru „row of cards” -->
                                             <StackPanel Orientation="Horizontal" Spacing="12" />
                                         </ItemsPanelTemplate>
                                     </ItemsControl.ItemsPanel>
 
                                     <ItemsControl.ItemTemplate>
                                         <DataTemplate>
-                                            <ui:EventCard />
+                                            <Button
+                                                Padding="0"
+                                                Background="Transparent"
+                                                BorderThickness="0"
+                                                Click="EventCardButton_Click">
+                                                <ui:EventCard Model="{Binding}" />
+                                            </Button>
                                         </DataTemplate>
                                     </ItemsControl.ItemTemplate>
                                 </ItemsControl>
                             </ScrollViewer>
-
                         </StackPanel>
                     </DataTemplate>
                 </ItemsControl.ItemTemplate>

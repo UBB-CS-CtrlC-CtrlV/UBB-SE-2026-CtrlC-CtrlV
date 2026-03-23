@@ -4,16 +4,173 @@
     xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
     xmlns:d="http://schemas.microsoft.com/expression/blend/2008"
     xmlns:mc="http://schemas.openxmlformats.org/markup-compatibility/2006"
+    xmlns:controls="using:Microsoft.UI.Xaml.Controls"
     mc:Ignorable="d">
 
-    <Grid Padding="32">
-        <StackPanel Spacing="12">
-            <TextBlock
-                Style="{ThemeResource HeaderTextBlockStyle}"
-                Text="My Events" />
-            <TextBlock
-                Text="Placeholder page for the My Events area."
-                TextWrapping="WrapWholeWords" />
+    <ScrollViewer
+        Padding="20"
+        VerticalScrollBarVisibility="Auto">
+        <StackPanel Spacing="20">
+            <Border Style="{StaticResource SurfaceCardStyle}">
+                <Grid ColumnSpacing="12">
+                    <Grid.ColumnDefinitions>
+                        <ColumnDefinition Width="2*" />
+                        <ColumnDefinition Width="*" />
+                        <ColumnDefinition Width="*" />
+                        <ColumnDefinition Width="Auto" />
+                    </Grid.ColumnDefinitions>
+
+                    <AutoSuggestBox PlaceholderText="Search" />
+                    <ComboBox
+                        Grid.Column="1"
+                        PlaceholderText="Sort">
+                        <x:String>Price</x:String>
+                        <x:String>Historical rating</x:String>
+                    </ComboBox>
+                    <ComboBox
+                        Grid.Column="2"
+                        PlaceholderText="Filter" />
+                    <Button
+                        Grid.Column="3"
+                        Content="Reset" />
+                </Grid>
+            </Border>
+
+            <controls:TabView>
+                <controls:TabViewItem Header="Created">
+                    <Grid
+                        Padding="0,16,0,0"
+                        ColumnSpacing="16">
+                        <Grid.ColumnDefinitions>
+                            <ColumnDefinition Width="2*" />
+                            <ColumnDefinition Width="*" />
+                        </Grid.ColumnDefinitions>
+
+                        <Border Style="{StaticResource SurfaceCardStyle}">
+                            <ListView Height="420" />
+                        </Border>
+
+                        <Border
+                            Grid.Column="1"
+                            Style="{StaticResource SurfaceCardStyle}">
+                            <StackPanel Spacing="10">
+                                <TextBox Header="Title" />
+                                <TextBox Header="Location" />
+                                <controls:NumberBox Header="Price" />
+                                <controls:NumberBox Header="Capacity" />
+                                <Button Content="Save" />
+                            </StackPanel>
+                        </Border>
+                    </Grid>
+                </controls:TabViewItem>
+
+                <controls:TabViewItem Header="Joined">
+                    <Grid
+                        Padding="0,16,0,0"
+                        ColumnSpacing="16">
+                        <Grid.ColumnDefinitions>
+                            <ColumnDefinition Width="2*" />
+                            <ColumnDefinition Width="*" />
+                        </Grid.ColumnDefinitions>
+
+                        <Border Style="{StaticResource SurfaceCardStyle}">
+                            <ListView Height="420" />
+                        </Border>
+
+                        <Border
+                            Grid.Column="1"
+                            Style="{StaticResource SurfaceCardStyle}">
+                            <StackPanel Spacing="10">
+                                <TextBox Header="Selected event" />
+                                <TextBox
+                                    AcceptsReturn="True"
+                                    Header="Notes"
+                                    Height="180" />
+                                <Button Content="Cancel participation" />
+                            </StackPanel>
+                        </Border>
+                    </Grid>
+                </controls:TabViewItem>
+
+                <controls:TabViewItem Header="Favorites">
+                    <Grid
+                        Padding="0,16,0,0"
+                        ColumnSpacing="16">
+                        <Grid.ColumnDefinitions>
+                            <ColumnDefinition Width="2*" />
+                            <ColumnDefinition Width="*" />
+                        </Grid.ColumnDefinitions>
+
+                        <Border Style="{StaticResource SurfaceCardStyle}">
+                            <ListView Height="420" />
+                        </Border>
+
+                        <Border
+                            Grid.Column="1"
+                            Style="{StaticResource SurfaceCardStyle}">
+                            <StackPanel Spacing="10">
+                                <TextBox Header="Selected favorite" />
+                                <TextBox Header="Current price" />
+                                <TextBox Header="Seat availability" />
+                                <Button Content="Remove" />
+                            </StackPanel>
+                        </Border>
+                    </Grid>
+                </controls:TabViewItem>
+
+                <controls:TabViewItem Header="Manage">
+                    <Grid
+                        Padding="0,16,0,0"
+                        ColumnSpacing="16">
+                        <Grid.ColumnDefinitions>
+                            <ColumnDefinition Width="2*" />
+                            <ColumnDefinition Width="*" />
+                        </Grid.ColumnDefinitions>
+
+                        <Border Style="{StaticResource SurfaceCardStyle}">
+                            <ListView Height="420" />
+                        </Border>
+
+                        <Border
+                            Grid.Column="1"
+                            Style="{StaticResource SurfaceCardStyle}">
+                            <StackPanel Spacing="10">
+                                <TextBox Header="Title" />
+                                <TextBox Header="Location" />
+                                <TextBox Header="Type" />
+                                <Button Content="Edit" />
+                                <Button Content="Delete" />
+                            </StackPanel>
+                        </Border>
+                    </Grid>
+                </controls:TabViewItem>
+
+                <controls:TabViewItem Header="Watchlist">
+                    <Grid
+                        Padding="0,16,0,0"
+                        ColumnSpacing="16">
+                        <Grid.ColumnDefinitions>
+                            <ColumnDefinition Width="2*" />
+                            <ColumnDefinition Width="*" />
+                        </Grid.ColumnDefinitions>
+
+                        <Border Style="{StaticResource SurfaceCardStyle}">
+                            <ListView Height="420" />
+                        </Border>
+
+                        <Border
+                            Grid.Column="1"
+                            Style="{StaticResource SurfaceCardStyle}">
+                            <StackPanel Spacing="10">
+                                <TextBox Header="Event reference" />
+                                <controls:NumberBox Header="Target price" />
+                                <ToggleSwitch Header="Active" />
+                                <Button Content="Save" />
+                            </StackPanel>
+                        </Border>
+                    </Grid>
+                </controls:TabViewItem>
+            </controls:TabView>
         </StackPanel>
-    </Grid>
+    </ScrollViewer>
 </Page>

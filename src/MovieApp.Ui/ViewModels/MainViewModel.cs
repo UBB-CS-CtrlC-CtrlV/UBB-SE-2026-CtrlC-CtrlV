@@ -7,8 +7,8 @@ public sealed class MainViewModel : ViewModelBase
     public MainViewModel(User currentUser)
     {
         CurrentUser = currentUser;
-        Greeting = $"{currentUser.Username} is ready to start";
-        Description = $"Authenticated as {currentUser.StableId}";
+        Greeting = currentUser.Username;
+        Description = currentUser.StableId;
     }
 
     private MainViewModel(string greeting, string description)
@@ -29,4 +29,12 @@ public sealed class MainViewModel : ViewModelBase
     public string Greeting { get; }
 
     public string Description { get; }
+
+    public string UserBadgeText => CurrentUser?.Username[..1].ToUpperInvariant() ?? "?";
+
+    public string UserLabel => CurrentUser?.Username ?? "Dummy user";
+
+    public bool UserFoundInDatabase => CurrentUser is not null;
+
+    public int UserDatabaseStateIndex => UserFoundInDatabase ? 0 : 1;
 }

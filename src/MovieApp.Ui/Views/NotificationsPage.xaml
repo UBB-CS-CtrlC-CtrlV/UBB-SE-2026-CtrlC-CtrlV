@@ -1,5 +1,5 @@
 <Page
-    x:Class="MovieApp.Ui.Views.ReferralAreaPage"
+    x:Class="MovieApp.Ui.Views.NotificationsPage"
     xmlns="http://schemas.microsoft.com/winfx/2006/xaml/presentation"
     xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
     xmlns:d="http://schemas.microsoft.com/expression/blend/2008"
@@ -9,25 +9,25 @@
     <ScrollViewer Padding="20">
         <Grid ColumnSpacing="16">
             <Grid.ColumnDefinitions>
-                <ColumnDefinition Width="1.5*" />
+                <ColumnDefinition Width="1.6*" />
                 <ColumnDefinition Width="*" />
             </Grid.ColumnDefinitions>
 
             <Border Style="{StaticResource SurfaceCardStyle}">
-                <StackPanel Spacing="12">
-                    <TextBox Header="Referral code" />
-                    <ListView Height="400" />
-                </StackPanel>
+                <ListView Height="480" />
             </Border>
 
             <Border
                 Grid.Column="1"
                 Style="{StaticResource SurfaceCardStyle}">
                 <StackPanel Spacing="10">
-                    <TextBox Header="Entered code" />
+                    <TextBox Header="Type" />
                     <TextBox Header="Event" />
-                    <CheckBox Content="Reject self-referral" IsChecked="True" />
-                    <Button Content="Validate" />
+                    <TextBox
+                        AcceptsReturn="True"
+                        Header="Message"
+                        Height="220" />
+                    <Button Content="Open event" />
                 </StackPanel>
             </Border>
         </Grid>

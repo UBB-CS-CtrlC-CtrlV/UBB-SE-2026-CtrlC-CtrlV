@@ -6,14 +6,35 @@
     xmlns:mc="http://schemas.openxmlformats.org/markup-compatibility/2006"
     mc:Ignorable="d">
 
-    <Grid Padding="32">
-        <StackPanel Spacing="12">
-            <TextBlock
-                Style="{ThemeResource HeaderTextBlockStyle}"
-                Text="Marathons" />
-            <TextBlock
-                Text="Placeholder page for the Marathons area."
-                TextWrapping="WrapWholeWords" />
-        </StackPanel>
-    </Grid>
+    <ScrollViewer Padding="20">
+        <Grid ColumnSpacing="16">
+            <Grid.ColumnDefinitions>
+                <ColumnDefinition Width="1.25*" />
+                <ColumnDefinition Width="1.1*" />
+                <ColumnDefinition Width="*" />
+            </Grid.ColumnDefinitions>
+
+            <Border Style="{StaticResource SurfaceCardStyle}">
+                <ListView Height="460" />
+            </Border>
+
+            <Border
+                Grid.Column="1"
+                Style="{StaticResource SurfaceCardStyle}">
+                <StackPanel Spacing="10">
+                    <TextBox Header="Movie" />
+                    <Button Content="Question 1" />
+                    <Button Content="Question 2" />
+                    <Button Content="Question 3" />
+                    <Button Content="Submit" />
+                </StackPanel>
+            </Border>
+
+            <Border
+                Grid.Column="2"
+                Style="{StaticResource SurfaceCardStyle}">
+                <ListView Height="460" />
+            </Border>
+        </Grid>
+    </ScrollViewer>
 </Page>

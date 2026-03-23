@@ -9,33 +9,101 @@
     mc:Ignorable="d">
 
     <Grid Background="{ThemeResource ApplicationPageBackgroundThemeBrush}">
+        <Grid.RowDefinitions>
+            <RowDefinition Height="Auto" />
+            <RowDefinition Height="*" />
+        </Grid.RowDefinitions>
+
+        <Border
+            Margin="12,12,12,0"
+            Style="{StaticResource SurfaceCardStyle}">
+            <Grid ColumnSpacing="16">
+                <Grid.ColumnDefinitions>
+                    <ColumnDefinition Width="*" />
+                    <ColumnDefinition Width="Auto" />
+                </Grid.ColumnDefinitions>
+
+                <TextBlock
+                    VerticalAlignment="Center"
+                    Style="{ThemeResource TitleTextBlockStyle}"
+                    Text="{x:Bind ViewModel.AppTitle, Mode=OneWay}" />
+
+                <Button
+                    Grid.Column="1"
+                    Width="36"
+                    Height="36"
+                    Padding="0"
+                    HorizontalAlignment="Right"
+                    VerticalAlignment="Center">
+                    <Button.Flyout>
+                        <Flyout Placement="BottomEdgeAlignedRight">
+                            <StackPanel
+                                Width="220"
+                                Padding="12"
+                                Spacing="12">
+                                <StackPanel Spacing="2">
+                                    <TextBlock
+                                        FontWeight="SemiBold"
+                                        Text="{x:Bind ViewModel.UserLabel, Mode=OneWay}" />
+                                    <TextBlock
+                                        Style="{StaticResource SectionCaptionTextStyle}"
+                                        Text="Dummy user context" />
+                                </StackPanel>
+
+                                <ComboBox
+                                    IsEnabled="False"
+                                    SelectedIndex="{x:Bind ViewModel.UserDatabaseStateIndex, Mode=OneWay}">
+                                    <x:String>Found in DB</x:String>
+                                    <x:String>Not found in DB</x:String>
+                                </ComboBox>
+
+                                <Button Click="AlertsButton_Click" Content="Alerts" />
+                                <Button Click="RewardsButton_Click" Content="Rewards" />
+                                <Button Click="ReferralButton_Click" Content="Referral" />
+                            </StackPanel>
+                        </Flyout>
+                    </Button.Flyout>
+                    <TextBlock
+                        HorizontalAlignment="Center"
+                        VerticalAlignment="Center"
+                        FontWeight="SemiBold"
+                        Text="{x:Bind ViewModel.UserBadgeText, Mode=OneWay}" />
+                </Button>
+            </Grid>
+        </Border>
+
         <controls:NavigationView
             x:Name="AppNavigationView"
+            Grid.Row="1"
             IsBackButtonVisible="Collapsed"
             IsSettingsVisible="False"
-            PaneDisplayMode="Left"
+            IsPaneToggleButtonVisible="False"
+            Margin="0,12,0,0"
+            PaneDisplayMode="Top"
             SelectionChanged="AppNavigationView_SelectionChanged">
 
-            <controls:NavigationView.Header>
-                <StackPanel Spacing="4">
-                    <TextBlock
-                        Style="{ThemeResource TitleTextBlockStyle}"
-                        Text="{x:Bind ViewModel.AppTitle, Mode=OneWay}" />
-                    <TextBlock
-                        Opacity="0.75"
-                        Text="{x:Bind ViewModel.Greeting, Mode=OneWay}" />
-                </StackPanel>
-            </controls:NavigationView.Header>
-
             <controls:NavigationView.MenuItems>
-                <controls:NavigationViewItem Content="Home" Tag="Home" Icon="Home" />
-                <controls:NavigationViewItem Content="My Events" Tag="MyEvents" Icon="Calendar" />
-                <controls:NavigationViewItem Content="Event Management" Tag="EventManagement" Icon="Edit" />
-                <controls:NavigationViewItem Content="Favorites" Tag="Favorites" Icon="Favorite" />
-                <controls:NavigationViewItem Content="Referral Area" Tag="ReferralArea" Icon="Share" />
-                <controls:NavigationViewItem Content="Slot Machine" Tag="SlotMachine" Icon="Shop" />
-                <controls:NavigationViewItem Content="Trivia Wheel" Tag="TriviaWheel" Icon="Help" />
-                <controls:NavigationViewItem Content="Marathons" Tag="Marathons" Icon="Play" />
+                <controls:NavigationViewItem
+                    x:Name="HomeNavigationItem"
+                    Content="Home"
+                    Icon="Home"
+                    Tag="Home" />
+                <controls:NavigationViewItem
+                    Content="My Events"
+                    Icon="Calendar"
+                    Tag="MyEvents" />
+                <controls:NavigationViewItem
+                    Content="Slots"
+                    Icon="Shop"
+                    Tag="SlotMachine" />
+                <controls:NavigationViewItem
+                    Content="Trivia Wheel"
+                    Icon="Help"
+                    Tag="TriviaWheel" />
+                <controls:NavigationViewItem
+                    Content="Marathons"
+                    Icon="Play"
+                    Tag="Marathons" />
             </controls:NavigationView.MenuItems>
 
             <Frame x:Name="ContentFrame" />

@@ -6,14 +6,39 @@
     xmlns:mc="http://schemas.openxmlformats.org/markup-compatibility/2006"
     mc:Ignorable="d">
 
-    <Grid Padding="32">
-        <StackPanel Spacing="12">
-            <TextBlock
-                Style="{ThemeResource HeaderTextBlockStyle}"
-                Text="Trivia Wheel" />
-            <TextBlock
-                Text="Placeholder page for the Trivia Wheel area."
-                TextWrapping="WrapWholeWords" />
-        </StackPanel>
-    </Grid>
+    <ScrollViewer Padding="20">
+        <Grid ColumnSpacing="16">
+            <Grid.ColumnDefinitions>
+                <ColumnDefinition Width="1.3*" />
+                <ColumnDefinition Width="*" />
+            </Grid.ColumnDefinitions>
+
+            <Border Style="{StaticResource SurfaceCardStyle}">
+                <StackPanel Spacing="12">
+                    <Border
+                        Width="260"
+                        Height="260"
+                        HorizontalAlignment="Center"
+                        Style="{StaticResource StrongSurfaceCardStyle}" />
+                    <Button HorizontalAlignment="Left" Content="Spin" />
+                </StackPanel>
+            </Border>
+
+            <Border
+                Grid.Column="1"
+                Style="{StaticResource SurfaceCardStyle}">
+                <StackPanel Spacing="10">
+                    <TextBox Header="Question" />
+                    <Button Content="Answer A" />
+                    <Button Content="Answer B" />
+                    <Button Content="Answer C" />
+                    <Button Content="Answer D" />
+                    <StackPanel Orientation="Horizontal" Spacing="8">
+                        <Button Content="Hint" />
+                        <Button Content="Score" />
+                    </StackPanel>
+                </StackPanel>
+            </Border>
+        </Grid>
+    </ScrollViewer>
 </Page>

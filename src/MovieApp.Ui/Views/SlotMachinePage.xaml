@@ -6,14 +6,43 @@
     xmlns:mc="http://schemas.openxmlformats.org/markup-compatibility/2006"
     mc:Ignorable="d">
 
-    <Grid Padding="32">
-        <StackPanel Spacing="12">
-            <TextBlock
-                Style="{ThemeResource HeaderTextBlockStyle}"
-                Text="Slot Machine" />
-            <TextBlock
-                Text="Placeholder page for the Slot Machine area."
-                TextWrapping="WrapWholeWords" />
-        </StackPanel>
-    </Grid>
+    <ScrollViewer Padding="20">
+        <Grid ColumnSpacing="16">
+            <Grid.ColumnDefinitions>
+                <ColumnDefinition Width="1.6*" />
+                <ColumnDefinition Width="*" />
+            </Grid.ColumnDefinitions>
+
+            <StackPanel Spacing="16">
+                <Border Style="{StaticResource SurfaceCardStyle}">
+                    <Grid ColumnSpacing="12">
+                        <Grid.ColumnDefinitions>
+                            <ColumnDefinition Width="*" />
+                            <ColumnDefinition Width="*" />
+                            <ColumnDefinition Width="*" />
+                        </Grid.ColumnDefinitions>
+
+                        <Border Grid.Column="0" Style="{StaticResource StrongSurfaceCardStyle}" MinHeight="180" />
+                        <Border Grid.Column="1" Style="{StaticResource StrongSurfaceCardStyle}" MinHeight="180" />
+                        <Border Grid.Column="2" Style="{StaticResource StrongSurfaceCardStyle}" MinHeight="180" />
+                    </Grid>
+                </Border>
+
+                <Border Style="{StaticResource SurfaceCardStyle}">
+                    <ListView Height="220" />
+                </Border>
+            </StackPanel>
+
+            <Border
+                Grid.Column="1"
+                Style="{StaticResource SurfaceCardStyle}">
+                <StackPanel Spacing="10">
+                    <TextBox Header="Available spins" />
+                    <TextBox Header="Bonus spins today" />
+                    <TextBox Header="Open streak" />
+                    <Button Content="Spin" />
+                </StackPanel>
+            </Border>
+        </Grid>
+    </ScrollViewer>
 </Page>
