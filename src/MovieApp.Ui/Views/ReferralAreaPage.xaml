@@ -13,7 +13,7 @@
             <Border
                 Padding="24"
                 Background="{StaticResource ShellHeroBrush}"
-                CornerRadius="28">
+                CornerRadius="8">
                 <Grid ColumnSpacing="24">
                     <Grid.ColumnDefinitions>
                         <ColumnDefinition Width="*" />
@@ -33,7 +33,7 @@
                             Background="#1FFFFFFF"
                             BorderBrush="#33FFFFFF"
                             BorderThickness="1"
-                            CornerRadius="18">
+                            CornerRadius="8">
                             <StackPanel Spacing="4">
                                 <TextBlock
                                     Foreground="#CCFFFFFF"
@@ -57,7 +57,7 @@
                         Background="#1FFFFFFF"
                         BorderBrush="#33FFFFFF"
                         BorderThickness="1"
-                        CornerRadius="18">
+                        CornerRadius="8">
                         <StackPanel Spacing="8">
                             <TextBlock
                                 Foreground="#CCFFFFFF"

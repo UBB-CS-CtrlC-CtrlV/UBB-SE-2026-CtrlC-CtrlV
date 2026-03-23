@@ -12,7 +12,7 @@
         Background="{ThemeResource CardBackgroundFillColorDefaultBrush}"
         BorderBrush="{ThemeResource CardStrokeColorDefaultBrush}"
         BorderThickness="1"
-        CornerRadius="20">
+        CornerRadius="8">
         <Grid RowSpacing="0">
             <Grid.RowDefinitions>
                 <RowDefinition Height="156" />
@@ -21,29 +21,9 @@
 
             <Border
                 Grid.Row="0"
-                CornerRadius="20,20,0,0">
+                Background="{ThemeResource CardBackgroundFillColorSecondaryBrush}"
+                CornerRadius="8,8,0,0">
                 <Grid>
-                    <Rectangle>
-                        <Rectangle.Fill>
-                            <LinearGradientBrush StartPoint="0,0" EndPoint="1,1">
-                                <GradientStop Color="#FF091B2A" Offset="0" />
-                                <GradientStop Color="#FF214B6B" Offset="0.55" />
-                                <GradientStop Color="#FFF17C45" Offset="1" />
-                            </LinearGradientBrush>
-                        </Rectangle.Fill>
-                    </Rectangle>
-
-                    <Rectangle
-                        VerticalAlignment="Bottom"
-                        Height="72">
-                        <Rectangle.Fill>
-                            <LinearGradientBrush StartPoint="0,0" EndPoint="0,1">
-                                <GradientStop Color="#00FFFFFF" Offset="0" />
-                                <GradientStop Color="#D9000000" Offset="1" />
-                            </LinearGradientBrush>
-                        </Rectangle.Fill>
-                    </Rectangle>
-
                     <Grid Padding="16">
                         <Grid.RowDefinitions>
                             <RowDefinition Height="Auto" />
@@ -54,14 +34,13 @@
                         <Border
                             HorizontalAlignment="Left"
                             Padding="10,4"
-                            Background="#26FFFFFF"
-                            BorderBrush="#33FFFFFF"
+                            Background="{ThemeResource ControlFillColorSecondaryBrush}"
+                            BorderBrush="{ThemeResource CardStrokeColorDefaultBrush}"
                             BorderThickness="1"
-                            CornerRadius="999">
+                            CornerRadius="6">
                             <TextBlock
                                 FontSize="12"
                                 FontWeight="SemiBold"
-                                Foreground="White"
                                 Text="{x:Bind EventTypeText, Mode=OneWay}" />
                         </Border>
 
@@ -69,7 +48,6 @@
                             Grid.Row="2"
                             FontSize="28"
                             FontWeight="SemiBold"
-                            Foreground="#F2FFFFFF"
                             Text="{x:Bind DateBadgeDay, Mode=OneWay}" />
                     </Grid>
                 </Grid>

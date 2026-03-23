@@ -8,15 +8,15 @@
     xmlns:controls="using:Microsoft.UI.Xaml.Controls"
     mc:Ignorable="d">
 
-    <Grid Background="{StaticResource ShellBackdropBrush}">
+    <Grid Background="{ThemeResource ApplicationPageBackgroundThemeBrush}">
         <Grid.RowDefinitions>
             <RowDefinition Height="Auto" />
             <RowDefinition Height="*" />
         </Grid.RowDefinitions>
 
         <Border
-            Padding="24"
-            Background="{StaticResource ShellHeroBrush}">
+            Margin="16,16,16,0"
+            Style="{StaticResource SurfaceCardStyle}">
             <Grid ColumnSpacing="24">
                 <Grid.ColumnDefinitions>
                     <ColumnDefinition Width="*" />
@@ -26,14 +26,11 @@
                 <StackPanel Spacing="6">
                     <TextBlock
                         Style="{ThemeResource TitleTextBlockStyle}"
-                        Foreground="White"
                         Text="{x:Bind ViewModel.AppTitle, Mode=OneWay}" />
                     <TextBlock
-                        Foreground="#E6FFFFFF"
                         Text="{x:Bind ViewModel.Greeting, Mode=OneWay}" />
                     <TextBlock
-                        Foreground="#CCFFFFFF"
-                        TextWrapping="WrapWholeWords"
+                        Style="{StaticResource SectionCaptionTextStyle}"
                         Text="{x:Bind ViewModel.Description, Mode=OneWay}" />
                 </StackPanel>
 
@@ -46,46 +43,34 @@
                     </Grid.ColumnDefinitions>
 
                     <Border
-                        Padding="16"
-                        Background="#1FFFFFFF"
-                        BorderBrush="#33FFFFFF"
-                        BorderThickness="1"
-                        CornerRadius="18">
+                        Style="{StaticResource StrongSurfaceCardStyle}">
                         <StackPanel Spacing="4">
                             <TextBlock
-                                Foreground="#CCFFFFFF"
                                 Style="{StaticResource MiniLabelTextStyle}"
                                 Text="User context" />
                             <TextBlock
                                 FontSize="18"
                                 FontWeight="SemiBold"
-                                Foreground="White"
                                 Text="Dummy authenticated user" />
                             <TextBlock
-                                Foreground="#D9FFFFFF"
+                                Style="{StaticResource SectionCaptionTextStyle}"
                                 Text="All features are surfaced in-app with no login flow." />
                         </StackPanel>
                     </Border>
 
                     <Border
                         Grid.Column="1"
-                        Padding="16"
-                        Background="#1FFFFFFF"
-                        BorderBrush="#33FFFFFF"
-                        BorderThickness="1"
-                        CornerRadius="18">
+                        Style="{StaticResource StrongSurfaceCardStyle}">
                         <StackPanel Spacing="4">
                             <TextBlock
-                                Foreground="#CCFFFFFF"
                                 Style="{StaticResource MiniLabelTextStyle}"
                                 Text="Layout status" />
                             <TextBlock
                                 FontSize="18"
                                 FontWeight="SemiBold"
-                                Foreground="White"
                                 Text="Implementation-ready shell" />
                             <TextBlock
-                                Foreground="#D9FFFFFF"
+                                Style="{StaticResource SectionCaptionTextStyle}"
                                 Text="Each screen exposes stable mount points for feature teams." />
                         </StackPanel>
                     </Border>
@@ -98,18 +83,19 @@
             Grid.Row="1"
             IsBackButtonVisible="Collapsed"
             IsSettingsVisible="False"
-            PaneDisplayMode="Left"
+            IsPaneToggleButtonVisible="False"
+            Margin="0,12,0,0"
+            PaneDisplayMode="Top"
             SelectionChanged="AppNavigationView_SelectionChanged">
 
             <controls:NavigationView.MenuItems>
-                <controls:NavigationViewItemHeader Content="Browse" />
                 <controls:NavigationViewItem
                     x:Name="HomeNavigationItem"
                     Content="Home"
                     Icon="Home"
                     Tag="Home" />
                 <controls:NavigationViewItem
-                    Content="Details and Checkout"
+                    Content="Details"
                     Icon="Preview"
                     Tag="DetailsCheckout" />
                 <controls:NavigationViewItem
@@ -117,17 +103,15 @@
                     Icon="Calendar"
                     Tag="MyEvents" />
                 <controls:NavigationViewItem
-                    Content="Event Management"
+                    Content="Manage"
                     Icon="Edit"
                     Tag="EventManagement" />
-                <controls:NavigationViewItemSeparator />
-                <controls:NavigationViewItemHeader Content="Engagement" />
                 <controls:NavigationViewItem
                     Content="Favorites"
                     Icon="Favorite"
                     Tag="Favorites" />
                 <controls:NavigationViewItem
-                    Content="Notifications"
+                    Content="Alerts"
                     Icon="Message"
                     Tag="Notifications" />
                 <controls:NavigationViewItem
@@ -135,13 +119,11 @@
                     Icon="Like"
                     Tag="Rewards" />
                 <controls:NavigationViewItem
-                    Content="Referral Area"
+                    Content="Referral"
                     Icon="Share"
                     Tag="ReferralArea" />
-                <controls:NavigationViewItemSeparator />
-                <controls:NavigationViewItemHeader Content="Games and Challenges" />
                 <controls:NavigationViewItem
-                    Content="Slot Machine"
+                    Content="Slots"
                     Icon="Shop"
                     Tag="SlotMachine" />
                 <controls:NavigationViewItem
@@ -153,21 +135,6 @@
                     Icon="Play"
                     Tag="Marathons" />
             </controls:NavigationView.MenuItems>
-
-            <controls:NavigationView.PaneFooter>
-                <Border
-                    Margin="12,0,12,12"
-                    Style="{StaticResource StrongSurfaceCardStyle}">
-                    <StackPanel Spacing="8">
-                        <TextBlock
-                            Style="{StaticResource SectionTitleTextStyle}"
-                            Text="Handoff note" />
-                        <TextBlock
-                            Style="{StaticResource SectionCaptionTextStyle}"
-                            Text="The shell intentionally separates details, rewards, notifications, and game surfaces so each feature owner can wire behavior without reshaping navigation." />
-                    </StackPanel>
-                </Border>
-            </controls:NavigationView.PaneFooter>
 
             <Frame x:Name="ContentFrame" />
         </controls:NavigationView>
