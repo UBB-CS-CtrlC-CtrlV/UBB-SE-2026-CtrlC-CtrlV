@@ -13,11 +13,9 @@
                 <ColumnDefinition Width="*" />
             </Grid.ColumnDefinitions>
 
-            <!-- LEFT PANEL — Wheel -->
+            <!--  LEFT PANEL — Wheel  -->
             <Border Style="{StaticResource SurfaceCardStyle}">
-                <StackPanel
-                    Spacing="16"
-                    HorizontalAlignment="Center">
+                <StackPanel Spacing="16" HorizontalAlignment="Center">
 
                     <TextBlock
                         Style="{ThemeResource TitleTextBlockStyle}"
@@ -48,11 +46,12 @@
                         </Canvas.RenderTransform>
                     </Canvas>
 
+                    <!--  Selected category label  -->
                     <TextBlock
                         x:Name="SelectedCategoryText"
                         HorizontalAlignment="Center"
-                        FontWeight="SemiBold"
-                        FontSize="16" />
+                        FontWeight="Bold"
+                        FontSize="20" />
 
                     <Button
                         x:Name="SpinButton"
@@ -60,13 +59,9 @@
                         HorizontalAlignment="Center"
                         Click="SpinButton_Click" />
 
-                    <Border
-                        Style="{StaticResource StrongSurfaceCardStyle}"
-                        Padding="12">
+                    <Border Style="{StaticResource StrongSurfaceCardStyle}" Padding="12">
                         <StackPanel Spacing="4">
-                            <TextBlock
-                                Text="How to win"
-                                FontWeight="SemiBold" />
+                            <TextBlock Text="How to win" FontWeight="SemiBold" />
                             <TextBlock
                                 Text="Answer all 20 questions correctly to earn a free movie ticket reward. One spin per day."
                                 TextWrapping="WrapWholeWords"
@@ -77,13 +72,11 @@
                 </StackPanel>
             </Border>
 
-            <!-- RIGHT PANEL -->
-            <Border
-                Grid.Column="1"
-                Style="{StaticResource SurfaceCardStyle}">
+            <!--  RIGHT PANEL  -->
+            <Border Grid.Column="1" Style="{StaticResource SurfaceCardStyle}">
                 <Grid>
 
-                    <!-- STATE 1: Idle -->
+                    <!--  STATE 1: Idle  -->
                     <StackPanel
                         x:Name="IdlePanel"
                         Spacing="12"
@@ -100,7 +93,7 @@
                             Style="{StaticResource SectionCaptionTextStyle}" />
                     </StackPanel>
 
-                    <!-- STATE 2: Playing -->
+                    <!--  STATE 2: Playing  -->
                     <StackPanel
                         x:Name="PlayingPanel"
                         Spacing="12"
@@ -125,9 +118,7 @@
                         <RadioButton x:Name="OptionC" GroupName="Answers" />
                         <RadioButton x:Name="OptionD" GroupName="Answers" />
 
-                        <StackPanel
-                            Orientation="Horizontal"
-                            Spacing="8">
+                        <StackPanel Orientation="Horizontal" Spacing="8">
                             <Button
                                 x:Name="HintButton"
                                 Content="Use Hint"
@@ -139,7 +130,7 @@
 
                     </StackPanel>
 
-                    <!-- STATE 3: Results -->
+                    <!--  STATE 3: Results  -->
                     <StackPanel
                         x:Name="ResultsPanel"
                         Spacing="16"

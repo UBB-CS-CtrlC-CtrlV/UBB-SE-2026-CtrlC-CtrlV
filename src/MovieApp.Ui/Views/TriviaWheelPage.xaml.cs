@@ -18,13 +18,14 @@ public sealed partial class TriviaWheelPage : Page
         "Actors", "Directors", "Movie Quotes", "Oscars and Awards", "General Movie Trivia"
     };
 
+    // Warm, vibrant, complementary palette
     private readonly Color[] _segmentColors = new[]
     {
-        Color.FromArgb(255, 99,  179, 237),
-        Color.FromArgb(255, 154, 117, 234),
-        Color.FromArgb(255, 72,  187, 120),
-        Color.FromArgb(255, 246, 173, 85),
-        Color.FromArgb(255, 237, 100, 166),
+        Color.FromArgb(255, 229,  57,  53),  // vivid red
+        Color.FromArgb(255, 255, 160,   0),  // warm amber
+        Color.FromArgb(255,  30, 136,  30),  // rich green
+        Color.FromArgb(255,  21, 101, 192),  // deep blue
+        Color.FromArgb(255, 142,  36, 170),  // bold purple
     };
 
     public TriviaWheelPage()
@@ -60,25 +61,36 @@ public sealed partial class TriviaWheelPage : Page
             var path = new Path
             {
                 Fill = new SolidColorBrush(_segmentColors[i]),
-                Stroke = new SolidColorBrush(Color.FromArgb(255, 30, 30, 30)),
-                StrokeThickness = 1,
+                Stroke = new SolidColorBrush(Color.FromArgb(255, 20, 20, 20)),
+                StrokeThickness = 2,
                 Data = CreateSegmentGeometry(cx, cy, radius, startAngle, endAngle)
             };
             WheelCanvas.Children.Add(path);
 
-            double midAngle = (startAngle + endAngle) / 2.0 * Math.PI / 180.0;
-            double labelRadius = radius * 0.65;
-            double lx = cx + labelRadius * Math.Cos(midAngle) - 40;
-            double ly = cy + labelRadius * Math.Sin(midAngle) - 10;
+            // Label centered on segment midpoint at 60% radius
+            double midAngleRad = (startAngle + angleStep / 2.0) * Math.PI / 180.0;
+            double labelRadius = radius * 0.60;
+            double lx = cx + labelRadius * Math.Cos(midAngleRad) - 44;
+            double ly = cy + labelRadius * Math.Sin(midAngleRad) - 14;
+
+            // Shortened names so they fit inside the segment
+            string shortName = _categories[i] switch
+            {
+                "Oscars and Awards" => "Oscars &\nAwards",
+                "General Movie Trivia" => "General\nTrivia",
+                "Movie Quotes" => "Movie\nQuotes",
+                _ => _categories[i]
+            };
 
             var label = new TextBlock
             {
-                Text = _categories[i],
-                FontSize = 9,
-                Width = 80,
+                Text = shortName,
+                FontSize = 11,
+                FontWeight = Microsoft.UI.Text.FontWeights.Bold,
+                Width = 88,
                 TextWrapping = TextWrapping.Wrap,
                 TextAlignment = TextAlignment.Center,
-                Foreground = new SolidColorBrush(Color.FromArgb(255, 255, 255, 255))
+                Foreground = new SolidColorBrush(Color.FromArgb(255, 255, 255, 255)),
             };
 
             Canvas.SetLeft(label, lx);
@@ -127,18 +139,24 @@ public sealed partial class TriviaWheelPage : Page
         if (_viewModel is null || !_viewModel.CanSpin) return;
 
         SpinButton.IsEnabled = false;
-        SelectedCategoryText.Text = "Spinning...";
 
         var random = new Random();
-        int categoryIndex = random.Next(_categories.Length);
 
+        // Spin 3 full rotations plus a random extra angle
+        double extraAngle = random.NextDouble() * 360.0;
+        double totalRotation = 360.0 * 3 + extraAngle;
+
+        // Figure out which segment the arrow (at top = 270°) points to after rotation
+        // The wheel rotates clockwise, so we subtract from 270° to find where arrow lands
+        double finalAngle = totalRotation % 360.0;
+        double arrowPointsAt = (270.0 - finalAngle + 360.0) % 360.0;
         double segmentAngle = 360.0 / _categories.Length;
-        double targetAngle = 360.0 * 3 + (categoryIndex * segmentAngle);
+        int categoryIndex = (int)(arrowPointsAt / segmentAngle) % _categories.Length;
 
         var animation = new DoubleAnimation
         {
             From = 0,
-            To = targetAngle,
+            To = totalRotation,
             Duration = new Duration(TimeSpan.FromSeconds(3)),
             EasingFunction = new CubicEase { EasingMode = EasingMode.EaseOut }
         };
@@ -151,6 +169,7 @@ public sealed partial class TriviaWheelPage : Page
         storyboard.Completed += (s, ev) =>
         {
             SelectedCategoryText.Text = _categories[categoryIndex];
+         
             ShowPlayingPanel();
             _ = LoadQuestionsAsync(_categories[categoryIndex]);
         };
