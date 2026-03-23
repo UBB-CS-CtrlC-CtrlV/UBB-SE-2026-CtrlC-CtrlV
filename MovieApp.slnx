@@ -1,0 +1,31 @@
+<Solution>
+  <Configurations>
+    <Platform Name="Any CPU" />
+    <Platform Name="ARM64" />
+    <Platform Name="x64" />
+    <Platform Name="x86" />
+  </Configurations>
+  <Folder Name="/src/">
+    <Project Path="src/MovieApp.Core/MovieApp.Core.csproj" />
+    <Project Path="src/MovieApp.Infrastructure/MovieApp.Infrastructure.csproj" />
+    <Project Path="src/MovieApp.Ui/MovieApp.Ui.csproj">
+      <Platform Solution="*|ARM64" Project="ARM64" />
+      <Platform Solution="*|x64" Project="x64" />
+      <Platform Solution="*|x86" Project="x86" />
+      <Deploy Solution="*|ARM64" />
+      <Deploy Solution="*|x64" />
+      <Deploy Solution="*|x86" />
+    </Project>
+  </Folder>
+  <Folder Name="/tests/">
+    <Project Path="tests/MovieApp.Core.Tests/MovieApp.Core.Tests.csproj">
+      <Platform Solution="Debug|ARM64" Project="ARM64" />
+    </Project>
+    <Project Path="tests/MovieApp.Infrastructure.Tests/MovieApp.Infrastructure.Tests.csproj" />
+    <Project Path="tests/MovieApp.Ui.Tests/MovieApp.Ui.Tests.csproj">
+      <Platform Solution="*|ARM64" Project="ARM64" />
+      <Platform Solution="*|x64" Project="x64" />
+      <Platform Solution="*|x86" Project="x86" />
+    </Project>
+  </Folder>
+</Solution>
