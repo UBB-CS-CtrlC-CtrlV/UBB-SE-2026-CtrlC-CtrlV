@@ -68,6 +68,8 @@ public sealed class EventSqlQueriesTests
     [Fact]
     public void BootstrapScript_IncludesAllCurrentDatabaseScripts()
     {
+        // TODO: This test is pinned to deleted/renamed files.
+        // Fix by either restoring 000-bootstrap.sql as the canonical script entrypoint, or updating this test to match the current script layout and filenames.
         var bootstrapFile = ReadRepoFile("src", "MovieApp.Infrastructure", "Database", "Scripts", "000-bootstrap.sql");
 
         Assert.Contains(@":r .\006-user-spins.sql", bootstrapFile);
@@ -80,6 +82,8 @@ public sealed class EventSqlQueriesTests
     [Fact]
     public void SeedEventsScript_IsGuardedAgainstDuplicateSeedData()
     {
+        // TODO: 010-seed-events.sql was renamed to 012-seed-events.sql.
+        // Update this path if the renumbering is intentional, or revert the rename if 010 is still the contract expected by bootstrap/docs.
         var seedScript = ReadRepoFile("src", "MovieApp.Infrastructure", "Database", "Scripts", "010-seed-events.sql");
 
         Assert.Contains("IF NOT EXISTS", seedScript);

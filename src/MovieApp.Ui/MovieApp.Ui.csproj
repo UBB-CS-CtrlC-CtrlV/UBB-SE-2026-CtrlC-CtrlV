@@ -30,7 +30,6 @@
 	<None Remove="Views\SectionEventsPage.xaml" />
   </ItemGroup>
   <ItemGroup>
-    <Page Remove="views\SectionEventsPage.xaml" />
   </ItemGroup>
 
   <ItemGroup>
@@ -57,9 +56,6 @@
   </ItemGroup>
 
   <ItemGroup>
-    <None Update="Views\SectionEventsPage.xaml">
-      <Generator>MSBuild:Compile</Generator>
-    </None>
   </ItemGroup>
 
   <ItemGroup>

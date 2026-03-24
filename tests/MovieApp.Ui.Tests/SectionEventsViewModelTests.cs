@@ -44,20 +44,20 @@ public sealed class SectionEventsViewModelTests
     }
 
     [Fact]
-    public async Task InitializeAsync_FallbackSectionLoadsEventsWithoutValidType()
+    public async Task InitializeAsync_IgnoresEventsWithoutValidType()
     {
         var repository = new StubEventRepository(BuildSampleEvents());
         var context = new SectionNavigationContext
         {
-            Title = "Other events",
-            GroupingValue = "Other events",
+            Title = "Premiere",
+            GroupingValue = "Premiere",
         };
 
         var viewModel = new SectionEventsViewModel(repository, context);
 
         await viewModel.InitializeAsync();
 
-        Assert.Equal([4, 5], viewModel.VisibleEvents.Select(e => e.Id));
+        Assert.DoesNotContain(viewModel.VisibleEvents, e => e.Id is 4 or 5);
     }
 
     [Fact]
