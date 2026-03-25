@@ -63,4 +63,27 @@ public sealed class MarathonService : IMarathonService
             await _marathonRepo.UpdateProgressAsync(progress);
         }
     }
+
+    public async Task<bool> LogMovieAsync(int marathonId, int movieId, int correctAnswers)
+    {
+        if (correctAnswers < 3) return false;
+
+        var userId = _currentUserService.CurrentUser.Id;
+        var progress = await _marathonRepo.GetUserProgressAsync(userId, marathonId);
+        if (progress is null) return false;
+
+        double newScore = (correctAnswers / 3.0) * 100;
+        progress.TriviaAccuracy = progress.CompletedMoviesCount == 0
+            ? newScore
+            : (progress.TriviaAccuracy + newScore) / 2;
+
+        progress.CompletedMoviesCount++;
+
+        int totalMovies = await _marathonRepo.GetMarathonMovieCountAsync(marathonId);
+        if (progress.CompletedMoviesCount >= totalMovies && !progress.IsCompleted)
+            progress.FinishedAt = DateTime.UtcNow;
+
+        await _marathonRepo.UpdateProgressAsync(progress);
+        return true;
+    }
 }

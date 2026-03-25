@@ -147,4 +147,19 @@ public sealed class SqlMarathonRepository : IMarathonRepository
         var result = await command.ExecuteScalarAsync();
         return Convert.ToInt32(result) > 0;
     }
+
+    public async Task<int> GetMarathonMovieCountAsync(int marathonId)
+    {
+        const string sql = """
+        SELECT COUNT(1) FROM dbo.MarathonMovies
+        WHERE MarathonId = @marathonId;
+        """;
+
+        await using var connection = new SqlConnection(_connectionString);
+        await connection.OpenAsync();
+        await using var command = new SqlCommand(sql, connection);
+        command.Parameters.AddWithValue("@marathonId", marathonId);
+        var result = await command.ExecuteScalarAsync();
+        return Convert.ToInt32(result);
+    }
 }
