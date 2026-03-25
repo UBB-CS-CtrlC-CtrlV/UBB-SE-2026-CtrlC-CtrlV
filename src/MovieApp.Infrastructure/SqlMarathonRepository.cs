@@ -129,4 +129,22 @@ public sealed class SqlMarathonRepository : IMarathonRepository
         await connection.OpenAsync();
         return await command.ExecuteNonQueryAsync() > 0;
     }
+    public async Task<bool> IsPrerequisiteCompletedAsync(
+    int userId, int prerequisiteMarathonId)
+    {
+        const string sql = """
+        SELECT COUNT(1) FROM dbo.MarathonProgress
+        WHERE UserId = @userId
+          AND MarathonId = @prereqId
+          AND FinishedAt IS NOT NULL;
+        """;
+
+        await using var connection = new SqlConnection(_connectionString);
+        await connection.OpenAsync();
+        await using var command = new SqlCommand(sql, connection);
+        command.Parameters.AddWithValue("@userId", userId);
+        command.Parameters.AddWithValue("@prereqId", prerequisiteMarathonId);
+        var result = await command.ExecuteScalarAsync();
+        return Convert.ToInt32(result) > 0;
+    }
 }
