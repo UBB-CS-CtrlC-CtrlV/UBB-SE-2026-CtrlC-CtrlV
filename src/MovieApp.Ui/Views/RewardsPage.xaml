@@ -21,8 +21,19 @@
                     </StackPanel>
                 </controls:TabViewItem>
                 <controls:TabViewItem Header="Referral">
-                    <StackPanel Padding="0,16,0,0">
-                        <ListView Height="420" />
+                    <StackPanel Padding="16" Spacing="12">
+                        <TextBlock Text="Free Passes" Style="{ThemeResource SubtitleTextBlockStyle}" />
+                        <TextBlock Text="Available from referral rewards" Style="{StaticResource SectionCaptionTextStyle}" />
+                        <Border Padding="16" CornerRadius="8" Background="{ThemeResource CardBackgroundFillColorSecondaryBrush}">
+                            <StackPanel Orientation="Horizontal" Spacing="12" VerticalAlignment="Center">
+                                <FontIcon Glyph="&#xE8D1;" FontSize="28" Foreground="{ThemeResource SystemAccentColor}" />
+                                <TextBlock
+                                    Text="{x:Bind RewardBalance, Mode=OneWay}"
+                                    FontSize="32"
+                                    FontWeight="Bold"
+                                    VerticalAlignment="Center" />
+                            </StackPanel>
+                        </Border>
                     </StackPanel>
                 </controls:TabViewItem>
                 <controls:TabViewItem Header="Trivia">
