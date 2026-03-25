@@ -34,6 +34,17 @@ public sealed class MarathonService : IMarathonService
         var existing = await _marathonRepo.GetUserProgressAsync(userId, marathonId);
         if (existing != null) return true;
 
+        var marathons = await _marathonRepo.GetActiveMarathonsAsync();
+        var marathon = marathons.FirstOrDefault(m => m.Id == marathonId);
+
+        if (marathon?.PrerequisiteMarathonId is int prereqId)
+        {
+            var prereqDone = await _marathonRepo
+                .IsPrerequisiteCompletedAsync(userId, prereqId);
+
+            if (!prereqDone) return false;
+        }
+
         return await _marathonRepo.JoinMarathonAsync(userId, marathonId);
     }
 
