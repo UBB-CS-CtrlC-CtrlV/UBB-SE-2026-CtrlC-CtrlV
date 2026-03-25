@@ -302,10 +302,21 @@ public sealed partial class TriviaWheelPage : Page
         PlayingPanel.Visibility = Visibility.Collapsed;
         ResultsPanel.Visibility = Visibility.Visible;
 
-        ResultsTitleText.Text = _viewModel!.HasEarnedReward ? "🎉 You won!" : "Session Complete";
-        ResultsScoreText.Text = $"You answered {_viewModel.Score}/20 correctly.";
-        ResultsRewardText.Text = _viewModel.HasEarnedReward
-            ? "A free movie ticket reward has been added to your account!"
-            : "Answer all 20 correctly next time to earn a reward.";
+        if (_viewModel!.HasEarnedReward)
+        {
+            ResultsTitleText.Text = "🎉 Perfect Score!";
+            ResultsTitleText.Foreground = new SolidColorBrush(Color.FromArgb(255, 255, 200, 0)); // gold
+            ResultsScoreText.Text = $"{_viewModel.Score}";
+            ResultsScoreText.Foreground = new SolidColorBrush(Color.FromArgb(255, 255, 200, 0)); // gold
+            ResultsRewardText.Text = "A free movie ticket reward has been added to your account!";
+        }
+        else
+        {
+            ResultsTitleText.Text = "Session Complete";
+            ResultsTitleText.Foreground = new SolidColorBrush(Color.FromArgb(255, 200, 200, 200)); // neutral
+            ResultsScoreText.Text = $"{_viewModel.Score}";
+            ResultsScoreText.Foreground = new SolidColorBrush(Color.FromArgb(255, 200, 200, 200)); // neutral
+            ResultsRewardText.Text = "Answer all 20 correctly next time to earn a reward.";
+        }
     }
 }
