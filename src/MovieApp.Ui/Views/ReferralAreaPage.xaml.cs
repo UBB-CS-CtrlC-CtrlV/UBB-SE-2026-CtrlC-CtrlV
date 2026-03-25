@@ -2,6 +2,7 @@ using Microsoft.UI.Xaml.Controls;
 using System.ComponentModel;
 using System.Collections.ObjectModel;
 using MovieApp.Core.Models;
+using Microsoft.UI.Xaml.Navigation;
 
 namespace MovieApp.Ui.Views;
 
@@ -32,11 +33,11 @@ public sealed partial class ReferralAreaPage : Page, INotifyPropertyChanged
     public ReferralAreaPage()
     {
         InitializeComponent();
-        Loaded += ReferralAreaPage_Loaded;
     }
 
-    private async void ReferralAreaPage_Loaded(object sender, Microsoft.UI.Xaml.RoutedEventArgs e)
+    protected override async void OnNavigatedTo(NavigationEventArgs e)
     {
+        base.OnNavigatedTo(e);
         if (App.AmbassadorRepository is not null && App.CurrentUserService?.CurrentUser is { } currentUser)
         {
             var code = await App.AmbassadorRepository.GetReferralCodeAsync(currentUser.Id);
