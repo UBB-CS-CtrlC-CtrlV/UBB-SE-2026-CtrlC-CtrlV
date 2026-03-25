@@ -1,0 +1,53 @@
+﻿<ContentDialog
+    x:Class="MovieApp.Ui.Controls.SeatGuideDialog"
+    xmlns="http://schemas.microsoft.com/winfx/2006/xaml/presentation"
+    xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
+    Title="Visual Seat Guide"
+    CloseButtonText="Close">
+
+    <StackPanel Spacing="20" MinWidth="450">
+        
+        <Border Height="8" Background="{ThemeResource TextFillColorDisabledBrush}" CornerRadius="4" Margin="30,0,30,10">
+            <TextBlock Text="SCREEN" HorizontalAlignment="Center" FontSize="10" Margin="0,-20,0,0" Foreground="{ThemeResource TextFillColorSecondaryBrush}"/>
+        </Border>
+
+        <StackPanel Orientation="Horizontal" HorizontalAlignment="Center" Spacing="20" Margin="0,0,0,10">
+            <StackPanel Orientation="Horizontal" Spacing="5">
+                <Rectangle Width="16" Height="16" Fill="#4CAF50" RadiusX="4" RadiusY="4"/>
+                <TextBlock Text="Optimal (Sweet Spot)" FontSize="12" VerticalAlignment="Center"/>
+            </StackPanel>
+            <StackPanel Orientation="Horizontal" Spacing="5">
+                <Rectangle Width="16" Height="16" Fill="#FFC107" RadiusX="4" RadiusY="4"/>
+                <TextBlock Text="Standard" FontSize="12" VerticalAlignment="Center"/>
+            </StackPanel>
+            <StackPanel Orientation="Horizontal" Spacing="5">
+                <Rectangle Width="16" Height="16" Fill="#FF4D4D" RadiusX="4" RadiusY="4"/>
+                <TextBlock Text="Poor (Neck Strain)" FontSize="12" VerticalAlignment="Center"/>
+            </StackPanel>
+        </StackPanel>
+
+        <ItemsControl ItemsSource="{Binding Seats}" HorizontalAlignment="Center">
+            <ItemsControl.ItemsPanel>
+                <ItemsPanelTemplate>
+                    <ItemsWrapGrid Orientation="Horizontal" MaximumRowsOrColumns="{Binding TotalColumns}" HorizontalAlignment="Center"/>
+                </ItemsPanelTemplate>
+            </ItemsControl.ItemsPanel>
+            
+            <ItemsControl.ItemTemplate>
+                <DataTemplate>
+                    <Grid Margin="3" Width="30" Height="30" ToolTipService.ToolTip="{Binding Row}">
+                        <Rectangle Fill="{Binding SeatColor}" RadiusX="6" RadiusY="6" 
+                                   Opacity="{Binding IsAvailable, Converter={StaticResource BoolToOpacityConverter}}"/>
+                        
+                        <FontIcon Glyph="&#xE734;" FontSize="14" Foreground="White" 
+                                  Visibility="{Binding IsSweetSpot}" />
+                        
+                        <FontIcon Glyph="&#xE711;" FontSize="14" Foreground="Black" Opacity="0.5"
+                                  Visibility="{Binding !IsAvailable}" />
+                    </Grid>
+                </DataTemplate>
+            </ItemsControl.ItemTemplate>
+        </ItemsControl>
+
+    </StackPanel>
+</ContentDialog>
