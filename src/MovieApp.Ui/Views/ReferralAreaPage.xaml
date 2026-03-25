@@ -15,7 +15,7 @@
 
             <Border Style="{StaticResource SurfaceCardStyle}">
                 <StackPanel Spacing="12">
-                    <TextBox Header="Referral code" />
+                    <TextBox Header="Referral code" Text="{x:Bind ReferralCode, Mode=OneWay}" IsReadOnly="True" />
                     <ListView Height="400" />
                 </StackPanel>
             </Border>
