@@ -41,4 +41,13 @@ public static class ReferralSqlQueries
         INSERT INTO dbo.AmbassadorProfile (UserId, referral_code)
         VALUES (@userId, @referralCode);
         """;
+
+    /// <summary>
+    /// Gets the User ID who owns the given referral code.
+    /// </summary>
+    public const string SelectUserIdByReferralCode = """
+        SELECT UserId
+        FROM dbo.AmbassadorProfile
+        WHERE referral_code = @referralCode;
+        """;
 }
