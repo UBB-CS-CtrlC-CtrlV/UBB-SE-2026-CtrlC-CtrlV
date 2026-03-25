@@ -15,4 +15,13 @@ public static class ReferralSqlQueries
         WHERE ap.referral_code = @referralCode
           AND rl.EventID = @eventId;
         """;
+
+    /// <summary>
+    /// Checks if a referral code exists in the AmbassadorProfile table.
+    /// </summary>
+    public const string CheckReferralCodeExists = """
+        SELECT CAST(CASE WHEN EXISTS (
+            SELECT 1 FROM dbo.AmbassadorProfile WHERE referral_code = @referralCode
+        ) THEN 1 ELSE 0 END AS BIT);
+        """;
 }
