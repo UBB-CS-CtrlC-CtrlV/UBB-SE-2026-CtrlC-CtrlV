@@ -45,6 +45,33 @@ public sealed partial class EventManagementPage : Page
         return ViewModel.InitializeAsync();
     }
 
+    private async void SimulateUpdate_Click(object sender, RoutedEventArgs e)
+    {
+        var eventRepo = App.EventRepository;
+        var notifService = App.NotificationService;
+        
+        if (eventRepo != null && notifService != null)
+        {
+            var events = (await eventRepo.GetAllAsync()).ToList();
+            var firstEvent = events.FirstOrDefault();
+            
+            if (firstEvent != null)
+            {
+                // Drop price
+                firstEvent.TicketPrice -= 5;
+                if (firstEvent.TicketPrice < 0) firstEvent.TicketPrice = 0;
+                
+                // Add seats
+                firstEvent.CurrentEnrollment = firstEvent.MaxCapacity - 5;
+                if (firstEvent.CurrentEnrollment < 0) firstEvent.CurrentEnrollment = 0;
+                
+                await eventRepo.UpdateAsync(firstEvent);
+                
+                // Generate notifications
+                await notifService.GeneratePriceDropNotificationAsync(firstEvent.Id, firstEvent.Title);
+                await notifService.GenerateSeatsAvailableNotificationAsync(firstEvent.Id, firstEvent.Title);
+            }
+        }
     /// <summary>
     /// Applies the shared event search behavior to the event-management list state.
     /// </summary>

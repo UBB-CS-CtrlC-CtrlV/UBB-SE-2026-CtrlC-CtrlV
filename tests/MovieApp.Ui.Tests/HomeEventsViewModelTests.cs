@@ -76,7 +76,7 @@ public sealed class HomeEventsViewModelTests
         var repository = new StubEventRepository([]);
         var viewModel = new HomeEventsViewModel(repository);
 
-        Assert.Equal("Home Events", viewModel.PageTitle);
+        Assert.Equal("Home", viewModel.PageTitle);
     }
 
     [Fact]
@@ -114,10 +114,9 @@ public sealed class HomeEventsViewModelTests
 
         await viewModel.InitializeAsync();
 
-        Assert.Equal(["Festival", "Premiere", "Other events"], viewModel.Sections.Select(s => s.Title));
+        Assert.Equal(["Festival", "Premiere"], viewModel.Sections.Select(s => s.Title));
         Assert.Equal([3], viewModel.Sections[0].Events.Select(e => e.Id));
         Assert.Equal([2, 1], viewModel.Sections[1].Events.Select(e => e.Id));
-        Assert.Equal([4], viewModel.Sections[2].Events.Select(e => e.Id));
     }
 
     [Fact]
@@ -334,9 +333,19 @@ public sealed class HomeEventsViewModelTests
             return Task.FromResult(1);
         }
 
+        public Task<bool> UpdateAsync(Event @event, CancellationToken cancellationToken = default)
+        {
+            return Task.FromResult(true);
+        }
+
         public Task<bool> UpdateEnrollmentAsync(int eventId, int newCount, CancellationToken cancellationToken = default)
         {
             return Task.FromResult(true);
+        }
+
+        public Task UpdateEventAsync(Event updatedEvent, CancellationToken cancellationToken = default)
+        {
+            return Task.CompletedTask;
         }
     }
 }

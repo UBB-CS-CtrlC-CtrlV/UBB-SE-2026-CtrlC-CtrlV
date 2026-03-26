@@ -1,4 +1,4 @@
-﻿namespace MovieApp.Core.Models;
+namespace MovieApp.Core.Models;
 
 
 /// Simple in-app notification, typically tied to an event.
@@ -6,7 +6,7 @@
 
 public sealed class Notification
 {
-    public required int Id { get; init; }
+    public int Id { get; set; }
 
     public required int UserId { get; init; }
 

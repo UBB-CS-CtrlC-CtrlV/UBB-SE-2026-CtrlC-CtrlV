@@ -1,10 +1,10 @@
-﻿namespace MovieApp.Core.Models;
+namespace MovieApp.Core.Models;
 
 /// Link entity: a user can mark an event as favorite.
 /// Mirrors the style used by Participation (UserId + EventId).
 public sealed class FavoriteEvent
 {
-    public required int Id { get; init; }
+    public int Id { get; set; }
 
     public required int UserId { get; init; }
 

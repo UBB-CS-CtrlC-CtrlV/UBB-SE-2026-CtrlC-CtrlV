@@ -5,6 +5,7 @@
     xmlns:d="http://schemas.microsoft.com/expression/blend/2008"
     xmlns:mc="http://schemas.openxmlformats.org/markup-compatibility/2006"
     xmlns:controls="using:Microsoft.UI.Xaml.Controls"
+    xmlns:views="using:MovieApp.Ui.Views"
     xmlns:ui="using:MovieApp.Ui.Controls"
     mc:Ignorable="d">
 
@@ -95,29 +96,7 @@
                 </controls:TabViewItem>
 
                 <controls:TabViewItem Header="Favorites">
-                    <Grid
-                        Padding="0,16,0,0"
-                        ColumnSpacing="16">
-                        <Grid.ColumnDefinitions>
-                            <ColumnDefinition Width="2*" />
-                            <ColumnDefinition Width="*" />
-                        </Grid.ColumnDefinitions>
-
-                        <Border Style="{StaticResource SurfaceCardStyle}">
-                            <ListView Height="420" />
-                        </Border>
-
-                        <Border
-                            Grid.Column="1"
-                            Style="{StaticResource SurfaceCardStyle}">
-                            <StackPanel Spacing="10">
-                                <TextBox Header="Selected favorite" />
-                                <TextBox Header="Current price" />
-                                <TextBox Header="Seat availability" />
-                                <Button Content="Remove" />
-                            </StackPanel>
-                        </Border>
-                    </Grid>
+                    <Frame SourcePageType="views:FavoritesPage" />
                 </controls:TabViewItem>
 
                 <controls:TabViewItem Header="Manage">

@@ -89,6 +89,45 @@ public sealed class SqlEventRepository(DatabaseOptions databaseOptions) : IEvent
         return MapEvent(reader);
     }
 
+    public async Task<bool> UpdateAsync(Event @event, CancellationToken cancellationToken = default)
+    {
+        const string sql = """
+            UPDATE dbo.Events
+            SET Title = @title,
+                Description = @description,
+                PosterUrl = @posterUrl,
+                EventDateTime = @eventDateTime,
+                LocationReference = @locationReference,
+                TicketPrice = @ticketPrice,
+                EventType = @eventType,
+                HistoricalRating = @historicalRating,
+                MaxCapacity = @maxCapacity,
+                CurrentEnrollment = @currentEnrollment,
+                CreatorUserId = @creatorUserId
+            WHERE Id = @id;
+            """;
+
+        await using var connection = new SqlConnection(_connectionString);
+        await connection.OpenAsync(cancellationToken);
+
+        await using var command = new SqlCommand(sql, connection);
+        command.Parameters.AddWithValue("@id", @event.Id);
+        command.Parameters.AddWithValue("@title", @event.Title);
+        command.Parameters.AddWithValue("@description", (object?)@event.Description ?? DBNull.Value);
+        command.Parameters.AddWithValue("@posterUrl", @event.PosterUrl ?? string.Empty);
+        command.Parameters.AddWithValue("@eventDateTime", @event.EventDateTime);
+        command.Parameters.AddWithValue("@locationReference", @event.LocationReference ?? string.Empty);
+        command.Parameters.AddWithValue("@ticketPrice", @event.TicketPrice);
+        command.Parameters.AddWithValue("@eventType", @event.EventType ?? string.Empty);
+        command.Parameters.AddWithValue("@historicalRating", @event.HistoricalRating);
+        command.Parameters.AddWithValue("@maxCapacity", @event.MaxCapacity);
+        command.Parameters.AddWithValue("@currentEnrollment", @event.CurrentEnrollment);
+        command.Parameters.AddWithValue("@creatorUserId", @event.CreatorUserId);
+
+        var rowsAffected = await command.ExecuteNonQueryAsync(cancellationToken);
+        return rowsAffected > 0;
+    }
+
     public async Task<bool> UpdateEnrollmentAsync(int eventId, int newCount, CancellationToken cancellationToken = default)
     {
         const string sql = """
@@ -106,6 +145,42 @@ public sealed class SqlEventRepository(DatabaseOptions databaseOptions) : IEvent
 
         var rowsAffected = await command.ExecuteNonQueryAsync(cancellationToken);
         return rowsAffected > 0;
+    }
+
+    public async Task UpdateEventAsync(Event updatedEvent, CancellationToken cancellationToken = default)
+    {
+        const string sql = """
+            UPDATE dbo.Events
+            SET Title = @title,
+                Description = @description,
+                PosterUrl = @posterUrl,
+                EventDateTime = @eventDateTime,
+                LocationReference = @locationReference,
+                TicketPrice = @ticketPrice,
+                EventType = @eventType,
+                HistoricalRating = @historicalRating,
+                MaxCapacity = @maxCapacity,
+                CurrentEnrollment = @currentEnrollment
+            WHERE Id = @id;
+            """;
+
+        await using var connection = new SqlConnection(_connectionString);
+        await connection.OpenAsync(cancellationToken);
+
+        await using var command = new SqlCommand(sql, connection);
+        command.Parameters.AddWithValue("@id", updatedEvent.Id);
+        command.Parameters.AddWithValue("@title", updatedEvent.Title);
+        command.Parameters.AddWithValue("@description", updatedEvent.Description ?? (object)DBNull.Value);
+        command.Parameters.AddWithValue("@posterUrl", updatedEvent.PosterUrl);
+        command.Parameters.AddWithValue("@eventDateTime", updatedEvent.EventDateTime);
+        command.Parameters.AddWithValue("@locationReference", updatedEvent.LocationReference);
+        command.Parameters.AddWithValue("@ticketPrice", updatedEvent.TicketPrice);
+        command.Parameters.AddWithValue("@eventType", updatedEvent.EventType);
+        command.Parameters.AddWithValue("@historicalRating", updatedEvent.HistoricalRating);
+        command.Parameters.AddWithValue("@maxCapacity", updatedEvent.MaxCapacity);
+        command.Parameters.AddWithValue("@currentEnrollment", updatedEvent.CurrentEnrollment);
+
+        await command.ExecuteNonQueryAsync(cancellationToken);
     }
 
     /// <summary>

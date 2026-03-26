@@ -161,8 +161,90 @@ public sealed partial class EventCard : UserControl
         }
     }
 
+<<<<<<< Updated upstream
+    private async void RefreshComputedProperties()
+=======
+        var dialog = new SeatGuideDialog(capacity)
+        {
+            XamlRoot = this.XamlRoot 
+        };
+
+        await dialog.ShowAsync();
+    }
+
+    private async void Favorite_Click(object sender, Microsoft.UI.Xaml.RoutedEventArgs e)
+    {
+        if (EventModel is null) return;
+
+        var favoriteService = App.FavoriteEventService;
+        var currentUserService = App.CurrentUserService;
+
+        if (favoriteService is not null && currentUserService?.CurrentUser is not null)
+        {
+            await favoriteService.AddFavoriteAsync(currentUserService.CurrentUser.Id, EventModel.Id);
+            
+            // Show a simple success feedback (can use a dialog or just silently succeed)
+        }
+    }
+
     private void RefreshComputedProperties()
+>>>>>>> Stashed changes
     {
         Bindings.Update();
+        await UpdateFavoriteIconAsync();
+    }
+
+    private async System.Threading.Tasks.Task UpdateFavoriteIconAsync()
+    {
+        if (EventModel is null || App.FavoriteEventService is null || App.CurrentUserService?.CurrentUser is null) return;
+        
+        try
+        {
+            bool isFav = await App.FavoriteEventService.ExistsFavoriteAsync(App.CurrentUserService.CurrentUser.Id, EventModel.Id);
+            UpdateIconVisuals(isFav);
+        }
+        catch { }
+    }
+
+    private void UpdateIconVisuals(bool isFavorite)
+    {
+        if (FavoriteIcon == null) return;
+        
+        if (isFavorite)
+        {
+            FavoriteIcon.Glyph = "\uEB52"; // Solid heart
+            FavoriteIcon.Foreground = new SolidColorBrush(Windows.UI.Color.FromArgb(255, 239, 68, 68)); // Red color
+        }
+        else
+        {
+            FavoriteIcon.Glyph = "\uEB51"; // Outline heart
+            FavoriteIcon.ClearValue(FontIcon.ForegroundProperty); // Reset color
+        }
+    }
+
+    private async void ToggleFavorite_Click(object sender, RoutedEventArgs e)
+    {
+        if (EventModel is null) return;
+        
+        var favoriteService = App.FavoriteEventService;
+        var currentUser = App.CurrentUserService?.CurrentUser;
+        
+        if (favoriteService == null || currentUser == null) return;
+        
+        try
+        {
+            bool isFav = await favoriteService.ExistsFavoriteAsync(currentUser.Id, EventModel.Id);
+            if (isFav)
+            {
+                await favoriteService.RemoveFavoriteAsync(currentUser.Id, EventModel.Id);
+                UpdateIconVisuals(false);
+            }
+            else
+            {
+                await favoriteService.AddFavoriteAsync(currentUser.Id, EventModel.Id);
+                UpdateIconVisuals(true);
+            }
+        }
+        catch { }
     }
 }

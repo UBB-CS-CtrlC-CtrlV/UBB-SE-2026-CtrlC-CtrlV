@@ -25,6 +25,11 @@ public partial class App : Application
     public static IAmbassadorRepository? AmbassadorRepository { get; private set; }
     public static IReferralValidator? ReferralValidator { get; private set; }
     public static MainWindow? CurrentMainWindow { get; private set; }
+    public static IConfigurationRoot? Configuration { get; private set; }
+    public static IMarathonRepository? MarathonRepository { get; private set; }
+    
+    public static IFavoriteEventService? FavoriteEventService { get; private set; }
+    public static INotificationService? NotificationService { get; private set; }
     public static int CurrentUserId { get; private set; }
     public static IMovieRepository? MovieRepository { get; private set; }
     public static IUserSlotMachineStateRepository? SlotMachineStateRepository { get; private set; }
@@ -55,7 +60,7 @@ public partial class App : Application
             Configuration = configuration;
             var databaseOptions = new DatabaseOptions
             {
-                ConnectionString = configuration["Database:ConnectionString"]
+                ConnectionString = connectionString
                     ?? throw new InvalidOperationException("Missing configuration value 'Database:ConnectionString'."),
             };
             var bootstrapUserOptions = new BootstrapUserOptions
@@ -71,6 +76,8 @@ public partial class App : Application
             var triviaRepository = new SqlTriviaRepository(databaseOptions);
             var triviaRewardRepository = new SqlTriviaRewardRepository(databaseOptions);
             var ambassadorRepository = new SqlAmbassadorRepository(databaseOptions);
+            var favoriteEventRepository = new SqlFavoriteEventRepository(databaseOptions);
+            var notificationRepository = new SqlNotificationRepository(databaseOptions);
             var movieRepository = new SqlMovieRepository(databaseOptions);
             var slotMachineStateRepository = new SqlUserSlotMachineStateRepository(databaseOptions);
             var userMovieDiscountRepository = new SqlUserRewardRepository(databaseOptions);
@@ -94,6 +101,16 @@ public partial class App : Application
             TriviaRepository = triviaRepository;
             TriviaRewardRepository = triviaRewardRepository;
             AmbassadorRepository = ambassadorRepository;
+            ReferralValidator = new MovieApp.Core.Services.ReferralValidator(ambassadorRepository);
+            
+            FavoriteEventService = new FavoriteEventService(favoriteEventRepository, eventRepository);
+            NotificationService = new NotificationService(notificationRepository, favoriteEventRepository);
+
+            var favoriteEventRepository = new SqlFavoriteEventRepository(databaseOptions);
+            var notificationRepository = new SqlNotificationRepository(databaseOptions);
+
+            FavoriteEventService = new FavoriteEventService(favoriteEventRepository, eventRepository);
+            NotificationService = new NotificationService(notificationRepository, favoriteEventRepository, eventRepository);
             ReferralValidator = new ReferralValidator(ambassadorRepository);
             CurrentUserId = _currentUserService.CurrentUser.Id;
             MovieRepository = movieRepository;
@@ -107,9 +124,26 @@ public partial class App : Application
 
             viewModel = new MainViewModel(_currentUserService.CurrentUser);
         }
-        catch (Exception exception)
+        catch (Exception)
         {
-            viewModel = MainViewModel.CreateStartupError(BuildStartupErrorMessage(exception));
+            // If LocalDB is not found, we still want to show the app in DEMO MODE as requested.
+            if (exception.Message.Contains("Local Database Runtime") || exception.InnerException?.Message.Contains("Local Database Runtime") == true)
+            {
+                var dummyUserRepo = new DummyUserRepository();
+                _currentUserService = new CurrentUserService(dummyUserRepo, new BootstrapUserOptions { AuthProvider = "dummy", AuthSubject = "default-user" });
+                _currentUserService.InitializeAsync().Wait();
+                CurrentUserService = _currentUserService;
+
+                var favoriteRepo = new InMemoryFavoriteEventRepository();
+                FavoriteEventService = new FavoriteEventService(favoriteRepo, UnavailableEventRepository.Instance);
+                NotificationService = new NotificationService(new InMemoryNotificationRepository(), favoriteRepo, UnavailableEventRepository.Instance);
+
+                viewModel = new MainViewModel(_currentUserService.CurrentUser);
+            }
+            else
+            {
+                viewModel = MainViewModel.CreateStartupError(BuildStartupErrorMessage(exception));
+            }
         }
 
         CurrentMainWindow = new MainWindow(viewModel);

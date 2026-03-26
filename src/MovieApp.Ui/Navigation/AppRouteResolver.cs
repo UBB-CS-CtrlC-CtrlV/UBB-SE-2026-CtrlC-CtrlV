@@ -1,4 +1,4 @@
-﻿using MovieApp.Ui.Views;
+using MovieApp.Ui.Views;
 
 namespace MovieApp.Ui.Navigation;
 
@@ -14,12 +14,16 @@ public static class AppRouteResolver
     public const string TriviaWheel = "TriviaWheel";
     public const string Marathons = "Marathons";
 
+    public const string Slots = "Slots";
+    public const string Favorites = "Favorites";
+
     public static Type ResolvePageType(string? tag)
     {
         return tag switch
         {
             Home => typeof(HomePage),
             MyEvents => typeof(MyEventsPage),
+            Favorites => typeof(FavoritesPage),
             EventManagement => typeof(EventManagementPage),
             Notifications => typeof(NotificationsPage),
             Rewards => typeof(RewardsPage),

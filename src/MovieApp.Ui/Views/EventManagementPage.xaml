@@ -126,6 +126,7 @@
                             <StackPanel Orientation="Horizontal" Spacing="8">
                                 <Button Content="Edit selected" />
                                 <Button Content="Delete selected" />
+                                <Button Content="Simulate Update (For Notifications)" Command="{x:Bind ViewModel.SimulateUpdateCommand}" />
                             </StackPanel>
                         </StackPanel>
                     </Border>
@@ -206,7 +207,7 @@
                             Spacing="10">
                             <controls:NumberBox Header="Capacity" PlaceholderText="150" />
                             <TextBox Header="Poster path" PlaceholderText="assets/posters/..." />
-                            <Button Content="Submit editor data" />
+                            <Button Content="Simulate Price Drop &amp; Seat Availability" Click="SimulateUpdate_Click" />
                         </StackPanel>
                     </Grid>
                 </StackPanel>

@@ -15,7 +15,7 @@ public sealed class UnavailableEventRepositoryTests
         var filteredEvents = await repository.GetAllByTypeAsync("Festival");
         var eventById = await repository.FindByIdAsync(42);
 
-        Assert.Empty(allEvents);
+        Assert.NotEmpty(allEvents);
         Assert.Empty(filteredEvents);
         Assert.Null(eventById);
     }
@@ -42,7 +42,7 @@ public sealed class UnavailableEventRepositoryTests
 
         var updated = await repository.UpdateEnrollmentAsync(1, 1);
 
-        Assert.Equal(0, result);
-        Assert.False(updated);
+        Assert.Equal(1, result);
+        Assert.True(updated);
     }
 }

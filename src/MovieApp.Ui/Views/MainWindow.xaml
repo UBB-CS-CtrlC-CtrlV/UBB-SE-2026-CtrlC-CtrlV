@@ -89,6 +89,10 @@
                     Icon="Home"
                     Tag="Home" />
                 <controls:NavigationViewItem
+                    Content="Favorites"
+                    Icon="Heart"
+                    Tag="Favorites" />
+                <controls:NavigationViewItem
                     Content="My Events"
                     Icon="Calendar"
                     Tag="MyEvents" />

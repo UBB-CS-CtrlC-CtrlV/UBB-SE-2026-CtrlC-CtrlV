@@ -79,6 +79,7 @@ public sealed class SlotMachineServiceTests
         public Task<Event?> FindByIdAsync(int id, CancellationToken cancellationToken = default) => throw new NotImplementedException();
         public Task<int> AddAsync(Event @event, CancellationToken cancellationToken = default) => throw new NotImplementedException();
         public Task<bool> UpdateEnrollmentAsync(int eventId, int newCount, CancellationToken cancellationToken = default) => throw new NotImplementedException();
+        public Task UpdateEventAsync(Event updatedEvent, CancellationToken cancellationToken = default) => Task.CompletedTask;
     }
 
     private sealed class InMemoryDiscountRepo : IUserMovieDiscountRepository
@@ -105,7 +106,7 @@ public sealed class SlotMachineServiceTests
         var eventRepo = new InMemoryEventRepo();
         var discountRepo = new InMemoryDiscountRepo();
 
-        var initialState = new UserSpinData { UserId = 1, DailySpinsRemaining = 1, BonusSpins = 0, LoginStreak = 3, EventSpinRewardsToday = 0 };
+        var initialState = new UserSpinData { UserId = 1, DailySpinsRemaining = 1, BonusSpins = 0, LoginStreak = 3, EventSpinRewardsToday = 0, LastSlotSpinReset = DateTime.UtcNow };
         await stateRepo.CreateAsync(initialState);
 
         var service = new SlotMachineService(stateRepo, movieRepo, eventRepo, discountRepo);
@@ -126,7 +127,7 @@ public sealed class SlotMachineServiceTests
         var eventRepo = new InMemoryEventRepo();
         var discountRepo = new InMemoryDiscountRepo();
 
-        var initialState = new UserSpinData { UserId = 2, DailySpinsRemaining = 0, BonusSpins = 0, LoginStreak = 0, EventSpinRewardsToday = 0 };
+        var initialState = new UserSpinData { UserId = 2, DailySpinsRemaining = 0, BonusSpins = 0, LoginStreak = 0, EventSpinRewardsToday = 0, LastSlotSpinReset = DateTime.UtcNow };
         await stateRepo.CreateAsync(initialState);
 
         var service = new SlotMachineService(stateRepo, movieRepo, eventRepo, discountRepo);

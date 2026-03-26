@@ -4,6 +4,8 @@
     xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
     xmlns:d="http://schemas.microsoft.com/expression/blend/2008"
     xmlns:mc="http://schemas.openxmlformats.org/markup-compatibility/2006"
+    xmlns:controls="using:Microsoft.UI.Xaml.Controls"
+    xmlns:models="using:MovieApp.Core.Models"
     mc:Ignorable="d">
 
     <ScrollViewer Padding="20">
@@ -14,20 +16,62 @@
             </Grid.ColumnDefinitions>
 
             <Border Style="{StaticResource SurfaceCardStyle}">
-                <ListView Height="480" />
+<<<<<<< Updated upstream
+                <ScrollViewer HorizontalScrollBarVisibility="Disabled" VerticalScrollBarVisibility="Auto" Height="480">
+                    <ItemsControl ItemsSource="{Binding Notifications}">
+                        <ItemsControl.ItemsPanel>
+                            <ItemsPanelTemplate>
+                                <StackPanel Spacing="12" />
+                            </ItemsPanelTemplate>
+                        </ItemsControl.ItemsPanel>
+
+                        <ItemsControl.ItemTemplate>
+                            <DataTemplate>
+                                <Border Padding="16" Background="{ThemeResource CardBackgroundFillColorDefaultBrush}" CornerRadius="8" BorderBrush="{ThemeResource CardStrokeColorDefaultBrush}" BorderThickness="1">
+                                    <Grid ColumnSpacing="12">
+                                        <Grid.ColumnDefinitions>
+                                            <ColumnDefinition Width="*" />
+                                            <ColumnDefinition Width="Auto" />
+                                        </Grid.ColumnDefinitions>
+                                        <StackPanel Spacing="4">
+                                            <TextBlock FontWeight="Bold" Text="{Binding Type}" />
+                                            <TextBlock Text="{Binding Message}" TextWrapping="Wrap" />
+                                            <TextBlock FontSize="12" Opacity="0.5" Text="{Binding CreatedAt}" />
+                                        </StackPanel>
+                                        <Button Grid.Column="1" VerticalAlignment="Center" Content="Dismiss" Click="DismissNotification_Click" DataContext="{Binding}" />
+                                    </Grid>
+                                </Border>
+                            </DataTemplate>
+                        </ItemsControl.ItemTemplate>
+                    </ItemsControl>
+                </ScrollViewer>
+=======
+                <ListView Height="480" ItemsSource="{x:Bind ViewModel.Notifications, Mode=OneWay}" SelectedItem="{x:Bind ViewModel.SelectedNotification, Mode=TwoWay}">
+                    <ListView.ItemTemplate>
+                        <DataTemplate x:DataType="models:Notification">
+                            <StackPanel>
+                                <TextBlock Text="{x:Bind Type}" FontWeight="SemiBold" />
+                                <TextBlock Text="{x:Bind Message}" TextWrapping="Wrap" />
+                            </StackPanel>
+                        </DataTemplate>
+                    </ListView.ItemTemplate>
+                </ListView>
+>>>>>>> Stashed changes
             </Border>
 
             <Border
                 Grid.Column="1"
                 Style="{StaticResource SurfaceCardStyle}">
                 <StackPanel Spacing="10">
-                    <TextBox Header="Type" />
-                    <TextBox Header="Event" />
+                    <TextBox Header="Type" Text="{x:Bind ViewModel.SelectedNotification.Type, Mode=OneWay}" IsReadOnly="True" />
+                    <TextBox Header="Event" Text="{x:Bind ViewModel.SelectedNotification.EventId, Mode=OneWay}" IsReadOnly="True" />
                     <TextBox
                         AcceptsReturn="True"
                         Header="Message"
+                        Text="{x:Bind ViewModel.SelectedNotification.Message, Mode=OneWay}"
+                        IsReadOnly="True"
                         Height="220" />
-                    <Button Content="Open event" />
+                    <Button Content="Mark as read / Remove" Command="{x:Bind ViewModel.MarkAsReadCommand}" />
                 </StackPanel>
             </Border>
         </Grid>
