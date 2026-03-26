@@ -5,6 +5,7 @@
     xmlns:d="http://schemas.microsoft.com/expression/blend/2008"
     xmlns:mc="http://schemas.openxmlformats.org/markup-compatibility/2006"
     xmlns:controls="using:Microsoft.UI.Xaml.Controls"
+    xmlns:ui="using:MovieApp.Ui.Controls"
     mc:Ignorable="d">
 
     <ScrollViewer
@@ -29,7 +30,9 @@
                         <ColumnDefinition Width="Auto" />
                     </Grid.ColumnDefinitions>
 
-                    <AutoSuggestBox PlaceholderText="Search event rows" />
+                    <ui:EventSearchBox
+                        PlaceholderText="Search event rows by title or type"
+                        SearchTextChanged="SearchBox_SearchTextChanged" />
                     <ComboBox
                         Grid.Column="1"
                         PlaceholderText="Sort">

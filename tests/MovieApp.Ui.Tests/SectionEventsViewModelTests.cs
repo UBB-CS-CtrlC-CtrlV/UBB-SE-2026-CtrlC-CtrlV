@@ -78,6 +78,24 @@ public sealed class SectionEventsViewModelTests
         Assert.Equal([2], viewModel.VisibleEvents.Select(e => e.Id));
     }
 
+    [Fact]
+    public async Task SetSearchText_MatchesEventTypeOnlyInsideSelectedSection()
+    {
+        var repository = new StubEventRepository(BuildSampleEvents());
+        var context = new SectionNavigationContext
+        {
+            Title = "Premiere",
+            GroupingValue = "Premiere",
+        };
+
+        var viewModel = new SectionEventsViewModel(repository, context);
+
+        await viewModel.InitializeAsync();
+        viewModel.SetSearchText("premiere");
+
+        Assert.Equal([1, 2], viewModel.VisibleEvents.Select(e => e.Id));
+    }
+
     private static IReadOnlyList<Event> BuildSampleEvents()
     {
         return

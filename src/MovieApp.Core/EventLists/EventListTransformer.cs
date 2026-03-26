@@ -48,8 +48,13 @@ public static class EventListTransformer
 
     /// <summary>
     /// Searches across the user-visible text fields for an event,
-    /// including its title, description, location and type.
+    /// including its title, description, location, and event type.
     /// </summary>
+    /// <remarks>
+    /// This method is intentionally screen-agnostic. It filters only the sequence
+    /// supplied by the caller, so different event-list screens can reuse the same
+    /// search behavior without sharing state.
+    /// </remarks>
     public static IEnumerable<Event> ApplySearch(IEnumerable<Event> events, string? searchText)
     {
         ArgumentNullException.ThrowIfNull(events);

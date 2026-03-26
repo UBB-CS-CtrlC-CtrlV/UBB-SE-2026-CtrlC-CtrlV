@@ -13,6 +13,10 @@
                 Style="{ThemeResource HeaderTextBlockStyle}"
                 Text="{Binding PageTitle}" />
 
+            <ui:EventSearchBox
+                PlaceholderText="Search events by title or type"
+                SearchTextChanged="SearchBox_SearchTextChanged" />
+
             <Border Style="{StaticResource SurfaceCardStyle}">
                 <StackPanel Spacing="12">
                     <TextBlock

@@ -78,6 +78,16 @@
                         HorizontalAlignment="Center"
                         Click="SpinButton_Click" />
 
+                    <TextBlock
+                        x:Name="TriviaAvailabilityText"
+                        MaxWidth="320"
+                        HorizontalAlignment="Center"
+                        Opacity="0.8"
+                        TextAlignment="Center"
+                        TextWrapping="WrapWholeWords"
+                        Visibility="Collapsed"
+                        Style="{StaticResource SectionCaptionTextStyle}" />
+
                     <Border Style="{StaticResource StrongSurfaceCardStyle}" Padding="12">
                         <StackPanel Spacing="4">
                             <TextBlock Text="How to win" FontWeight="SemiBold" />
@@ -102,10 +112,12 @@
                         VerticalAlignment="Center"
                         HorizontalAlignment="Center">
                         <TextBlock
+                            x:Name="IdleTitleText"
                             Text="Spin the wheel to begin!"
                             Style="{ThemeResource TitleTextBlockStyle}"
                             HorizontalAlignment="Center" />
                         <TextBlock
+                            x:Name="IdleDescriptionText"
                             Text="A category will be selected and you'll answer 20 trivia questions."
                             TextWrapping="WrapWholeWords"
                             HorizontalAlignment="Center"

@@ -80,18 +80,34 @@ public sealed partial class TriviaWheelPage : Page
 
             await _viewModel.InitializeAsync();
         }
+        else
+        {
+            TriviaAvailabilityText.Text = "Trivia unavailable: no database connection.";
+            TriviaAvailabilityText.Visibility = Visibility.Visible;
+        }
 
         if (_viewModel?.CanSpin == false)
         {
-            RemainingSpinsText.Visibility = Visibility.Collapsed;
-            StartCountdown();
+            if (_viewModel.IsTriviaAvailable)
+            {
+                RemainingSpinsText.Visibility = Visibility.Collapsed;
+                StartCountdown();
+            }
+            else
+            {
+                TriviaAvailabilityText.Text = _viewModel.AvailabilityMessage;
+                TriviaAvailabilityText.Visibility = Visibility.Visible;
+            }
         }
         else
         {
             RemainingSpinsText.Text = _viewModel?.RemainingSpinsText ?? "Loading...";
+            TriviaAvailabilityText.Visibility = Visibility.Collapsed;
         }
 
-        SpinButton.IsEnabled = _viewModel?.CanSpin ?? false;
+        SpinButton.IsEnabled = _viewModel is not null
+            && _viewModel.CanSpin
+            && _viewModel.IsTriviaAvailable;
         DrawWheel();
     }
 
@@ -227,6 +243,13 @@ public sealed partial class TriviaWheelPage : Page
     {
         if (_viewModel is null) return;
         await _viewModel.LoadQuestionsAsync(category);
+
+        if (_viewModel.NoQuestionsAvailable)
+        {
+            ShowNoQuestionsState();
+            return;
+        }
+
         ShowCurrentQuestion();
     }
 
@@ -301,6 +324,20 @@ public sealed partial class TriviaWheelPage : Page
         IdlePanel.Visibility = Visibility.Collapsed;
         ResultsPanel.Visibility = Visibility.Collapsed;
         PlayingPanel.Visibility = Visibility.Visible;
+    }
+
+    /// <summary>
+    /// Returns the page to the idle layout with a message explaining that the category has no questions.
+    /// </summary>
+    private void ShowNoQuestionsState()
+    {
+        IdlePanel.Visibility = Visibility.Visible;
+        ResultsPanel.Visibility = Visibility.Collapsed;
+        PlayingPanel.Visibility = Visibility.Collapsed;
+
+        IdleTitleText.Text = "No trivia available";
+        IdleDescriptionText.Text = _viewModel?.EmptyStateMessage
+            ?? "No trivia questions are available for this category yet.";
     }
 
     private void ShowResults()
