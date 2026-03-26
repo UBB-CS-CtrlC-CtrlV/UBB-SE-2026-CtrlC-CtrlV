@@ -1,12 +1,16 @@
+using Microsoft.UI.Text;
 using Microsoft.UI.Xaml;
 using Microsoft.UI.Xaml.Controls;
 using Microsoft.UI.Xaml.Input;
+using Microsoft.UI.Xaml.Media;
+using Microsoft.UI.Xaml.Shapes;
 using MovieApp.Core.Models;
 using MovieApp.Core.Models.Movie;
 using MovieApp.Ui.Controls;
 using MovieApp.Ui.ViewModels;
 using System.Globalization;
 using Windows.System;
+using Windows.UI;
 
 namespace MovieApp.Ui.Views;
 
@@ -43,6 +47,7 @@ public sealed partial class SlotMachinePage : Page
         viewModel.JackpotHit += OnJackpotHit;
         DataContext = viewModel;
         await viewModel.InitializeAsync();
+        this.Focus(FocusState.Programmatic);
     }
 
     private void OnKeyDown(object sender, KeyRoutedEventArgs e)
@@ -55,70 +60,163 @@ public sealed partial class SlotMachinePage : Page
             }
 
             e.Handled = true;
+            this.Focus(FocusState.Programmatic);
         }
     }
 
     private async void OnJackpotHit(Movie movie, int discountPercentage)
     {
+        var gold   = new SolidColorBrush(Color.FromArgb(0xFF, 0xC8, 0x97, 0x1A));
+        var darkBg = new SolidColorBrush(Color.FromArgb(0xFF, 0x0B, 0x0B, 0x1E));
+        var lightText = new SolidColorBrush(Color.FromArgb(0xFF, 0xE8, 0xE8, 0xFF));
+
         var dialog = new ContentDialog
         {
             XamlRoot = XamlRoot,
-            Title = "🎰 JACKPOT! 🎰",
-            PrimaryButtonText = "Awesome!",
-            DefaultButton = ContentDialogButton.Primary,
-            Content = BuildJackpotDialogContent(movie, discountPercentage),
+            DefaultButton = ContentDialogButton.None,
         };
 
+        // Casino colour overrides (title area, border, background)
+        dialog.Resources["ContentDialogBackground"]      = darkBg;
+        dialog.Resources["ContentDialogForeground"]      = lightText;
+        dialog.Resources["ContentDialogTitleForeground"] = gold;
+        dialog.Resources["ContentDialogBorderBrush"]     = gold;
+
+        // Content is built after the dialog so the close button can reference it
+        dialog.Content = BuildJackpotDialogContent(movie, discountPercentage, dialog);
+
         await dialog.ShowAsync();
+        this.Focus(FocusState.Programmatic);
     }
 
-    private static UIElement BuildJackpotDialogContent(Movie movie, int discountPercentage)
+    private static UIElement BuildJackpotDialogContent(Movie movie, int discountPercentage, ContentDialog dialog)
     {
-        var layout = new StackPanel { Spacing = 16, HorizontalAlignment = HorizontalAlignment.Center };
+        var gold      = new SolidColorBrush(Color.FromArgb(0xFF, 0xC8, 0x97, 0x1A));
+        var goldHover = new SolidColorBrush(Color.FromArgb(0xFF, 0xE0, 0xAA, 0x20));
+        var goldPress = new SolidColorBrush(Color.FromArgb(0xFF, 0xA0, 0x78, 0x14));
+        var dimGold   = new SolidColorBrush(Color.FromArgb(0xFF, 0x6A, 0x4E, 0x0F));
+        var dimText   = new SolidColorBrush(Color.FromArgb(0xFF, 0xA0, 0xA0, 0xC0));
+        var goldBg    = new SolidColorBrush(Color.FromArgb(0x40, 0xC8, 0x97, 0x1A));
+        var darkText  = new SolidColorBrush(Color.FromArgb(0xFF, 0x0B, 0x0B, 0x1E));
+        var ruleBrush = new SolidColorBrush(Color.FromArgb(0x80, 0xC8, 0x97, 0x1A));
 
+        var layout = new StackPanel
+        {
+            Spacing = 18,
+            HorizontalAlignment = HorizontalAlignment.Center,
+            MinWidth = 320,
+        };
+
+        // ── Title (centered, owned by content so we control alignment) ──
         layout.Children.Add(new TextBlock
         {
-            Text = "🎰  🎰  🎰",
-            FontSize = 48,
+            Text = "🎰  JACKPOT!  🎰",
+            FontSize = 22,
+            FontWeight = FontWeights.Bold,
+            Foreground = gold,
             HorizontalAlignment = HorizontalAlignment.Center,
+            TextAlignment = TextAlignment.Center,
+            CharacterSpacing = 40,
         });
 
-        layout.Children.Add(new TextBlock
-        {
-            Text = "All three reels matched a movie!",
-            FontSize = 14,
-            HorizontalAlignment = HorizontalAlignment.Center,
-            Opacity = 0.8,
-        });
+        layout.Children.Add(new Rectangle { Height = 1, Fill = ruleBrush, HorizontalAlignment = HorizontalAlignment.Stretch });
+        layout.Children.Add(BuildLightStrip(gold, dimGold));
+        layout.Children.Add(new Rectangle { Height = 1, Fill = ruleBrush, HorizontalAlignment = HorizontalAlignment.Stretch });
 
         layout.Children.Add(new TextBlock
         {
             Text = movie.Title,
             FontSize = 22,
-            FontWeight = Microsoft.UI.Text.FontWeights.Bold,
+            FontWeight = FontWeights.Bold,
+            Foreground = gold,
             HorizontalAlignment = HorizontalAlignment.Center,
             TextAlignment = TextAlignment.Center,
             TextWrapping = TextWrapping.Wrap,
+            MaxWidth = 340,
         });
 
-        var discountBorder = new Border
+        layout.Children.Add(new TextBlock
         {
-            Background = new Microsoft.UI.Xaml.Media.SolidColorBrush(
-                Windows.UI.Color.FromArgb(0x40, 0x16, 0xA3, 0x4A)),
-            CornerRadius = new CornerRadius(8),
-            Padding = new Thickness(16, 12, 16, 12),
+            Text = "All three reels aligned — you hit the jackpot!",
+            FontSize = 12,
+            Foreground = dimText,
             HorizontalAlignment = HorizontalAlignment.Center,
-            Child = new TextBlock
+            TextAlignment = TextAlignment.Center,
+        });
+
+        layout.Children.Add(new Border
+        {
+            Background = goldBg,
+            BorderBrush = gold,
+            BorderThickness = new Thickness(1),
+            CornerRadius = new CornerRadius(12),
+            Padding = new Thickness(24, 14, 24, 14),
+            HorizontalAlignment = HorizontalAlignment.Center,
+            Child = new StackPanel
             {
-                Text = $"🎉 You earned a {discountPercentage}% discount!",
-                FontSize = 18,
-                FontWeight = Microsoft.UI.Text.FontWeights.SemiBold,
+                Spacing = 2,
                 HorizontalAlignment = HorizontalAlignment.Center,
+                Children =
+                {
+                    new TextBlock
+                    {
+                        Text = $"{discountPercentage}%",
+                        FontSize = 44,
+                        FontWeight = FontWeights.Bold,
+                        Foreground = gold,
+                        HorizontalAlignment = HorizontalAlignment.Center,
+                    },
+                    new TextBlock
+                    {
+                        Text = "DISCOUNT EARNED",
+                        FontSize = 11,
+                        FontWeight = FontWeights.Bold,
+                        Foreground = gold,
+                        HorizontalAlignment = HorizontalAlignment.Center,
+                        CharacterSpacing = 120,
+                    },
+                },
             },
+        });
+
+        layout.Children.Add(new Rectangle { Height = 1, Fill = ruleBrush, HorizontalAlignment = HorizontalAlignment.Stretch });
+        layout.Children.Add(BuildLightStrip(dimGold, gold));
+        layout.Children.Add(new Rectangle { Height = 1, Fill = ruleBrush, HorizontalAlignment = HorizontalAlignment.Stretch });
+
+        // ── Collect button (centered, gold, owned by content) ──
+        var collectButton = new Button
+        {
+            Content = "🎉  Collect!",
+            HorizontalAlignment = HorizontalAlignment.Center,
+            Background = gold,
+            Foreground = darkText,
+            CornerRadius = new CornerRadius(10),
+            Padding = new Thickness(32, 12, 32, 12),
+            FontSize = 16,
+            FontWeight = FontWeights.Bold,
+            IsTabStop = false,
         };
-        layout.Children.Add(discountBorder);
+        collectButton.Resources["ButtonBackgroundPointerOver"] = goldHover;
+        collectButton.Resources["ButtonForegroundPointerOver"] = darkText;
+        collectButton.Resources["ButtonBackgroundPressed"]     = goldPress;
+        collectButton.Resources["ButtonForegroundPressed"]     = darkText;
+        collectButton.Click += (_, _) => dialog.Hide();
+        layout.Children.Add(collectButton);
 
         return layout;
+    }
+
+    private static StackPanel BuildLightStrip(SolidColorBrush primary, SolidColorBrush secondary)
+    {
+        var strip = new StackPanel
+        {
+            Orientation = Orientation.Horizontal,
+            HorizontalAlignment = HorizontalAlignment.Center,
+            Spacing = 8,
+        };
+        for (int i = 0; i < 11; i++)
+            strip.Children.Add(new Ellipse { Width = 10, Height = 10, Fill = i % 2 == 0 ? primary : secondary });
+        return strip;
     }
 
     private async void ViewEventButton_Click(object sender, RoutedEventArgs e)
@@ -176,6 +274,7 @@ public sealed partial class SlotMachinePage : Page
         };
 
         await dialog.ShowAsync();
+        this.Focus(FocusState.Programmatic);
 
         // SM.30: immediately update the spin counter after a possible bonus-spin grant
         if (DataContext is SlotMachineViewModel vm)
