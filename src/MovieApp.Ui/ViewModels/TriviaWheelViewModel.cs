@@ -132,12 +132,12 @@ public sealed class TriviaWheelViewModel : ViewModelBase
     public double ProgressValue => CurrentQuestionIndex / 20.0 * 100;
     public string ProgressText => $"{CurrentQuestionIndex}/20";
 
-    // ── Methods called by the page code-behind ──────────────────────────────
-
     /// <summary>
-    /// Loads up to 20 randomised questions for the chosen category
-    /// and sets the first question as current.
+    /// Starts a new session for the selected category.
     /// </summary>
+    /// <remarks>
+    /// Question randomization and the local daily-spin toggle both happen here.
+    /// </remarks>
     public async Task LoadQuestionsAsync(string category)
     {
         SelectedCategory = category;
@@ -160,8 +160,7 @@ public sealed class TriviaWheelViewModel : ViewModelBase
     }
 
     /// <summary>
-    /// Evaluates the selected answer, updates the score,
-    /// and moves to the next question or ends the session.
+    /// Evaluates the selected answer, updates the score, and advances the session.
     /// </summary>
     public void SubmitAnswer(char selectedOption)
     {
@@ -189,8 +188,7 @@ public sealed class TriviaWheelViewModel : ViewModelBase
     }
 
     /// <summary>
-    /// Marks the hint as used — the page handles
-    /// which answer options to hide visually.
+    /// Marks the one-time hint as consumed for the current session.
     /// </summary>
     public void UseHint()
     {
@@ -212,8 +210,6 @@ public sealed class TriviaWheelViewModel : ViewModelBase
 
         return incorrect;
     }
-
-    // ── Private helpers ─────────────────────────────────────────────────────
 
     private async Task GrantRewardAsync()
     {

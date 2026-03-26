@@ -28,12 +28,11 @@ public sealed class SlotMachineService
     {
         var state = await _stateRepository.GetByUserIdAsync(userId) ?? throw new InvalidOperationException("User state not found");
 
-        // Check if daily spins need to be reset (more than a day has passed)
         var today = DateTime.UtcNow.Date;
         var lastReset = state.LastSlotSpinReset.Date;
         if (lastReset < today)
         {
-            state.ResetDailySpins(5); // Reset to 5 daily spins
+            state.ResetDailySpins(5);
         }
 
         var totalSpins = state.DailySpinsRemaining + state.BonusSpins;
@@ -51,7 +50,7 @@ public sealed class SlotMachineService
         var actor = await GetRandomActorAsync();
         var director = await GetRandomDirectorAsync();
 
-        // find matching events and jackpot
+        // Match current reel results back to events and jackpot-eligible movies.
         var matchingEvents = await GetMatchingEventsAsync(genre.Id, actor.Id, director.Id);
         var jackpotMovie = await FindJackpotMovieAsync(genre.Id, actor.Id, director.Id);
 
@@ -82,13 +81,13 @@ public sealed class SlotMachineService
     {
         var state = await _stateRepository.GetByUserIdAsync(userId) ?? throw new InvalidOperationException("User state not found");
 
-        // Check if daily spins need to be reset (more than a day has passed)
+        // Availability reads share the same reset rule as actual spins.
         var today = DateTime.UtcNow.Date;
         var lastReset = state.LastSlotSpinReset.Date;
         if (lastReset < today)
         {
-            state.ResetDailySpins(5); // Reset to 5 daily spins
-            await _stateRepository.UpdateAsync(state); // Persist the reset
+            state.ResetDailySpins(5);
+            await _stateRepository.UpdateAsync(state);
         }
 
         return state.DailySpinsRemaining + state.BonusSpins;
@@ -120,7 +119,7 @@ public sealed class SlotMachineService
         return false;
     }
 
-    // Helpers: these use the movie and event repositories to select from active movies
+    // Helper methods expose the reference data needed by the UI animation layer.
     public async Task<Genre> GetRandomGenreAsync(CancellationToken cancellationToken = default)
     {
         var genres = await _movieRepository.GetGenresAsync(cancellationToken);

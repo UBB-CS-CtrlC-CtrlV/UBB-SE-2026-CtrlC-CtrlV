@@ -16,9 +16,7 @@ public sealed partial class MarathonsPage : Page
 
     public MarathonsPage()
     {
-        // Build dependencies the same way HomePage and ReferralAreaPage do —
-        // read the connection string from App.Configuration and create
-        // the repo and service directly here.
+        // Temporary local composition for the marathon feature.
         var connectionString = App.Configuration?["Database:ConnectionString"]
             ?? throw new InvalidOperationException("Missing connection string.");
 
@@ -31,7 +29,6 @@ public sealed partial class MarathonsPage : Page
         Loaded += async (_, _) => await ViewModel.LoadAsync();
     }
 
-    // Called when the user selects a marathon from the left list
     private async void MarathonListView_SelectionChanged(
         object sender, SelectionChangedEventArgs e)
     {
@@ -39,17 +36,16 @@ public sealed partial class MarathonsPage : Page
 
         await ViewModel.SelectMarathonAsync(marathon);
 
-        // Show or hide the locked banner
         LockedBanner.Visibility = ViewModel.IsLocked
             ? Visibility.Visible
             : Visibility.Collapsed;
 
-        // Reset the middle column back to idle when switching marathons
         ShowIdle();
     }
 
-    // Call this from a "Log" button next to a movie in the marathon.
-    // For now this is wired manually — pass the movieId of the movie to verify.
+    /// <summary>
+    /// Starts the quiz flow for a specific marathon movie.
+    /// </summary>
     public async Task StartQuizForMovieAsync(int movieId)
     {
         if (App.TriviaRepository is null) return;
@@ -68,7 +64,6 @@ public sealed partial class MarathonsPage : Page
     {
         if (_triviaVm is null) return;
 
-        // Find which radio button is checked and read its Tag (A/B/C/D)
         var selected = new[] { OptionA, OptionB, OptionC, OptionD }
             .FirstOrDefault(r => r.IsChecked == true);
 
@@ -76,7 +71,6 @@ public sealed partial class MarathonsPage : Page
 
         _triviaVm.SubmitAnswer(option);
 
-        // Clear selection for next question
         foreach (var r in new[] { OptionA, OptionB, OptionC, OptionD })
             r.IsChecked = false;
 
@@ -84,7 +78,6 @@ public sealed partial class MarathonsPage : Page
         {
             ShowResult();
 
-            // If the user passed all 3, log the movie to the marathon
             if (_triviaVm.IsPassed && ViewModel.SelectedMarathon is not null)
             {
                 _ = LogPassedMovieAsync(
@@ -108,7 +101,6 @@ public sealed partial class MarathonsPage : Page
 
         await service.LogMovieAsync(marathonId, movieId, correctCount);
 
-        // Refresh progress text and leaderboard in the ViewModel
         await ViewModel.RefreshAfterMovieLoggedAsync();
     }
 
@@ -121,7 +113,6 @@ public sealed partial class MarathonsPage : Page
         RefreshQuizUi();
     }
 
-    // Updates the middle column quiz controls from the current ViewModel state
     private void RefreshQuizUi()
     {
         if (_triviaVm?.CurrentQuestion is not TriviaQuestion q) return;
@@ -137,7 +128,6 @@ public sealed partial class MarathonsPage : Page
         SubmitButton.IsEnabled = true;
     }
 
-    // Panel state switching
     private void ShowIdle()
     {
         IdlePanel.Visibility = Visibility.Visible;
