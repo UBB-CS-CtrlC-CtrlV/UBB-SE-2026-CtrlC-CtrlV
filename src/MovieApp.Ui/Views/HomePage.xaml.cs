@@ -82,6 +82,14 @@ public sealed partial class HomePage : Page
         ViewModel.SetSearchText(searchText);
     }
 
+    /// <summary>
+    /// Applies the selected sort mode to the home page event list only.
+    /// </summary>
+    private void SortSelector_SortOptionChanged(object? sender, MovieApp.Core.EventLists.EventSortOption sortOption)
+    {
+        ViewModel.SetSortOption(sortOption);
+    }
+
     private async void EventCardButton_Click(object sender, RoutedEventArgs e)
     {
         if (sender is not Button button || button.DataContext is not Event selectedEvent)

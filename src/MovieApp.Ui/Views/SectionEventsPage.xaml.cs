@@ -68,6 +68,14 @@ public sealed partial class SectionEventsPage : Page
         ViewModel?.SetSearchText(searchText);
     }
 
+    /// <summary>
+    /// Applies the reusable sort selector to the currently loaded section list only.
+    /// </summary>
+    private void SortSelector_SortOptionChanged(object? sender, MovieApp.Core.EventLists.EventSortOption sortOption)
+    {
+        ViewModel?.SetSortOption(sortOption);
+    }
+
     private async void EventCardButton_Click(object sender, RoutedEventArgs e)
     {
         if (sender is not Button button || button.DataContext is not Event selectedEvent)

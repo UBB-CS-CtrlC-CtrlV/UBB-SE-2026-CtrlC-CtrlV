@@ -17,6 +17,11 @@
                 PlaceholderText="Search events by title or type"
                 SearchTextChanged="SearchBox_SearchTextChanged" />
 
+            <ui:EventSortSelector
+                PlaceholderText="Sort home events"
+                SelectedSortOption="{Binding EventListState.SelectedSortOption, Mode=OneWay}"
+                SortOptionChanged="SortSelector_SortOptionChanged" />
+
             <Border Style="{StaticResource SurfaceCardStyle}">
                 <StackPanel Spacing="12">
                     <TextBlock

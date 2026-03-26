@@ -118,23 +118,36 @@ public sealed class HomeEventsViewModel : EventListPageViewModel
         }
     }
 
+    /// <summary>
+    /// Groups the already-transformed visible event sequence into home-page sections.
+    /// </summary>
+    /// <remarks>
+    /// This method preserves the incoming event order inside each section so the
+    /// active list sort mode remains consistent on the home screen.
+    /// </remarks>
     private static IReadOnlyList<EventSection> BuildSections(IEnumerable<Event> events)
     {
-        var groups = events
-            .Where(e => !string.IsNullOrWhiteSpace(e.EventType))
-            .GroupBy(e => e.EventType.Trim(), StringComparer.OrdinalIgnoreCase);
+        var sectionsByType = new Dictionary<string, EventSection>(StringComparer.OrdinalIgnoreCase);
+        var orderedSections = new List<EventSection>();
 
-        var sections = groups
-            .Select(g => new EventSection
+        foreach (var @event in events.Where(e => !string.IsNullOrWhiteSpace(e.EventType)))
+        {
+            var eventType = @event.EventType.Trim();
+            if (!sectionsByType.TryGetValue(eventType, out var section))
             {
-                Title = g.Key,
-                Events = g.OrderBy(ev => ev.EventDateTime)
-                    .ToList(),
-                GroupingValue = g.Key,
-            })
-            .OrderBy(s => s.Title)
-            .ToList();
+                section = new EventSection
+                {
+                    Title = eventType,
+                    GroupingValue = eventType,
+                    Events = new List<Event>(),
+                };
+                sectionsByType[eventType] = section;
+                orderedSections.Add(section);
+            }
 
-        return sections;
+            ((List<Event>)section.Events).Add(@event);
+        }
+
+        return orderedSections;
     }
 }

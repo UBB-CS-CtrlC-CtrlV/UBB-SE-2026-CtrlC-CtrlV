@@ -52,4 +52,12 @@ public sealed partial class EventManagementPage : Page
     {
         ViewModel.SetSearchText(searchText);
     }
+
+    /// <summary>
+    /// Applies the shared event sort behavior to the event-management list state.
+    /// </summary>
+    private void SortSelector_SortOptionChanged(object? sender, MovieApp.Core.EventLists.EventSortOption sortOption)
+    {
+        ViewModel.SetSortOption(sortOption);
+    }
 }

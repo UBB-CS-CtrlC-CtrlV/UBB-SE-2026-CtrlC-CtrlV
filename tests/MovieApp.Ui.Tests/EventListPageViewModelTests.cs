@@ -69,6 +69,44 @@ public sealed class EventListPageViewModelTests
     }
 
     [Fact]
+    public void SetSortOption_SupportsHistoricalRatingAndPriceModes()
+    {
+        var viewModel = CreateInitializedViewModel();
+
+        viewModel.SetSortOption(EventSortOption.PriceAscending);
+        Assert.Equal([3, 2, 1, 4], viewModel.VisibleEvents.Select(e => e.Id));
+
+        viewModel.SetSortOption(EventSortOption.HistoricalRatingDescending);
+        Assert.Equal([4, 2, 1, 3], viewModel.VisibleEvents.Select(e => e.Id));
+    }
+
+    [Fact]
+    public void SetSortOption_KeepsOnlyOneSortModeActivePerListInstance()
+    {
+        var viewModel = CreateInitializedViewModel();
+
+        viewModel.SetSortOption(EventSortOption.PriceDescending);
+        viewModel.SetSortOption(EventSortOption.HistoricalRatingDescending);
+
+        Assert.Equal(EventSortOption.HistoricalRatingDescending, viewModel.EventListState.SelectedSortOption);
+        Assert.Equal([4, 2, 1, 3], viewModel.VisibleEvents.Select(e => e.Id));
+    }
+
+    [Fact]
+    public void SetSortOption_IsScopedToTheCurrentListInstance()
+    {
+        var firstViewModel = CreateInitializedViewModel();
+        var secondViewModel = CreateInitializedViewModel();
+
+        firstViewModel.SetSortOption(EventSortOption.PriceDescending);
+
+        Assert.Equal(EventSortOption.PriceDescending, firstViewModel.EventListState.SelectedSortOption);
+        Assert.Equal(EventSortOption.DateAscending, secondViewModel.EventListState.SelectedSortOption);
+        Assert.Equal([4, 1, 2, 3], firstViewModel.VisibleEvents.Select(e => e.Id));
+        Assert.Equal([3, 2, 4, 1], secondViewModel.VisibleEvents.Select(e => e.Id));
+    }
+
+    [Fact]
     public void SetSortOption_DoesNotRaiseVisibleEventsChangeWhenValueIsUnchanged()
     {
         var viewModel = CreateInitializedViewModel();

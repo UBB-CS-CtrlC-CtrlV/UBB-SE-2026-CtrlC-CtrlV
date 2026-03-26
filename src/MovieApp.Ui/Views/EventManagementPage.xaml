@@ -33,12 +33,11 @@
                     <ui:EventSearchBox
                         PlaceholderText="Search event rows by title or type"
                         SearchTextChanged="SearchBox_SearchTextChanged" />
-                    <ComboBox
+                    <ui:EventSortSelector
                         Grid.Column="1"
-                        PlaceholderText="Sort">
-                        <x:String>Price</x:String>
-                        <x:String>Historical rating</x:String>
-                    </ComboBox>
+                        PlaceholderText="Sort event rows"
+                        SelectedSortOption="{Binding EventListState.SelectedSortOption, Mode=OneWay}"
+                        SortOptionChanged="SortSelector_SortOptionChanged" />
                     <ComboBox
                         Grid.Column="2"
                         PlaceholderText="Filter">
