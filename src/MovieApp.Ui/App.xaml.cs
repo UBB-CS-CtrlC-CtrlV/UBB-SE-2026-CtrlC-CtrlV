@@ -15,10 +15,13 @@ public partial class App : Application
     private ICurrentUserService? _currentUserService;
 
     public static ICurrentUserService? CurrentUserService { get; private set; }
-
     public static IEventRepository? EventRepository { get; private set; }
     public static ITriviaRepository? TriviaRepository { get; private set; }
+    public static ITriviaRewardRepository? TriviaRewardRepository { get; private set; }
     public static IAmbassadorRepository? AmbassadorRepository { get; private set; }
+    public static IReferralValidator? ReferralValidator { get; private set; }
+    public static MainWindow? CurrentMainWindow { get; private set; }
+    public static int CurrentUserId { get; private set; }
     public static IMovieRepository? MovieRepository { get; private set; }
     public static IUserSlotMachineStateRepository? SlotMachineStateRepository { get; private set; }
     public static IUserMovieDiscountRepository? UserMovieDiscountRepository { get; private set; }
@@ -41,6 +44,8 @@ public partial class App : Application
         MainViewModel viewModel;
         EventRepository = UnavailableEventRepository.Instance;
         TriviaRepository = null;
+        TriviaRewardRepository = null;
+        CurrentUserId = 0;
 
         try
         {
@@ -62,6 +67,7 @@ public partial class App : Application
             var userRepository = new SqlUserRepository(databaseOptions);
             var eventRepository = new SqlEventRepository(databaseOptions);
             var triviaRepository = new SqlTriviaRepository(databaseOptions);
+            var triviaRewardRepository = new SqlTriviaRewardRepository(databaseOptions);
             var ambassadorRepository = new SqlAmbassadorRepository(databaseOptions);
             var movieRepository = new SqlMovieRepository(databaseOptions);
             var slotMachineStateRepository = new SqlUserSlotMachineStateRepository(databaseOptions);
@@ -84,7 +90,10 @@ public partial class App : Application
 
             EventRepository = eventRepository;
             TriviaRepository = triviaRepository;
+            TriviaRewardRepository = triviaRewardRepository;
             AmbassadorRepository = ambassadorRepository;
+            ReferralValidator = new ReferralValidator(ambassadorRepository);
+            CurrentUserId = _currentUserService.CurrentUser.Id;
             MovieRepository = movieRepository;
             SlotMachineStateRepository = slotMachineStateRepository;
             UserMovieDiscountRepository = userMovieDiscountRepository;

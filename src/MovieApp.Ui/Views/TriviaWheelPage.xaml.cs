@@ -68,9 +68,12 @@ public sealed partial class TriviaWheelPage : Page
 
     private void OnPageLoaded(object sender, RoutedEventArgs e)
     {
-        if (App.TriviaRepository is not null)
+        if (App.TriviaRepository is not null && App.TriviaRewardRepository is not null)
         {
-            _viewModel = new TriviaWheelViewModel(App.TriviaRepository);
+            _viewModel = new TriviaWheelViewModel(
+                App.TriviaRepository,
+                App.TriviaRewardRepository,
+                App.CurrentUserId);
         }
 
         if (_viewModel?.CanSpin == false)
