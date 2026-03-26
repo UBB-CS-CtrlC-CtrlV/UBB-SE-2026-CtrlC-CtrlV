@@ -7,6 +7,8 @@ using MovieApp.Ui.Services;
 using MovieApp.Ui.ViewModels;
 using MovieApp.Ui.Views;
 
+using System;
+
 namespace MovieApp.Ui;
 
 /// <summary>
@@ -19,6 +21,8 @@ public partial class App : Application
     private ICurrentUserService? _currentUserService;
 
     public static ICurrentUserService? CurrentUserService { get; private set; }
+    
+    public static IPriceWatcherRepository? PriceWatcherRepository { get; private set; }
     public static IEventRepository? EventRepository { get; private set; }
     public static ITriviaRepository? TriviaRepository { get; private set; }
     public static ITriviaRewardRepository? TriviaRewardRepository { get; private set; }
@@ -48,6 +52,7 @@ public partial class App : Application
         TriviaRepository = null;
         TriviaRewardRepository = null;
         CurrentUserId = 0;
+        PriceWatcherRepository = null;
 
         try
         {
@@ -104,6 +109,8 @@ public partial class App : Application
             SlotMachineResultService = slotMachineResultService;
             ReelAnimationService = reelAnimationService;
             MarathonRepository = marathonRepository;
+            string localDataFolder = Environment.GetFolderPath(Environment.SpecialFolder.LocalApplicationData);
+            PriceWatcherRepository = new LocalPriceWatcherRepository(localDataFolder);
 
             viewModel = new MainViewModel(_currentUserService.CurrentUser);
         }
