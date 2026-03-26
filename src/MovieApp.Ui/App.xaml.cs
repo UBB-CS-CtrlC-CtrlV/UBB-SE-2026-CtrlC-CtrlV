@@ -29,8 +29,6 @@ public partial class App : Application
     public static SlotMachineService? SlotMachineService { get; private set; }
     public static SlotMachineResultService? SlotMachineResultService { get; private set; }
     public static ReelAnimationService? ReelAnimationService { get; private set; }
-    public static MovieApp.Core.Services.IReferralValidator? ReferralValidator { get; private set; }
-    public static MainWindow? CurrentMainWindow { get; private set; }
     public static IConfigurationRoot? Configuration { get; private set; }
     public static IMarathonRepository? MarathonRepository { get; private set; }
 
@@ -102,7 +100,6 @@ public partial class App : Application
             SlotMachineResultService = slotMachineResultService;
             ReelAnimationService = reelAnimationService;
             MarathonRepository = marathonRepository;
-            ReferralValidator = new MovieApp.Core.Services.ReferralValidator(ambassadorRepository);
 
             viewModel = new MainViewModel(_currentUserService.CurrentUser);
         }

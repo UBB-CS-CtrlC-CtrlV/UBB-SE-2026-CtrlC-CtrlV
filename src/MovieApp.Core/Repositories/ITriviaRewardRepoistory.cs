@@ -7,4 +7,6 @@ public interface ITriviaRewardRepository
     Task AddAsync(TriviaReward reward, CancellationToken cancellationToken = default);
 
     Task<TriviaReward?> GetUnredeemedByUserAsync(int userId, CancellationToken cancellationToken = default);
+
+    Task MarkAsRedeemedAsync(int rewardId, CancellationToken cancellationToken = default);
 }
