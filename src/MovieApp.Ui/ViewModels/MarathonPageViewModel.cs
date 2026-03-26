@@ -62,9 +62,9 @@ public sealed class MarathonPageViewModel : ViewModelBase
             ? $"Completed — {CurrentProgress.CompletedMoviesCount} movies verified"
             : $"{CurrentProgress.CompletedMoviesCount} movies verified so far";
 
-    public async Task LoadAsync()
+    public async Task LoadAsync(int userId)
     {
-        var list = await _marathonService.GetWeeklyMarathonsAsync();
+        var list = await _marathonService.GetWeeklyMarathonsAsync(userId);
         Marathons = list.ToList();
     }
 

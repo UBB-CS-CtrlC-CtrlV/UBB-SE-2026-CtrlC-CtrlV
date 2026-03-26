@@ -16,9 +16,25 @@ public sealed class MarathonService : IMarathonService
         _currentUserService = currentUserService;
     }
 
-    public async Task<IEnumerable<Marathon>> GetWeeklyMarathonsAsync()
+    public async Task<IEnumerable<Marathon>> GetWeeklyMarathonsAsync(int userId)
     {
-        return await _marathonRepo.GetActiveMarathonsAsync();
+        var now = DateTime.UtcNow;
+        var weekString = $"{now.Year}-W" +
+            System.Globalization.ISOWeek.GetWeekOfYear(now).ToString("D2");
+
+        var existing = await _marathonRepo
+            .GetWeeklyMarathonsForUserAsync(userId, weekString);
+
+        var list = existing.ToList();
+
+        if (list.Count == 0)
+        {
+            await _marathonRepo.AssignWeeklyMarathonsAsync(userId, weekString, 10);
+            list = (await _marathonRepo
+                .GetWeeklyMarathonsForUserAsync(userId, weekString)).ToList();
+        }
+
+        return list;
     }
 
     public async Task<MarathonProgress?> GetCurrentProgressAsync(int marathonId)

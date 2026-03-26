@@ -4,7 +4,7 @@ namespace MovieApp.Core.Services;
 
 public interface IMarathonService
 {
-    Task<IEnumerable<Marathon>> GetWeeklyMarathonsAsync();
+    Task<IEnumerable<Marathon>> GetWeeklyMarathonsAsync(int userId);
 
     Task<MarathonProgress?> GetCurrentProgressAsync(int marathonId);
 

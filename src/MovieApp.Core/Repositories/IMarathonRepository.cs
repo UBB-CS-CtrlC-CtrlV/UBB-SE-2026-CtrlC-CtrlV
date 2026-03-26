@@ -15,4 +15,6 @@ public interface IMarathonRepository
     Task<IEnumerable<MarathonProgress>> GetLeaderboardAsync(int marathonId);
     Task<bool> IsPrerequisiteCompletedAsync(int userId, int prerequisiteMarathonId);
     Task<int> GetMarathonMovieCountAsync(int marathonId);
+    Task<IEnumerable<Marathon>> GetWeeklyMarathonsForUserAsync(int userId, string weekString);
+    Task AssignWeeklyMarathonsAsync(int userId, string weekString, int count = 10);
 }
