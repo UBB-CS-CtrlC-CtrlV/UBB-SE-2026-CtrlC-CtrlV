@@ -90,6 +90,11 @@ public sealed class SlotMachineServiceTests
             Rewards.Add(reward);
             return Task.CompletedTask;
         }
+
+        public Task<List<Reward>> GetDiscountsForUserAsync(int userId, CancellationToken cancellationToken = default)
+        {
+            return Task.FromResult(Rewards.Where(r => r.OwnerUserId == userId).ToList());
+        }
     }
 
     [Fact]
