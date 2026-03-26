@@ -1,4 +1,5 @@
-﻿using Microsoft.UI.Xaml.Controls;
+﻿using Microsoft.UI.Xaml;
+using Microsoft.UI.Xaml.Controls;
 using MovieApp.Ui.ViewModels.Events;
 
 namespace MovieApp.Ui.Controls;
@@ -14,4 +15,7 @@ public sealed partial class SeatGuideDialog : ContentDialog
         ViewModel = new SeatGuideViewModel(totalCapacity);
         this.DataContext = ViewModel;
     }
+    
+    public static Visibility GetVisibility(bool value) => value ? Visibility.Visible : Visibility.Collapsed;
+    public static Visibility GetInverseVisibility(bool value) => value ? Visibility.Collapsed : Visibility.Visible;
 }

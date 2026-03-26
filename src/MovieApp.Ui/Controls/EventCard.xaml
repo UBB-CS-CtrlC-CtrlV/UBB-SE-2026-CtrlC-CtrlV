@@ -126,15 +126,6 @@
                             FontWeight="SemiBold"
                             Text="{x:Bind PriceText, Mode=OneWay}" />
                     </StackPanel>
-                    
-                    <Button Margin="0,15,0,0"
-                            HorizontalAlignment="Stretch"
-                            Click="VisualSeatGuide_Click">
-                        <StackPanel Orientation="Horizontal" Spacing="8">
-                            <FontIcon Glyph="&#xE7FC;" FontSize="14"/>
-                            <TextBlock Text="Visual Seat Guide" />
-                        </StackPanel>
-                    </Button>
 
                     <StackPanel
                         Grid.Column="1"
@@ -160,6 +151,16 @@
                             Text="{x:Bind CapacityText, Mode=OneWay}" />
                     </StackPanel>
                 </Grid>
+                
+                <Button Margin="0,15,0,0"
+                        HorizontalAlignment="Stretch"
+                        Click="VisualSeatGuide_Click">
+                    <StackPanel Orientation="Horizontal" Spacing="8">
+                        <FontIcon Glyph="&#xE7FC;" FontSize="14"/>
+                        <TextBlock Text="Visual Seat Guide" />
+                    </StackPanel>
+                </Button>
+
             </StackPanel>
         </Grid>
     </Border>

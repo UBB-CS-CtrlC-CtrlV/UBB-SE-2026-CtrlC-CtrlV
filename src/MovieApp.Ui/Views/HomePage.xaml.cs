@@ -7,6 +7,7 @@ using MovieApp.Ui.Controls;
 using MovieApp.Ui.Navigation;
 using MovieApp.Ui.Services;
 using MovieApp.Ui.ViewModels.Events;
+using System;
 
 namespace MovieApp.Ui.Views;
 
@@ -80,7 +81,15 @@ public sealed partial class HomePage : Page
             return;
         }
 
-        var content = BuildEventDialogContent(selectedEvent);
+        var dialog = new ContentDialog
+        {
+            XamlRoot = XamlRoot,
+            Title = selectedEvent.Title,
+            PrimaryButtonText = "Close",
+            DefaultButton = ContentDialogButton.Primary
+        };
+
+        var content = BuildEventDialogContent(selectedEvent, dialog);
 
         // Check reward balance and add a Free Pass button if available
         if (App.AmbassadorRepository is not null && App.CurrentUserService?.CurrentUser is { } currentUser)
@@ -119,19 +128,12 @@ public sealed partial class HomePage : Page
             }
         }
 
-        var dialog = new ContentDialog
-        {
-            XamlRoot = XamlRoot,
-            Title = selectedEvent.Title,
-            PrimaryButtonText = "Close",
-            DefaultButton = ContentDialogButton.Primary,
-            Content = content,
-        };
+        dialog.Content = content;
 
         await dialog.ShowAsync();
     }
 
-    private static UIElement BuildEventDialogContent(Event selectedEvent)
+    private static UIElement BuildEventDialogContent(Event selectedEvent, ContentDialog parentDialog)
     {
         var layout = new StackPanel
         {
@@ -192,6 +194,26 @@ public sealed partial class HomePage : Page
             Children = { referralTextBox, validationButton }
         });
 
+        var seatGuideButton = new Button { Content = "Seat guide" };
+        seatGuideButton.Click += async (s, args) =>
+        {
+            parentDialog.Hide();
+            
+            try
+            {
+                int capacity = selectedEvent.MaxCapacity > 0 ? selectedEvent.MaxCapacity : 50;
+                var seatDialog = new SeatGuideDialog(capacity)
+                {
+                    XamlRoot = parentDialog.XamlRoot
+                };
+                await seatDialog.ShowAsync();
+            }
+            catch (Exception ex)
+            {
+                System.Diagnostics.Debug.WriteLine($"Eroare la deschiderea Seat Guide: {ex.Message}");
+            }
+        };
+
         layout.Children.Add(new StackPanel
         {
             Orientation = Orientation.Horizontal,
@@ -201,7 +223,7 @@ public sealed partial class HomePage : Page
                 new Button { Content = "Will attend" },
                 new Button { Content = "Buy ticket" },
                 new Button { Content = "Favorite" },
-                new Button { Content = "Seat guide" },
+                seatGuideButton
             },
         });
 
