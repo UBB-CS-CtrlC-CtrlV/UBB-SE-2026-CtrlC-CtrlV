@@ -5,6 +5,13 @@ namespace MovieApp.Core.EventLists;
 /// </summary>
 public sealed class EventListState
 {
+    /// <summary>
+    /// Gets or sets the free-text query applied to the current event list.
+    /// </summary>
+    /// <remarks>
+    /// This value is owned by a single screen instance and is intended to filter only
+    /// that screen's loaded <c>AllEvents</c> collection.
+    /// </remarks>
     public string SearchText { get; set; } = string.Empty;
 
     public EventSortOption SelectedSortOption { get; set; } = EventSortOption.DateAscending;

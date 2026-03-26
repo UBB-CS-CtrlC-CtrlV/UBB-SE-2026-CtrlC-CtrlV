@@ -164,6 +164,29 @@ public sealed class EventListTests
     }
 
     [Fact]
+    public void ApplySearch_MatchesTitleAndEventTypeCaseInsensitively()
+    {
+        var byTitle = EventListTransformer.ApplySearch(_sampleEvents, "FESTIVAL").Select(e => e.Id);
+        var byType = EventListTransformer.ApplySearch(_sampleEvents, "PREMIERE").Select(e => e.Id);
+
+        Assert.Equal([1, 2], byTitle);
+        Assert.Equal([1], byType);
+    }
+
+    [Fact]
+    public void ApplySearch_FiltersOnlyTheProvidedSequence()
+    {
+        var homeEvents = _sampleEvents.Take(2).ToList();
+        var sectionEvents = _sampleEvents.Skip(2).ToList();
+
+        var homeResult = EventListTransformer.ApplySearch(homeEvents, "festival").Select(e => e.Id);
+        var sectionResult = EventListTransformer.ApplySearch(sectionEvents, "festival").Select(e => e.Id);
+
+        Assert.Equal([1, 2], homeResult);
+        Assert.Empty(sectionResult);
+    }
+
+    [Fact]
     public void ApplySorting_SortsByEachSupportedOption()
     {
         Assert.Equal([3, 2, 4, 5, 1], EventListTransformer.ApplySorting(_sampleEvents, EventSortOption.DateAscending).Select(e => e.Id));
