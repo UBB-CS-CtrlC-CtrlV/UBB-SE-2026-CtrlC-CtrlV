@@ -1,14 +1,11 @@
 using Microsoft.UI.Xaml;
 using Microsoft.UI.Xaml.Controls;
 using MovieApp.Core.EventLists;
+using MovieApp.Core.Models;
 using MovieApp.Ui.ViewModels.Events;
 
 namespace MovieApp.Ui.Views;
 
-/// <summary>
-/// Hosts the management-oriented CRUD workspace, including the table surface,
-/// selected-row preview, and editor mount points.
-/// </summary>
 public sealed partial class EventManagementPage : Page
 {
     private bool _initialized;
@@ -23,34 +20,36 @@ public sealed partial class EventManagementPage : Page
 
     public EventManagementViewModel ViewModel { get; }
 
-    /// <summary>
-    /// Initializes the page once after load so shared event-list behaviors are ready.
-    /// </summary>
     private async void EventManagementPage_Loaded(object sender, RoutedEventArgs e)
     {
-        if (_initialized)
-        {
-            return;
-        }
-
+        if (_initialized) return;
         _initialized = true;
         await ViewModel.InitializeAsync();
     }
 
-    /// <summary>
-    /// Applies the shared event search behavior to the event-management list state.
-    /// </summary>
     private void SearchBox_SearchTextChanged(object? sender, string searchText)
     {
         ViewModel.SetSearchText(searchText);
     }
 
-    /// <summary>
-    /// Applies the shared event sort behavior to the event-management list state.
-    /// </summary>
     private void SortSelector_SortOptionChanged(object? sender, EventSortOption sortOption)
     {
         ViewModel.SetSortOption(sortOption);
+    }
+
+    private void EventListView_SelectionChanged(object sender, SelectionChangedEventArgs e)
+    {
+        if (ViewModel.SelectedEvent is not Event selected) return;
+
+        ViewModel.FormTitle = selected.Title;
+        ViewModel.FormLocation = selected.LocationReference;
+        ViewModel.FormEventType = selected.EventType;
+        ViewModel.FormDescription = selected.Description ?? string.Empty;
+        ViewModel.FormDate = new DateTimeOffset(selected.EventDateTime);
+        ViewModel.FormTime = selected.EventDateTime.TimeOfDay;
+        ViewModel.FormPrice = (double)selected.TicketPrice;
+        ViewModel.FormCapacity = selected.MaxCapacity;
+        ViewModel.FormPosterUrl = selected.PosterUrl;
     }
 
     private async void SimulateUpdate_Click(object sender, RoutedEventArgs e)

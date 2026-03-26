@@ -8,18 +8,10 @@
     xmlns:ui="using:MovieApp.Ui.Controls"
     mc:Ignorable="d">
 
-    <ScrollViewer
-        Padding="32"
-        VerticalScrollBarVisibility="Auto">
+    <ScrollViewer Padding="32" VerticalScrollBarVisibility="Auto">
         <StackPanel Spacing="24">
-            <StackPanel Spacing="6">
-                <TextBlock
-                    Style="{ThemeResource TitleTextBlockStyle}"
-                    Text="{Binding PageTitle}" />
-                <TextBlock
-                    Style="{StaticResource SectionCaptionTextStyle}"
-                    Text="This page reserves the CRUD table, selected-row detail view, pagination, and validation workflow required by the plan." />
-            </StackPanel>
+
+            <TextBlock Style="{ThemeResource TitleTextBlockStyle}" Text="{Binding PageTitle}" />
 
             <Border Style="{StaticResource SurfaceCardStyle}">
                 <Grid ColumnSpacing="12">
@@ -29,151 +21,52 @@
                         <ColumnDefinition Width="*" />
                         <ColumnDefinition Width="Auto" />
                     </Grid.ColumnDefinitions>
-
                     <ui:EventSearchBox
-                        PlaceholderText="Search event rows by title or type"
+                        PlaceholderText="Search events by title or type"
                         SearchTextChanged="SearchBox_SearchTextChanged" />
                     <ui:EventSortSelector
                         Grid.Column="1"
-                        PlaceholderText="Sort event rows"
+                        PlaceholderText="Sort events"
                         SelectedSortOption="{Binding EventListState.SelectedSortOption, Mode=OneWay}"
                         SortOptionChanged="SortSelector_SortOptionChanged" />
-                    <ComboBox
-                        Grid.Column="2"
-                        PlaceholderText="Filter">
+                    <ComboBox Grid.Column="2" PlaceholderText="Filter">
                         <x:String>Location</x:String>
                         <x:String>Type</x:String>
                         <x:String>Minimum rating</x:String>
                     </ComboBox>
-                    <Button
-                        Grid.Column="3"
-                        Content="Clear" />
+                    <Button Grid.Column="3" Content="Clear" />
                 </Grid>
             </Border>
 
-            <Grid ColumnSpacing="16">
-                <Grid.ColumnDefinitions>
-                    <ColumnDefinition Width="2.2*" />
-                    <ColumnDefinition Width="1.2*" />
-                </Grid.ColumnDefinitions>
-
-                <Border Style="{StaticResource SurfaceCardStyle}">
-                    <StackPanel Spacing="16">
-                        <Grid>
+            <ListView
+                x:Name="EventListView"
+                Height="250"
+                ItemsSource="{Binding VisibleEvents}"
+                SelectedItem="{x:Bind ViewModel.SelectedEvent, Mode=TwoWay}"
+                SelectionChanged="EventListView_SelectionChanged">
+                <ListView.ItemTemplate>
+                    <DataTemplate>
+                        <Grid ColumnSpacing="12">
                             <Grid.ColumnDefinitions>
+                                <ColumnDefinition Width="64" />
+                                <ColumnDefinition Width="2*" />
+                                <ColumnDefinition Width="*" />
                                 <ColumnDefinition Width="*" />
                                 <ColumnDefinition Width="Auto" />
                             </Grid.ColumnDefinitions>
-
-                            <StackPanel Spacing="6">
-                                <TextBlock
-                                    Style="{ThemeResource SubtitleTextBlockStyle}"
-                                    Text="Paginated event table host" />
-                                <TextBlock
-                                    Style="{StaticResource SectionCaptionTextStyle}"
-                                    Text="Swap the sample rows for a bound table-like list with selection, paging, and command wiring." />
-                            </StackPanel>
-
-                            <StackPanel
-                                Grid.Column="1"
-                                Orientation="Horizontal"
-                                Spacing="8">
-                                <Button Content="Create" Command="{x:Bind ViewModel.CreateEventCommand}" />
-                                <Button Content="Refresh" />
-                            </StackPanel>
+                            <TextBlock Text="{Binding Id}" />
+                            <TextBlock Grid.Column="1" Text="{Binding Title}" />
+                            <TextBlock Grid.Column="2" Text="{Binding EventDateTime}" />
+                            <TextBlock Grid.Column="3" Text="{Binding LocationReference}" />
+                            <TextBlock Grid.Column="4" Text="{Binding TicketPrice}" />
                         </Grid>
+                    </DataTemplate>
+                </ListView.ItemTemplate>
+            </ListView>
 
-                        <ListView
-                        Height="440"
-                        ItemsSource="{Binding VisibleEvents}"
-                        SelectedItem="{x:Bind ViewModel.SelectedEvent, Mode=TwoWay}">
-                            <ListView.ItemTemplate>
-                                <DataTemplate>
-                                    <Grid ColumnSpacing="12">
-                                        <Grid.ColumnDefinitions>
-                                            <ColumnDefinition Width="64" />
-                                            <ColumnDefinition Width="2*" />
-                                            <ColumnDefinition Width="*" />
-                                            <ColumnDefinition Width="*" />
-                                            <ColumnDefinition Width="Auto" />
-                                        </Grid.ColumnDefinitions>
-                                        <TextBlock Text="{Binding Id}" />
-                                        <TextBlock Grid.Column="1" Text="{Binding Title}" />
-                                        <TextBlock Grid.Column="2" Text="{Binding EventDateTime}" />
-                                        <TextBlock Grid.Column="3" Text="{Binding LocationReference}" />
-                                        <TextBlock Grid.Column="4" Text="{Binding TicketPrice}" />
-                                    </Grid>
-                                </DataTemplate>
-                            </ListView.ItemTemplate>
-                        </ListView>
-
-                        <Grid HorizontalAlignment="Right" ColumnSpacing="8">
-                            <Grid.ColumnDefinitions>
-                                <ColumnDefinition Width="Auto" />
-                                <ColumnDefinition Width="Auto" />
-                                <ColumnDefinition Width="Auto" />
-                            </Grid.ColumnDefinitions>
-                            <Button Content="Previous" />
-                            <Button Grid.Column="1" Content="Page 1 of 8" />
-                            <Button Grid.Column="2" Content="Next" />
-                        </Grid>
-                    </StackPanel>
-                </Border>
-
-                <StackPanel
-                    Grid.Column="1"
-                    Spacing="16">
-                    <Border Style="{StaticResource SurfaceCardStyle}">
-                        <StackPanel Spacing="10">
-                            <TextBlock
-                                Style="{ThemeResource SubtitleTextBlockStyle}"
-                                Text="Selected event detail view" />
-                            <TextBlock
-                                Style="{StaticResource SectionCaptionTextStyle}"
-                                Text="This is the separate selected-row detail surface required by the CRUD requirements." />
-                            <TextBox Header="Title" PlaceholderText="Select an event to inspect its title" />
-                            <TextBox Header="Location" PlaceholderText="Select an event to inspect its location" />
-                            <TextBox Header="Type" PlaceholderText="Select an event to inspect its type" />
-                            <TextBox
-                                AcceptsReturn="True"
-                                Header="Description"
-                                Height="120"
-                                PlaceholderText="Select an event to inspect its description, poster, and screening summary." />
-                            <StackPanel Orientation="Horizontal" Spacing="8">
-                                <Button Content="Edit selected" Command="{x:Bind ViewModel.EditEventCommand}" />
-                                <Button Content="Delete selected" Command="{x:Bind ViewModel.DeleteEventCommand}" />
-                                <Button Content="Simulate Update (For Notifications)" Command="{x:Bind ViewModel.SimulateUpdateCommand}" />
-                            </StackPanel>
-                        </StackPanel>
-                    </Border>
-
-                    <Border Style="{StaticResource StrongSurfaceCardStyle}">
-                        <StackPanel Spacing="10">
-                            <TextBlock
-                                Style="{ThemeResource SubtitleTextBlockStyle}"
-                                Text="Validation contract" />
-                            <TextBlock
-                                Style="{StaticResource SectionCaptionTextStyle}"
-                                Text="Required field validation, invalid date checks, and negative-price prevention should flow through this panel and the editor form below." />
-                            <ListView>
-                                <ListViewItem Content="Title cannot be empty" />
-                                <ListViewItem Content="Location cannot be empty" />
-                                <ListViewItem Content="Date must be valid and in the expected range" />
-                                <ListViewItem Content="Ticket price cannot be negative" />
-                            </ListView>
-                            <TextBlock
-    Text="{x:Bind ViewModel.ValidationMessage, Mode=OneWay}"
-    Foreground="{ThemeResource SystemErrorTextColor}" />
-                        </StackPanel>
-                    </Border>
-                </StackPanel>
-            </Grid>
-
-            <Border Style="{StaticResource SurfaceCardStyle}">
+            <Border Style="{StaticResource SurfaceCardStyle}" Margin="0,-12,0,0">
                 <StackPanel Spacing="16">
-                    <TextBlock
-                        Style="{StaticResource SectionTitleTextStyle}"
-                        Text="Editor form mount" />
+                    <TextBlock Style="{StaticResource SectionTitleTextStyle}" Text="Create or edit event" />
                     <Grid ColumnSpacing="16" RowSpacing="12">
                         <Grid.ColumnDefinitions>
                             <ColumnDefinition Width="*" />
@@ -187,55 +80,44 @@
                         </Grid.RowDefinitions>
 
                         <TextBox Header="Title" PlaceholderText="Event title" Text="{x:Bind ViewModel.FormTitle, Mode=TwoWay}" />
-                        <TextBox
-                        Grid.Column="1"
-                        Header="Location"
-                        PlaceholderText="Venue and hall"
-                        Text="{x:Bind ViewModel.FormLocation, Mode=TwoWay}" />
-                        <ComboBox
-                            Grid.Column="2"
-                            Header="Event type"
-                            PlaceholderText="Choose type">
+                        <TextBox Grid.Column="1" Header="Location" PlaceholderText="Venue and hall" Text="{x:Bind ViewModel.FormLocation, Mode=TwoWay}" />
+                        <ComboBox Grid.Column="2" Header="Event type" PlaceholderText="Choose type">
                             <x:String>Premiere</x:String>
                             <x:String>Marathon</x:String>
                             <x:String>Outdoor screening</x:String>
                         </ComboBox>
 
-                        <CalendarDatePicker
-    Grid.Row="1"
-    Header="Date"
-    Date="{x:Bind ViewModel.FormDate, Mode=TwoWay}" />
-                        <TimePicker
-    Grid.Row="1"
-    Grid.Column="1"
-    Header="Time"
-    Time="{x:Bind ViewModel.FormTime, Mode=TwoWay}" />
-                        <controls:NumberBox
-    Grid.Row="1"
-    Grid.Column="2"
-    Header="Ticket price"
-    PlaceholderText="0.00"
-    Value="{x:Bind ViewModel.FormPrice, Mode=TwoWay}" />
+                        <CalendarDatePicker Grid.Row="1" Header="Date" Date="{x:Bind ViewModel.FormDate, Mode=TwoWay}" />
+                        <TimePicker Grid.Row="1" Grid.Column="1" Header="Time" Time="{x:Bind ViewModel.FormTime, Mode=TwoWay}" />
+                        <controls:NumberBox Grid.Row="1" Grid.Column="2" Header="Ticket price" PlaceholderText="0.00" Value="{x:Bind ViewModel.FormPrice, Mode=TwoWay}" />
 
                         <TextBox
-    Grid.Row="2"
-    Grid.ColumnSpan="2"
-    AcceptsReturn="True"
-    Header="Description"
-    Height="120"
-    TextWrapping="Wrap"
-    Text="{x:Bind ViewModel.FormDescription, Mode=TwoWay}" />
-                        <StackPanel
                             Grid.Row="2"
-                            Grid.Column="2"
-                            Spacing="10">
+                            Grid.ColumnSpan="2"
+                            AcceptsReturn="True"
+                            Header="Description"
+                            Height="120"
+                            TextWrapping="Wrap"
+                            Text="{x:Bind ViewModel.FormDescription, Mode=TwoWay}" />
+                        <StackPanel Grid.Row="2" Grid.Column="2" Spacing="10">
                             <controls:NumberBox Header="Capacity" PlaceholderText="150" Value="{x:Bind ViewModel.FormCapacity, Mode=TwoWay}" />
                             <TextBox Header="Poster path" PlaceholderText="assets/posters/..." Text="{x:Bind ViewModel.FormPosterUrl, Mode=TwoWay}" />
-                            <Button Content="Simulate Price Drop &amp; Seat Availability" Click="SimulateUpdate_Click" />
                         </StackPanel>
                     </Grid>
+
+                    <TextBlock
+                        Text="{x:Bind ViewModel.ValidationMessage, Mode=OneWay}"
+                        Foreground="{ThemeResource SystemErrorTextColor}" />
+
+                    <StackPanel Orientation="Horizontal" Spacing="8">
+                        <Button Content="Create" Command="{x:Bind ViewModel.CreateEventCommand}" />
+                        <Button Content="Edit selected" Command="{x:Bind ViewModel.EditEventCommand}" />
+                        <Button Content="Delete selected" Command="{x:Bind ViewModel.DeleteEventCommand}" />
+                        <Button Content="Simulate Update" Click="SimulateUpdate_Click" />
+                    </StackPanel>
                 </StackPanel>
             </Border>
+
         </StackPanel>
     </ScrollViewer>
 </Page>
