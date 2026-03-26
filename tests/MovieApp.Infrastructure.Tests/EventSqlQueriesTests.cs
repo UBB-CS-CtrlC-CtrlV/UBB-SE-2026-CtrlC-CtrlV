@@ -68,26 +68,57 @@ public sealed class EventSqlQueriesTests
     [Fact]
     public void BootstrapScript_IncludesAllCurrentDatabaseScripts()
     {
-        // TODO: This test is pinned to deleted/renamed files.
-        // Fix by either restoring 000-bootstrap.sql as the canonical script entrypoint, or updating this test to match the current script layout and filenames.
         var bootstrapFile = ReadRepoFile("src", "MovieApp.Infrastructure", "Database", "Scripts", "000-bootstrap.sql");
 
-        Assert.Contains(@":r .\006-user-spins.sql", bootstrapFile);
+        Assert.Contains(@":r .\000-clear-db.sql", bootstrapFile);
+        Assert.Contains(@":r .\001-create-database.sql", bootstrapFile);
+        Assert.Contains(@":r .\002-create-schema.sql", bootstrapFile);
+        Assert.Contains(@":r .\004-create-event.sql", bootstrapFile);
+        Assert.Contains(@":r .\005-create-participation.sql", bootstrapFile);
+        Assert.Contains(@":r .\006-create-favorite-events.sql", bootstrapFile);
         Assert.Contains(@":r .\007-create-movies.sql", bootstrapFile);
-        Assert.Contains(@":r .\008-create-user-movie-discounts.sql", bootstrapFile);
-        Assert.Contains(@":r .\009-create-marathon.sql", bootstrapFile);
-        Assert.Contains(@":r .\010-seed-events.sql", bootstrapFile);
+        Assert.Contains(@":r .\008-user-spins.sql", bootstrapFile);
+        Assert.Contains(@":r .\009-create-notifications.sql", bootstrapFile);
+        Assert.Contains(@":r .\010-create-user-movie-discounts.sql", bootstrapFile);
+        Assert.Contains(@":r .\011-create-marathon.sql", bootstrapFile);
+        Assert.Contains(@":r .\013-create-trivia-questions.sql", bootstrapFile);
+        Assert.Contains(@":r .\014-create-ambassador-profile.sql", bootstrapFile);
+        Assert.Contains(@":r .\015-create-referral-log.sql", bootstrapFile);
+        Assert.Contains(@":r .\016-create-screenings.sql", bootstrapFile);
+        Assert.Contains(@":r .\019-create-trivia-rewards.sql", bootstrapFile);
+        Assert.DoesNotContain(@":r ..\MockData\", bootstrapFile);
     }
 
     [Fact]
-    public void SeedEventsScript_IsGuardedAgainstDuplicateSeedData()
+    public void BaseEventMockData_IsGuardedAgainstDuplicateSeedData()
     {
-        // TODO: 010-seed-events.sql was renamed to 012-seed-events.sql.
-        // Update this path if the renumbering is intentional, or revert the rename if 010 is still the contract expected by bootstrap/docs.
-        var seedScript = ReadRepoFile("src", "MovieApp.Infrastructure", "Database", "Scripts", "010-seed-events.sql");
+        var seedScript = ReadRepoFile("src", "MovieApp.Infrastructure", "Database", "MockData", "002-seed-base-events.sql");
 
         Assert.Contains("IF NOT EXISTS", seedScript);
         Assert.Contains("WHERE Title = 'Cannes Winner Screening'", seedScript);
+    }
+
+    [Fact]
+    public void ExtraEventMockData_AddsAdditionalEventsPerEventType()
+    {
+        var seedScript = ReadRepoFile("src", "MovieApp.Infrastructure", "Database", "MockData", "007-seed-extra-users-and-events.sql");
+
+        Assert.Contains("Sunset Classics Screening", seedScript);
+        Assert.Contains("Midnight Horror Marathon", seedScript);
+        Assert.Contains("Directors Roundtable Live", seedScript);
+        Assert.Contains("Award Winners Spotlight", seedScript);
+    }
+
+    [Fact]
+    public void LegacySeedScripts_AreDocumentedAsMovedToMockData()
+    {
+        var eventsStub = ReadRepoFile("src", "MovieApp.Infrastructure", "Database", "Scripts", "012-seed-events.sql");
+        var marathonsStub = ReadRepoFile("src", "MovieApp.Infrastructure", "Database", "Scripts", "020-seed-marathons.sql");
+
+        Assert.Contains("MockData", eventsStub);
+        Assert.Contains("MockData", marathonsStub);
+        Assert.DoesNotContain("INSERT INTO dbo.Events", eventsStub);
+        Assert.DoesNotContain("INSERT INTO dbo.Marathons", marathonsStub);
     }
 
     [Fact]

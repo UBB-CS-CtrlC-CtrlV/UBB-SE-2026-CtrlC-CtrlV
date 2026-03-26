@@ -13,16 +13,22 @@ public sealed class MockDataScriptsTests
     {
         var bootstrapFile = ReadRepoFile("src", "MovieApp.Infrastructure", "Database", "MockData", "000-bootstrap-mock-data.sql");
 
-        Assert.Contains(@":r .\001-seed-users-and-events.sql", bootstrapFile);
-        Assert.Contains(@":r .\002-seed-catalog-and-trivia.sql", bootstrapFile);
-        Assert.Contains(@":r .\003-seed-engagement-and-rewards.sql", bootstrapFile);
-        Assert.Contains(@":r .\004-seed-screenings-and-marathons.sql", bootstrapFile);
+        Assert.Contains(@":r .\001-seed-dummy-user.sql", bootstrapFile);
+        Assert.Contains(@":r .\002-seed-base-events.sql", bootstrapFile);
+        Assert.Contains(@":r .\003-seed-base-trivia-questions.sql", bootstrapFile);
+        Assert.Contains(@":r .\004-seed-base-movies-and-cast.sql", bootstrapFile);
+        Assert.Contains(@":r .\005-seed-base-user-spins.sql", bootstrapFile);
+        Assert.Contains(@":r .\006-seed-base-marathons.sql", bootstrapFile);
+        Assert.Contains(@":r .\007-seed-extra-users-and-events.sql", bootstrapFile);
+        Assert.Contains(@":r .\008-seed-extra-catalog-and-trivia.sql", bootstrapFile);
+        Assert.Contains(@":r .\009-seed-engagement-and-rewards.sql", bootstrapFile);
+        Assert.Contains(@":r .\010-seed-screenings-and-marathons.sql", bootstrapFile);
     }
 
     [Fact]
     public void EngagementMockData_CoversRelationshipDrivenTables()
     {
-        var engagementFile = ReadRepoFile("src", "MovieApp.Infrastructure", "Database", "MockData", "003-seed-engagement-and-rewards.sql");
+        var engagementFile = ReadRepoFile("src", "MovieApp.Infrastructure", "Database", "MockData", "009-seed-engagement-and-rewards.sql");
 
         Assert.Contains("INSERT INTO dbo.UserSpins", engagementFile);
         Assert.Contains("INSERT INTO dbo.Participations", engagementFile);
@@ -37,7 +43,7 @@ public sealed class MockDataScriptsTests
     [Fact]
     public void CatalogMockData_AddsMovieSpecificTriviaForMarathonScenarios()
     {
-        var catalogFile = ReadRepoFile("src", "MovieApp.Infrastructure", "Database", "MockData", "002-seed-catalog-and-trivia.sql");
+        var catalogFile = ReadRepoFile("src", "MovieApp.Infrastructure", "Database", "MockData", "008-seed-extra-catalog-and-trivia.sql");
 
         Assert.Contains("INSERT INTO dbo.Movies", catalogFile);
         Assert.Contains("INSERT INTO dbo.MovieGenres", catalogFile);
