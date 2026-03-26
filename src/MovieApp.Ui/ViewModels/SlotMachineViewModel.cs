@@ -14,9 +14,9 @@ namespace MovieApp.Ui.ViewModels;
 /// </summary>
 public sealed class SlotMachineViewModel : ViewModelBase
 {
-    private readonly SlotMachineService _slotMachineService;
-    private readonly SlotMachineResultService _resultService;
-    private readonly ReelAnimationService _animationService;
+    private readonly SlotMachineService? _slotMachineService;
+    private readonly SlotMachineResultService? _resultService;
+    private readonly ReelAnimationService? _animationService;
     private readonly int _userId;
 
     private Genre _selectedGenre = new();
@@ -104,6 +104,9 @@ public sealed class SlotMachineViewModel : ViewModelBase
     private AsyncRelayCommand? _spinCommand;
     public ICommand SpinCommand => _spinCommand ??= new AsyncRelayCommand(SpinAsync, CanSpin);
 
+    /// <summary>
+    /// Creates a database-backed slot-machine view model for the current user.
+    /// </summary>
     public SlotMachineViewModel(
         int userId,
         SlotMachineService slotMachineService,
@@ -116,6 +119,26 @@ public sealed class SlotMachineViewModel : ViewModelBase
         _animationService = animationService;
     }
 
+    private SlotMachineViewModel(string unavailableMessage)
+    {
+        _statusMessage = unavailableMessage;
+        _isSpinButtonEnabled = false;
+    }
+
+    /// <summary>
+    /// Creates a non-interactive view model used when the database-backed slot-machine
+    /// services are unavailable but the shell should still remain navigable.
+    /// </summary>
+    /// <param name="unavailableMessage">Short message explaining why the feature is offline.</param>
+    /// <returns>A disabled slot-machine state for the page.</returns>
+    public static SlotMachineViewModel CreateUnavailable(string unavailableMessage)
+    {
+        return new SlotMachineViewModel(unavailableMessage);
+    }
+
+    /// <summary>
+    /// Loads the current user's slot-machine state and the initial reel values.
+    /// </summary>
     public async Task InitializeAsync(CancellationToken cancellationToken = default)
     {
         try
@@ -132,7 +155,7 @@ public sealed class SlotMachineViewModel : ViewModelBase
 
     private async Task LoadUserStateAsync(CancellationToken cancellationToken = default)
     {
-        var availableSpins = await _slotMachineService.GetAvailableSpinsAsync(_userId);
+        var availableSpins = await _slotMachineService!.GetAvailableSpinsAsync(_userId);
         AvailableSpins = availableSpins;
 
         // Load initial random values for display
@@ -156,7 +179,7 @@ public sealed class SlotMachineViewModel : ViewModelBase
         try
         {
             // Perform the spin
-            var result = await _slotMachineService.SpinAsync(_userId);
+            var result = await _slotMachineService!.SpinAsync(_userId);
 
             // Get reel sequences for animation
             var genres = await _slotMachineService.GetGenresAsync();
@@ -164,7 +187,7 @@ public sealed class SlotMachineViewModel : ViewModelBase
             var directors = await _slotMachineService.GetDirectorsAsync();
 
             // Animate the reels
-            await _animationService.AnimateReelsAsync(
+            await _animationService!.AnimateReelsAsync(
                 result.Genre,
                 result.Actor,
                 result.Director,
@@ -173,7 +196,7 @@ public sealed class SlotMachineViewModel : ViewModelBase
                 directors.ToList());
 
             // Prepare final result
-            var finalResult = await _resultService.PrepareSpinResultAsync(
+            var finalResult = await _resultService!.PrepareSpinResultAsync(
                 _userId,
                 result.Genre,
                 result.Actor,

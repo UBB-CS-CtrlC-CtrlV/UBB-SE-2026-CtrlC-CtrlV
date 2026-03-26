@@ -11,10 +11,13 @@ using Windows.UI;
 namespace MovieApp.Ui.Controls;
 
 /// <summary>
-/// Displays a compact event summary card with favorite toggling and seat-guide access.
+/// Displays a compact event summary card and a seat-guide entry point for a single event.
 /// </summary>
 public sealed partial class EventCard : UserControl
 {
+    /// <summary>
+    /// Identifies the event model shown by the card.
+    /// </summary>
     public static readonly DependencyProperty ModelProperty = DependencyProperty.Register(
         nameof(Model),
         typeof(object),
@@ -26,6 +29,9 @@ public sealed partial class EventCard : UserControl
         InitializeComponent();
     }
 
+    /// <summary>
+    /// Gets or sets the event model rendered by the card.
+    /// </summary>
     public object? Model
     {
         get => GetValue(ModelProperty);
@@ -134,97 +140,11 @@ public sealed partial class EventCard : UserControl
         }
     }
 
-    private async void VisualSeatGuide_Click(object sender, RoutedEventArgs e)
-    {
-        try
-        {
-            var capacity = EventModel?.MaxCapacity ?? 50;
-            var dialog = new SeatGuideDialog(capacity)
-            {
-                XamlRoot = XamlRoot,
-            };
-
-            await dialog.ShowAsync();
-        }
-        catch (Exception ex)
-        {
-            System.Diagnostics.Debug.WriteLine($"Error opening seat guide: {ex.Message}");
-            System.Diagnostics.Debug.WriteLine(ex.StackTrace);
-        }
-    }
-
-    private async void RefreshComputedProperties()
+    /// <summary>
+    /// Recomputes the generated bindings when a new event model is assigned.
+    /// </summary>
+    private void RefreshComputedProperties()
     {
         Bindings.Update();
-        await UpdateFavoriteIconAsync();
-    }
-
-    private async Task UpdateFavoriteIconAsync()
-    {
-        if (EventModel is null || App.FavoriteEventService is null || App.CurrentUserService?.CurrentUser is null)
-        {
-            return;
-        }
-
-        try
-        {
-            var isFavorite = await App.FavoriteEventService.ExistsFavoriteAsync(App.CurrentUserService.CurrentUser.Id, EventModel.Id);
-            UpdateIconVisuals(isFavorite);
-        }
-        catch
-        {
-        }
-    }
-
-    private void UpdateIconVisuals(bool isFavorite)
-    {
-        if (FavoriteIcon is null)
-        {
-            return;
-        }
-
-        if (isFavorite)
-        {
-            FavoriteIcon.Glyph = "\uEB52";
-            FavoriteIcon.Foreground = new SolidColorBrush(Color.FromArgb(255, 239, 68, 68));
-        }
-        else
-        {
-            FavoriteIcon.Glyph = "\uEB51";
-            FavoriteIcon.ClearValue(FontIcon.ForegroundProperty);
-        }
-    }
-
-    private async void ToggleFavorite_Click(object sender, RoutedEventArgs e)
-    {
-        if (EventModel is null)
-        {
-            return;
-        }
-
-        var favoriteService = App.FavoriteEventService;
-        var currentUser = App.CurrentUserService?.CurrentUser;
-        if (favoriteService is null || currentUser is null)
-        {
-            return;
-        }
-
-        try
-        {
-            var isFavorite = await favoriteService.ExistsFavoriteAsync(currentUser.Id, EventModel.Id);
-            if (isFavorite)
-            {
-                await favoriteService.RemoveFavoriteAsync(currentUser.Id, EventModel.Id);
-                UpdateIconVisuals(false);
-            }
-            else
-            {
-                await favoriteService.AddFavoriteAsync(currentUser.Id, EventModel.Id);
-                UpdateIconVisuals(true);
-            }
-        }
-        catch
-        {
-        }
     }
 }

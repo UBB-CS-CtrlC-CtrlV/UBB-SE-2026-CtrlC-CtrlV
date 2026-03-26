@@ -1,5 +1,6 @@
 using MovieApp.Core.Models;
 using MovieApp.Core.Repositories;
+using Microsoft.UI.Xaml;
 using MovieApp.Ui.ViewModels.Events;
 using Xunit;
 
@@ -173,6 +174,19 @@ public sealed class HomeEventsViewModelTests
 
         Assert.Equal("Premiere", context.Title);
         Assert.Equal("Premiere", context.GroupingValue);
+    }
+
+    [Fact]
+    public async Task InitializeAsync_WithoutRepository_ShowsUnavailableStateAndNoEvents()
+    {
+        var viewModel = new HomeEventsViewModel(null);
+
+        await viewModel.InitializeAsync();
+
+        Assert.False(viewModel.IsRepositoryAvailable);
+        Assert.Equal(Visibility.Visible, viewModel.UnavailableMessageVisibility);
+        Assert.Empty(viewModel.AllEvents);
+        Assert.Empty(viewModel.VisibleEvents);
     }
 
     [Fact]

@@ -12,6 +12,9 @@ namespace MovieApp.Ui.Controls;
 /// </remarks>
 public sealed partial class EventSearchBox : UserControl
 {
+    private bool _isLoaded;
+    private string _pendingSearchText = string.Empty;
+
     /// <summary>
     /// Raised whenever the search text changes through user interaction or property sync.
     /// </summary>
@@ -20,6 +23,7 @@ public sealed partial class EventSearchBox : UserControl
     public EventSearchBox()
     {
         InitializeComponent();
+        Loaded += OnLoaded;
     }
 
     /// <summary>
@@ -60,6 +64,12 @@ public sealed partial class EventSearchBox : UserControl
             typeof(EventSearchBox),
             new PropertyMetadata("Search events"));
 
+    private void OnLoaded(object sender, RoutedEventArgs e)
+    {
+        _isLoaded = true;
+        ApplySearchText(_pendingSearchText);
+    }
+
     private static void OnSearchTextChanged(DependencyObject dependencyObject, DependencyPropertyChangedEventArgs args)
     {
         if (dependencyObject is not EventSearchBox searchBox)
@@ -67,10 +77,20 @@ public sealed partial class EventSearchBox : UserControl
             return;
         }
 
-        var newValue = args.NewValue as string ?? string.Empty;
-        if (searchBox.SearchTextBox.Text != newValue)
+        searchBox._pendingSearchText = args.NewValue as string ?? string.Empty;
+        searchBox.ApplySearchText(searchBox._pendingSearchText);
+    }
+
+    private void ApplySearchText(string text)
+    {
+        if (!_isLoaded || SearchTextBox is null)
         {
-            searchBox.SearchTextBox.Text = newValue;
+            return;
+        }
+
+        if (SearchTextBox.Text != text)
+        {
+            SearchTextBox.Text = text;
         }
     }
 

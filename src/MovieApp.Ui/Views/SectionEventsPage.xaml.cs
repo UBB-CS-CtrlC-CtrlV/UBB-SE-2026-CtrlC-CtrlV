@@ -1,12 +1,10 @@
-﻿using Microsoft.UI.Xaml;
+using System.Globalization;
+using Microsoft.UI.Xaml;
 using Microsoft.UI.Xaml.Controls;
 using Microsoft.UI.Xaml.Navigation;
 using MovieApp.Core.Models;
-using MovieApp.Core.Repositories;
 using MovieApp.Ui.Controls;
-using MovieApp.Ui.Services;
 using MovieApp.Ui.ViewModels.Events;
-using System.Globalization;
 
 namespace MovieApp.Ui.Views;
 
@@ -21,16 +19,17 @@ public sealed partial class SectionEventsPage : Page
 {
     private bool _initialized;
 
+    /// <summary>
+    /// Gets the view model driving the currently selected section page.
+    /// </summary>
     public SectionEventsViewModel? ViewModel { get; private set; }
-
-    private static IEventRepository GetEventRepository()
-        => App.EventRepository ?? UnavailableEventRepository.Instance;
 
     public SectionEventsPage()
     {
         InitializeComponent();
     }
 
+    /// <inheritdoc />
     protected override async void OnNavigatedTo(NavigationEventArgs e)
     {
         base.OnNavigatedTo(e);
@@ -45,7 +44,7 @@ public sealed partial class SectionEventsPage : Page
             return;
         }
 
-        ViewModel = new SectionEventsViewModel(GetEventRepository(), context);
+        ViewModel = new SectionEventsViewModel(App.EventRepository, context);
         DataContext = ViewModel;
 
         _initialized = true;

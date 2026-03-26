@@ -18,6 +18,10 @@
                 <TextBlock
                     Style="{StaticResource SectionCaptionTextStyle}"
                     Text="Manage your favorited events here." />
+                <TextBlock
+                    Visibility="{x:Bind ViewModel.StatusVisibility, Mode=OneWay}"
+                    Style="{StaticResource SectionCaptionTextStyle}"
+                    Text="{x:Bind ViewModel.StatusMessage, Mode=OneWay}" />
             </StackPanel>
 
             <Grid ColumnSpacing="16">

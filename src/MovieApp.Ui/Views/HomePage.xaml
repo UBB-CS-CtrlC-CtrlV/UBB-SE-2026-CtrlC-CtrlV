@@ -7,11 +7,18 @@
     xmlns:ui="using:MovieApp.Ui.Controls"
     mc:Ignorable="d">
 
-    <ScrollViewer Padding="24" VerticalScrollBarVisibility="Auto">
+    <ScrollViewer
+        Padding="24"
+        VerticalScrollBarVisibility="Auto">
         <StackPanel Spacing="16">
             <TextBlock
                 Style="{ThemeResource HeaderTextBlockStyle}"
                 Text="{Binding PageTitle}" />
+
+            <TextBlock
+                Visibility="{Binding UnavailableMessageVisibility}"
+                Style="{StaticResource SectionCaptionTextStyle}"
+                Text="{Binding UnavailableMessage}" />
 
             <ui:EventSearchBox
                 PlaceholderText="Search events by title or type"

@@ -22,6 +22,9 @@ public sealed partial class EventSortSelector : UserControl
         new EventSortOptionItem(EventSortOption.HistoricalRatingDescending, "Historical rating")
     ];
 
+    private bool _isLoaded;
+    private EventSortOption _pendingSortOption = EventSortOption.DateAscending;
+
     /// <summary>
     /// Raised when the user selects a different sort mode.
     /// </summary>
@@ -30,8 +33,7 @@ public sealed partial class EventSortSelector : UserControl
     public EventSortSelector()
     {
         InitializeComponent();
-        SortComboBox.ItemsSource = DefaultSortOptions;
-        UpdateSelectedItem(SelectedSortOption);
+        Loaded += OnLoaded;
     }
 
     /// <summary>
@@ -72,6 +74,13 @@ public sealed partial class EventSortSelector : UserControl
             typeof(EventSortSelector),
             new PropertyMetadata("Sort events"));
 
+    private void OnLoaded(object sender, RoutedEventArgs e)
+    {
+        _isLoaded = true;
+        SortComboBox.ItemsSource = DefaultSortOptions;
+        UpdateSelectedItem(_pendingSortOption);
+    }
+
     private static void OnSelectedSortOptionChanged(DependencyObject dependencyObject, DependencyPropertyChangedEventArgs args)
     {
         if (dependencyObject is not EventSortSelector selector || args.NewValue is not EventSortOption sortOption)
@@ -79,6 +88,7 @@ public sealed partial class EventSortSelector : UserControl
             return;
         }
 
+        selector._pendingSortOption = sortOption;
         selector.UpdateSelectedItem(sortOption);
     }
 
@@ -87,6 +97,11 @@ public sealed partial class EventSortSelector : UserControl
     /// </summary>
     private void UpdateSelectedItem(EventSortOption sortOption)
     {
+        if (!_isLoaded || SortComboBox is null)
+        {
+            return;
+        }
+
         var selectedItem = DefaultSortOptions.FirstOrDefault(item => item.Value == sortOption);
         if (!ReferenceEquals(SortComboBox.SelectedItem, selectedItem))
         {

@@ -8,52 +8,58 @@
     mc:Ignorable="d">
 
     <ScrollViewer Padding="20">
-        <Grid ColumnSpacing="16">
-            <Grid.ColumnDefinitions>
-                <ColumnDefinition Width="1.25*" />
-                <ColumnDefinition Width="1.1*" />
-                <ColumnDefinition Width="*" />
-            </Grid.ColumnDefinitions>
+        <StackPanel Spacing="16">
+            <TextBlock
+                Visibility="{x:Bind ViewModel.StatusVisibility, Mode=OneWay}"
+                Style="{StaticResource SectionCaptionTextStyle}"
+                Text="{x:Bind ViewModel.StatusMessage, Mode=OneWay}" />
 
-            <!-- Left: Marathon list + progress -->
-            <Border Style="{StaticResource SurfaceCardStyle}">
-                <StackPanel Spacing="12">
-                    <TextBlock Style="{ThemeResource SubtitleTextBlockStyle}"
-                               Text="This week's marathons" />
-                    <ListView x:Name="MarathonListView"
-                              ItemsSource="{x:Bind ViewModel.Marathons, Mode=OneWay}"
-                              SelectionChanged="MarathonListView_SelectionChanged"
-                              Height="380">
-                        <ListView.ItemTemplate>
-                            <DataTemplate x:DataType="models:Marathon">
-                                <StackPanel Padding="4" Spacing="2">
-                                    <TextBlock Text="{x:Bind Title}"
-                                               FontWeight="SemiBold" />
-                                    <TextBlock Text="{x:Bind Theme}"
-                                               FontSize="12" Opacity="0.6" />
-                                </StackPanel>
-                            </DataTemplate>
-                        </ListView.ItemTemplate>
-                    </ListView>
-                    <Border Style="{StaticResource StrongSurfaceCardStyle}">
-                        <StackPanel Spacing="4">
-                            <TextBlock Text="Your progress"
-                                       FontWeight="SemiBold" />
-                            <TextBlock
-                                Text="{x:Bind ViewModel.ProgressText, Mode=OneWay}"
-                                Style="{StaticResource SectionCaptionTextStyle}" />
-                            <TextBlock x:Name="LockedBanner"
-                                       Text="Locked — complete the prerequisite marathon first"
-                                       Foreground="{ThemeResource SystemErrorTextColor}"
-                                       Visibility="Collapsed" />
-                        </StackPanel>
-                    </Border>
-                </StackPanel>
-            </Border>
+            <Grid ColumnSpacing="16">
+                <Grid.ColumnDefinitions>
+                    <ColumnDefinition Width="1.25*" />
+                    <ColumnDefinition Width="1.1*" />
+                    <ColumnDefinition Width="*" />
+                </Grid.ColumnDefinitions>
 
-            <!-- Middle: Quiz area -->
-            <Border Grid.Column="1" Style="{StaticResource SurfaceCardStyle}">
-                <StackPanel Spacing="12">
+                <!-- Left: Marathon list + progress -->
+                <Border Style="{StaticResource SurfaceCardStyle}">
+                    <StackPanel Spacing="12">
+                        <TextBlock Style="{ThemeResource SubtitleTextBlockStyle}"
+                                   Text="This week's marathons" />
+                        <ListView x:Name="MarathonListView"
+                                  ItemsSource="{x:Bind ViewModel.Marathons, Mode=OneWay}"
+                                  SelectionChanged="MarathonListView_SelectionChanged"
+                                  Height="380">
+                            <ListView.ItemTemplate>
+                                <DataTemplate x:DataType="models:Marathon">
+                                    <StackPanel Padding="4" Spacing="2">
+                                        <TextBlock Text="{x:Bind Title}"
+                                                   FontWeight="SemiBold" />
+                                        <TextBlock Text="{x:Bind Theme}"
+                                                   FontSize="12" Opacity="0.6" />
+                                    </StackPanel>
+                                </DataTemplate>
+                            </ListView.ItemTemplate>
+                        </ListView>
+                        <Border Style="{StaticResource StrongSurfaceCardStyle}">
+                            <StackPanel Spacing="4">
+                                <TextBlock Text="Your progress"
+                                           FontWeight="SemiBold" />
+                                <TextBlock
+                                    Text="{x:Bind ViewModel.ProgressText, Mode=OneWay}"
+                                    Style="{StaticResource SectionCaptionTextStyle}" />
+                                <TextBlock x:Name="LockedBanner"
+                                           Text="Locked - complete the prerequisite marathon first"
+                                           Foreground="{ThemeResource SystemErrorTextColor}"
+                                           Visibility="Collapsed" />
+                            </StackPanel>
+                        </Border>
+                    </StackPanel>
+                </Border>
+
+                <!-- Middle: Quiz area -->
+                <Border Grid.Column="1" Style="{StaticResource SurfaceCardStyle}">
+                    <StackPanel Spacing="12">
 
                     <!-- Idle state -->
                     <StackPanel x:Name="IdlePanel" Spacing="8">
@@ -95,30 +101,31 @@
                                 Click="TryAgainButton_Click" />
                     </StackPanel>
 
-                </StackPanel>
-            </Border>
+                    </StackPanel>
+                </Border>
 
-            <!-- Right: Leaderboard -->
-            <Border Grid.Column="2" Style="{StaticResource SurfaceCardStyle}">
-                <StackPanel Spacing="12">
-                    <TextBlock Style="{ThemeResource SubtitleTextBlockStyle}"
-                               Text="Leaderboard" />
-                    <ListView x:Name="LeaderboardListView"
-                              ItemsSource="{x:Bind ViewModel.Leaderboard, Mode=OneWay}"
-                              Height="440">
-                        <ListView.ItemTemplate>
-                            <DataTemplate x:DataType="models:MarathonProgress">
-                                <StackPanel Padding="4" Spacing="2">
-                                    <TextBlock FontWeight="SemiBold"
-                                               Text="{x:Bind CompletedMoviesCount}" />
-                                    <TextBlock FontSize="12" Opacity="0.7"
-                                               Text="{x:Bind TriviaAccuracy}" />
-                                </StackPanel>
-                            </DataTemplate>
-                        </ListView.ItemTemplate>
-                    </ListView>
-                </StackPanel>
-            </Border>
-        </Grid>
+                <!-- Right: Leaderboard -->
+                <Border Grid.Column="2" Style="{StaticResource SurfaceCardStyle}">
+                    <StackPanel Spacing="12">
+                        <TextBlock Style="{ThemeResource SubtitleTextBlockStyle}"
+                                   Text="Leaderboard" />
+                        <ListView x:Name="LeaderboardListView"
+                                  ItemsSource="{x:Bind ViewModel.Leaderboard, Mode=OneWay}"
+                                  Height="440">
+                            <ListView.ItemTemplate>
+                                <DataTemplate x:DataType="models:MarathonProgress">
+                                    <StackPanel Padding="4" Spacing="2">
+                                        <TextBlock FontWeight="SemiBold"
+                                                   Text="{x:Bind CompletedMoviesCount}" />
+                                        <TextBlock FontSize="12" Opacity="0.7"
+                                                   Text="{x:Bind TriviaAccuracy}" />
+                                    </StackPanel>
+                                </DataTemplate>
+                            </ListView.ItemTemplate>
+                        </ListView>
+                    </StackPanel>
+                </Border>
+            </Grid>
+        </StackPanel>
     </ScrollViewer>
 </Page>

@@ -1,6 +1,7 @@
 using MovieApp.Core.Models;
 using MovieApp.Core.Repositories;
 using MovieApp.Ui.Navigation;
+using Microsoft.UI.Xaml;
 using System.ComponentModel;
 
 namespace MovieApp.Ui.ViewModels.Events;
@@ -17,7 +18,7 @@ namespace MovieApp.Ui.ViewModels.Events;
 /// </remarks>
 public sealed class HomeEventsViewModel : EventListPageViewModel
 {
-    private readonly IEventRepository _repository;
+    private readonly IEventRepository? _repository;
     private IReadOnlyList<EventSection> _sections = [];
 
     /// <summary>
@@ -27,9 +28,9 @@ public sealed class HomeEventsViewModel : EventListPageViewModel
     /// <exception cref="ArgumentNullException">
     /// Thrown when <paramref name="repository"/> is <see langword="null"/>.
     /// </exception>
-    public HomeEventsViewModel(IEventRepository repository)
+    public HomeEventsViewModel(IEventRepository? repository)
     {
-        _repository = repository ?? throw new ArgumentNullException(nameof(repository));
+        _repository = repository;
         PropertyChanged += OnBasePropertyChanged;
     }
 
@@ -74,6 +75,21 @@ public sealed class HomeEventsViewModel : EventListPageViewModel
     }
 
     /// <summary>
+    /// Gets a value indicating whether the page can load event data from the configured repository.
+    /// </summary>
+    public bool IsRepositoryAvailable => _repository is not null;
+
+    /// <summary>
+    /// Gets the visibility of the repository-unavailable message.
+    /// </summary>
+    public Visibility UnavailableMessageVisibility => IsRepositoryAvailable ? Visibility.Collapsed : Visibility.Visible;
+
+    /// <summary>
+    /// Gets the message shown when the page cannot load database-backed events.
+    /// </summary>
+    public string UnavailableMessage => "Event data is unavailable because the database connection is not ready.";
+
+    /// <summary>
     /// Creates the navigation payload used to open a section-specific event page.
     /// </summary>
     /// <param name="section">The section selected by the user.</param>
@@ -106,6 +122,11 @@ public sealed class HomeEventsViewModel : EventListPageViewModel
     /// </returns>
     protected override async Task<IReadOnlyList<Event>> LoadEventsAsync()
     {
+        if (_repository is null)
+        {
+            return [];
+        }
+
         var allEvents = await _repository.GetAllAsync();
         return allEvents.ToList();
     }
