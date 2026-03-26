@@ -74,6 +74,14 @@ public sealed partial class HomePage : Page
         Frame.Navigate(AppRouteResolver.ResolvePageType(shortcut.RouteTag));
     }
 
+    /// <summary>
+    /// Applies the current search text to the home page event list only.
+    /// </summary>
+    private void SearchBox_SearchTextChanged(object? sender, string searchText)
+    {
+        ViewModel.SetSearchText(searchText);
+    }
+
     private async void EventCardButton_Click(object sender, RoutedEventArgs e)
     {
         if (sender is not Button button || button.DataContext is not Event selectedEvent)

@@ -134,6 +134,20 @@ public sealed class HomeEventsViewModelTests
     }
 
     [Fact]
+    public async Task SetSearchText_MatchesSectionsByEventType()
+    {
+        var repository = new StubEventRepository(BuildSectionSampleEvents());
+        var viewModel = new HomeEventsViewModel(repository);
+
+        await viewModel.InitializeAsync();
+        viewModel.SetSearchText("festival");
+
+        var section = Assert.Single(viewModel.Sections);
+        Assert.Equal("Festival", section.Title);
+        Assert.Equal([3], section.Events.Select(e => e.Id));
+    }
+
+    [Fact]
     public async Task CreateNavigationContext_ReturnsSelectedGroupingInformation()
     {
         var repository = new StubEventRepository(BuildSectionSampleEvents());
