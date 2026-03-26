@@ -119,7 +119,7 @@ public partial class App : Application
             viewModel = MainViewModel.CreateStartupError(BuildStartupErrorMessage(exception));
         }
 
-        CurrentMainWindow = new MainWindow(viewModel);
+        CurrentMainWindow = new MainWindow(viewModel, EventRepository!);
         _window = CurrentMainWindow;
         _window.Activate();
     }
