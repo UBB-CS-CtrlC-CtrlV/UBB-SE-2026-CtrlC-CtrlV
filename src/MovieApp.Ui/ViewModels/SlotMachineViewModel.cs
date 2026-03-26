@@ -122,6 +122,20 @@ public sealed class SlotMachineViewModel : ViewModelBase
     public Movie? JackpotMovie { get; private set; }
     public bool JackpotAchieved { get; private set; }
 
+    private bool _hasMatchingEvents;
+    public bool HasMatchingEvents
+    {
+        get => _hasMatchingEvents;
+        private set => SetProperty(ref _hasMatchingEvents, value);
+    }
+
+    private bool _hasNoMatchingEvents = true;
+    public bool HasNoMatchingEvents
+    {
+        get => _hasNoMatchingEvents;
+        private set => SetProperty(ref _hasNoMatchingEvents, value);
+    }
+
     public event Action<Movie, int>? JackpotHit;
 
     private AsyncRelayCommand? _spinCommand;
@@ -138,6 +152,11 @@ public sealed class SlotMachineViewModel : ViewModelBase
         _userId = userId;
         _slotMachineService = slotMachineService;
         _animationService = animationService;
+        MatchingEvents.CollectionChanged += (_, _) =>
+        {
+            HasMatchingEvents = MatchingEvents.Count > 0;
+            HasNoMatchingEvents = !HasMatchingEvents;
+        };
     }
 
     public async Task InitializeAsync(CancellationToken cancellationToken = default)

@@ -13,143 +13,546 @@
         <local:BoolToHighlightBrushConverter x:Key="BoolToHighlightBrushConverter" />
     </Page.Resources>
 
-    <ScrollViewer Padding="20">
-        <Grid ColumnSpacing="16">
-            <Grid.ColumnDefinitions>
-                <ColumnDefinition Width="1.6*" />
-                <ColumnDefinition Width="*" />
-            </Grid.ColumnDefinitions>
+    <ScrollViewer VerticalScrollBarVisibility="Auto">
+        <StackPanel>
 
-            <StackPanel Spacing="16">
-                <!-- Slot Machine Reels Display -->
-                <Border Style="{StaticResource SurfaceCardStyle}" Padding="12">
-                    <Grid ColumnSpacing="12">
+            <!-- ═══════════════════════════════════════════════════════
+                 HERO SECTION  – fills at least one viewport height
+                 ═══════════════════════════════════════════════════════ -->
+            <Grid MinHeight="800"
+                  HorizontalAlignment="Stretch"
+                  VerticalAlignment="Stretch">
+
+                <!-- Dark starfield background -->
+                <Rectangle>
+                    <Rectangle.Fill>
+                        <LinearGradientBrush StartPoint="0,0" EndPoint="0,1">
+                            <GradientStop Color="#0B0B1E" Offset="0" />
+                            <GradientStop Color="#111130" Offset="1" />
+                        </LinearGradientBrush>
+                    </Rectangle.Fill>
+                </Rectangle>
+
+                <!-- Cabinet centred in hero -->
+                <StackPanel HorizontalAlignment="Center"
+                            VerticalAlignment="Center"
+                            Spacing="24"
+                            MaxWidth="920"
+                            Padding="0,40">
+
+                    <!-- ╔══════════════════════════════╗
+                         ║   SLOT MACHINE CABINET       ║
+                         ╚══════════════════════════════╝ -->
+                    <Border Background="#0B0B1E"
+                            CornerRadius="28"
+                            BorderBrush="#C8971A"
+                            BorderThickness="3"
+                            Padding="28,24">
+                        <StackPanel Spacing="0">
+
+                            <!-- Top decorative light strip -->
+                            <StackPanel Orientation="Horizontal"
+                                        HorizontalAlignment="Center"
+                                        Spacing="8"
+                                        Margin="0,0,0,16">
+                                <Ellipse Width="10" Height="10" Fill="#C8971A" />
+                                <Ellipse Width="10" Height="10" Fill="#6A4E0F" />
+                                <Ellipse Width="10" Height="10" Fill="#C8971A" />
+                                <Ellipse Width="10" Height="10" Fill="#6A4E0F" />
+                                <Ellipse Width="10" Height="10" Fill="#C8971A" />
+                                <TextBlock Text="🎰  CINE SLOT  🎰"
+                                           FontSize="22"
+                                           FontWeight="Bold"
+                                           Foreground="#C8971A"
+                                           VerticalAlignment="Center"
+                                           Margin="12,0" />
+                                <Ellipse Width="10" Height="10" Fill="#C8971A" />
+                                <Ellipse Width="10" Height="10" Fill="#6A4E0F" />
+                                <Ellipse Width="10" Height="10" Fill="#C8971A" />
+                                <Ellipse Width="10" Height="10" Fill="#6A4E0F" />
+                                <Ellipse Width="10" Height="10" Fill="#C8971A" />
+                            </StackPanel>
+
+                            <!-- Thin gold rule under title -->
+                            <Rectangle Height="2"
+                                       Fill="#C8971A"
+                                       Opacity="0.5"
+                                       Margin="0,0,0,20" />
+
+                            <!-- Payline arrow + reel window row -->
+                            <Grid>
+                                <Grid.ColumnDefinitions>
+                                    <ColumnDefinition Width="Auto" />
+                                    <ColumnDefinition Width="*" />
+                                    <ColumnDefinition Width="Auto" />
+                                </Grid.ColumnDefinitions>
+
+                                <!-- Left payline arrow -->
+                                <TextBlock Grid.Column="0"
+                                           Text="▶"
+                                           FontSize="22"
+                                           Foreground="#C8971A"
+                                           VerticalAlignment="Center"
+                                           Margin="0,0,10,0" />
+
+                                <!-- Reel window -->
+                                <Border Grid.Column="1"
+                                        Background="#070712"
+                                        CornerRadius="14"
+                                        BorderBrush="#6A4E0F"
+                                        BorderThickness="4"
+                                        Padding="10">
+                                    <Grid ColumnSpacing="10">
+                                        <Grid.ColumnDefinitions>
+                                            <ColumnDefinition Width="180" />
+                                            <ColumnDefinition Width="180" />
+                                            <ColumnDefinition Width="180" />
+                                        </Grid.ColumnDefinitions>
+
+                                        <!-- ── GENRE REEL ── -->
+                                        <Grid Grid.Column="0" Height="250">
+                                            <!-- Reel drum surface -->
+                                            <Border Background="#0A0A20"
+                                                    CornerRadius="8" />
+
+                                            <!-- Payline highlight band -->
+                                            <Border Background="#16163A"
+                                                    BorderBrush="#C8971A"
+                                                    BorderThickness="0,2"
+                                                    Height="72"
+                                                    VerticalAlignment="Center"
+                                                    CornerRadius="4" />
+
+                                            <!-- Symbol text -->
+                                            <TextBlock Text="{Binding SelectedGenre.Name}"
+                                                       HorizontalAlignment="Center"
+                                                       VerticalAlignment="Center"
+                                                       TextAlignment="Center"
+                                                       FontSize="18"
+                                                       FontWeight="Bold"
+                                                       Foreground="#E8E8FF"
+                                                       TextWrapping="Wrap"
+                                                       MaxLines="2"
+                                                       TextTrimming="CharacterEllipsis"
+                                                       Width="160"
+                                                       Margin="8" />
+
+                                            <!-- Spin indicator -->
+                                            <ProgressRing IsActive="{Binding IsGenreSpinning}"
+                                                          Width="28" Height="28"
+                                                          Foreground="#C8971A"
+                                                          VerticalAlignment="Center"
+                                                          HorizontalAlignment="Center" />
+
+                                            <!-- Top fade overlay -->
+                                            <Rectangle VerticalAlignment="Top"
+                                                       Height="56">
+                                                <Rectangle.Fill>
+                                                    <LinearGradientBrush StartPoint="0,0" EndPoint="0,1">
+                                                        <GradientStop Color="#CC070712" Offset="0" />
+                                                        <GradientStop Color="#00070712" Offset="1" />
+                                                    </LinearGradientBrush>
+                                                </Rectangle.Fill>
+                                            </Rectangle>
+
+                                            <!-- Bottom fade overlay -->
+                                            <Rectangle VerticalAlignment="Bottom"
+                                                       Height="56">
+                                                <Rectangle.Fill>
+                                                    <LinearGradientBrush StartPoint="0,0" EndPoint="0,1">
+                                                        <GradientStop Color="#00070712" Offset="0" />
+                                                        <GradientStop Color="#CC070712" Offset="1" />
+                                                    </LinearGradientBrush>
+                                                </Rectangle.Fill>
+                                            </Rectangle>
+                                        </Grid>
+
+                                        <!-- Reel divider -->
+                                        <Rectangle Grid.Column="0"
+                                                   Width="2"
+                                                   Fill="#C8971A"
+                                                   Opacity="0.4"
+                                                   HorizontalAlignment="Right"
+                                                   Margin="0,8" />
+
+                                        <!-- ── ACTOR REEL ── -->
+                                        <Grid Grid.Column="1" Height="250">
+                                            <Border Background="#0A0A20"
+                                                    CornerRadius="8" />
+
+                                            <Border Background="#16163A"
+                                                    BorderBrush="#C8971A"
+                                                    BorderThickness="0,2"
+                                                    Height="72"
+                                                    VerticalAlignment="Center"
+                                                    CornerRadius="4" />
+
+                                            <TextBlock Text="{Binding SelectedActor.Name}"
+                                                       HorizontalAlignment="Center"
+                                                       VerticalAlignment="Center"
+                                                       TextAlignment="Center"
+                                                       FontSize="18"
+                                                       FontWeight="Bold"
+                                                       Foreground="#E8E8FF"
+                                                       TextWrapping="Wrap"
+                                                       MaxLines="2"
+                                                       TextTrimming="CharacterEllipsis"
+                                                       Width="160"
+                                                       Margin="8" />
+
+                                            <ProgressRing IsActive="{Binding IsActorSpinning}"
+                                                          Width="28" Height="28"
+                                                          Foreground="#C8971A"
+                                                          VerticalAlignment="Center"
+                                                          HorizontalAlignment="Center" />
+
+                                            <Rectangle VerticalAlignment="Top"
+                                                       Height="56">
+                                                <Rectangle.Fill>
+                                                    <LinearGradientBrush StartPoint="0,0" EndPoint="0,1">
+                                                        <GradientStop Color="#CC070712" Offset="0" />
+                                                        <GradientStop Color="#00070712" Offset="1" />
+                                                    </LinearGradientBrush>
+                                                </Rectangle.Fill>
+                                            </Rectangle>
+
+                                            <Rectangle VerticalAlignment="Bottom"
+                                                       Height="56">
+                                                <Rectangle.Fill>
+                                                    <LinearGradientBrush StartPoint="0,0" EndPoint="0,1">
+                                                        <GradientStop Color="#00070712" Offset="0" />
+                                                        <GradientStop Color="#CC070712" Offset="1" />
+                                                    </LinearGradientBrush>
+                                                </Rectangle.Fill>
+                                            </Rectangle>
+                                        </Grid>
+
+                                        <!-- Reel divider -->
+                                        <Rectangle Grid.Column="1"
+                                                   Width="2"
+                                                   Fill="#C8971A"
+                                                   Opacity="0.4"
+                                                   HorizontalAlignment="Right"
+                                                   Margin="0,8" />
+
+                                        <!-- ── DIRECTOR REEL ── -->
+                                        <Grid Grid.Column="2" Height="250">
+                                            <Border Background="#0A0A20"
+                                                    CornerRadius="8" />
+
+                                            <Border Background="#16163A"
+                                                    BorderBrush="#C8971A"
+                                                    BorderThickness="0,2"
+                                                    Height="72"
+                                                    VerticalAlignment="Center"
+                                                    CornerRadius="4" />
+
+                                            <TextBlock Text="{Binding SelectedDirector.Name}"
+                                                       HorizontalAlignment="Center"
+                                                       VerticalAlignment="Center"
+                                                       TextAlignment="Center"
+                                                       FontSize="18"
+                                                       FontWeight="Bold"
+                                                       Foreground="#E8E8FF"
+                                                       TextWrapping="Wrap"
+                                                       MaxLines="2"
+                                                       TextTrimming="CharacterEllipsis"
+                                                       Width="160"
+                                                       Margin="8" />
+
+                                            <ProgressRing IsActive="{Binding IsDirectorSpinning}"
+                                                          Width="28" Height="28"
+                                                          Foreground="#C8971A"
+                                                          VerticalAlignment="Center"
+                                                          HorizontalAlignment="Center" />
+
+                                            <Rectangle VerticalAlignment="Top"
+                                                       Height="56">
+                                                <Rectangle.Fill>
+                                                    <LinearGradientBrush StartPoint="0,0" EndPoint="0,1">
+                                                        <GradientStop Color="#CC070712" Offset="0" />
+                                                        <GradientStop Color="#00070712" Offset="1" />
+                                                    </LinearGradientBrush>
+                                                </Rectangle.Fill>
+                                            </Rectangle>
+
+                                            <Rectangle VerticalAlignment="Bottom"
+                                                       Height="56">
+                                                <Rectangle.Fill>
+                                                    <LinearGradientBrush StartPoint="0,0" EndPoint="0,1">
+                                                        <GradientStop Color="#00070712" Offset="0" />
+                                                        <GradientStop Color="#CC070712" Offset="1" />
+                                                    </LinearGradientBrush>
+                                                </Rectangle.Fill>
+                                            </Rectangle>
+                                        </Grid>
+                                    </Grid>
+                                </Border>
+
+                                <!-- Right payline arrow -->
+                                <TextBlock Grid.Column="2"
+                                           Text="◀"
+                                           FontSize="22"
+                                           Foreground="#C8971A"
+                                           VerticalAlignment="Center"
+                                           Margin="10,0,0,0" />
+                            </Grid>
+
+                            <!-- Reel category labels -->
+                            <Grid Margin="32,10,32,0">
+                                <Grid.ColumnDefinitions>
+                                    <ColumnDefinition Width="*" />
+                                    <ColumnDefinition Width="*" />
+                                    <ColumnDefinition Width="*" />
+                                </Grid.ColumnDefinitions>
+                                <TextBlock Grid.Column="0" Text="GENRE"
+                                           HorizontalAlignment="Center"
+                                           FontSize="11" FontWeight="Bold"
+                                           Foreground="#6868A0"
+                                           CharacterSpacing="120" />
+                                <TextBlock Grid.Column="1" Text="ACTOR"
+                                           HorizontalAlignment="Center"
+                                           FontSize="11" FontWeight="Bold"
+                                           Foreground="#6868A0"
+                                           CharacterSpacing="120" />
+                                <TextBlock Grid.Column="2" Text="DIRECTOR"
+                                           HorizontalAlignment="Center"
+                                           FontSize="11" FontWeight="Bold"
+                                           Foreground="#6868A0"
+                                           CharacterSpacing="120" />
+                            </Grid>
+
+                            <!-- Thin gold rule above bottom lights -->
+                            <Rectangle Height="2"
+                                       Fill="#C8971A"
+                                       Opacity="0.5"
+                                       Margin="0,20,0,16" />
+
+                            <!-- Bottom decorative light strip -->
+                            <StackPanel Orientation="Horizontal"
+                                        HorizontalAlignment="Center"
+                                        Spacing="8">
+                                <Ellipse Width="10" Height="10" Fill="#6A4E0F" />
+                                <Ellipse Width="10" Height="10" Fill="#C8971A" />
+                                <Ellipse Width="10" Height="10" Fill="#6A4E0F" />
+                                <Ellipse Width="10" Height="10" Fill="#C8971A" />
+                                <Ellipse Width="10" Height="10" Fill="#6A4E0F" />
+                                <Ellipse Width="10" Height="10" Fill="#C8971A" />
+                                <Ellipse Width="10" Height="10" Fill="#6A4E0F" />
+                                <Ellipse Width="10" Height="10" Fill="#C8971A" />
+                                <Ellipse Width="10" Height="10" Fill="#6A4E0F" />
+                            </StackPanel>
+
+                        </StackPanel>
+                    </Border>
+                    <!-- END CABINET -->
+
+                    <!-- Stats row -->
+                    <Grid HorizontalAlignment="Center" ColumnSpacing="12">
                         <Grid.ColumnDefinitions>
-                            <ColumnDefinition Width="*" />
-                            <ColumnDefinition Width="*" />
-                            <ColumnDefinition Width="*" />
+                            <ColumnDefinition Width="190" />
+                            <ColumnDefinition Width="190" />
+                            <ColumnDefinition Width="190" />
                         </Grid.ColumnDefinitions>
 
-                        <!-- Genre Reel -->
-                        <Border Grid.Column="0" Style="{StaticResource StrongSurfaceCardStyle}" MinHeight="200" Padding="12">
-                            <Grid>
-                                <Grid.RowDefinitions>
-                                    <RowDefinition Height="Auto" />
-                                    <RowDefinition Height="*" />
-                                    <RowDefinition Height="Auto" />
-                                </Grid.RowDefinitions>
-                                <TextBlock Grid.Row="0" Text="GENRE" HorizontalAlignment="Center" FontSize="14" FontWeight="Bold" Opacity="0.7" Margin="0,0,0,8" />
-                                <TextBlock Grid.Row="1" Text="{Binding SelectedGenre.Name}" HorizontalAlignment="Center" VerticalAlignment="Center" TextAlignment="Center" FontSize="18" FontWeight="Bold" TextWrapping="Wrap" />
-                                <ProgressRing Grid.Row="2" IsActive="{Binding IsGenreSpinning}" Width="24" Height="24" HorizontalAlignment="Center" Margin="0,8,0,0" />
-                            </Grid>
+                        <!-- Daily Spins -->
+                        <Border Grid.Column="0"
+                                Background="#0E0E24"
+                                BorderBrush="#C8971A"
+                                BorderThickness="1"
+                                CornerRadius="10"
+                                Padding="12,10">
+                            <StackPanel HorizontalAlignment="Center" Spacing="2">
+                                <TextBlock Text="DAILY SPINS"
+                                           FontSize="10" FontWeight="Bold"
+                                           Foreground="#C8971A"
+                                           HorizontalAlignment="Center"
+                                           CharacterSpacing="80" />
+                                <TextBlock Text="{Binding AvailableSpins}"
+                                           FontSize="32" FontWeight="Bold"
+                                           Foreground="#E8E8FF"
+                                           HorizontalAlignment="Center" />
+                            </StackPanel>
                         </Border>
 
-                        <!-- Actor Reel -->
-                        <Border Grid.Column="1" Style="{StaticResource StrongSurfaceCardStyle}" MinHeight="200" Padding="12">
-                            <Grid>
-                                <Grid.RowDefinitions>
-                                    <RowDefinition Height="Auto" />
-                                    <RowDefinition Height="*" />
-                                    <RowDefinition Height="Auto" />
-                                </Grid.RowDefinitions>
-                                <TextBlock Grid.Row="0" Text="ACTOR" HorizontalAlignment="Center" FontSize="14" FontWeight="Bold" Opacity="0.7" Margin="0,0,0,8" />
-                                <TextBlock Grid.Row="1" Text="{Binding SelectedActor.Name}" HorizontalAlignment="Center" VerticalAlignment="Center" TextAlignment="Center" FontSize="18" FontWeight="Bold" TextWrapping="Wrap" />
-                                <ProgressRing Grid.Row="2" IsActive="{Binding IsActorSpinning}" Width="24" Height="24" HorizontalAlignment="Center" Margin="0,8,0,0" />
-                            </Grid>
+                        <!-- Bonus Spins -->
+                        <Border Grid.Column="1"
+                                Background="#0E0E24"
+                                BorderBrush="#3A3A6A"
+                                BorderThickness="1"
+                                CornerRadius="10"
+                                Padding="12,10">
+                            <StackPanel HorizontalAlignment="Center" Spacing="2">
+                                <TextBlock Text="BONUS SPINS"
+                                           FontSize="10" FontWeight="Bold"
+                                           Foreground="#8888C0"
+                                           HorizontalAlignment="Center"
+                                           CharacterSpacing="80" />
+                                <TextBlock Text="{Binding BonusSpins}"
+                                           FontSize="32" FontWeight="Bold"
+                                           Foreground="#E8E8FF"
+                                           HorizontalAlignment="Center" />
+                            </StackPanel>
                         </Border>
 
-                        <!-- Director Reel -->
-                        <Border Grid.Column="2" Style="{StaticResource StrongSurfaceCardStyle}" MinHeight="200" Padding="12">
-                            <Grid>
-                                <Grid.RowDefinitions>
-                                    <RowDefinition Height="Auto" />
-                                    <RowDefinition Height="*" />
-                                    <RowDefinition Height="Auto" />
-                                </Grid.RowDefinitions>
-                                <TextBlock Grid.Row="0" Text="DIRECTOR" HorizontalAlignment="Center" FontSize="14" FontWeight="Bold" Opacity="0.7" Margin="0,0,0,8" />
-                                <TextBlock Grid.Row="1" Text="{Binding SelectedDirector.Name}" HorizontalAlignment="Center" VerticalAlignment="Center" TextAlignment="Center" FontSize="18" FontWeight="Bold" TextWrapping="Wrap" />
-                                <ProgressRing Grid.Row="2" IsActive="{Binding IsDirectorSpinning}" Width="24" Height="24" HorizontalAlignment="Center" Margin="0,8,0,0" />
-                            </Grid>
+                        <!-- Login Streak -->
+                        <Border Grid.Column="2"
+                                Background="#0E0E24"
+                                BorderBrush="#3A3A6A"
+                                BorderThickness="1"
+                                CornerRadius="10"
+                                Padding="12,10">
+                            <StackPanel HorizontalAlignment="Center" Spacing="2">
+                                <TextBlock Text="🔥 STREAK"
+                                           FontSize="10" FontWeight="Bold"
+                                           Foreground="#8888C0"
+                                           HorizontalAlignment="Center"
+                                           CharacterSpacing="80" />
+                                <TextBlock Text="{Binding LoginStreak}"
+                                           FontSize="32" FontWeight="Bold"
+                                           Foreground="#E8E8FF"
+                                           HorizontalAlignment="Center" />
+                            </StackPanel>
                         </Border>
                     </Grid>
-                </Border>
 
-                <!-- Matching Events -->
-                <Border Style="{StaticResource SurfaceCardStyle}">
-                    <StackPanel Spacing="12">
-                        <TextBlock Text="Matching Events" FontSize="16" FontWeight="SemiBold" />
-                        <ListView ItemsSource="{Binding MatchingEvents}" Height="220">
-                            <ListView.ItemTemplate>
+                    <!-- Status message -->
+                    <TextBlock Text="{Binding StatusMessage}"
+                               HorizontalAlignment="Center"
+                               TextAlignment="Center"
+                               FontSize="14"
+                               Foreground="#A0A0C0"
+                               TextWrapping="Wrap"
+                               MaxWidth="560" />
+
+                    <!-- SPIN button -->
+                    <Button Command="{Binding SpinCommand}"
+                            IsEnabled="{Binding IsSpinButtonEnabled}"
+                            HorizontalAlignment="Center"
+                            Width="300"
+                            Padding="0,18"
+                            FontSize="20"
+                            FontWeight="Bold"
+                            CornerRadius="14"
+                            Background="#C8971A"
+                            Foreground="#0B0B1E">
+                        <TextBlock Text="🎰  SPIN" />
+                    </Button>
+
+                    <!-- Spinning indicator (only visible while spinning) -->
+                    <ProgressRing IsActive="{Binding IsSpinning}"
+                                  Visibility="{Binding IsSpinning, Converter={StaticResource BoolToVisibilityConverter}}"
+                                  Width="36" Height="36"
+                                  Foreground="#C8971A"
+                                  HorizontalAlignment="Center" />
+
+                </StackPanel>
+            </Grid>
+            <!-- END HERO SECTION -->
+
+            <!-- ═══════════════════════════════════════════════════════
+                 MATCHING EVENTS SECTION  – below the fold
+                 ═══════════════════════════════════════════════════════ -->
+            <Border Style="{StaticResource SurfaceCardStyle}"
+                    Margin="24,0,24,24">
+                <StackPanel Spacing="16">
+
+                    <!-- Section header -->
+                    <StackPanel Orientation="Horizontal" Spacing="8">
+                        <TextBlock Text="🎬 Matching Events"
+                                   FontSize="18"
+                                   FontWeight="SemiBold" />
+                        <Border Background="#C8971A"
+                                CornerRadius="10"
+                                Padding="8,2"
+                                Visibility="{Binding HasMatchingEvents, Converter={StaticResource BoolToVisibilityConverter}}">
+                            <TextBlock Text="{Binding MatchingEvents.Count}"
+                                       FontSize="12"
+                                       FontWeight="Bold"
+                                       Foreground="#0B0B1E" />
+                        </Border>
+                    </StackPanel>
+
+                    <!-- Empty state -->
+                    <StackPanel HorizontalAlignment="Center"
+                                Spacing="8"
+                                Padding="0,32"
+                                Visibility="{Binding HasNoMatchingEvents, Converter={StaticResource BoolToVisibilityConverter}}">
+                        <TextBlock Text="🎰"
+                                   FontSize="40"
+                                   HorizontalAlignment="Center" />
+                        <TextBlock Text="Spin the reels to discover matching movie events"
+                                   FontSize="14"
+                                   Opacity="0.6"
+                                   HorizontalAlignment="Center"
+                                   TextAlignment="Center" />
+                    </StackPanel>
+
+                    <!-- Events list (scrollable, max height ~500) -->
+                    <ScrollViewer MaxHeight="500"
+                                  VerticalScrollBarVisibility="Auto"
+                                  Visibility="{Binding HasMatchingEvents, Converter={StaticResource BoolToVisibilityConverter}}">
+                        <ItemsControl ItemsSource="{Binding MatchingEvents}">
+                            <ItemsControl.ItemTemplate>
                                 <DataTemplate>
                                     <Border Background="{Binding IsJackpotEvent, Converter={StaticResource BoolToHighlightBrushConverter}}"
-                                            CornerRadius="4" Padding="8">
+                                            CornerRadius="8"
+                                            Padding="12,10"
+                                            Margin="0,0,0,8">
                                         <Grid ColumnSpacing="12">
                                             <Grid.ColumnDefinitions>
                                                 <ColumnDefinition Width="*" />
                                                 <ColumnDefinition Width="Auto" />
                                                 <ColumnDefinition Width="Auto" />
                                             </Grid.ColumnDefinitions>
+
+                                            <!-- Title + date -->
                                             <StackPanel Grid.Column="0" Spacing="4">
                                                 <StackPanel Orientation="Horizontal" Spacing="8">
-                                                    <TextBlock Text="{Binding Event.Title}" FontWeight="Bold" />
-                                                    <TextBlock Text="⭐ JACKPOT" FontWeight="Bold" Foreground="#D4A017"
-                                                               Visibility="{Binding IsJackpotEvent, Converter={StaticResource BoolToVisibilityConverter}}" />
+                                                    <TextBlock Text="{Binding Event.Title}"
+                                                               FontWeight="Bold"
+                                                               FontSize="14" />
+                                                    <Border Background="#D4A017"
+                                                            CornerRadius="4"
+                                                            Padding="6,2"
+                                                            Visibility="{Binding IsJackpotEvent, Converter={StaticResource BoolToVisibilityConverter}}">
+                                                        <TextBlock Text="⭐ JACKPOT"
+                                                                   FontSize="11"
+                                                                   FontWeight="Bold"
+                                                                   Foreground="#0B0B1E" />
+                                                    </Border>
                                                 </StackPanel>
-                                                <TextBlock Text="{Binding Event.EventDateTime}" FontSize="12" Opacity="0.7" />
+                                                <TextBlock Text="{Binding Event.EventDateTime}"
+                                                           FontSize="12"
+                                                           Opacity="0.6" />
                                             </StackPanel>
-                                            <TextBlock Grid.Column="1" Text="{Binding PriceText}" VerticalAlignment="Center" FontWeight="Bold" />
-                                            <Button Grid.Column="2" Content="View Event" Click="ViewEventButton_Click"
-                                                    VerticalAlignment="Center" Padding="8,4" FontSize="12" />
+
+                                            <!-- Price -->
+                                            <TextBlock Grid.Column="1"
+                                                       Text="{Binding PriceText}"
+                                                       VerticalAlignment="Center"
+                                                       FontWeight="Bold"
+                                                       FontSize="14" />
+
+                                            <!-- View button -->
+                                            <Button Grid.Column="2"
+                                                    Content="View Event"
+                                                    Click="ViewEventButton_Click"
+                                                    VerticalAlignment="Center"
+                                                    Padding="10,6"
+                                                    FontSize="12" />
                                         </Grid>
                                     </Border>
                                 </DataTemplate>
-                            </ListView.ItemTemplate>
-                        </ListView>
-                    </StackPanel>
-                </Border>
-            </StackPanel>
+                            </ItemsControl.ItemTemplate>
+                        </ItemsControl>
+                    </ScrollViewer>
 
-            <!-- Control Panel -->
-            <Border Grid.Column="1" Style="{StaticResource SurfaceCardStyle}" VerticalAlignment="Top">
-                <StackPanel Spacing="16" Padding="4">
-                    <!-- Spin Stats -->
-                    <StackPanel Spacing="12">
-                        <StackPanel Spacing="4">
-                            <TextBlock Text="Daily Spins" FontSize="12" Opacity="0.7" />
-                            <TextBlock Text="{Binding AvailableSpins}" FontSize="24" FontWeight="Bold" />
-                        </StackPanel>
-
-                        <StackPanel Spacing="4">
-                            <TextBlock Text="Bonus Spins" FontSize="12" Opacity="0.7" />
-                            <TextBlock Text="{Binding BonusSpins}" FontSize="24" FontWeight="Bold" />
-                        </StackPanel>
-
-                        <StackPanel Spacing="4">
-                            <TextBlock Text="Login Streak" FontSize="12" Opacity="0.7" />
-                            <TextBlock Text="{Binding LoginStreak}" FontSize="24" FontWeight="Bold" />
-                        </StackPanel>
-                    </StackPanel>
-
-                    <Border Height="1" Background="{ThemeResource DividerStrokeColorDefaultBrush}" Margin="0,8" />
-
-                    <!-- Status Message -->
-                    <TextBlock Text="{Binding StatusMessage}" TextWrapping="Wrap" FontSize="13" Opacity="0.9" />
-
-                    <!-- Spin Button -->
-                    <Button 
-                        Content="SPIN" 
-                        Command="{Binding SpinCommand}"
-                        IsEnabled="{Binding IsSpinButtonEnabled}"
-                        HorizontalAlignment="Stretch"
-                        Padding="12,16"
-                        FontSize="16"
-                        FontWeight="Bold" />
-
-                    <!-- Loading Indicator -->
-                    <ProgressRing IsActive="{Binding IsSpinning}" Visibility="{Binding IsSpinning}" />
                 </StackPanel>
             </Border>
-        </Grid>
+            <!-- END MATCHING EVENTS -->
+
+        </StackPanel>
     </ScrollViewer>
 </Page>
 
