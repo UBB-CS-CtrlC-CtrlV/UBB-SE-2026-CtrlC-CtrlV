@@ -1,5 +1,7 @@
+using System.Threading.Tasks;
 using Microsoft.UI.Xaml;
 using Microsoft.UI.Xaml.Controls;
+using Microsoft.UI.Xaml.Navigation;
 using MovieApp.Ui.ViewModels.Events;
 
 namespace MovieApp.Ui.Views;
@@ -35,6 +37,17 @@ public sealed partial class MyEventsPage : Page
 
         _initialized = true;
         await InitializeViewModelAsync();
+    }
+
+    protected override async void OnNavigatedTo(NavigationEventArgs e)
+    {
+        base.OnNavigatedTo(e);
+        await ViewModel.LoadWatchlistAsync();
+    }
+
+    private async void WatchlistSaveButton_Click(object sender, RoutedEventArgs e)
+    {
+        await ViewModel.SaveSelectedWatchlistAsync();
     }
 
     /// <summary>

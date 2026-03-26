@@ -5,6 +5,7 @@
     xmlns:d="http://schemas.microsoft.com/expression/blend/2008"
     xmlns:mc="http://schemas.openxmlformats.org/markup-compatibility/2006"
     xmlns:controls="using:Microsoft.UI.Xaml.Controls"
+    xmlns:models="using:MovieApp.Core.Models"
     mc:Ignorable="d">
 
     <ScrollViewer
@@ -155,17 +156,29 @@
                         </Grid.ColumnDefinitions>
 
                         <Border Style="{StaticResource SurfaceCardStyle}">
-                            <ListView Height="420" />
+                            <ListView Height="420"
+                                      ItemsSource="{x:Bind ViewModel.WatchedEvents, Mode=OneWay}"
+                                      SelectedItem="{x:Bind ViewModel.SelectedWatchedEvent, Mode=TwoWay}">
+                                <ListView.ItemTemplate>
+                                    <DataTemplate x:DataType="models:WatchedEvent">
+                                        <StackPanel Padding="8">
+                                            <TextBlock Text="{x:Bind EventId.ToString()}" FontWeight="SemiBold" />
+                                            <TextBlock Text="{x:Bind EventTitle}" FontWeight="SemiBold" />
+                                            <TextBlock Text="{x:Bind TargetPrice.ToString()}" Foreground="Gray" />
+                                        </StackPanel>
+                                    </DataTemplate>
+                                </ListView.ItemTemplate>
+                            </ListView>
                         </Border>
 
                         <Border
                             Grid.Column="1"
                             Style="{StaticResource SurfaceCardStyle}">
                             <StackPanel Spacing="10">
-                                <TextBox Header="Event reference" />
-                                <controls:NumberBox Header="Target price" />
-                                <ToggleSwitch Header="Active" />
-                                <Button Content="Save" />
+                                <TextBox Header="Event reference" Text="{x:Bind ViewModel.SelectedEventIdText, Mode=OneWay}" IsReadOnly="True" />
+                                <controls:NumberBox Header="Target price" Value="{x:Bind ViewModel.SelectedTargetPrice, Mode=TwoWay}" />
+                                <ToggleSwitch Header="Active" IsOn="True" />
+                                <Button Content="Save" Click="WatchlistSaveButton_Click" HorizontalAlignment="Stretch" />
                             </StackPanel>
                         </Border>
                     </Grid>

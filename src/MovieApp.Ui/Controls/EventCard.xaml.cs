@@ -166,79 +166,97 @@ public sealed partial class EventCard : UserControl
 
     private async void WatcherButton_Click(object sender, RoutedEventArgs e)
     {
-        if (EventModel == null) return;
-
-        var button = (ToggleButton)sender;
-        var isWatching = button.IsChecked ?? false;
-
-        var folderPath = Windows.Storage.ApplicationData.Current.LocalFolder.Path;
-        var repo = new MovieApp.Infrastructure.LocalPriceWatcherRepository(folderPath);
-
-        if (isWatching)
+        try
         {
-            var inputTextBox = new TextBox
-            {
-                PlaceholderText = "Ex: 50.00",
-                InputScope = new Microsoft.UI.Xaml.Input.InputScope
-                {
-                    Names = { new Microsoft.UI.Xaml.Input.InputScopeName { NameValue = Microsoft.UI.Xaml.Input.InputScopeNameValue.Number } }
-                }
-            };
+            if (EventModel == null) return;
 
-            var dialog = new ContentDialog
+            var button = (Microsoft.UI.Xaml.Controls.Primitives.ToggleButton)sender;
+            var isWatching = button.IsChecked ?? false;
+
+            // Folosim folderul sigur pentru Windows, care nu dă erori în WinUI 3 Unpackaged
+            var folderPath = System.IO.Path.Combine(System.Environment.GetFolderPath(System.Environment.SpecialFolder.LocalApplicationData), "MovieApp");
+            System.IO.Directory.CreateDirectory(folderPath);
+            
+            var repo = new MovieApp.Infrastructure.LocalPriceWatcherRepository(folderPath);
+
+            if (isWatching)
             {
-                Title = "Set Target Price",
-                Content = new StackPanel
+                var inputTextBox = new TextBox
                 {
-                    Spacing = 10,
-                    Children =
+                    PlaceholderText = "Ex: 50.00",
+                    Width = 200
+                };
+
+                var dialog = new ContentDialog
+                {
+                    Title = "Set Target Price",
+                    Content = new StackPanel
                     {
-                        new TextBlock { Text = "Enter desired target price:" },
-                        inputTextBox
+                        Spacing = 10,
+                        Children =
+                        {
+                            new TextBlock { Text = "Enter desired target price:" },
+                            inputTextBox
+                        }
+                    },
+                    PrimaryButtonText = "Save",
+                    CloseButtonText = "Cancel",
+                    XamlRoot = this.XamlRoot
+                };
+
+                var result = await dialog.ShowAsync();
+
+                if (result == ContentDialogResult.Primary)
+                {
+                    string cleanInput = inputTextBox.Text.Replace(",", ".");
+                    
+                    if (decimal.TryParse(cleanInput, System.Globalization.NumberStyles.Any, System.Globalization.CultureInfo.InvariantCulture, out decimal targetPrice))
+                    {
+                        var success = await repo.AddWatchAsync(new WatchedEvent { EventId = EventModel.Id, EventTitle = EventModel.Title, TargetPrice = targetPrice });
+                        if (!success)
+                        {
+                            button.IsChecked = false;
+                            var errorDialog = new ContentDialog
+                            {
+                                Title = "Limit Reached",
+                                Content = "You can only watch up to 10 events, or you already watch this one.",
+                                CloseButtonText = "OK",
+                                XamlRoot = this.XamlRoot
+                            };
+                            await errorDialog.ShowAsync();
+                        }
                     }
-                },
-                PrimaryButtonText = "Save",
-                CloseButtonText = "Cancel",
-                XamlRoot = this.XamlRoot
-            };
-
-            var result = await dialog.ShowAsync();
-
-            if (result == ContentDialogResult.Primary && decimal.TryParse(inputTextBox.Text, out decimal targetPrice))
-            {
-                var success = await repo.AddWatchAsync(new WatchedEvent { EventId = EventModel.Id, TargetPrice = targetPrice });
-                if (!success)
-                {
-                    button.IsChecked = false;
-                    var errorDialog = new ContentDialog
+                    else
                     {
-                        Title = "Limit Reached",
-                        Content = "You can only watch up to 10 events.",
-                        CloseButtonText = "OK",
-                        XamlRoot = this.XamlRoot
-                    };
-                    await errorDialog.ShowAsync();
+                        button.IsChecked = false; // A introdus text invalid
+                    }
+                }
+                else
+                {
+                    button.IsChecked = false; // A apasat Cancel
                 }
             }
             else
             {
-                button.IsChecked = false;
+                await repo.RemoveWatchAsync(EventModel.Id);
             }
         }
-        else
+        catch (System.Exception ex)
         {
-            await repo.RemoveWatchAsync(EventModel.Id);
+            System.Diagnostics.Debug.WriteLine($"Eroare la click: {ex.Message}");
         }
     }
 
-    private async Task SyncWatcherStateAsync()
+    private async System.Threading.Tasks.Task SyncWatcherStateAsync()
     {
         if (EventModel == null || WatcherButton == null) return;
-        var folderPath = Windows.Storage.ApplicationData.Current.LocalFolder.Path;
+        
+        var folderPath = System.IO.Path.Combine(System.Environment.GetFolderPath(System.Environment.SpecialFolder.LocalApplicationData), "MovieApp");
+        System.IO.Directory.CreateDirectory(folderPath);
+        
         var repo = new MovieApp.Infrastructure.LocalPriceWatcherRepository(folderPath);
         WatcherButton.IsChecked = await repo.IsWatchingAsync(EventModel.Id);
     }
-
     private void RefreshComputedProperties()
     {
         Bindings.Update();
