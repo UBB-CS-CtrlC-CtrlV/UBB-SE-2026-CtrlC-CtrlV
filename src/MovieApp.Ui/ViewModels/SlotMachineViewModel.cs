@@ -63,7 +63,11 @@ public sealed class SlotMachineViewModel : ViewModelBase
     public int BonusSpins
     {
         get => _bonusSpins;
-        private set => SetProperty(ref _bonusSpins, value);
+        private set
+        {
+            if (SetProperty(ref _bonusSpins, value))
+                UpdateIsSpinButtonEnabled();
+        }
     }
 
     public int LoginStreak
@@ -90,7 +94,7 @@ public sealed class SlotMachineViewModel : ViewModelBase
 
     private void UpdateIsSpinButtonEnabled()
     {
-        IsSpinButtonEnabled = !IsSpinning && AvailableSpins > 0;
+        IsSpinButtonEnabled = !IsSpinning && (AvailableSpins > 0 || BonusSpins > 0);
         _spinCommand?.NotifyCanExecuteChanged();
     }
 
@@ -181,13 +185,18 @@ public sealed class SlotMachineViewModel : ViewModelBase
     /// </summary>
     public async Task RefreshSpinCountAsync()
     {
-        AvailableSpins = await _slotMachineService.GetAvailableSpinsAsync(_userId);
+        var state = await _slotMachineService.GetUserSpinStateAsync(_userId);
+        AvailableSpins = state.DailySpinsRemaining;
+        BonusSpins = state.BonusSpins;
+        LoginStreak = state.LoginStreak;
     }
 
     private async Task LoadUserStateAsync(CancellationToken cancellationToken = default)
     {
-        var availableSpins = await _slotMachineService.GetAvailableSpinsAsync(_userId);
-        AvailableSpins = availableSpins;
+        var state = await _slotMachineService.GetUserSpinStateAsync(_userId);
+        AvailableSpins = state.DailySpinsRemaining;
+        BonusSpins = state.BonusSpins;
+        LoginStreak = state.LoginStreak;
 
         // Load initial random values for display
         SelectedGenre = await _slotMachineService.GetRandomGenreAsync(cancellationToken);
@@ -195,11 +204,11 @@ public sealed class SlotMachineViewModel : ViewModelBase
         SelectedDirector = await _slotMachineService.GetRandomDirectorAsync(cancellationToken);
     }
 
-    private bool CanSpin() => !IsSpinning && AvailableSpins > 0;
+    private bool CanSpin() => !IsSpinning && (AvailableSpins > 0 || BonusSpins > 0);
 
     private async Task SpinAsync()
     {
-        if (IsSpinning || AvailableSpins <= 0)
+        if (IsSpinning || (AvailableSpins <= 0 && BonusSpins <= 0))
             return;
 
         IsSpinning = true;
@@ -268,8 +277,10 @@ public sealed class SlotMachineViewModel : ViewModelBase
                 StatusMessage = "No matching events this time. Try again!";
             }
 
-            // Refresh available spins (without overwriting reel values)
-            AvailableSpins = await _slotMachineService.GetAvailableSpinsAsync(_userId);
+            // Refresh spin counts (without overwriting reel values)
+            var updatedState = await _slotMachineService.GetUserSpinStateAsync(_userId);
+            AvailableSpins = updatedState.DailySpinsRemaining;
+            BonusSpins = updatedState.BonusSpins;
         }
         catch (InvalidOperationException ex)
         {

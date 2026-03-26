@@ -112,6 +112,24 @@ public sealed class SlotMachineService
         return state.DailySpinsRemaining + state.BonusSpins;
     }
 
+    /// <summary>
+    /// Returns the full spin state for a user (daily spins, bonus spins, login streak),
+    /// resetting daily spins if the day has rolled over.
+    /// </summary>
+    public async Task<UserSpinData> GetUserSpinStateAsync(int userId)
+    {
+        var state = await _stateRepository.GetByUserIdAsync(userId) ?? throw new InvalidOperationException("User state not found");
+
+        var today = DateTime.UtcNow.Date;
+        if (state.LastSlotSpinReset.Date < today)
+        {
+            state.ResetDailySpins(5);
+            await _stateRepository.UpdateAsync(state);
+        }
+
+        return state;
+    }
+
     public async Task<bool> GrantBonusSpinForEventParticipationAsync(int userId)
     {
         var state = await _stateRepository.GetByUserIdAsync(userId) ?? throw new InvalidOperationException("User state not found");
