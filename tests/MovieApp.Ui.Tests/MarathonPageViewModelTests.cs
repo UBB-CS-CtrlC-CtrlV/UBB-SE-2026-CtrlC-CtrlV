@@ -1,6 +1,7 @@
 using MovieApp.Core.Models;
 using MovieApp.Core.Repositories;
 using MovieApp.Core.Services;
+using Microsoft.UI.Xaml;
 using MovieApp.Ui.ViewModels;
 using Xunit;
 
@@ -92,6 +93,19 @@ public sealed class MarathonPageViewModelTests
         await viewModel.SelectMarathonAsync(marathon);
 
         Assert.True(viewModel.IsLocked);
+    }
+
+    [Fact]
+    public async Task LoadAsync_WithoutServices_ShowsUnavailableStateAndKeepsCollectionsEmpty()
+    {
+        var viewModel = new MarathonPageViewModel();
+
+        await viewModel.LoadAsync(userId: 10);
+
+        Assert.False(viewModel.IsDataAvailable);
+        Assert.Equal(Visibility.Visible, viewModel.StatusVisibility);
+        Assert.Empty(viewModel.Marathons);
+        Assert.Empty(viewModel.Leaderboard);
     }
 
     private sealed class StubMarathonService : IMarathonService

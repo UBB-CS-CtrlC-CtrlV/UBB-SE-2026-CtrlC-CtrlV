@@ -78,6 +78,7 @@ public sealed class SlotMachineServiceTests
         public Task<IEnumerable<Event>> GetAllByTypeAsync(string eventType, CancellationToken cancellationToken = default) => throw new NotImplementedException();
         public Task<Event?> FindByIdAsync(int id, CancellationToken cancellationToken = default) => throw new NotImplementedException();
         public Task<int> AddAsync(Event @event, CancellationToken cancellationToken = default) => throw new NotImplementedException();
+        public Task<bool> UpdateAsync(Event @event, CancellationToken cancellationToken = default) => throw new NotImplementedException();
         public Task<bool> UpdateEnrollmentAsync(int eventId, int newCount, CancellationToken cancellationToken = default) => throw new NotImplementedException();
         public Task UpdateEventAsync(Event updatedEvent, CancellationToken cancellationToken = default) => Task.CompletedTask;
     }
@@ -116,7 +117,7 @@ public sealed class SlotMachineServiceTests
         Assert.NotNull(result);
         Assert.Equal(0, (await stateRepo.GetByUserIdAsync(1))!.DailySpinsRemaining);
         Assert.True(result.JackpotDiscountApplied);
-        Assert.Equal(1, discountRepo.Rewards.Count);
+        Assert.Single(discountRepo.Rewards);
     }
 
     [Fact]

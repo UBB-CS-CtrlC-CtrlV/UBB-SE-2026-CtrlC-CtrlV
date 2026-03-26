@@ -7,60 +7,66 @@ namespace MovieApp.Ui.ViewModels.Events;
 /// <summary>
 /// Represents the event-management workspace used for organizer-facing CRUD flows.
 /// </summary>
-/// <remarks>
-/// The current implementation exposes the shared event-list behavior, but the
-/// management data source has not been connected yet.
-/// </remarks>
 public sealed class EventManagementViewModel : EventListPageViewModel
 {
-    public override string PageTitle => "Event Management";
-
     private readonly IEventRepository? _eventRepository;
     private readonly INotificationService? _notificationService;
 
-    public System.Windows.Input.ICommand SimulateUpdateCommand { get; }
-
-    public EventManagementViewModel()
     /// <summary>
-    /// Loads the management event list.
+    /// Creates the management view model using the app-level repositories.
     /// </summary>
-    protected override Task<IReadOnlyList<Event>> LoadEventsAsync()
+    public EventManagementViewModel()
     {
         _eventRepository = App.EventRepository;
         _notificationService = App.NotificationService;
-
-        SimulateUpdateCommand = new CommunityToolkit.Mvvm.Input.AsyncRelayCommand(SimulateEventUpdateAsync);
+        SimulateUpdateCommand = new MovieApp.Ui.ViewModels.AsyncRelayCommand(SimulateEventUpdateAsync);
     }
 
-    private async Task SimulateEventUpdateAsync()
-    {
-        if (_eventRepository is null || _notificationService is null) return;
+    public override string PageTitle => "Event Management";
 
-        var ev = VisibleEvents.FirstOrDefault();
-        if (ev is null) return;
+    /// <summary>
+    /// Gets the command used by the placeholder management UI to simulate notifications.
+    /// </summary>
+    public System.Windows.Input.ICommand SimulateUpdateCommand { get; }
 
-        // Simulate price drop
-        var oldPrice = ev.TicketPrice;
-        ev.TicketPrice = oldPrice > 5 ? oldPrice - 5 : 0;
-        
-        // Simulate seats became available
-        var oldEnrollment = ev.CurrentEnrollment;
-        if (ev.CurrentEnrollment > 0)
-        {
-            ev.CurrentEnrollment -= 1; 
-        }
-
-        await _eventRepository.UpdateEventAsync(ev);
-        await _notificationService.NotifyPriceDropAsync(ev.Id, oldPrice, ev.TicketPrice);
-        await _notificationService.NotifySeatsAvailableAsync(ev.Id, ev.MaxCapacity);
-    }
-
+    /// <inheritdoc />
     protected override async Task<IReadOnlyList<Event>> LoadEventsAsync()
     {
         if (_eventRepository is null)
+        {
             return [];
+        }
 
         var events = await _eventRepository.GetAllAsync();
         return events.ToList();
+    }
+
+    /// <summary>
+    /// Simulates an event update so notification flows can be exercised from the placeholder UI.
+    /// </summary>
+    public async Task SimulateEventUpdateAsync()
+    {
+        if (_eventRepository is null || _notificationService is null)
+        {
+            return;
+        }
+
+        var @event = VisibleEvents.FirstOrDefault();
+        if (@event is null)
+        {
+            return;
+        }
+
+        var oldPrice = @event.TicketPrice;
+        @event.TicketPrice = oldPrice > 5 ? oldPrice - 5 : 0;
+
+        if (@event.CurrentEnrollment > 0)
+        {
+            @event.CurrentEnrollment -= 1;
+        }
+
+        await _eventRepository.UpdateEventAsync(@event);
+        await _notificationService.NotifyPriceDropAsync(@event.Id, oldPrice, @event.TicketPrice);
+        await _notificationService.NotifySeatsAvailableAsync(@event.Id, @event.MaxCapacity);
     }
 }

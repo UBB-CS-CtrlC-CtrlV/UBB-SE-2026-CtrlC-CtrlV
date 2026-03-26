@@ -5,9 +5,6 @@ namespace MovieApp.Ui.ViewModels;
 
 public sealed class TriviaWheelViewModel : ViewModelBase
 {
-    
-    private const bool DisableDailySpinLimit = false;
-
     private readonly ITriviaRepository _triviaRepository;
     private readonly ITriviaRewardRepository _triviaRewardRepository;
     private readonly IUserSlotMachineStateRepository _spinRepository;
@@ -199,13 +196,6 @@ public sealed class TriviaWheelViewModel : ViewModelBase
     {
         try
         {
-            if (DisableDailySpinLimit)
-            {
-                CanSpin = true;
-                await RefreshTriviaAvailabilityAsync();
-                return;
-            }
-
             _spinData = await _spinRepository.GetByUserIdAsync(_currentUserId);
 
             if (_spinData is null)
@@ -243,8 +233,6 @@ public sealed class TriviaWheelViewModel : ViewModelBase
     /// </summary>
     public async Task RecordSpinAsync()
     {
-        if (DisableDailySpinLimit) return;
-
         _spinData ??= await _spinRepository.GetByUserIdAsync(_currentUserId);
 
         if (_spinData is null) return;
@@ -256,6 +244,13 @@ public sealed class TriviaWheelViewModel : ViewModelBase
 
     // ── Questions ────────────────────────────────────────────────────────────
 
+    /// <summary>
+    /// Loads a full 20-question trivia session for the selected category.
+    /// </summary>
+    /// <remarks>
+    /// The requirements expect a session to start only when at least 20 questions
+    /// exist for the chosen category.
+    /// </remarks>
     public async Task LoadQuestionsAsync(string category)
     {
         SelectedCategory = category;
@@ -274,7 +269,7 @@ public sealed class TriviaWheelViewModel : ViewModelBase
         NoQuestionsAvailable = false;
         CurrentQuestion = null;
 
-        if (_questions.Count == 0)
+        if (_questions.Count < 20)
         {
             IsPlaying = false;
             NoQuestionsAvailable = true;

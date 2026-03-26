@@ -10,6 +10,10 @@ namespace MovieApp.Ui.Views;
 /// </summary>
 public sealed partial class SlotMachinePage : Page
 {
+    /// <summary>
+    /// Creates the slot-machine page and defers database-backed initialization
+    /// until the page is loaded into the shell.
+    /// </summary>
     public SlotMachinePage()
     {
         InitializeComponent();
@@ -21,14 +25,21 @@ public sealed partial class SlotMachinePage : Page
         Loaded -= OnPageLoaded;
 
         var currentUser = App.CurrentUserService?.CurrentUser;
-        if (currentUser is null)
+        if (currentUser is null
+            || App.SlotMachineService is null
+            || App.SlotMachineResultService is null
+            || App.ReelAnimationService is null)
+        {
+            DataContext = SlotMachineViewModel.CreateUnavailable(
+                "Slot machine unavailable because the database connection is not ready.");
             return;
+        }
 
         var viewModel = new SlotMachineViewModel(
             currentUser.Id,
-            App.SlotMachineService ?? throw new InvalidOperationException("SlotMachineService not initialized"),
-            App.SlotMachineResultService ?? throw new InvalidOperationException("SlotMachineResultService not initialized"),
-            App.ReelAnimationService ?? throw new InvalidOperationException("ReelAnimationService not initialized"));
+            App.SlotMachineService,
+            App.SlotMachineResultService,
+            App.ReelAnimationService);
 
         DataContext = viewModel;
         await viewModel.InitializeAsync();

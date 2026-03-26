@@ -1,8 +1,8 @@
-using Microsoft.UI.Xaml;
 using Microsoft.Extensions.Configuration;
+using Microsoft.UI.Xaml;
 using MovieApp.Core.Repositories;
-using MovieApp.Infrastructure;
 using MovieApp.Core.Services;
+using MovieApp.Infrastructure;
 using MovieApp.Ui.Services;
 using MovieApp.Ui.ViewModels;
 using MovieApp.Ui.Views;
@@ -27,7 +27,6 @@ public partial class App : Application
     public static MainWindow? CurrentMainWindow { get; private set; }
     public static IConfigurationRoot? Configuration { get; private set; }
     public static IMarathonRepository? MarathonRepository { get; private set; }
-    
     public static IFavoriteEventService? FavoriteEventService { get; private set; }
     public static INotificationService? NotificationService { get; private set; }
     public static int CurrentUserId { get; private set; }
@@ -38,26 +37,24 @@ public partial class App : Application
     public static SlotMachineService? SlotMachineService { get; private set; }
     public static SlotMachineResultService? SlotMachineResultService { get; private set; }
     public static ReelAnimationService? ReelAnimationService { get; private set; }
-    public static IConfigurationRoot? Configuration { get; private set; }
-    public static IMarathonRepository? MarathonRepository { get; private set; }
 
     public App()
     {
         InitializeComponent();
     }
 
+    /// <inheritdoc />
     protected override async void OnLaunched(LaunchActivatedEventArgs args)
     {
         MainViewModel viewModel;
-        EventRepository = UnavailableEventRepository.Instance;
-        TriviaRepository = null;
-        TriviaRewardRepository = null;
-        CurrentUserId = 0;
+        ResetRuntimeServices();
 
         try
         {
             var configuration = BuildConfiguration();
             Configuration = configuration;
+
+            var connectionString = configuration["Database:ConnectionString"];
             var databaseOptions = new DatabaseOptions
             {
                 ConnectionString = connectionString
@@ -65,10 +62,10 @@ public partial class App : Application
             };
             var bootstrapUserOptions = new BootstrapUserOptions
             {
-                AuthProvider = configuration["Authentication:DummyUser:AuthProvider"]
-                    ?? throw new InvalidOperationException("Missing configuration value 'Authentication:DummyUser:AuthProvider'."),
-                AuthSubject = configuration["Authentication:DummyUser:AuthSubject"]
-                    ?? throw new InvalidOperationException("Missing configuration value 'Authentication:DummyUser:AuthSubject'."),
+                AuthProvider = configuration["Authentication:BootstrapUser:AuthProvider"]
+                    ?? throw new InvalidOperationException("Missing configuration value 'Authentication:BootstrapUser:AuthProvider'."),
+                AuthSubject = configuration["Authentication:BootstrapUser:AuthSubject"]
+                    ?? throw new InvalidOperationException("Missing configuration value 'Authentication:BootstrapUser:AuthSubject'."),
             };
 
             var userRepository = new SqlUserRepository(databaseOptions);
@@ -86,69 +83,42 @@ public partial class App : Application
 
             _currentUserService = new CurrentUserService(userRepository, bootstrapUserOptions);
             await _currentUserService.InitializeAsync();
+
             CurrentUserService = _currentUserService;
-
-            var slotMachineService = new SlotMachineService(
-                slotMachineStateRepository,
-                movieRepository,
-                eventRepository,
-                userMovieDiscountRepository);
-
-            var slotMachineResultService = new SlotMachineResultService(userMovieDiscountRepository);
-            var reelAnimationService = new ReelAnimationService();
-
             EventRepository = eventRepository;
             TriviaRepository = triviaRepository;
             TriviaRewardRepository = triviaRewardRepository;
             AmbassadorRepository = ambassadorRepository;
-            ReferralValidator = new MovieApp.Core.Services.ReferralValidator(ambassadorRepository);
-            
-            FavoriteEventService = new FavoriteEventService(favoriteEventRepository, eventRepository);
-            NotificationService = new NotificationService(notificationRepository, favoriteEventRepository);
-
-            var favoriteEventRepository = new SqlFavoriteEventRepository(databaseOptions);
-            var notificationRepository = new SqlNotificationRepository(databaseOptions);
-
+            ReferralValidator = new ReferralValidator(ambassadorRepository);
             FavoriteEventService = new FavoriteEventService(favoriteEventRepository, eventRepository);
             NotificationService = new NotificationService(notificationRepository, favoriteEventRepository, eventRepository);
-            ReferralValidator = new ReferralValidator(ambassadorRepository);
             CurrentUserId = _currentUserService.CurrentUser.Id;
             MovieRepository = movieRepository;
             SlotMachineStateRepository = slotMachineStateRepository;
             UserMovieDiscountRepository = userMovieDiscountRepository;
             ScreeningRepository = screeningRepository;
-            SlotMachineService = slotMachineService;
-            SlotMachineResultService = slotMachineResultService;
-            ReelAnimationService = reelAnimationService;
             MarathonRepository = marathonRepository;
+
+            SlotMachineService = new SlotMachineService(
+                slotMachineStateRepository,
+                movieRepository,
+                eventRepository,
+                userMovieDiscountRepository);
+            SlotMachineResultService = new SlotMachineResultService(userMovieDiscountRepository);
+            ReelAnimationService = new ReelAnimationService();
 
             viewModel = new MainViewModel(_currentUserService.CurrentUser);
         }
-        catch (Exception)
+        catch (Exception exception)
         {
-            // If LocalDB is not found, we still want to show the app in DEMO MODE as requested.
-            if (exception.Message.Contains("Local Database Runtime") || exception.InnerException?.Message.Contains("Local Database Runtime") == true)
-            {
-                var dummyUserRepo = new DummyUserRepository();
-                _currentUserService = new CurrentUserService(dummyUserRepo, new BootstrapUserOptions { AuthProvider = "dummy", AuthSubject = "default-user" });
-                _currentUserService.InitializeAsync().Wait();
-                CurrentUserService = _currentUserService;
-
-                var favoriteRepo = new InMemoryFavoriteEventRepository();
-                FavoriteEventService = new FavoriteEventService(favoriteRepo, UnavailableEventRepository.Instance);
-                NotificationService = new NotificationService(new InMemoryNotificationRepository(), favoriteRepo, UnavailableEventRepository.Instance);
-
-                viewModel = new MainViewModel(_currentUserService.CurrentUser);
-            }
-            else
-            {
-                viewModel = MainViewModel.CreateStartupError(BuildStartupErrorMessage(exception));
-            }
+            ResetRuntimeServices();
+            viewModel = MainViewModel.CreateStartupError(BuildStartupErrorMessage(exception));
         }
 
         CurrentMainWindow = new MainWindow(viewModel);
         _window = CurrentMainWindow;
         _window.Activate();
+
     }
 
     private static IConfigurationRoot BuildConfiguration()
@@ -159,9 +129,38 @@ public partial class App : Application
             .Build();
     }
 
+    /// <summary>
+    /// Clears the application-wide runtime services before a new startup attempt
+    /// or after a startup failure.
+    /// </summary>
+    private void ResetRuntimeServices()
+    {
+        _currentUserService = null;
+        CurrentUserService = null;
+        EventRepository = null;
+        TriviaRepository = null;
+        TriviaRewardRepository = null;
+        AmbassadorRepository = null;
+        ReferralValidator = null;
+        Configuration = null;
+        MarathonRepository = null;
+        FavoriteEventService = null;
+        NotificationService = null;
+        CurrentUserId = 0;
+        MovieRepository = null;
+        SlotMachineStateRepository = null;
+        UserMovieDiscountRepository = null;
+        ScreeningRepository = null;
+        SlotMachineService = null;
+        SlotMachineResultService = null;
+        ReelAnimationService = null;
+    }
+
     private static string BuildStartupErrorMessage(Exception exception)
     {
-        return "Check the database setup scripts and the appsettings.json connection string."
+        return "The application could not connect to the configured database."
+            + Environment.NewLine
+            + "Verify the database exists, the schema is applied, and appsettings.json points to a reachable SQL Server instance."
             + Environment.NewLine
             + Environment.NewLine
             + exception.Message;

@@ -15,7 +15,7 @@ public sealed class ReferralServicesTests
 
         var code = generator.Generate("alice", 7);
 
-        Assert.Equal($"ALICE{DateTime.UtcNow.Year}-7", code);
+        Assert.Equal($"ALICE{DateTime.UtcNow.Year}7", code);
     }
 
     [Fact]

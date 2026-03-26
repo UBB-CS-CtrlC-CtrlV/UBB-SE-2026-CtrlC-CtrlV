@@ -2,6 +2,10 @@ using MovieApp.Ui.Views;
 
 namespace MovieApp.Ui.Navigation;
 
+/// <summary>
+/// Centralizes the string route tags used by the shell and the page type
+/// resolution required to navigate between top-level feature panels.
+/// </summary>
 public static class AppRouteResolver
 {
     public const string Home = "Home";
@@ -17,6 +21,11 @@ public static class AppRouteResolver
     public const string Slots = "Slots";
     public const string Favorites = "Favorites";
 
+    /// <summary>
+    /// Resolves a shell route tag to its corresponding page type.
+    /// </summary>
+    /// <param name="tag">The route tag emitted by the shell navigation UI.</param>
+    /// <returns>The page type that should be loaded into the main frame.</returns>
     public static Type ResolvePageType(string? tag)
     {
         return tag switch

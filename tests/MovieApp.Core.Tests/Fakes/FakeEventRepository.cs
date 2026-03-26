@@ -54,4 +54,9 @@ public class FakeEventRepository : IEventRepository
         }
         return Task.FromResult(false);
     }
+
+    public Task UpdateEventAsync(Event updatedEvent, CancellationToken cancellationToken = default)
+    {
+        return UpdateAsync(updatedEvent, cancellationToken);
+    }
 }

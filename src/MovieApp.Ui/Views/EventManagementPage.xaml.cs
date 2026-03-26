@@ -1,5 +1,6 @@
 using Microsoft.UI.Xaml;
 using Microsoft.UI.Xaml.Controls;
+using MovieApp.Core.EventLists;
 using MovieApp.Ui.ViewModels.Events;
 
 namespace MovieApp.Ui.Views;
@@ -23,8 +24,7 @@ public sealed partial class EventManagementPage : Page
     public EventManagementViewModel ViewModel { get; }
 
     /// <summary>
-    /// Initializes the page once after load so shared event-list behaviors are ready
-    /// when the CRUD team wires the live table.
+    /// Initializes the page once after load so shared event-list behaviors are ready.
     /// </summary>
     private async void EventManagementPage_Loaded(object sender, RoutedEventArgs e)
     {
@@ -34,44 +34,9 @@ public sealed partial class EventManagementPage : Page
         }
 
         _initialized = true;
-        await InitializeViewModelAsync();
+        await ViewModel.InitializeAsync();
     }
 
-    /// <summary>
-    /// Centralizes the initial view-model load path for the page.
-    /// </summary>
-    private Task InitializeViewModelAsync()
-    {
-        return ViewModel.InitializeAsync();
-    }
-
-    private async void SimulateUpdate_Click(object sender, RoutedEventArgs e)
-    {
-        var eventRepo = App.EventRepository;
-        var notifService = App.NotificationService;
-        
-        if (eventRepo != null && notifService != null)
-        {
-            var events = (await eventRepo.GetAllAsync()).ToList();
-            var firstEvent = events.FirstOrDefault();
-            
-            if (firstEvent != null)
-            {
-                // Drop price
-                firstEvent.TicketPrice -= 5;
-                if (firstEvent.TicketPrice < 0) firstEvent.TicketPrice = 0;
-                
-                // Add seats
-                firstEvent.CurrentEnrollment = firstEvent.MaxCapacity - 5;
-                if (firstEvent.CurrentEnrollment < 0) firstEvent.CurrentEnrollment = 0;
-                
-                await eventRepo.UpdateAsync(firstEvent);
-                
-                // Generate notifications
-                await notifService.GeneratePriceDropNotificationAsync(firstEvent.Id, firstEvent.Title);
-                await notifService.GenerateSeatsAvailableNotificationAsync(firstEvent.Id, firstEvent.Title);
-            }
-        }
     /// <summary>
     /// Applies the shared event search behavior to the event-management list state.
     /// </summary>
@@ -83,8 +48,13 @@ public sealed partial class EventManagementPage : Page
     /// <summary>
     /// Applies the shared event sort behavior to the event-management list state.
     /// </summary>
-    private void SortSelector_SortOptionChanged(object? sender, MovieApp.Core.EventLists.EventSortOption sortOption)
+    private void SortSelector_SortOptionChanged(object? sender, EventSortOption sortOption)
     {
         ViewModel.SetSortOption(sortOption);
+    }
+
+    private async void SimulateUpdate_Click(object sender, RoutedEventArgs e)
+    {
+        await ViewModel.SimulateEventUpdateAsync();
     }
 }

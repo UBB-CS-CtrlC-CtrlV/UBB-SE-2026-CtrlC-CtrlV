@@ -4,12 +4,7 @@
     xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
     xmlns:d="http://schemas.microsoft.com/expression/blend/2008"
     xmlns:mc="http://schemas.openxmlformats.org/markup-compatibility/2006"
-<<<<<<< Updated upstream
-    xmlns:ui="using:MovieApp.Ui.Controls"
-=======
-    xmlns:controls="using:Microsoft.UI.Xaml.Controls"
     xmlns:models="using:MovieApp.Core.Models"
->>>>>>> Stashed changes
     mc:Ignorable="d">
 
     <ScrollViewer
@@ -23,6 +18,10 @@
                 <TextBlock
                     Style="{StaticResource SectionCaptionTextStyle}"
                     Text="Manage your favorited events here." />
+                <TextBlock
+                    Visibility="{x:Bind ViewModel.StatusVisibility, Mode=OneWay}"
+                    Style="{StaticResource SectionCaptionTextStyle}"
+                    Text="{x:Bind ViewModel.StatusMessage, Mode=OneWay}" />
             </StackPanel>
 
             <Grid ColumnSpacing="16">
@@ -35,45 +34,17 @@
                     <StackPanel Spacing="16">
                         <TextBlock
                             Style="{ThemeResource SubtitleTextBlockStyle}"
-                            Text="Favorite-event list host" />
-<<<<<<< Updated upstream
-                        <TextBlock
-                            Style="{StaticResource SectionCaptionTextStyle}"
-                            Text="Only persisted events should be addable, duplicates must be blocked, and the list should remain user-specific." />
-                        <ScrollViewer HorizontalScrollBarVisibility="Disabled" VerticalScrollBarVisibility="Auto" Height="420">
-                            <ItemsControl ItemsSource="{Binding VisibleEvents}">
-                                <ItemsControl.ItemsPanel>
-                                    <ItemsPanelTemplate>
-                                        <StackPanel Spacing="12" />
-                                    </ItemsPanelTemplate>
-                                </ItemsControl.ItemsPanel>
-
-                                <ItemsControl.ItemTemplate>
-                                    <DataTemplate>
-                                        <Grid ColumnSpacing="16">
-                                            <Grid.ColumnDefinitions>
-                                                <ColumnDefinition Width="*" />
-                                                <ColumnDefinition Width="Auto" />
-                                            </Grid.ColumnDefinitions>
-                                            
-                                            <ui:EventCard Model="{Binding}" />
-                                            
-                                            <Button Grid.Column="1" VerticalAlignment="Center" Content="Remove Favorite" 
-                                                    Click="RemoveFavorite_Click" DataContext="{Binding}" />
-                                        </Grid>
-                                    </DataTemplate>
-                                </ItemsControl.ItemTemplate>
-                            </ItemsControl>
-                        </ScrollViewer>
-=======
-                        <ListView Height="420" ItemsSource="{x:Bind ViewModel.Favorites, Mode=OneWay}" SelectedItem="{x:Bind ViewModel.SelectedFavorite, Mode=TwoWay}">
+                            Text="Favorite-event list" />
+                        <ListView
+                            Height="420"
+                            ItemsSource="{x:Bind ViewModel.Favorites, Mode=OneWay}"
+                            SelectedItem="{x:Bind ViewModel.SelectedFavorite, Mode=TwoWay}">
                             <ListView.ItemTemplate>
                                 <DataTemplate x:DataType="models:Event">
                                     <TextBlock Text="{x:Bind Title}" />
                                 </DataTemplate>
                             </ListView.ItemTemplate>
                         </ListView>
->>>>>>> Stashed changes
                     </StackPanel>
                 </Border>
 
@@ -85,11 +56,11 @@
                             <TextBlock
                                 Style="{ThemeResource SubtitleTextBlockStyle}"
                                 Text="Selected favorite detail" />
-                            <TextBox Header="Selected title" Text="{x:Bind ViewModel.SelectedFavorite.Title, Mode=OneWay}" IsReadOnly="True" />
-                            <TextBox Header="Current price" Text="{x:Bind ViewModel.SelectedFavorite.TicketPrice, Mode=OneWay}" IsReadOnly="True" />
-                            <TextBox Header="Seat availability" Text="{x:Bind ViewModel.SelectedFavorite.AvailableSpots, Mode=OneWay}" IsReadOnly="True" />
+                            <TextBox Header="Selected title" IsReadOnly="True" Text="{x:Bind ViewModel.SelectedFavorite.Title, Mode=OneWay}" />
+                            <TextBox Header="Current price" IsReadOnly="True" Text="{x:Bind ViewModel.SelectedFavorite.TicketPrice, Mode=OneWay}" />
+                            <TextBox Header="Seat availability" IsReadOnly="True" Text="{x:Bind ViewModel.SelectedFavorite.AvailableSpots, Mode=OneWay}" />
                             <StackPanel Orientation="Horizontal" Spacing="8">
-                                <Button Content="Remove favorite" Command="{x:Bind ViewModel.RemoveFavoriteCommand}" />
+                                <Button Command="{x:Bind ViewModel.RemoveFavoriteCommand}" Content="Remove favorite" />
                             </StackPanel>
                         </StackPanel>
                     </Border>

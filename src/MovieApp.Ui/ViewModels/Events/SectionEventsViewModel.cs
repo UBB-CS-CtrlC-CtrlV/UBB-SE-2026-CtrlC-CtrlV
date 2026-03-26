@@ -1,4 +1,5 @@
-﻿using MovieApp.Core.Models;
+using Microsoft.UI.Xaml;
+using MovieApp.Core.Models;
 using MovieApp.Core.Repositories;
 
 namespace MovieApp.Ui.ViewModels.Events;
@@ -11,10 +12,10 @@ namespace MovieApp.Ui.ViewModels.Events;
 /// against the normalized <see cref="MovieApp.Core.Models.Event.EventType"/> of each event.
 /// Events without a valid event type are ignored.
 /// </remarks>
-public sealed class SectionEventsViewModel(IEventRepository repository, SectionNavigationContext context)
+public sealed class SectionEventsViewModel(IEventRepository? repository, SectionNavigationContext context)
     : EventListPageViewModel
 {
-    private readonly IEventRepository _repository = repository ?? throw new ArgumentNullException(nameof(repository));
+    private readonly IEventRepository? _repository = repository;
 
     /// <summary>
     /// Gets the navigation context that defines which section this view model represents.
@@ -27,6 +28,21 @@ public sealed class SectionEventsViewModel(IEventRepository repository, SectionN
     public override string PageTitle => Context.Title;
 
     /// <summary>
+    /// Gets a value indicating whether the selected section can load events from the database.
+    /// </summary>
+    public bool IsRepositoryAvailable => _repository is not null;
+
+    /// <summary>
+    /// Gets the visibility of the repository-unavailable message.
+    /// </summary>
+    public Visibility UnavailableMessageVisibility => IsRepositoryAvailable ? Visibility.Collapsed : Visibility.Visible;
+
+    /// <summary>
+    /// Gets the message shown when the selected section cannot load database-backed events.
+    /// </summary>
+    public string UnavailableMessage => "Section events are unavailable because the database connection is not ready.";
+
+    /// <summary>
     /// Loads all events for the current section and orders them by date.
     /// </summary>
     /// <returns>
@@ -35,6 +51,11 @@ public sealed class SectionEventsViewModel(IEventRepository repository, SectionN
     /// </returns>
     protected override async Task<IReadOnlyList<Event>> LoadEventsAsync()
     {
+        if (_repository is null)
+        {
+            return [];
+        }
+
         var allEvents = await _repository.GetAllAsync();
 
         return allEvents
@@ -58,8 +79,8 @@ public sealed class SectionEventsViewModel(IEventRepository repository, SectionN
         {
             return false;
         }
-        var normalizedGroupingValue = groupingValue.Trim();
 
+        var normalizedGroupingValue = groupingValue.Trim();
         var eventGroupingValue = @event.EventType.Trim();
 
         return string.Equals(

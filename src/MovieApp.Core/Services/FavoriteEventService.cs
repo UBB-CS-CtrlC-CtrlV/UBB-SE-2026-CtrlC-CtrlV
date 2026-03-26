@@ -3,67 +3,61 @@ using MovieApp.Core.Repositories;
 
 namespace MovieApp.Core.Services;
 
+/// <summary>
+/// Implements the favorite-event workflow on top of repository abstractions.
+/// </summary>
 public sealed class FavoriteEventService : IFavoriteEventService
 {
     private readonly IFavoriteEventRepository _favoriteEventRepository;
     private readonly IEventRepository _eventRepository;
 
-<<<<<<< Updated upstream
-    public FavoriteEventService(IFavoriteEventRepository favoriteEventRepository, IEventRepository eventRepository)
-=======
+    /// <summary>
+    /// Creates the service with favorite-link and event repositories.
+    /// </summary>
     public FavoriteEventService(
         IFavoriteEventRepository favoriteEventRepository,
         IEventRepository eventRepository)
->>>>>>> Stashed changes
     {
         _favoriteEventRepository = favoriteEventRepository;
         _eventRepository = eventRepository;
     }
 
+    /// <inheritdoc />
     public async Task AddFavoriteAsync(int userId, int eventId, CancellationToken cancellationToken = default)
     {
-<<<<<<< Updated upstream
         if (await ExistsFavoriteAsync(userId, eventId, cancellationToken))
         {
             throw new InvalidOperationException("Event is already favorited by this user.");
         }
 
         var @event = await _eventRepository.FindByIdAsync(eventId, cancellationToken);
-        if (@event == null)
+        if (@event is null)
         {
             throw new InvalidOperationException("Event not found.");
-=======
-        var existingFavorites = await _favoriteEventRepository.FindByUserAsync(userId, cancellationToken);
-        if (existingFavorites.Any(f => f.EventId == eventId))
-        {
-            // Already favorited, ignore or throw
-            return;
->>>>>>> Stashed changes
         }
 
         await _favoriteEventRepository.AddAsync(userId, eventId, cancellationToken);
     }
 
-<<<<<<< Updated upstream
-    public async Task RemoveFavoriteAsync(int userId, int eventId, CancellationToken cancellationToken = default)
-    {
-        await _favoriteEventRepository.RemoveAsync(userId, eventId, cancellationToken);
-    }
-
-    public async Task<IReadOnlyList<FavoriteEvent>> GetFavoritesByUserAsync(int userId, CancellationToken cancellationToken = default)
-    {
-        return await _favoriteEventRepository.FindByUserAsync(userId, cancellationToken);
-    }
-
-    public async Task<bool> ExistsFavoriteAsync(int userId, int eventId, CancellationToken cancellationToken = default)
-    {
-        return await _favoriteEventRepository.ExistsAsync(userId, eventId, cancellationToken);
-=======
+    /// <inheritdoc />
     public Task RemoveFavoriteAsync(int userId, int eventId, CancellationToken cancellationToken = default)
     {
         return _favoriteEventRepository.RemoveAsync(userId, eventId, cancellationToken);
     }
 
+    /// <inheritdoc />
+    public Task<IReadOnlyList<FavoriteEvent>> GetFavoritesByUserAsync(int userId, CancellationToken cancellationToken = default)
+    {
+        return _favoriteEventRepository.FindByUserAsync(userId, cancellationToken);
+    }
+
+    /// <inheritdoc />
+    public Task<bool> ExistsFavoriteAsync(int userId, int eventId, CancellationToken cancellationToken = default)
+    {
+        return _favoriteEventRepository.ExistsAsync(userId, eventId, cancellationToken);
+    }
+
+    /// <inheritdoc />
     public async Task<IReadOnlyList<Event>> GetFavoriteEventsByUserIdAsync(int userId, CancellationToken cancellationToken = default)
     {
         var favoriteLinks = await _favoriteEventRepository.FindByUserAsync(userId, cancellationToken);
@@ -79,6 +73,5 @@ public sealed class FavoriteEventService : IFavoriteEventService
         }
 
         return events;
->>>>>>> Stashed changes
     }
 }

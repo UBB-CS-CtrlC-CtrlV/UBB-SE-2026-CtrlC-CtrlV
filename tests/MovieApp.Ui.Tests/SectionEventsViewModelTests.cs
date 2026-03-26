@@ -1,5 +1,6 @@
 using MovieApp.Core.Models;
 using MovieApp.Core.Repositories;
+using Microsoft.UI.Xaml;
 using MovieApp.Ui.ViewModels.Events;
 using Xunit;
 
@@ -94,6 +95,24 @@ public sealed class SectionEventsViewModelTests
         viewModel.SetSearchText("premiere");
 
         Assert.Equal([1, 2], viewModel.VisibleEvents.Select(e => e.Id));
+    }
+
+    [Fact]
+    public async Task InitializeAsync_WithoutRepository_ShowsUnavailableStateAndNoEvents()
+    {
+        var context = new SectionNavigationContext
+        {
+            Title = "Premiere",
+            GroupingValue = "Premiere",
+        };
+        var viewModel = new SectionEventsViewModel(null, context);
+
+        await viewModel.InitializeAsync();
+
+        Assert.False(viewModel.IsRepositoryAvailable);
+        Assert.Equal(Visibility.Visible, viewModel.UnavailableMessageVisibility);
+        Assert.Empty(viewModel.AllEvents);
+        Assert.Empty(viewModel.VisibleEvents);
     }
 
     private static IReadOnlyList<Event> BuildSampleEvents()

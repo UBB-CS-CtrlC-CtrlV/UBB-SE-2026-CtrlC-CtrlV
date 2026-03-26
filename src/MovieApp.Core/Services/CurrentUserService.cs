@@ -45,7 +45,7 @@ public sealed class CurrentUserService : ICurrentUserService
         if (_currentUser is null)
         {
             throw new InvalidOperationException(
-                $"The seeded dummy user '{_bootstrapUserOptions.AuthProvider}:{_bootstrapUserOptions.AuthSubject}' could not be found.");
+                $"The configured bootstrap user '{_bootstrapUserOptions.AuthProvider}:{_bootstrapUserOptions.AuthSubject}' could not be found.");
         }
     }
 }

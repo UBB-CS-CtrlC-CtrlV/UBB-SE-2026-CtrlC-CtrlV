@@ -57,30 +57,20 @@
                 Grid.Row="1"
                 Padding="16"
                 Spacing="12">
-                <Grid ColumnSpacing="8">
-                    <Grid.ColumnDefinitions>
-                        <ColumnDefinition Width="*" />
-                        <ColumnDefinition Width="Auto" />
-                    </Grid.ColumnDefinitions>
-                    <StackPanel Spacing="8">
-                        <TextBlock
-                            Style="{ThemeResource SubtitleTextBlockStyle}"
-                            Text="{x:Bind TitleText, Mode=OneWay}"
-                            TextTrimming="CharacterEllipsis"
-                            TextWrapping="WrapWholeWords" />
+                <StackPanel Spacing="8">
+                    <TextBlock
+                        Style="{ThemeResource SubtitleTextBlockStyle}"
+                        Text="{x:Bind TitleText, Mode=OneWay}"
+                        TextTrimming="CharacterEllipsis"
+                        TextWrapping="WrapWholeWords" />
 
-                        <TextBlock
-                            Foreground="{ThemeResource TextFillColorSecondaryBrush}"
-                            MaxLines="2"
-                            Text="{x:Bind DescriptionText, Mode=OneWay}"
-                            TextTrimming="CharacterEllipsis"
-                            TextWrapping="WrapWholeWords" />
-                    </StackPanel>
-                    
-                    <Button x:Name="FavoriteButton" Grid.Column="1" VerticalAlignment="Top" Width="36" Height="36" Padding="0" Background="Transparent" BorderThickness="0" Click="ToggleFavorite_Click" ToolTipService.ToolTip="Toggle Favorite">
-                        <FontIcon x:Name="FavoriteIcon" Glyph="&#xEB51;" FontSize="16" />
-                    </Button>
-                </Grid>
+                    <TextBlock
+                        Foreground="{ThemeResource TextFillColorSecondaryBrush}"
+                        MaxLines="2"
+                        Text="{x:Bind DescriptionText, Mode=OneWay}"
+                        TextTrimming="CharacterEllipsis"
+                        TextWrapping="WrapWholeWords" />
+                </StackPanel>
 
                 <Grid ColumnSpacing="12">
                     <Grid.ColumnDefinitions>
@@ -120,11 +110,7 @@
                     </Border>
                 </Grid>
 
-                <Grid ColumnSpacing="12" RowSpacing="12">
-                    <Grid.RowDefinitions>
-                        <RowDefinition Height="Auto" />
-                        <RowDefinition Height="Auto" />
-                    </Grid.RowDefinitions>
+                <Grid ColumnSpacing="12">
                     <Grid.ColumnDefinitions>
                         <ColumnDefinition Width="*" />
                         <ColumnDefinition Width="*" />
@@ -140,11 +126,7 @@
                             FontWeight="SemiBold"
                             Text="{x:Bind PriceText, Mode=OneWay}" />
                     </StackPanel>
-<<<<<<< Updated upstream
 
-=======
-                    
->>>>>>> Stashed changes
                     <StackPanel
                         Grid.Column="1"
                         Spacing="2">
@@ -168,29 +150,22 @@
                             FontWeight="SemiBold"
                             Text="{x:Bind CapacityText, Mode=OneWay}" />
                     </StackPanel>
-
-                    <StackPanel Grid.Row="1" Grid.ColumnSpan="3" Orientation="Horizontal" Spacing="8">
-                        <Button HorizontalAlignment="Left" Click="Favorite_Click" ToolTipService.ToolTip="Add to Favorites">
-                            <FontIcon Glyph="&#xEB51;" FontSize="14" Foreground="Red" />
-                        </Button>
-                        <Button HorizontalAlignment="Stretch" Click="VisualSeatGuide_Click">
-                            <StackPanel Orientation="Horizontal" Spacing="8">
-                                <FontIcon Glyph="&#xE7FC;" FontSize="14"/>
-                                <TextBlock Text="Visual Seat Guide" />
-                            </StackPanel>
-                        </Button>
-                    </StackPanel>
                 </Grid>
-                
-                <Button Margin="0,15,0,0"
-                        HorizontalAlignment="Stretch"
-                        Click="VisualSeatGuide_Click">
-                    <StackPanel Orientation="Horizontal" Spacing="8">
-                        <FontIcon Glyph="&#xE7FC;" FontSize="14"/>
-                        <TextBlock Text="Visual Seat Guide" />
-                    </StackPanel>
-                </Button>
 
+                <Border
+                    Margin="0,15,0,0"
+                    Padding="0"
+                    Background="Transparent">
+                    <StackPanel Orientation="Horizontal" Spacing="8">
+                        <FontIcon
+                            FontSize="14"
+                            Glyph="&#xE7FC;"
+                            Opacity="0.7" />
+                        <TextBlock
+                            Opacity="0.7"
+                            Text="Open for event details" />
+                    </StackPanel>
+                </Border>
             </StackPanel>
         </Grid>
     </Border>

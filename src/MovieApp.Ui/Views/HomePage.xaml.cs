@@ -2,12 +2,9 @@ using Microsoft.UI.Xaml;
 using Microsoft.UI.Xaml.Controls;
 using Microsoft.UI.Xaml.Navigation;
 using MovieApp.Core.Models;
-using MovieApp.Core.Repositories;
 using MovieApp.Ui.Controls;
 using MovieApp.Ui.Navigation;
-using MovieApp.Ui.Services;
 using MovieApp.Ui.ViewModels.Events;
-using System;
 
 namespace MovieApp.Ui.Views;
 
@@ -19,17 +16,14 @@ public sealed partial class HomePage : Page
 {
     private bool _initialized;
 
-    public HomeEventsViewModel ViewModel { get; }
-
     /// <summary>
-    /// Returns the repository used to populate the home event rows.
+    /// Gets the page view model that owns search, sort, and section grouping state.
     /// </summary>
-    private static IEventRepository GetEventRepository()
-        => App.EventRepository ?? UnavailableEventRepository.Instance;
+    public HomeEventsViewModel ViewModel { get; }
 
     public HomePage()
     {
-        ViewModel = new HomeEventsViewModel(GetEventRepository());
+        ViewModel = new HomeEventsViewModel(App.EventRepository);
         NavigationCacheMode = NavigationCacheMode.Required;
         InitializeComponent();
         DataContext = ViewModel;
@@ -37,11 +31,15 @@ public sealed partial class HomePage : Page
     }
 
     /// <summary>
-    /// Initializes the page's event data once after the visual tree is loaded.
+    /// Initializes the home page once after its visual tree is loaded.
     /// </summary>
     private async void HomePage_Loaded(object sender, RoutedEventArgs e)
     {
-        if (_initialized) return;
+        if (_initialized)
+        {
+            return;
+        }
+
         _initialized = true;
 
         if (App.AmbassadorRepository is not null && App.CurrentUserService?.CurrentUser is { } currentUser)
@@ -102,12 +100,11 @@ public sealed partial class HomePage : Page
             XamlRoot = XamlRoot,
             Title = selectedEvent.Title,
             PrimaryButtonText = "Close",
-            DefaultButton = ContentDialogButton.Primary
+            DefaultButton = ContentDialogButton.Primary,
         };
 
         var content = BuildEventDialogContent(selectedEvent, dialog);
 
-        // Check reward balance and add a Free Pass button if available
         if (App.AmbassadorRepository is not null && App.CurrentUserService?.CurrentUser is { } currentUser)
         {
             int balance = await App.AmbassadorRepository.GetRewardBalanceAsync(currentUser.Id);
@@ -115,7 +112,7 @@ public sealed partial class HomePage : Page
             {
                 var freePassButton = new Button
                 {
-                    Content = $"Use Free Pass 🎟 ({balance} left)",
+                    Content = $"Use Free Pass ({balance} left)",
                     HorizontalAlignment = HorizontalAlignment.Left,
                 };
 
@@ -135,7 +132,7 @@ public sealed partial class HomePage : Page
                     if (result == ContentDialogResult.Primary)
                     {
                         await App.AmbassadorRepository.DecrementRewardBalanceAsync(currentUser.Id);
-                        freePassButton.Content = "✅ Free Pass applied!";
+                        freePassButton.Content = "Free Pass applied";
                         freePassButton.IsEnabled = false;
                     }
                 };
@@ -145,7 +142,6 @@ public sealed partial class HomePage : Page
         }
 
         dialog.Content = content;
-
         await dialog.ShowAsync();
     }
 
@@ -187,12 +183,26 @@ public sealed partial class HomePage : Page
             Text = $"Seats: {EventCard.GetCapacityText(selectedEvent)}",
         });
 
-        var referralTextBox = new TextBox { PlaceholderText = "Optional referral code", Width = 200 };
-        var validationButton = new Button { Content = new FontIcon { Glyph = "\uE73E", FontSize = 14 } };
-
-        validationButton.Click += async (s, e) =>
+        var referralTextBox = new TextBox
         {
-            if (string.IsNullOrWhiteSpace(referralTextBox.Text)) return;
+            PlaceholderText = "Optional referral code",
+            Width = 200,
+        };
+        var validationButton = new Button
+        {
+            Content = new FontIcon
+            {
+                Glyph = "\uE73E",
+                FontSize = 14,
+            },
+        };
+
+        validationButton.Click += async (_, _) =>
+        {
+            if (string.IsNullOrWhiteSpace(referralTextBox.Text))
+            {
+                return;
+            }
 
             if (App.ReferralValidator is not null && App.CurrentUserService?.CurrentUser is { } currentUser)
             {
@@ -207,27 +217,23 @@ public sealed partial class HomePage : Page
         {
             Orientation = Orientation.Horizontal,
             Spacing = 8,
-            Children = { referralTextBox, validationButton }
+            Children = { referralTextBox, validationButton },
         });
 
-        var seatGuideButton = new Button { Content = "Seat guide" };
-        seatGuideButton.Click += async (s, args) =>
+        var seatGuideButton = new Button
+        {
+            Content = "Seat guide",
+        };
+        seatGuideButton.Click += async (_, _) =>
         {
             parentDialog.Hide();
-            
-            try
+
+            int capacity = selectedEvent.MaxCapacity > 0 ? selectedEvent.MaxCapacity : 50;
+            var seatDialog = new SeatGuideDialog(capacity)
             {
-                int capacity = selectedEvent.MaxCapacity > 0 ? selectedEvent.MaxCapacity : 50;
-                var seatDialog = new SeatGuideDialog(capacity)
-                {
-                    XamlRoot = parentDialog.XamlRoot
-                };
-                await seatDialog.ShowAsync();
-            }
-            catch (Exception ex)
-            {
-                System.Diagnostics.Debug.WriteLine($"Eroare la deschiderea Seat Guide: {ex.Message}");
-            }
+                XamlRoot = parentDialog.XamlRoot,
+            };
+            await seatDialog.ShowAsync();
         };
 
         layout.Children.Add(new StackPanel
@@ -239,7 +245,7 @@ public sealed partial class HomePage : Page
                 new Button { Content = "Will attend" },
                 new Button { Content = "Buy ticket" },
                 new Button { Content = "Favorite" },
-                seatGuideButton
+                seatGuideButton,
             },
         });
 
