@@ -10,6 +10,13 @@ using System.Globalization;
 
 namespace MovieApp.Ui.Views;
 
+/// <summary>
+/// Displays the events belonging to a single home-page section.
+/// </summary>
+/// <remarks>
+/// Search and filtering stay scoped to the selected section because this page owns
+/// its own <see cref="SectionEventsViewModel"/> instance.
+/// </remarks>
 public sealed partial class SectionEventsPage : Page
 {
     private bool _initialized;
@@ -51,6 +58,14 @@ public sealed partial class SectionEventsPage : Page
         {
             Frame.GoBack();
         }
+    }
+
+    /// <summary>
+    /// Applies the reusable search input to the currently loaded section list only.
+    /// </summary>
+    private void SearchBox_SearchTextChanged(object? sender, string searchText)
+    {
+        ViewModel?.SetSearchText(searchText);
     }
 
     private async void EventCardButton_Click(object sender, RoutedEventArgs e)

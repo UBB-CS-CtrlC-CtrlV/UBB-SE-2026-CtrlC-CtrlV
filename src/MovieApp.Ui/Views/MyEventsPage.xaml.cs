@@ -44,4 +44,12 @@ public sealed partial class MyEventsPage : Page
     {
         return ViewModel.InitializeAsync();
     }
+
+    /// <summary>
+    /// Applies the shared event search behavior to the current personal event-list state.
+    /// </summary>
+    private void SearchBox_SearchTextChanged(object? sender, string searchText)
+    {
+        ViewModel.SetSearchText(searchText);
+    }
 }

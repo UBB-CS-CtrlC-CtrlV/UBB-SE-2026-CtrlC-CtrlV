@@ -44,4 +44,12 @@ public sealed partial class EventManagementPage : Page
     {
         return ViewModel.InitializeAsync();
     }
+
+    /// <summary>
+    /// Applies the shared event search behavior to the event-management list state.
+    /// </summary>
+    private void SearchBox_SearchTextChanged(object? sender, string searchText)
+    {
+        ViewModel.SetSearchText(searchText);
+    }
 }
