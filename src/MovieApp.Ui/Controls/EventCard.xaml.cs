@@ -143,16 +143,22 @@ public sealed partial class EventCard : UserControl
     
     private async void VisualSeatGuide_Click(object sender, Microsoft.UI.Xaml.RoutedEventArgs e)
     {
-        var currentEvent = this.DataContext as MovieApp.Core.Models.Event;
-    
-        int capacity = currentEvent?.MaxCapacity ?? 50;
-
-        var dialog = new SeatGuideDialog(capacity)
+        try
         {
-            XamlRoot = this.XamlRoot 
-        };
+            int capacity = EventModel?.MaxCapacity ?? 50;
 
-        await dialog.ShowAsync();
+            var dialog = new SeatGuideDialog(capacity)
+            {
+                XamlRoot = this.XamlRoot 
+            };
+
+            await dialog.ShowAsync();
+        }
+        catch (Exception ex)
+        {
+            System.Diagnostics.Debug.WriteLine($"Eroare la deschiderea dialogului: {ex.Message}");
+            System.Diagnostics.Debug.WriteLine(ex.StackTrace);
+        }
     }
 
     private void RefreshComputedProperties()
