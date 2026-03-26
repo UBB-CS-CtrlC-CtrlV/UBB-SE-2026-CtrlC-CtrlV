@@ -1,6 +1,7 @@
 ﻿using MovieApp.Core.Models;
 using MovieApp.Core.Repositories;
 using MovieApp.Core.Services;
+using System.Collections.ObjectModel;
 
 namespace MovieApp.Ui.ViewModels;
 
@@ -8,11 +9,14 @@ public sealed class MarathonPageViewModel : ViewModelBase
 {
     private readonly IMarathonService _marathonService;
     private readonly IMarathonRepository _marathonRepository;
-    private IReadOnlyList<Marathon> _marathons = [];
+
     private Marathon? _selectedMarathon;
-    private IReadOnlyList<MarathonProgress> _leaderboard = [];
+    private IReadOnlyList<LeaderboardEntry> _leaderboard = [];
     private MarathonProgress? _currentProgress;
     private bool _isLocked;
+    private bool _isJoined;
+    private bool _isLoading;
+    private bool _hasSelection;
 
     public MarathonPageViewModel(
         IMarathonService marathonService,
@@ -22,11 +26,8 @@ public sealed class MarathonPageViewModel : ViewModelBase
         _marathonRepository = marathonRepository;
     }
 
-    public IReadOnlyList<Marathon> Marathons
-    {
-        get => _marathons;
-        private set => SetProperty(ref _marathons, value);
-    }
+    // The display items for the top card row
+    public ObservableCollection<MarathonDisplayItem> MarathonDisplayItems { get; } = new();
 
     public Marathon? SelectedMarathon
     {
@@ -34,7 +35,7 @@ public sealed class MarathonPageViewModel : ViewModelBase
         private set => SetProperty(ref _selectedMarathon, value);
     }
 
-    public IReadOnlyList<MarathonProgress> Leaderboard
+    public IReadOnlyList<LeaderboardEntry> Leaderboard
     {
         get => _leaderboard;
         private set => SetProperty(ref _leaderboard, value);
@@ -56,49 +57,155 @@ public sealed class MarathonPageViewModel : ViewModelBase
         private set => SetProperty(ref _isLocked, value);
     }
 
-    public string ProgressText => CurrentProgress is null
-        ? "Not started"
-        : CurrentProgress.IsCompleted
-            ? $"Completed — {CurrentProgress.CompletedMoviesCount} movies verified"
-            : $"{CurrentProgress.CompletedMoviesCount} movies verified so far";
-
-    public async Task LoadAsync(int userId)
+    public bool IsJoined
     {
-        var list = await _marathonService.GetWeeklyMarathonsAsync(userId);
-        Marathons = list.ToList();
-    }
-
-    public async Task SelectMarathonAsync(Marathon marathon)
-    {
-        SelectedMarathon = marathon;
-
-        CurrentProgress = await _marathonService
-            .GetCurrentProgressAsync(marathon.Id);
-
-        var leaderboard = await _marathonRepository
-            .GetLeaderboardAsync(marathon.Id);
-        Leaderboard = leaderboard.ToList();
-
-        // Check if this marathon is locked behind a prerequisite
-        IsLocked = false;
-        if (marathon.PrerequisiteMarathonId is int prereqId
-            && CurrentProgress is not null)
+        get => _isJoined;
+        private set
         {
-            var prereqDone = await _marathonRepository
-                .IsPrerequisiteCompletedAsync(CurrentProgress.UserId, prereqId);
-            IsLocked = !prereqDone;
+            SetProperty(ref _isJoined, value);
+            OnPropertyChanged(nameof(ShowJoinButton));
+            OnPropertyChanged(nameof(ShowMovieList));
         }
     }
 
-    public async Task RefreshAfterMovieLoggedAsync()
+    public bool IsLoading
     {
-        if (SelectedMarathon is null) return;
+        get => _isLoading;
+        private set => SetProperty(ref _isLoading, value);
+    }
 
+    public bool HasSelection
+    {
+        get => _hasSelection;
+        private set => SetProperty(ref _hasSelection, value);
+    }
+
+    public ObservableCollection<MarathonMovieItem> Movies { get; } = new();
+
+    public bool ShowJoinButton => SelectedMarathon is not null && !IsJoined && !IsLocked;
+    public bool ShowMovieList => SelectedMarathon is not null && IsJoined;
+
+    public string ProgressText => CurrentProgress is null
+        ? "Not joined yet"
+        : CurrentProgress.IsCompleted
+            ? $"✅ Completed — {CurrentProgress.CompletedMoviesCount} movies verified"
+            : $"{CurrentProgress.CompletedMoviesCount} of {Movies.Count} movies verified";
+
+    public async Task LoadAsync(int userId)
+    {
+        var marathons = await _marathonService.GetWeeklyMarathonsAsync(userId);
+
+        MarathonDisplayItems.Clear();
+        var weekEnd = GetSundayEnd();
+
+        foreach (var marathon in marathons)
+        {
+            var participantCount = await _marathonRepository
+                .GetParticipantCountAsync(marathon.Id);
+
+            var progress = await _marathonRepository
+                .GetUserProgressAsync(userId, marathon.Id);
+
+            var totalMovies = await _marathonRepository
+                .GetMarathonMovieCountAsync(marathon.Id);
+
+            MarathonDisplayItems.Add(new MarathonDisplayItem
+            {
+                Marathon = marathon,
+                ParticipantCount = participantCount,
+                UserAccuracy = progress?.TriviaAccuracy ?? 0,
+                IsJoinedByUser = progress is not null,
+                UserMoviesVerified = progress?.CompletedMoviesCount ?? 0,
+                TotalMovies = totalMovies,
+                WeekEnd = weekEnd,
+            });
+        }
+    }
+
+    public async Task SelectMarathonAsync(Marathon marathon, int userId)
+    {
+        SelectedMarathon = marathon;
+        HasSelection = true;
+        IsLoading = true;
+
+        try
+        {
+            CurrentProgress = await _marathonService
+                .GetCurrentProgressAsync(marathon.Id);
+
+            IsJoined = CurrentProgress is not null;
+
+            IsLocked = false;
+            if (marathon.PrerequisiteMarathonId is int prereqId)
+            {
+                var prereqDone = await _marathonRepository
+                    .IsPrerequisiteCompletedAsync(userId, prereqId);
+                IsLocked = !prereqDone;
+            }
+
+            var leaderboard = await _marathonRepository
+                .GetLeaderboardWithUsernamesAsync(marathon.Id);
+            Leaderboard = leaderboard.ToList();
+
+            if (IsJoined)
+                await LoadMoviesAsync(marathon.Id);
+        }
+        finally
+        {
+            IsLoading = false;
+        }
+    }
+
+    public async Task<bool> JoinMarathonAsync(int marathonId)
+    {
+        var success = await _marathonService.StartMarathonAsync(marathonId);
+        if (!success) return false;
+
+        CurrentProgress = await _marathonService.GetCurrentProgressAsync(marathonId);
+        IsJoined = true;
+        await LoadMoviesAsync(marathonId);
+        return true;
+    }
+
+    public async Task RefreshAfterMovieLoggedAsync(int marathonId)
+    {
         CurrentProgress = await _marathonService
-            .GetCurrentProgressAsync(SelectedMarathon.Id);
+            .GetCurrentProgressAsync(marathonId);
 
         var leaderboard = await _marathonRepository
-            .GetLeaderboardAsync(SelectedMarathon.Id);
+            .GetLeaderboardWithUsernamesAsync(marathonId);
         Leaderboard = leaderboard.ToList();
+
+        await LoadMoviesAsync(marathonId);
+    }
+
+    private async Task LoadMoviesAsync(int marathonId)
+    {
+        var movies = await _marathonRepository
+            .GetMoviesForMarathonAsync(marathonId);
+
+        var verifiedCount = CurrentProgress?.CompletedMoviesCount ?? 0;
+
+        Movies.Clear();
+        var movieList = movies.ToList();
+        for (int i = 0; i < movieList.Count; i++)
+        {
+            Movies.Add(new MarathonMovieItem
+            {
+                MovieId = movieList[i].Id,
+                Title = movieList[i].Title,
+                IsVerified = i < verifiedCount,
+            });
+        }
+
+        OnPropertyChanged(nameof(ProgressText));
+    }
+
+    private static DateTime GetSundayEnd()
+    {
+        var now = DateTime.UtcNow;
+        var daysFromMonday = ((int)now.DayOfWeek + 6) % 7;
+        var monday = now.Date.AddDays(-daysFromMonday);
+        return monday.AddDays(6).AddHours(23).AddMinutes(59).AddSeconds(59);
     }
 }

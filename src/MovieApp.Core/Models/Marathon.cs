@@ -12,4 +12,5 @@ public sealed class Marathon
     public DateTime? LastFeaturedDate { get; set; }
     public bool IsActive { get; set; }
     public string? WeekScoping { get; set; }
+    public bool IsElite => PrerequisiteMarathonId.HasValue;
 }
