@@ -78,7 +78,7 @@ public sealed class ReelAnimationService
         stopwatch.Stop();
     }
 
-    protected void OnAnimationCompleted(ReelAnimationCompletedEventArgs e)
+    private void OnAnimationCompleted(ReelAnimationCompletedEventArgs e)
     {
         AnimationCompleted?.Invoke(this, e);
     }

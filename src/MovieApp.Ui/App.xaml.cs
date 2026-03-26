@@ -9,6 +9,10 @@ using MovieApp.Ui.Views;
 
 namespace MovieApp.Ui;
 
+/// <summary>
+/// WinUI application entry point responsible for configuration loading,
+/// shared dependency construction, and main-window startup.
+/// </summary>
 public partial class App : Application
 {
     private Window? _window;
@@ -29,8 +33,6 @@ public partial class App : Application
     public static SlotMachineService? SlotMachineService { get; private set; }
     public static SlotMachineResultService? SlotMachineResultService { get; private set; }
     public static ReelAnimationService? ReelAnimationService { get; private set; }
-    public static MovieApp.Core.Services.IReferralValidator? ReferralValidator { get; private set; }
-    public static MainWindow? CurrentMainWindow { get; private set; }
     public static IConfigurationRoot? Configuration { get; private set; }
     public static IMarathonRepository? MarathonRepository { get; private set; }
 
