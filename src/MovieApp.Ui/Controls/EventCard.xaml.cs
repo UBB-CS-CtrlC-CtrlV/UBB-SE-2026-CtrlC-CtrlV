@@ -1,7 +1,10 @@
+using System;
 using System.Globalization;
 using System.Runtime.CompilerServices;
+using System.Threading.Tasks;
 using Microsoft.UI.Xaml;
 using Microsoft.UI.Xaml.Controls;
+using Microsoft.UI.Xaml.Controls.Primitives;
 using Microsoft.UI.Xaml.Media;
 using MovieApp.Core.Models;
 using Windows.UI;
@@ -161,8 +164,84 @@ public sealed partial class EventCard : UserControl
         }
     }
 
+    private async void WatcherButton_Click(object sender, RoutedEventArgs e)
+    {
+        if (EventModel == null) return;
+
+        var button = (ToggleButton)sender;
+        var isWatching = button.IsChecked ?? false;
+
+        var folderPath = Windows.Storage.ApplicationData.Current.LocalFolder.Path;
+        var repo = new MovieApp.Infrastructure.LocalPriceWatcherRepository(folderPath);
+
+        if (isWatching)
+        {
+            var inputTextBox = new TextBox
+            {
+                PlaceholderText = "Ex: 50.00",
+                InputScope = new Microsoft.UI.Xaml.Input.InputScope
+                {
+                    Names = { new Microsoft.UI.Xaml.Input.InputScopeName { NameValue = Microsoft.UI.Xaml.Input.InputScopeNameValue.Number } }
+                }
+            };
+
+            var dialog = new ContentDialog
+            {
+                Title = "Set Target Price",
+                Content = new StackPanel
+                {
+                    Spacing = 10,
+                    Children =
+                    {
+                        new TextBlock { Text = "Enter desired target price:" },
+                        inputTextBox
+                    }
+                },
+                PrimaryButtonText = "Save",
+                CloseButtonText = "Cancel",
+                XamlRoot = this.XamlRoot
+            };
+
+            var result = await dialog.ShowAsync();
+
+            if (result == ContentDialogResult.Primary && decimal.TryParse(inputTextBox.Text, out decimal targetPrice))
+            {
+                var success = await repo.AddWatchAsync(new WatchedEvent { EventId = EventModel.Id, TargetPrice = targetPrice });
+                if (!success)
+                {
+                    button.IsChecked = false;
+                    var errorDialog = new ContentDialog
+                    {
+                        Title = "Limit Reached",
+                        Content = "You can only watch up to 10 events.",
+                        CloseButtonText = "OK",
+                        XamlRoot = this.XamlRoot
+                    };
+                    await errorDialog.ShowAsync();
+                }
+            }
+            else
+            {
+                button.IsChecked = false;
+            }
+        }
+        else
+        {
+            await repo.RemoveWatchAsync(EventModel.Id);
+        }
+    }
+
+    private async Task SyncWatcherStateAsync()
+    {
+        if (EventModel == null || WatcherButton == null) return;
+        var folderPath = Windows.Storage.ApplicationData.Current.LocalFolder.Path;
+        var repo = new MovieApp.Infrastructure.LocalPriceWatcherRepository(folderPath);
+        WatcherButton.IsChecked = await repo.IsWatchingAsync(EventModel.Id);
+    }
+
     private void RefreshComputedProperties()
     {
         Bindings.Update();
+        _ = SyncWatcherStateAsync();
     }
 }

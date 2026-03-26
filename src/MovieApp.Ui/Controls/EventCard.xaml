@@ -50,6 +50,20 @@
                             FontWeight="SemiBold"
                             Text="{x:Bind DateBadgeDay, Mode=OneWay}" />
                     </Grid>
+                    
+                    <ToggleButton
+                        x:Name="WatcherButton"
+                        HorizontalAlignment="Right"
+                        VerticalAlignment="Top"
+                        Margin="8"
+                        Width="36"
+                        Height="36"
+                        CornerRadius="18"
+                        Background="{ThemeResource CardBackgroundFillColorDefaultBrush}"
+                        BorderThickness="0"
+                        Click="WatcherButton_Click">
+                        <FontIcon Glyph="&#xEA8F;" FontSize="16" />
+                    </ToggleButton>
                 </Grid>
             </Border>
 
