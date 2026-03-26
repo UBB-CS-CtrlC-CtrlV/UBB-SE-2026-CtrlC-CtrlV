@@ -5,6 +5,9 @@ namespace MovieApp.Ui.ViewModels;
 
 public sealed class TriviaWheelViewModel : ViewModelBase
 {
+    
+    private const bool DisableDailySpinLimit = false;
+
     private readonly ITriviaRepository _triviaRepository;
     private readonly ITriviaRewardRepository _triviaRewardRepository;
     private readonly IUserSlotMachineStateRepository _spinRepository;
@@ -139,9 +142,6 @@ public sealed class TriviaWheelViewModel : ViewModelBase
     public double ProgressValue => CurrentQuestionIndex / 20.0 * 100;
     public string ProgressText => $"{CurrentQuestionIndex}/20";
 
-    /// <summary>
-    /// Indicates whether the trivia feature has enough backend data to start a session.
-    /// </summary>
     public bool IsTriviaAvailable
     {
         get => _isTriviaAvailable;
@@ -152,9 +152,6 @@ public sealed class TriviaWheelViewModel : ViewModelBase
         }
     }
 
-    /// <summary>
-    /// Gets a short user-facing explanation when trivia cannot be started.
-    /// </summary>
     public string AvailabilityMessage
     {
         get => _availabilityMessage;
@@ -165,9 +162,6 @@ public sealed class TriviaWheelViewModel : ViewModelBase
         }
     }
 
-    /// <summary>
-    /// Indicates that the selected category currently has no question data available.
-    /// </summary>
     public bool NoQuestionsAvailable
     {
         get => _noQuestionsAvailable;
@@ -179,28 +173,27 @@ public sealed class TriviaWheelViewModel : ViewModelBase
         }
     }
 
-    /// <summary>
-    /// Gets the user-facing message for the current empty-state condition.
-    /// </summary>
     public string EmptyStateMessage => NoQuestionsAvailable
         ? "No trivia questions are available for this category yet."
         : "Spin the wheel to begin!";
 
     // ── Spin eligibility ─────────────────────────────────────────────────────
 
-    /// <summary>
-    /// Loads spin state from DB and sets CanSpin accordingly.
-    /// Call this on page load to persist state across tab switches.
-    /// </summary>
     public async Task InitializeAsync()
     {
+        if (DisableDailySpinLimit)
+        {
+            CanSpin = true;
+            await RefreshTriviaAvailabilityAsync();
+            return;
+        }
+
         try
         {
             _spinData = await _spinRepository.GetByUserIdAsync(_currentUserId);
 
             if (_spinData is null)
             {
-                // First time user — create a spin record
                 _spinData = new UserSpinData
                 {
                     UserId = _currentUserId,
@@ -214,7 +207,6 @@ public sealed class TriviaWheelViewModel : ViewModelBase
             }
             else
             {
-                // Check if the user has already spun today
                 CanSpin = !HasSpunToday(_spinData.LastTriviaSpinReset);
             }
 
@@ -228,11 +220,10 @@ public sealed class TriviaWheelViewModel : ViewModelBase
         }
     }
 
-    /// <summary>
-    /// Records the spin timestamp in the DB. Call this when the wheel starts spinning.
-    /// </summary>
     public async Task RecordSpinAsync()
     {
+        if (DisableDailySpinLimit) return;
+
         _spinData ??= await _spinRepository.GetByUserIdAsync(_currentUserId);
 
         if (_spinData is null) return;
@@ -244,13 +235,6 @@ public sealed class TriviaWheelViewModel : ViewModelBase
 
     // ── Questions ────────────────────────────────────────────────────────────
 
-    /// <summary>
-    /// Loads a full 20-question trivia session for the selected category.
-    /// </summary>
-    /// <remarks>
-    /// The requirements expect a session to start only when at least 20 questions
-    /// exist for the chosen category.
-    /// </remarks>
     public async Task LoadQuestionsAsync(string category)
     {
         SelectedCategory = category;
@@ -277,13 +261,9 @@ public sealed class TriviaWheelViewModel : ViewModelBase
         }
 
         IsPlaying = true;
-
         AdvanceToNextQuestion();
     }
 
-    /// <summary>
-    /// Evaluates the selected answer, updates the score, and advances the session.
-    /// </summary>
     public void SubmitAnswer(char selectedOption)
     {
         if (CurrentQuestion is null) return;
@@ -309,9 +289,6 @@ public sealed class TriviaWheelViewModel : ViewModelBase
         }
     }
 
-    /// <summary>
-    /// Marks the one-time hint as consumed for the current session.
-    /// </summary>
     public void UseHint()
     {
         HintUsed = true;
@@ -333,14 +310,9 @@ public sealed class TriviaWheelViewModel : ViewModelBase
     private static bool HasSpunToday(DateTime lastSpin)
     {
         if (lastSpin == default) return false;
-
-        // Reset happens at 00:00 server time — compare dates only
         return lastSpin.Date == DateTime.UtcNow.Date;
     }
 
-    /// <summary>
-    /// Verifies that at least one configured trivia category has questions available.
-    /// </summary>
     private async Task RefreshTriviaAvailabilityAsync()
     {
         foreach (var category in Categories)
