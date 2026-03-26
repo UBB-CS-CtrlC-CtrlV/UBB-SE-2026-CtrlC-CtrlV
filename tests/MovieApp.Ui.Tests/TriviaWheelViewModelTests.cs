@@ -55,6 +55,58 @@ public sealed class TriviaWheelViewModelTests
     }
 
     [Fact]
+    public async Task LoadQuestionsAsync_DoesNotStartSessionWhenCategoryHasFewerThanTwentyQuestions()
+    {
+        var triviaRepository = new StubTriviaRepository(
+        [
+            new TriviaQuestion
+            {
+                Id = 1,
+                QuestionText = "Question 1",
+                Category = "Actors",
+                OptionA = "A",
+                OptionB = "B",
+                OptionC = "C",
+                OptionD = "D",
+                CorrectOption = 'A',
+                MovieId = null,
+            },
+            new TriviaQuestion
+            {
+                Id = 2,
+                QuestionText = "Question 2",
+                Category = "Actors",
+                OptionA = "A",
+                OptionB = "B",
+                OptionC = "C",
+                OptionD = "D",
+                CorrectOption = 'B',
+                MovieId = null,
+            },
+            new TriviaQuestion
+            {
+                Id = 3,
+                QuestionText = "Question 3",
+                Category = "Actors",
+                OptionA = "A",
+                OptionB = "B",
+                OptionC = "C",
+                OptionD = "D",
+                CorrectOption = 'C',
+                MovieId = null,
+            },
+        ]);
+        var rewardRepository = new StubTriviaRewardRepository();
+        var spinRepository = new StubUserSpinRepository();
+        var viewModel = new TriviaWheelViewModel(triviaRepository, rewardRepository, spinRepository, 1);
+
+        await viewModel.LoadQuestionsAsync("Actors");
+
+        Assert.False(viewModel.IsPlaying);
+        Assert.Null(viewModel.CurrentQuestion);
+    }
+
+    [Fact]
     public async Task InitializeAsync_DisablesTrivia_WhenDatabaseHasNoQuestionData()
     {
         var triviaRepository = new StubTriviaRepository([]);
