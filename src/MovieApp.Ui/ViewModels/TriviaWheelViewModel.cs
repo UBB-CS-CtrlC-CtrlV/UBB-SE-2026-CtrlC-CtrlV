@@ -6,6 +6,8 @@ namespace MovieApp.Ui.ViewModels;
 public sealed class TriviaWheelViewModel : ViewModelBase
 {
     private readonly ITriviaRepository _triviaRepository;
+    private readonly ITriviaRewardRepository _triviaRewardRepository;
+    private readonly int _currentUserId;
     private List<TriviaQuestion> _questions = new();
 
     private string _selectedCategory = string.Empty;
@@ -17,9 +19,14 @@ public sealed class TriviaWheelViewModel : ViewModelBase
     private int _score;
     private bool _hintUsed;
 
-    public TriviaWheelViewModel(ITriviaRepository triviaRepository)
+    public TriviaWheelViewModel(
+        ITriviaRepository triviaRepository,
+        ITriviaRewardRepository triviaRewardRepository,
+        int currentUserId)
     {
         _triviaRepository = triviaRepository;
+        _triviaRewardRepository = triviaRewardRepository;
+        _currentUserId = currentUserId;
     }
 
     public IReadOnlyList<string> Categories { get; } = new List<string>
@@ -137,13 +144,11 @@ public sealed class TriviaWheelViewModel : ViewModelBase
 
         var all = await _triviaRepository.GetByCategoryAsync(category);
 
-        // Shuffle and take 20 (or fewer if the DB has less)
         _questions = all
             .OrderBy(_ => Guid.NewGuid())
             .Take(20)
             .ToList();
 
-        // Reset session state
         CurrentQuestionIndex = 0;
         Score = 0;
         HintUsed = false;
@@ -171,6 +176,11 @@ public sealed class TriviaWheelViewModel : ViewModelBase
         {
             IsSessionComplete = true;
             IsPlaying = false;
+
+            if (HasEarnedReward)
+            {
+                _ = GrantRewardAsync();
+            }
         }
         else
         {
@@ -204,6 +214,19 @@ public sealed class TriviaWheelViewModel : ViewModelBase
     }
 
     // ── Private helpers ─────────────────────────────────────────────────────
+
+    private async Task GrantRewardAsync()
+    {
+        var reward = new TriviaReward
+        {
+            Id = 0,
+            UserId = _currentUserId,
+            IsRedeemed = false,
+            CreatedAt = DateTime.UtcNow
+        };
+
+        await _triviaRewardRepository.AddAsync(reward);
+    }
 
     private void AdvanceToNextQuestion()
     {
