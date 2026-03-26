@@ -5,127 +5,301 @@
     xmlns:mc="http://schemas.openxmlformats.org/markup-compatibility/2006"
     xmlns:d="http://schemas.microsoft.com/expression/blend/2008"
     xmlns:models="using:MovieApp.Core.Models"
-    mc:Ignorable="d">
+    xmlns:controls="using:MovieApp.Ui.Controls"
+    mc:Ignorable="d"
+    Background="{ThemeResource ApplicationPageBackgroundThemeBrush}">
 
-    <ScrollViewer Padding="20">
-        <StackPanel Spacing="16">
-            <TextBlock
-                Visibility="{x:Bind ViewModel.StatusVisibility, Mode=OneWay}"
-                Style="{StaticResource SectionCaptionTextStyle}"
-                Text="{x:Bind ViewModel.StatusMessage, Mode=OneWay}" />
+    <ScrollViewer Padding="24">
+        <StackPanel Spacing="24">
 
-            <Grid ColumnSpacing="16">
+            <!-- Page title -->
+            <StackPanel Spacing="4">
+                <TextBlock Text="Movie Marathons"
+                           Style="{ThemeResource TitleTextBlockStyle}" />
+                <TextBlock
+                    Text="This week's themed marathons — verify movies by passing rapid-fire trivia."
+                    Style="{StaticResource SectionCaptionTextStyle}" />
+            </StackPanel>
+
+            <!-- Marathon cards horizontal row -->
+            <ScrollViewer HorizontalScrollBarVisibility="Auto"
+                          VerticalScrollBarVisibility="Disabled">
+                <ItemsRepeater x:Name="MarathonCardsRepeater"
+                               ItemsSource="{x:Bind ViewModel.MarathonDisplayItems, Mode=OneWay}">
+                    <ItemsRepeater.Layout>
+                        <StackLayout Orientation="Horizontal" Spacing="16" />
+                    </ItemsRepeater.Layout>
+                    <ItemsRepeater.ItemTemplate>
+                        <DataTemplate x:DataType="models:MarathonDisplayItem">
+                            <controls:EventCard
+                                Model="{x:Bind ToEvent()}"
+                                Tapped="MarathonCard_Tapped"
+                                Tag="{x:Bind Marathon}" />
+                        </DataTemplate>
+                    </ItemsRepeater.ItemTemplate>
+                </ItemsRepeater>
+            </ScrollViewer>
+
+            <!-- Detail panel — only visible when a marathon is selected -->
+            <Grid x:Name="DetailPanel"
+                  Visibility="Collapsed"
+                  ColumnSpacing="16">
                 <Grid.ColumnDefinitions>
-                    <ColumnDefinition Width="1.25*" />
-                    <ColumnDefinition Width="1.1*" />
+                    <ColumnDefinition Width="1.6*" />
                     <ColumnDefinition Width="*" />
                 </Grid.ColumnDefinitions>
 
-                <!-- Left: Marathon list + progress -->
+                <!-- Left: detail + movies + quiz -->
                 <Border Style="{StaticResource SurfaceCardStyle}">
-                    <StackPanel Spacing="12">
-                        <TextBlock Style="{ThemeResource SubtitleTextBlockStyle}"
-                                   Text="This week's marathons" />
-                        <ListView x:Name="MarathonListView"
-                                  ItemsSource="{x:Bind ViewModel.Marathons, Mode=OneWay}"
-                                  SelectionChanged="MarathonListView_SelectionChanged"
-                                  Height="380">
-                            <ListView.ItemTemplate>
-                                <DataTemplate x:DataType="models:Marathon">
-                                    <StackPanel Padding="4" Spacing="2">
-                                        <TextBlock Text="{x:Bind Title}"
-                                                   FontWeight="SemiBold" />
-                                        <TextBlock Text="{x:Bind Theme}"
-                                                   FontSize="12" Opacity="0.6" />
-                                    </StackPanel>
-                                </DataTemplate>
-                            </ListView.ItemTemplate>
-                        </ListView>
-                        <Border Style="{StaticResource StrongSurfaceCardStyle}">
-                            <StackPanel Spacing="4">
-                                <TextBlock Text="Your progress"
-                                           FontWeight="SemiBold" />
+                    <StackPanel Spacing="16">
+
+                        <!-- Marathon header -->
+                        <StackPanel Spacing="4">
+                            <TextBlock x:Name="DetailTitle"
+                                       Style="{ThemeResource SubtitleTextBlockStyle}" />
+                            <TextBlock x:Name="DetailTheme"
+                                       Opacity="0.6" FontSize="13" />
+                        </StackPanel>
+
+                        <!-- Progress bar -->
+                        <StackPanel Spacing="6">
+                            <TextBlock
+                                Text="{x:Bind ViewModel.ProgressText, Mode=OneWay}"
+                                FontWeight="SemiBold" />
+                            <ProgressBar x:Name="ProgressBar"
+                                         Minimum="0" Maximum="1" Value="0"
+                                         Height="6" />
+                        </StackPanel>
+
+                        <Border x:Name="LockedBanner"
+        Visibility="Collapsed"
+        Background="#33D13438"
+        CornerRadius="6" Padding="12,8">
+                            <StackPanel Orientation="Horizontal" Spacing="8">
+                                <FontIcon Glyph="&#xE72E;" FontSize="14"
+                  Foreground="#FFD13438" />
                                 <TextBlock
-                                    Text="{x:Bind ViewModel.ProgressText, Mode=OneWay}"
-                                    Style="{StaticResource SectionCaptionTextStyle}" />
-                                <TextBlock x:Name="LockedBanner"
-                                           Text="Locked - complete the prerequisite marathon first"
-                                           Foreground="{ThemeResource SystemErrorTextColor}"
-                                           Visibility="Collapsed" />
+            Text="Locked — complete the prerequisite Standard marathon first."
+            Foreground="#FFD13438"
+            FontSize="13" TextWrapping="WrapWholeWords" />
                             </StackPanel>
                         </Border>
+
+                        <!-- Join button -->
+                        <Button x:Name="JoinButton"
+                                Visibility="Collapsed"
+                                HorizontalAlignment="Stretch"
+                                Style="{ThemeResource AccentButtonStyle}"
+                                Click="JoinButton_Click">
+                            <StackPanel Orientation="Horizontal" Spacing="8">
+                                <FontIcon Glyph="&#xE8FA;" FontSize="14" />
+                                <TextBlock Text="Join Marathon" />
+                            </StackPanel>
+                        </Button>
+
+                        <!-- Join prompt text -->
+                        <TextBlock x:Name="JoinPromptText"
+                                   Visibility="Collapsed"
+                                   Style="{StaticResource SectionCaptionTextStyle}"
+                                   Text="Join this marathon to start logging movies and appear on the leaderboard." />
+
+                        <!-- Movie list -->
+                        <StackPanel x:Name="MovieListPanel" Visibility="Collapsed" Spacing="8">
+                            <TextBlock Text="Movies to verify"
+                                       FontWeight="SemiBold" FontSize="14" />
+                            <ListView x:Name="MovieListView"
+                                      ItemsSource="{x:Bind ViewModel.Movies, Mode=OneWay}"
+                                      SelectionMode="None">
+                                <ListView.ItemContainerStyle>
+                                    <Style TargetType="ListViewItem">
+                                        <Setter Property="Padding" Value="0" />
+                                        <Setter Property="HorizontalContentAlignment" Value="Stretch" />
+                                    </Style>
+                                </ListView.ItemContainerStyle>
+                                <ListView.ItemTemplate>
+                                    <DataTemplate x:DataType="models:MarathonMovieItem">
+                                        <Border Margin="0,4"
+                                                Padding="12,10"
+                                                CornerRadius="8"
+                                                Background="{ThemeResource CardBackgroundFillColorSecondaryBrush}"
+                                                BorderBrush="{ThemeResource CardStrokeColorDefaultBrush}"
+                                                BorderThickness="1">
+                                            <Grid ColumnSpacing="12">
+                                                <Grid.ColumnDefinitions>
+                                                    <ColumnDefinition Width="Auto" />
+                                                    <ColumnDefinition Width="*" />
+                                                    <ColumnDefinition Width="Auto" />
+                                                </Grid.ColumnDefinitions>
+
+                                                <!-- Film icon -->
+                                                <FontIcon Glyph="&#xE8B2;"
+                                                          FontSize="20"
+                                                          VerticalAlignment="Center"
+                                                          Opacity="0.7" />
+
+                                                <!-- Title + status -->
+                                                <StackPanel Grid.Column="1"
+                                                            VerticalAlignment="Center"
+                                                            Spacing="2">
+                                                    <TextBlock Text="{x:Bind Title}"
+                                                               FontWeight="SemiBold" />
+                                                    <TextBlock Text="{x:Bind StatusText}"
+                                                               FontSize="12" Opacity="0.6" />
+                                                </StackPanel>
+
+                                                <!-- Verified checkmark or Log button -->
+                                                <FontIcon Grid.Column="2"
+          Glyph="&#xE73E;"
+          FontSize="18"
+          Foreground="#4CAF50"
+          VerticalAlignment="Center"
+          Opacity="{x:Bind IsVerifiedOpacity}" />
+                                                <Button Grid.Column="2"
+        Content="Log"
+        Tag="{x:Bind MovieId}"
+        IsEnabled="{x:Bind CanLog}"
+        Opacity="{x:Bind CanLogOpacity}"
+        Click="LogButton_Click" />
+                                            </Grid>
+                                        </Border>
+                                    </DataTemplate>
+                                </ListView.ItemTemplate>
+                            </ListView>
+                        </StackPanel>
+
+                        <!-- Quiz playing -->
+                        <Border x:Name="PlayingPanel"
+                                Visibility="Collapsed"
+                                Style="{StaticResource StrongSurfaceCardStyle}">
+                            <StackPanel Spacing="12">
+                                <StackPanel Spacing="2">
+                                    <TextBlock x:Name="QuizMovieTitle"
+                                               FontWeight="SemiBold" FontSize="16" />
+                                    <TextBlock x:Name="QuizProgress"
+                                               Opacity="0.6" FontSize="12" />
+                                </StackPanel>
+                                <TextBlock x:Name="QuizQuestion"
+                                           TextWrapping="WrapWholeWords"
+                                           FontSize="15" />
+                                <StackPanel Spacing="8">
+                                    <RadioButton x:Name="OptionA" GroupName="Quiz" />
+                                    <RadioButton x:Name="OptionB" GroupName="Quiz" />
+                                    <RadioButton x:Name="OptionC" GroupName="Quiz" />
+                                    <RadioButton x:Name="OptionD" GroupName="Quiz" />
+                                </StackPanel>
+                                <Button x:Name="SubmitButton"
+                                        Content="Submit answer"
+                                        IsEnabled="False"
+                                        Style="{ThemeResource AccentButtonStyle}"
+                                        HorizontalAlignment="Stretch"
+                                        Click="SubmitButton_Click" />
+                            </StackPanel>
+                        </Border>
+
+                        <!-- Result -->
+                        <Border x:Name="ResultPanel"
+                                Visibility="Collapsed"
+                                Style="{StaticResource StrongSurfaceCardStyle}">
+                            <StackPanel Spacing="12">
+                                <TextBlock x:Name="ResultText"
+                                           FontWeight="SemiBold" FontSize="15"
+                                           TextWrapping="WrapWholeWords" />
+                                <StackPanel Orientation="Horizontal" Spacing="8">
+                                    <Button x:Name="TryAgainButton"
+                                            Content="Try again"
+                                            Visibility="Collapsed"
+                                            Click="TryAgainButton_Click" />
+                                    <Button x:Name="BackToMoviesButton"
+                                            Content="Back to movies"
+                                            Click="BackToMoviesButton_Click" />
+                                </StackPanel>
+                            </StackPanel>
+                        </Border>
+
                     </StackPanel>
                 </Border>
 
-                <!-- Middle: Quiz area -->
+                <!-- Right: leaderboard -->
                 <Border Grid.Column="1" Style="{StaticResource SurfaceCardStyle}">
                     <StackPanel Spacing="12">
+                        <StackPanel Spacing="2">
+                            <TextBlock Text="Leaderboard"
+                                       Style="{ThemeResource SubtitleTextBlockStyle}" />
+                            <TextBlock x:Name="LeaderboardSubtitle"
+                                       Opacity="0.6" FontSize="12" />
+                        </StackPanel>
 
-                    <!-- Idle state -->
-                    <StackPanel x:Name="IdlePanel" Spacing="8">
-                        <TextBlock Style="{ThemeResource SubtitleTextBlockStyle}"
-                                   Text="Select a marathon" />
-                        <TextBlock Style="{StaticResource SectionCaptionTextStyle}"
-                                   Text="Choose a marathon on the left, then click Log on a movie to start the trivia check." />
-                    </StackPanel>
-
-                    <!-- Playing state -->
-                    <StackPanel x:Name="PlayingPanel"
-                                Visibility="Collapsed" Spacing="10">
-                        <TextBlock x:Name="QuizMovieTitle"
-                                   FontWeight="SemiBold" FontSize="16" />
-                        <TextBlock x:Name="QuizProgress"
-                                   Style="{StaticResource SectionCaptionTextStyle}" />
-                        <TextBlock x:Name="QuizQuestion"
-                                   TextWrapping="WrapWholeWords"
-                                   FontWeight="SemiBold" />
-                        <RadioButton x:Name="OptionA" GroupName="Quiz" />
-                        <RadioButton x:Name="OptionB" GroupName="Quiz" />
-                        <RadioButton x:Name="OptionC" GroupName="Quiz" />
-                        <RadioButton x:Name="OptionD" GroupName="Quiz" />
-                        <Button x:Name="SubmitButton"
-                                Content="Submit answer"
-                                IsEnabled="False"
-                                Click="SubmitButton_Click" />
-                    </StackPanel>
-
-                    <!-- Result state -->
-                    <StackPanel x:Name="ResultPanel"
-                                Visibility="Collapsed" Spacing="10">
-                        <TextBlock x:Name="ResultText"
-                                   FontWeight="SemiBold" FontSize="16"
-                                   TextWrapping="WrapWholeWords" />
-                        <Button x:Name="TryAgainButton"
-                                Content="Try again"
-                                Visibility="Collapsed"
-                                Click="TryAgainButton_Click" />
-                    </StackPanel>
-
-                    </StackPanel>
-                </Border>
-
-                <!-- Right: Leaderboard -->
-                <Border Grid.Column="2" Style="{StaticResource SurfaceCardStyle}">
-                    <StackPanel Spacing="12">
-                        <TextBlock Style="{ThemeResource SubtitleTextBlockStyle}"
-                                   Text="Leaderboard" />
-                        <ListView x:Name="LeaderboardListView"
-                                  ItemsSource="{x:Bind ViewModel.Leaderboard, Mode=OneWay}"
-                                  Height="440">
+                        <ListView ItemsSource="{x:Bind ViewModel.Leaderboard, Mode=OneWay}"
+                                  SelectionMode="None">
+                            <ListView.ItemContainerStyle>
+                                <Style TargetType="ListViewItem">
+                                    <Setter Property="Padding" Value="0" />
+                                    <Setter Property="HorizontalContentAlignment" Value="Stretch" />
+                                </Style>
+                            </ListView.ItemContainerStyle>
                             <ListView.ItemTemplate>
-                                <DataTemplate x:DataType="models:MarathonProgress">
-                                    <StackPanel Padding="4" Spacing="2">
-                                        <TextBlock FontWeight="SemiBold"
-                                                   Text="{x:Bind CompletedMoviesCount}" />
-                                        <TextBlock FontSize="12" Opacity="0.7"
-                                                   Text="{x:Bind TriviaAccuracy}" />
-                                    </StackPanel>
+                                <DataTemplate x:DataType="models:LeaderboardEntry">
+                                    <Border Margin="0,3"
+                                            Padding="10,8"
+                                            CornerRadius="8"
+                                            Background="{ThemeResource CardBackgroundFillColorSecondaryBrush}"
+                                            BorderBrush="{ThemeResource CardStrokeColorDefaultBrush}"
+                                            BorderThickness="1">
+                                        <Grid ColumnSpacing="10">
+                                            <Grid.ColumnDefinitions>
+                                                <ColumnDefinition Width="Auto" />
+                                                <ColumnDefinition Width="*" />
+                                                <ColumnDefinition Width="Auto" />
+                                            </Grid.ColumnDefinitions>
+
+                                            <!-- Rank badge -->
+                                            <Border x:Name="RankBadge"
+                                                    Width="28" Height="28"
+                                                    CornerRadius="14"
+                                                    Background="{ThemeResource ControlFillColorSecondaryBrush}">
+                                                <TextBlock x:Name="RankText"
+                                                           HorizontalAlignment="Center"
+                                                           VerticalAlignment="Center"
+                                                           FontSize="12"
+                                                           FontWeight="SemiBold" />
+                                            </Border>
+
+                                            <!-- Username + accuracy -->
+                                            <StackPanel Grid.Column="1"
+                                                        VerticalAlignment="Center"
+                                                        Spacing="1">
+                                                <TextBlock Text="{x:Bind Username}"
+                                                           FontWeight="SemiBold"
+                                                           FontSize="13" />
+                                                <TextBlock FontSize="11" Opacity="0.6">
+                                                    <Run Text="{x:Bind TriviaAccuracy}" />
+                                                    <Run Text="% accuracy" />
+                                                </TextBlock>
+                                            </StackPanel>
+
+                                            <!-- Movies count -->
+                                            <StackPanel Grid.Column="2"
+                                                        VerticalAlignment="Center"
+                                                        HorizontalAlignment="Right"
+                                                        Spacing="1">
+                                                <TextBlock Text="{x:Bind CompletedMoviesCount}"
+                                                           FontWeight="Bold"
+                                                           FontSize="16"
+                                                           HorizontalAlignment="Center" />
+                                                <TextBlock Text="movies"
+                                                           FontSize="10"
+                                                           Opacity="0.5"
+                                                           HorizontalAlignment="Center" />
+                                            </StackPanel>
+                                        </Grid>
+                                    </Border>
                                 </DataTemplate>
                             </ListView.ItemTemplate>
                         </ListView>
                     </StackPanel>
                 </Border>
             </Grid>
+
         </StackPanel>
     </ScrollViewer>
 </Page>

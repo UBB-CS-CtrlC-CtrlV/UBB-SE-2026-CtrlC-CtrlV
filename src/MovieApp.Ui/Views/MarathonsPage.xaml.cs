@@ -1,119 +1,147 @@
 using Microsoft.UI.Xaml;
 using Microsoft.UI.Xaml.Controls;
+using Microsoft.UI.Xaml.Input;
 using MovieApp.Core.Models;
 using MovieApp.Core.Services;
+using MovieApp.Infrastructure;
 using MovieApp.Ui.ViewModels;
 
 namespace MovieApp.Ui.Views;
 
-/// <summary>
-/// Hosts the marathon browsing, quiz, and leaderboard surface while deferring
-/// data-backed interactions when the shared database services are unavailable.
-/// </summary>
 public sealed partial class MarathonsPage : Page
 {
-    private readonly IMarathonService? _marathonService;
     private MarathonTriviaViewModel? _triviaVm;
     private int _currentMovieId;
+    private int _currentUserId;
 
-    /// <summary>
-    /// Gets the page-level marathon view model.
-    /// </summary>
     public MarathonPageViewModel ViewModel { get; }
 
     public MarathonsPage()
     {
-        if (App.MarathonRepository is not null && App.CurrentUserService is not null)
+        var connectionString = App.Configuration?["Database:ConnectionString"]
+            ?? throw new InvalidOperationException("Missing connection string.");
+
+        var db = new DatabaseOptions { ConnectionString = connectionString };
+        var marathonRepo = new SqlMarathonRepository(db);
+        var marathonService = new MarathonService(marathonRepo, App.CurrentUserService!);
+
+        ViewModel = new MarathonPageViewModel(marathonService, marathonRepo);
+        InitializeComponent();
+
+        Loaded += async (_, _) =>
         {
-            _marathonService = new MarathonService(App.MarathonRepository, App.CurrentUserService);
-            ViewModel = new MarathonPageViewModel(_marathonService, App.MarathonRepository);
+            _currentUserId = App.CurrentUserService?.CurrentUser.Id ?? 0;
+            await ViewModel.LoadAsync(_currentUserId);
+        };
+    }
+
+    private async void MarathonCard_Tapped(object sender, TappedRoutedEventArgs e)
+    {
+        if (sender is not FrameworkElement fe) return;
+        if (fe.Tag is not Marathon marathon) return;
+
+        await ViewModel.SelectMarathonAsync(marathon, _currentUserId);
+
+        DetailTitle.Text = marathon.Title;
+        DetailTheme.Text = marathon.Theme ?? string.Empty;
+        LeaderboardSubtitle.Text = $"{ViewModel.Leaderboard.Count} participants";
+
+        RefreshProgressBar();
+
+        LockedBanner.Visibility = ViewModel.IsLocked
+            ? Visibility.Visible : Visibility.Collapsed;
+        JoinButton.Visibility = ViewModel.ShowJoinButton
+            ? Visibility.Visible : Visibility.Collapsed;
+        JoinPromptText.Visibility = ViewModel.ShowJoinButton
+            ? Visibility.Visible : Visibility.Collapsed;
+
+        
+        if (ViewModel.IsJoined)
+            ShowMovieList();
+        else if (!ViewModel.IsLocked)
+            ShowJoinPrompt();
+        else
+            ShowIdle();
+
+        DetailPanel.Visibility = Visibility.Visible;
+    }
+
+    private async void JoinButton_Click(object sender, RoutedEventArgs e)
+    {
+        if (ViewModel.SelectedMarathon is null) return;
+
+        var success = await ViewModel.JoinMarathonAsync(ViewModel.SelectedMarathon.Id);
+
+        if (success)
+        {
+            JoinButton.Visibility = Visibility.Collapsed;
+            JoinPromptText.Visibility = Visibility.Collapsed;
+            RefreshProgressBar();
+            ShowMovieList();
         }
         else
         {
-            ViewModel = new MarathonPageViewModel();
+            LockedBanner.Visibility = Visibility.Visible;
         }
-
-        InitializeComponent();
-        Loaded += OnPageLoaded;
     }
 
-    private async void OnPageLoaded(object sender, RoutedEventArgs e)
+    private async void LogButton_Click(object sender, RoutedEventArgs e)
     {
-        Loaded -= OnPageLoaded;
-
-        var userId = App.CurrentUserService?.CurrentUser.Id ?? 0;
-        await ViewModel.LoadAsync(userId);
-    }
-
-    private async void MarathonListView_SelectionChanged(
-        object sender, SelectionChangedEventArgs e)
-    {
-        if (MarathonListView.SelectedItem is not Marathon marathon)
-        {
-            return;
-        }
-
-        await ViewModel.SelectMarathonAsync(marathon);
-
-        LockedBanner.Visibility = ViewModel.IsLocked
-            ? Visibility.Visible
-            : Visibility.Collapsed;
-
-        ShowIdle();
-    }
-
-    /// <summary>
-    /// Starts the quiz flow for a specific marathon movie.
-    /// </summary>
-    public async Task StartQuizForMovieAsync(int movieId)
-    {
-        if (App.TriviaRepository is null || ViewModel.IsLocked || !ViewModel.IsDataAvailable)
-        {
-            return;
-        }
+        if (sender is not Button btn) return;
+        if (btn.Tag is not int movieId) return;
+        if (App.TriviaRepository is null) return;
 
         _currentMovieId = movieId;
+
+        var movie = ViewModel.Movies.FirstOrDefault(m => m.MovieId == movieId);
+        QuizMovieTitle.Text = movie?.Title ?? "Movie";
+
         _triviaVm = new MarathonTriviaViewModel(App.TriviaRepository);
 
-        await _triviaVm.StartAsync(movieId);
-
-        ShowPlaying();
-        RefreshQuizUi();
+        try
+        {
+            await _triviaVm.StartAsync(movieId);
+            ShowPlaying();
+            RefreshQuizUi();
+        }
+        catch (InvalidOperationException ex)
+        {
+            var dialog = new ContentDialog
+            {
+                XamlRoot = XamlRoot,
+                Title = "Cannot start quiz",
+                Content = ex.Message,
+                CloseButtonText = "OK"
+            };
+            await dialog.ShowAsync();
+        }
     }
 
     private void SubmitButton_Click(object sender, RoutedEventArgs e)
     {
-        if (_triviaVm is null)
-        {
-            return;
-        }
+        if (_triviaVm is null) return;
 
         var selected = new[] { OptionA, OptionB, OptionC, OptionD }
-            .FirstOrDefault(radioButton => radioButton.IsChecked == true);
+            .FirstOrDefault(r => r.IsChecked == true);
 
-        if (selected?.Tag is not char option)
-        {
-            return;
-        }
+        if (selected?.Tag is not char option) return;
 
         _triviaVm.SubmitAnswer(option);
 
-        foreach (var radioButton in new[] { OptionA, OptionB, OptionC, OptionD })
-        {
-            radioButton.IsChecked = false;
-        }
+        foreach (var r in new[] { OptionA, OptionB, OptionC, OptionD })
+            r.IsChecked = false;
+
+        SubmitButton.IsEnabled = false;
 
         if (_triviaVm.IsComplete)
         {
             ShowResult();
 
             if (_triviaVm.IsPassed && ViewModel.SelectedMarathon is not null)
-            {
                 _ = LogPassedMovieAsync(
                     ViewModel.SelectedMarathon.Id,
                     _currentMovieId,
                     _triviaVm.CorrectCount);
-            }
         }
         else
         {
@@ -123,73 +151,94 @@ public sealed partial class MarathonsPage : Page
 
     private async Task LogPassedMovieAsync(int marathonId, int movieId, int correctCount)
     {
-        if (_marathonService is null)
-        {
-            return;
-        }
+        var connectionString = App.Configuration?["Database:ConnectionString"]!;
+        var db = new DatabaseOptions { ConnectionString = connectionString };
+        var repo = new SqlMarathonRepository(db);
+        var service = new MarathonService(repo, App.CurrentUserService!);
 
-        await _marathonService.LogMovieAsync(marathonId, movieId, correctCount);
-        await ViewModel.RefreshAfterMovieLoggedAsync();
+        await service.LogMovieAsync(marathonId, movieId, correctCount);
+        await ViewModel.RefreshAfterMovieLoggedAsync(marathonId);
+
+        LeaderboardSubtitle.Text = $"{ViewModel.Leaderboard.Count} participants";
+        RefreshProgressBar();
     }
 
     private async void TryAgainButton_Click(object sender, RoutedEventArgs e)
     {
-        if (_triviaVm is null || App.TriviaRepository is null)
-        {
-            return;
-        }
-
+        if (_triviaVm is null || App.TriviaRepository is null) return;
         _triviaVm.Reset();
         await _triviaVm.StartAsync(_currentMovieId);
         ShowPlaying();
         RefreshQuizUi();
     }
 
+    private void BackToMoviesButton_Click(object sender, RoutedEventArgs e)
+    {
+        ShowMovieList();
+    }
+
     private void RefreshQuizUi()
     {
-        if (_triviaVm?.CurrentQuestion is not TriviaQuestion question)
-        {
-            return;
-        }
+        if (_triviaVm?.CurrentQuestion is not TriviaQuestion q) return;
 
         QuizProgress.Text = _triviaVm.ProgressText;
-        QuizQuestion.Text = question.QuestionText;
+        QuizQuestion.Text = q.QuestionText;
+        OptionA.Content = q.OptionA; OptionA.Tag = 'A';
+        OptionB.Content = q.OptionB; OptionB.Tag = 'B';
+        OptionC.Content = q.OptionC; OptionC.Tag = 'C';
+        OptionD.Content = q.OptionD; OptionD.Tag = 'D';
+        SubmitButton.IsEnabled = false;
 
-        OptionA.Content = question.OptionA;
-        OptionA.Tag = 'A';
-        OptionB.Content = question.OptionB;
-        OptionB.Tag = 'B';
-        OptionC.Content = question.OptionC;
-        OptionC.Tag = 'C';
-        OptionD.Content = question.OptionD;
-        OptionD.Tag = 'D';
+        foreach (var r in new[] { OptionA, OptionB, OptionC, OptionD })
+            r.Checked += (_, _) => SubmitButton.IsEnabled = true;
+    }
 
-        SubmitButton.IsEnabled = true;
+    private void RefreshProgressBar()
+    {
+        if (ViewModel.Movies.Count == 0)
+        {
+            ProgressBar.Value = 0;
+            return;
+        }
+        var verified = ViewModel.Movies.Count(m => m.IsVerified);
+        ProgressBar.Value = (double)verified / ViewModel.Movies.Count;
     }
 
     private void ShowIdle()
     {
-        IdlePanel.Visibility = Visibility.Visible;
+        MovieListPanel.Visibility = Visibility.Collapsed;
+        PlayingPanel.Visibility = Visibility.Collapsed;
+        ResultPanel.Visibility = Visibility.Collapsed;
+    }
+
+    private void ShowJoinPrompt()
+    {
+        MovieListPanel.Visibility = Visibility.Collapsed;
+        PlayingPanel.Visibility = Visibility.Collapsed;
+        ResultPanel.Visibility = Visibility.Collapsed;
+    }
+
+    private void ShowMovieList()
+    {
+        MovieListPanel.Visibility = Visibility.Visible;
         PlayingPanel.Visibility = Visibility.Collapsed;
         ResultPanel.Visibility = Visibility.Collapsed;
     }
 
     private void ShowPlaying()
     {
-        IdlePanel.Visibility = Visibility.Collapsed;
+        MovieListPanel.Visibility = Visibility.Collapsed;
         PlayingPanel.Visibility = Visibility.Visible;
         ResultPanel.Visibility = Visibility.Collapsed;
     }
 
     private void ShowResult()
     {
-        IdlePanel.Visibility = Visibility.Collapsed;
+        MovieListPanel.Visibility = Visibility.Collapsed;
         PlayingPanel.Visibility = Visibility.Collapsed;
         ResultPanel.Visibility = Visibility.Visible;
-
         ResultText.Text = _triviaVm?.ResultText ?? string.Empty;
-        TryAgainButton.Visibility = (_triviaVm?.IsPassed == false)
-            ? Visibility.Visible
-            : Visibility.Collapsed;
+        TryAgainButton.Visibility = _triviaVm?.IsPassed == false
+            ? Visibility.Visible : Visibility.Collapsed;
     }
 }

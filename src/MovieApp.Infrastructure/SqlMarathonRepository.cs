@@ -174,7 +174,6 @@ public sealed class SqlMarathonRepository : IMarathonRepository
         var weekString = $"{now.Year}-W" +
             System.Globalization.ISOWeek.GetWeekOfYear(now).ToString("D2");
 
-        // Monday = start, Sunday 23:59:59 = end
         var daysFromMonday = ((int)now.DayOfWeek + 6) % 7;
         var monday = now.Date.AddDays(-daysFromMonday);
         var sunday = monday.AddDays(6).AddHours(23).AddMinutes(59).AddSeconds(59);
@@ -187,7 +186,6 @@ public sealed class SqlMarathonRepository : IMarathonRepository
     {
         var (_, _, weekEnd) = GetCurrentWeekBounds();
 
-        // If it's past Sunday night, this week is over — return nothing
         if (DateTime.UtcNow > weekEnd)
             return [];
 
@@ -230,9 +228,6 @@ public sealed class SqlMarathonRepository : IMarathonRepository
     public async Task AssignWeeklyMarathonsAsync(
     int userId, string weekString, int count = 10)
     {
-        // Pick 'count' random marathons that:
-        // 1. The user has never completed
-        // 2. Don't already have a WeekScoping for this week
         const string selectSql = """
         SELECT TOP (@count) Id
         FROM dbo.Marathons
@@ -263,7 +258,6 @@ public sealed class SqlMarathonRepository : IMarathonRepository
 
         if (ids.Count == 0) return;
 
-        // Deactivate previous week's marathons
         const string deactivateSql = """
         UPDATE dbo.Marathons
         SET IsActive = 0
@@ -275,7 +269,6 @@ public sealed class SqlMarathonRepository : IMarathonRepository
         deactivateCmd.Parameters.AddWithValue("@week", weekString);
         await deactivateCmd.ExecuteNonQueryAsync();
 
-        // Stamp the selected marathons with this week and activate them
         foreach (var id in ids)
         {
             const string updateSql = """
@@ -289,5 +282,84 @@ public sealed class SqlMarathonRepository : IMarathonRepository
             updateCmd.Parameters.AddWithValue("@id", id);
             await updateCmd.ExecuteNonQueryAsync();
         }
+    }
+    public async Task<IEnumerable<MovieApp.Core.Models.Movie.Movie>> GetMoviesForMarathonAsync(
+    int marathonId)
+    {
+        const string sql = """
+        SELECT m.Id, m.Title, m.Description, m.ReleaseYear, m.DurationMinutes
+        FROM dbo.Movies m
+        INNER JOIN dbo.MarathonMovies mm ON m.Id = mm.MovieId
+        WHERE mm.MarathonId = @marathonId
+        ORDER BY m.Title;
+        """;
+
+        var movies = new List<MovieApp.Core.Models.Movie.Movie>();
+        await using var connection = new SqlConnection(_connectionString);
+        await using var command = new SqlCommand(sql, connection);
+        command.Parameters.AddWithValue("@marathonId", marathonId);
+
+        await connection.OpenAsync();
+        await using var reader = await command.ExecuteReaderAsync();
+        while (await reader.ReadAsync())
+        {
+            movies.Add(new MovieApp.Core.Models.Movie.Movie
+            {
+                Id = reader.GetInt32(0),
+                Title = reader.GetString(1),
+                Description = reader.IsDBNull(2) ? string.Empty : reader.GetString(2),
+                ReleaseYear = reader.IsDBNull(3) ? 0 : reader.GetInt32(3),
+                DurationMinutes = reader.IsDBNull(4) ? 0 : reader.GetInt32(4),
+            });
+        }
+        return movies;
+    }
+
+    public async Task<IEnumerable<LeaderboardEntry>> GetLeaderboardWithUsernamesAsync(
+        int marathonId)
+    {
+        const string sql = """
+        SELECT u.Id, u.Username, mp.CompletedMoviesCount, mp.TriviaAccuracy, mp.FinishedAt
+        FROM dbo.MarathonProgress mp
+        INNER JOIN dbo.Users u ON mp.UserId = u.Id
+        WHERE mp.MarathonId = @marathonId
+        ORDER BY mp.CompletedMoviesCount DESC,
+                 mp.TriviaAccuracy DESC,
+                 mp.FinishedAt ASC;
+        """;
+
+        var entries = new List<LeaderboardEntry>();
+        await using var connection = new SqlConnection(_connectionString);
+        await using var command = new SqlCommand(sql, connection);
+        command.Parameters.AddWithValue("@marathonId", marathonId);
+
+        await connection.OpenAsync();
+        await using var reader = await command.ExecuteReaderAsync();
+        while (await reader.ReadAsync())
+        {
+            entries.Add(new LeaderboardEntry
+            {
+                UserId = reader.GetInt32(0),
+                Username = reader.GetString(1),
+                CompletedMoviesCount = reader.GetInt32(2),
+                TriviaAccuracy = reader.GetDouble(3),
+                FinishedAt = reader.IsDBNull(4) ? null : reader.GetDateTime(4),
+            });
+        }
+        return entries;
+    }
+    public async Task<int> GetParticipantCountAsync(int marathonId)
+    {
+        const string sql = """
+        SELECT COUNT(1) FROM dbo.MarathonProgress
+        WHERE MarathonId = @marathonId;
+        """;
+
+        await using var connection = new SqlConnection(_connectionString);
+        await connection.OpenAsync();
+        await using var command = new SqlCommand(sql, connection);
+        command.Parameters.AddWithValue("@marathonId", marathonId);
+        var result = await command.ExecuteScalarAsync();
+        return Convert.ToInt32(result);
     }
 }
