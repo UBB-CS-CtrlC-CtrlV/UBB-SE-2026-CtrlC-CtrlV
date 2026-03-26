@@ -204,4 +204,13 @@ public sealed class SqlEventRepository(DatabaseOptions databaseOptions) : IEvent
             CreatorUserId = reader.GetInt32(11)
         };
     }
+    public async Task<bool> DeleteAsync(int eventId, CancellationToken cancellationToken = default)
+    {
+        await using var connection = new SqlConnection(_connectionString);
+        await connection.OpenAsync(cancellationToken);
+        await using var cmd = new SqlCommand("DELETE FROM Events WHERE Id = @Id", connection);
+        cmd.Parameters.AddWithValue("@Id", eventId);
+        var rows = await cmd.ExecuteNonQueryAsync(cancellationToken);
+        return rows > 0;
+    }
 }
