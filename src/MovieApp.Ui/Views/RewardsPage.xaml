@@ -20,6 +20,7 @@
                         <ListView Height="420" />
                     </StackPanel>
                 </controls:TabViewItem>
+
                 <controls:TabViewItem Header="Referral">
                     <StackPanel Padding="16" Spacing="12">
                         <TextBlock Text="Free Passes" Style="{ThemeResource SubtitleTextBlockStyle}" />
@@ -36,11 +37,93 @@
                         </Border>
                     </StackPanel>
                 </controls:TabViewItem>
+
                 <controls:TabViewItem Header="Trivia">
-                    <StackPanel Padding="0,16,0,0">
-                        <ListView Height="420" />
+                    <StackPanel Padding="16" Spacing="16">
+
+                        <TextBlock
+                            Text="Trivia Wheel Reward"
+                            Style="{ThemeResource SubtitleTextBlockStyle}" />
+
+                        <TextBlock
+                            Text="Earn a free movie ticket by answering all 20 trivia questions correctly."
+                            Style="{StaticResource SectionCaptionTextStyle}"
+                            TextWrapping="WrapWholeWords" />
+
+                        <!--  No reward state  -->
+                        <Border
+                            x:Name="NoRewardBanner"
+                            Padding="16"
+                            CornerRadius="8"
+                            Visibility="Visible"
+                            Background="{ThemeResource CardBackgroundFillColorSecondaryBrush}">
+                            <StackPanel Spacing="4">
+                                <TextBlock
+                                    Text="🎯 No reward available yet"
+                                    FontWeight="SemiBold" />
+                                <TextBlock
+                                    Text="Spin the trivia wheel and answer all 20 questions correctly to earn a free ticket."
+                                    Style="{StaticResource SectionCaptionTextStyle}"
+                                    TextWrapping="WrapWholeWords" />
+                            </StackPanel>
+                        </Border>
+
+                        <!--  Reward available state  -->
+                        <Border
+                            x:Name="RewardAvailableBanner"
+                            Padding="16"
+                            CornerRadius="8"
+                            Visibility="Collapsed"
+                            Background="{ThemeResource CardBackgroundFillColorSecondaryBrush}">
+                            <StackPanel Spacing="12">
+                                <StackPanel Orientation="Horizontal" Spacing="12">
+                                    <FontIcon
+                                        Glyph="&#xE8D1;"
+                                        FontSize="28"
+                                        Foreground="{ThemeResource SystemAccentColor}" />
+                                    <StackPanel Spacing="2">
+                                        <TextBlock
+                                            Text="🎉 Free Movie Ticket"
+                                            FontWeight="Bold"
+                                            FontSize="16" />
+                                        <TextBlock
+                                            Text="Applicable to any movie event"
+                                            Style="{StaticResource SectionCaptionTextStyle}" />
+                                    </StackPanel>
+                                </StackPanel>
+
+                                <TextBlock
+                                    x:Name="RewardEarnedDateText"
+                                    Style="{StaticResource SectionCaptionTextStyle}" />
+
+                                <Button
+                                    x:Name="RedeemButton"
+                                    Content="Redeem at checkout"
+                                    Click="RedeemButton_Click" />
+                            </StackPanel>
+                        </Border>
+
+                        <!--  Already redeemed state  -->
+                        <Border
+                            x:Name="RedeemedBanner"
+                            Padding="16"
+                            CornerRadius="8"
+                            Visibility="Collapsed"
+                            Background="{ThemeResource CardBackgroundFillColorSecondaryBrush}">
+                            <StackPanel Spacing="4">
+                                <TextBlock
+                                    Text="✅ Reward already redeemed"
+                                    FontWeight="SemiBold" />
+                                <TextBlock
+                                    Text="You have already used your free ticket reward. Earn another by scoring 20/20 again!"
+                                    Style="{StaticResource SectionCaptionTextStyle}"
+                                    TextWrapping="WrapWholeWords" />
+                            </StackPanel>
+                        </Border>
+
                     </StackPanel>
                 </controls:TabViewItem>
+
                 <controls:TabViewItem Header="Slots">
                     <StackPanel Padding="0,16,0,0">
                         <ListView Height="420" />

@@ -66,14 +66,19 @@ public sealed partial class TriviaWheelPage : Page
         Loaded += OnPageLoaded;
     }
 
-    private void OnPageLoaded(object sender, RoutedEventArgs e)
+    private async void OnPageLoaded(object sender, RoutedEventArgs e)
     {
-        if (App.TriviaRepository is not null && App.TriviaRewardRepository is not null)
+        if (App.TriviaRepository is not null
+            && App.TriviaRewardRepository is not null
+            && App.SlotMachineStateRepository is not null)
         {
             _viewModel = new TriviaWheelViewModel(
                 App.TriviaRepository,
                 App.TriviaRewardRepository,
+                App.SlotMachineStateRepository,
                 App.CurrentUserId);
+
+            await _viewModel.InitializeAsync();
         }
 
         if (_viewModel?.CanSpin == false)
@@ -110,13 +115,13 @@ public sealed partial class TriviaWheelPage : Page
             };
             WheelCanvas.Children.Add(path);
 
-            // Label centered on segment midpoint at 60% radius
+            
             double midAngleRad = (startAngle + angleStep / 2.0) * Math.PI / 180.0;
             double labelRadius = radius * 0.60;
             double lx = cx + labelRadius * Math.Cos(midAngleRad) - 44;
             double ly = cy + labelRadius * Math.Sin(midAngleRad) - 14;
 
-            // Shortened names so they fit inside the segment
+            
             string shortName = _categories[i] switch
             {
                 "Oscars and Awards" => "Oscars &\nAwards",
@@ -183,14 +188,13 @@ public sealed partial class TriviaWheelPage : Page
 
         SpinButton.IsEnabled = false;
 
-        var random = new Random();
+        
+        _ = _viewModel.RecordSpinAsync();
 
-        // Spin 3 full rotations plus a random extra angle
+        var random = new Random();
         double extraAngle = random.NextDouble() * 360.0;
         double totalRotation = 360.0 * 3 + extraAngle;
 
-        // Figure out which segment the arrow (at top = 270°) points to after rotation
-        // The wheel rotates clockwise, so we subtract from 270° to find where arrow lands
         double finalAngle = totalRotation % 360.0;
         double arrowPointsAt = (270.0 - finalAngle + 360.0) % 360.0;
         double segmentAngle = 360.0 / _categories.Length;
@@ -212,7 +216,6 @@ public sealed partial class TriviaWheelPage : Page
         storyboard.Completed += (s, ev) =>
         {
             SelectedCategoryText.Text = _categories[categoryIndex];
-         
             ShowPlayingPanel();
             _ = LoadQuestionsAsync(_categories[categoryIndex]);
         };

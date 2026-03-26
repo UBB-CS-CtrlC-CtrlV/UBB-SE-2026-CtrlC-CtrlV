@@ -5,10 +5,15 @@ namespace MovieApp.Ui.ViewModels;
 
 public sealed class TriviaWheelViewModel : ViewModelBase
 {
+    
+    private const bool DisableDailySpinLimit = false;
+
     private readonly ITriviaRepository _triviaRepository;
     private readonly ITriviaRewardRepository _triviaRewardRepository;
+    private readonly IUserSlotMachineStateRepository _spinRepository;
     private readonly int _currentUserId;
     private List<TriviaQuestion> _questions = new();
+    private UserSpinData? _spinData;
 
     private string _selectedCategory = string.Empty;
     private bool _canSpin = true;
@@ -22,10 +27,12 @@ public sealed class TriviaWheelViewModel : ViewModelBase
     public TriviaWheelViewModel(
         ITriviaRepository triviaRepository,
         ITriviaRewardRepository triviaRewardRepository,
+        IUserSlotMachineStateRepository spinRepository,
         int currentUserId)
     {
         _triviaRepository = triviaRepository;
         _triviaRewardRepository = triviaRewardRepository;
+        _spinRepository = spinRepository;
         _currentUserId = currentUserId;
     }
 
@@ -132,12 +139,60 @@ public sealed class TriviaWheelViewModel : ViewModelBase
     public double ProgressValue => CurrentQuestionIndex / 20.0 * 100;
     public string ProgressText => $"{CurrentQuestionIndex}/20";
 
+    // ── Spin eligibility ─────────────────────────────────────────────────────
+
     /// <summary>
-    /// Starts a new session for the selected category.
+    /// Loads spin state from DB and sets CanSpin accordingly.
+    /// Call this on page load to persist state across tab switches.
     /// </summary>
-    /// <remarks>
-    /// Question randomization and the local daily-spin toggle both happen here.
-    /// </remarks>
+    public async Task InitializeAsync()
+    {
+        if (DisableDailySpinLimit)
+        {
+            CanSpin = true;
+            return;
+        }
+
+        _spinData = await _spinRepository.GetByUserIdAsync(_currentUserId);
+
+        if (_spinData is null)
+        {
+            // First time user — create a spin record
+            _spinData = new UserSpinData
+            {
+                UserId = _currentUserId,
+                DailySpinsRemaining = 1,
+                BonusSpins = 0,
+                LoginStreak = 0,
+                EventSpinRewardsToday = 0
+            };
+            await _spinRepository.CreateAsync(_spinData);
+            CanSpin = true;
+            return;
+        }
+
+        // Check if the user has already spun today
+        CanSpin = !HasSpunToday(_spinData.LastTriviaSpinReset);
+    }
+
+    /// <summary>
+    /// Records the spin timestamp in the DB. Call this when the wheel starts spinning.
+    /// </summary>
+    public async Task RecordSpinAsync()
+    {
+        if (DisableDailySpinLimit) return;
+
+        _spinData ??= await _spinRepository.GetByUserIdAsync(_currentUserId);
+
+        if (_spinData is null) return;
+
+        _spinData.LastTriviaSpinReset = DateTime.UtcNow;
+        await _spinRepository.UpdateAsync(_spinData);
+        CanSpin = false;
+    }
+
+    // ── Questions ────────────────────────────────────────────────────────────
+
     public async Task LoadQuestionsAsync(string category)
     {
         SelectedCategory = category;
@@ -154,7 +209,6 @@ public sealed class TriviaWheelViewModel : ViewModelBase
         HintUsed = false;
         IsSessionComplete = false;
         IsPlaying = true;
-        CanSpin = false;
 
         AdvanceToNextQuestion();
     }
@@ -195,20 +249,25 @@ public sealed class TriviaWheelViewModel : ViewModelBase
         HintUsed = true;
     }
 
-    /// <summary>
-    /// Returns the two incorrect option letters to hide when hint is used.
-    /// </summary>
     public IReadOnlyList<char> GetHintOptionsToHide()
     {
         if (CurrentQuestion is null) return Array.Empty<char>();
 
-        var incorrect = new List<char> { 'A', 'B', 'C', 'D' }
+        return new List<char> { 'A', 'B', 'C', 'D' }
             .Where(o => o != CurrentQuestion.CorrectOption)
             .OrderBy(_ => Guid.NewGuid())
             .Take(2)
             .ToList();
+    }
 
-        return incorrect;
+    // ── Private helpers ──────────────────────────────────────────────────────
+
+    private static bool HasSpunToday(DateTime lastSpin)
+    {
+        if (lastSpin == default) return false;
+
+        // Reset happens at 00:00 server time — compare dates only
+        return lastSpin.Date == DateTime.UtcNow.Date;
     }
 
     private async Task GrantRewardAsync()

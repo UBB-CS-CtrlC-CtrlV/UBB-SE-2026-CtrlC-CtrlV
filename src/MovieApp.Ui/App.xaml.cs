@@ -104,7 +104,6 @@ public partial class App : Application
             SlotMachineResultService = slotMachineResultService;
             ReelAnimationService = reelAnimationService;
             MarathonRepository = marathonRepository;
-            ReferralValidator = new MovieApp.Core.Services.ReferralValidator(ambassadorRepository);
 
             viewModel = new MainViewModel(_currentUserService.CurrentUser);
         }

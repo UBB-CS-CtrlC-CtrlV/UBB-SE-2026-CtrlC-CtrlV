@@ -16,4 +16,10 @@ public static class TriviaRewardSqlQueries
         WHERE UserId = @userId
           AND IsRedeemed = 0;
         """;
+
+    public const string MarkAsRedeemed = """
+        UPDATE dbo.TriviaRewards
+        SET IsRedeemed = 1
+        WHERE Id = @rewardId;
+        """;
 }

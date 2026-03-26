@@ -36,6 +36,17 @@ public sealed class SqlTriviaRewardRepository(DatabaseOptions databaseOptions) :
         return MapTriviaReward(reader);
     }
 
+    public async Task MarkAsRedeemedAsync(int rewardId, CancellationToken cancellationToken = default)
+    {
+        await using var connection = new SqlConnection(_connectionString);
+        await connection.OpenAsync(cancellationToken);
+
+        await using var command = new SqlCommand(TriviaRewardSqlQueries.MarkAsRedeemed, connection);
+        command.Parameters.AddWithValue("@rewardId", rewardId);
+
+        await command.ExecuteNonQueryAsync(cancellationToken);
+    }
+
     private static TriviaReward MapTriviaReward(SqlDataReader reader)
     {
         return new TriviaReward
