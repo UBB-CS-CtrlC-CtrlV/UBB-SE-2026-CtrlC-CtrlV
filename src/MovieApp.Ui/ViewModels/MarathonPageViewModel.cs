@@ -4,6 +4,9 @@ using MovieApp.Core.Services;
 
 namespace MovieApp.Ui.ViewModels;
 
+/// <summary>
+/// Coordinates marathon selection, leaderboard loading, and current-user progress display.
+/// </summary>
 public sealed class MarathonPageViewModel : ViewModelBase
 {
     private readonly IMarathonService _marathonService;
@@ -14,6 +17,9 @@ public sealed class MarathonPageViewModel : ViewModelBase
     private MarathonProgress? _currentProgress;
     private bool _isLocked;
 
+    /// <summary>
+    /// Creates the marathon page view model.
+    /// </summary>
     public MarathonPageViewModel(
         IMarathonService marathonService,
         IMarathonRepository marathonRepository)
@@ -62,12 +68,18 @@ public sealed class MarathonPageViewModel : ViewModelBase
             ? $"Completed — {CurrentProgress.CompletedMoviesCount} movies verified"
             : $"{CurrentProgress.CompletedMoviesCount} movies verified so far";
 
+    /// <summary>
+    /// Loads the marathons available to the supplied user for the current week.
+    /// </summary>
     public async Task LoadAsync(int userId)
     {
         var list = await _marathonService.GetWeeklyMarathonsAsync(userId);
         Marathons = list.ToList();
     }
 
+    /// <summary>
+    /// Selects a marathon and loads its progress and leaderboard state.
+    /// </summary>
     public async Task SelectMarathonAsync(Marathon marathon)
     {
         SelectedMarathon = marathon;
@@ -90,6 +102,9 @@ public sealed class MarathonPageViewModel : ViewModelBase
         }
     }
 
+    /// <summary>
+    /// Refreshes progress and leaderboard data after a movie is logged.
+    /// </summary>
     public async Task RefreshAfterMovieLoggedAsync()
     {
         if (SelectedMarathon is null) return;

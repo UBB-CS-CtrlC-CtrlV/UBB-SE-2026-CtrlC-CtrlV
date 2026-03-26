@@ -3,6 +3,9 @@ using MovieApp.Core.Repositories;
 
 namespace MovieApp.Ui.ViewModels;
 
+/// <summary>
+/// Drives the rapid-fire trivia check used to verify movie watches inside marathons.
+/// </summary>
 public sealed class MarathonTriviaViewModel : ViewModelBase
 {
     private readonly ITriviaRepository _triviaRepository;
@@ -13,6 +16,9 @@ public sealed class MarathonTriviaViewModel : ViewModelBase
     private bool _isPlaying;
     private bool _isComplete;
 
+    /// <summary>
+    /// Creates the view model with access to movie-specific trivia data.
+    /// </summary>
     public MarathonTriviaViewModel(ITriviaRepository triviaRepository)
     {
         _triviaRepository = triviaRepository;
@@ -58,6 +64,9 @@ public sealed class MarathonTriviaViewModel : ViewModelBase
             ? "Passed! Movie verified."
             : $"Failed — {_correctCount}/{_questions.Count} correct. Try again.";
 
+    /// <summary>
+    /// Starts a new three-question trivia verification session for the specified movie.
+    /// </summary>
     public async Task StartAsync(int movieId)
     {
         IsLoading = true;
@@ -84,6 +93,9 @@ public sealed class MarathonTriviaViewModel : ViewModelBase
         NotifyQuestionChanged();
     }
 
+    /// <summary>
+    /// Submits an answer for the current question and advances the verification session.
+    /// </summary>
     public void SubmitAnswer(char selected)
     {
         if (!IsPlaying || CurrentQuestion is null) return;
@@ -102,6 +114,9 @@ public sealed class MarathonTriviaViewModel : ViewModelBase
         NotifyQuestionChanged();
     }
 
+    /// <summary>
+    /// Clears the current verification session state.
+    /// </summary>
     public void Reset()
     {
         _questions.Clear();

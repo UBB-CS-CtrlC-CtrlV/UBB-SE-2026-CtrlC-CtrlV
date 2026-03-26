@@ -3,11 +3,17 @@ using MovieApp.Core.Repositories;
 
 namespace MovieApp.Core.Services;
 
+/// <summary>
+/// Coordinates marathon enrollment, progress, and weekly assignment workflows.
+/// </summary>
 public sealed class MarathonService : IMarathonService
 {
     private readonly IMarathonRepository _marathonRepo;
     private readonly ICurrentUserService _currentUserService;
 
+    /// <summary>
+    /// Creates a service that operates on marathon persistence for the current user.
+    /// </summary>
     public MarathonService(
         IMarathonRepository marathonRepo,
         ICurrentUserService currentUserService)
@@ -16,6 +22,9 @@ public sealed class MarathonService : IMarathonService
         _currentUserService = currentUserService;
     }
 
+    /// <summary>
+    /// Gets the current week's marathons for the specified user, assigning a weekly set when none exist.
+    /// </summary>
     public async Task<IEnumerable<Marathon>> GetWeeklyMarathonsAsync(int userId)
     {
         var now = DateTime.UtcNow;
@@ -37,12 +46,18 @@ public sealed class MarathonService : IMarathonService
         return list;
     }
 
+    /// <summary>
+    /// Gets the current user's progress for a marathon.
+    /// </summary>
     public async Task<MarathonProgress?> GetCurrentProgressAsync(int marathonId)
     {
         var userId = _currentUserService.CurrentUser.Id;
         return await _marathonRepo.GetUserProgressAsync(userId, marathonId);
     }
 
+    /// <summary>
+    /// Starts a marathon for the current user if prerequisite rules allow it.
+    /// </summary>
     public async Task<bool> StartMarathonAsync(int marathonId)
     {
         var userId = _currentUserService.CurrentUser.Id;
@@ -64,6 +79,9 @@ public sealed class MarathonService : IMarathonService
         return await _marathonRepo.JoinMarathonAsync(userId, marathonId);
     }
 
+    /// <summary>
+    /// Updates aggregate quiz accuracy after a rapid-fire verification round.
+    /// </summary>
     public async Task UpdateQuizResultAsync(int marathonId, int correctAnswers)
     {
         var userId = _currentUserService.CurrentUser.Id;
@@ -80,6 +98,9 @@ public sealed class MarathonService : IMarathonService
         }
     }
 
+    /// <summary>
+    /// Logs a verified movie when the user answers all three verification questions correctly.
+    /// </summary>
     public async Task<bool> LogMovieAsync(int marathonId, int movieId, int correctAnswers)
     {
         if (correctAnswers < 3) return false;
