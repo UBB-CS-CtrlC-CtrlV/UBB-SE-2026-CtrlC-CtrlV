@@ -185,7 +185,6 @@ public sealed class MarathonPageViewModel : ViewModelBase
             .GetMoviesForMarathonAsync(marathonId);
 
         var verifiedCount = CurrentProgress?.CompletedMoviesCount ?? 0;
-
         Movies.Clear();
         var movieList = movies.ToList();
         for (int i = 0; i < movieList.Count; i++)
@@ -197,7 +196,6 @@ public sealed class MarathonPageViewModel : ViewModelBase
                 IsVerified = i < verifiedCount,
             });
         }
-
         OnPropertyChanged(nameof(ProgressText));
     }
 

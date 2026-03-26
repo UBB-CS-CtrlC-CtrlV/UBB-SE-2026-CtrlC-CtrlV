@@ -153,12 +153,12 @@
           FontSize="18"
           Foreground="#4CAF50"
           VerticalAlignment="Center"
-          Visibility="{x:Bind VerifiedVisibility}" />
+          Opacity="{x:Bind IsVerifiedOpacity}" />
                                                 <Button Grid.Column="2"
         Content="Log"
         Tag="{x:Bind MovieId}"
         IsEnabled="{x:Bind CanLog}"
-        Visibility="{x:Bind LogVisibility}"
+        Opacity="{x:Bind CanLogOpacity}"
         Click="LogButton_Click" />
                                             </Grid>
                                         </Border>
