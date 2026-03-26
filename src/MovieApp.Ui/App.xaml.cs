@@ -38,6 +38,11 @@ public partial class App : Application
     public static SlotMachineResultService? SlotMachineResultService { get; private set; }
     public static ReelAnimationService? ReelAnimationService { get; private set; }
     public static SlotMachineAnimationService? SlotMachineAnimationService { get; private set; }
+    public static MovieApp.Core.Services.IReferralValidator? ReferralValidator { get; private set; }
+    public static MainWindow? CurrentMainWindow { get; private set; }
+    public static IConfigurationRoot? Configuration { get; private set; }
+    public static IMarathonRepository? MarathonRepository { get; private set; }
+    public static bool StreakSpinGrantedOnLogin { get; private set; }
 
     public App()
     {
@@ -125,6 +130,10 @@ public partial class App : Application
                 userMovieDiscountRepository);
             SlotMachineResultService = new SlotMachineResultService(userMovieDiscountRepository);
             ReelAnimationService = new ReelAnimationService();
+
+            // SM.32/SM.33: record login, advance streak, and award bonus spin if streak reached 3
+            StreakSpinGrantedOnLogin = await slotMachineService.RecordLoginAndCheckStreakAsync(
+                _currentUserService.CurrentUser.Id);
 
             viewModel = new MainViewModel(_currentUserService.CurrentUser);
         }

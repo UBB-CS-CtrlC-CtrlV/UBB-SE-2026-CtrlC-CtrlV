@@ -199,4 +199,94 @@ public sealed class SlotMachineServiceTests
         var spins = await service.GetAvailableSpinsAsync(1);
         Assert.Equal(7, spins); // 5 daily + 2 bonus (not 3)
     }
+
+    [Fact]
+    public async Task RecordLoginAndCheckStreakAsync_IncrementsStreakAndGrantsSpinOnThirdDay()
+    {
+        // SM.32: three consecutive logins → bonus spin; SM.33: streak resets to 0
+        var stateRepo = new InMemoryStateRepo();
+        var service = new SlotMachineService(stateRepo, new InMemoryMovieRepo(), new InMemoryEventRepo(), new InMemoryDiscountRepo());
+
+        // Simulate day-1 login
+        var state = new UserSpinData
+        {
+            UserId = 1,
+            DailySpinsRemaining = 5,
+            BonusSpins = 0,
+            LoginStreak = 0,
+            LastLoginDate = DateTime.UtcNow.Date.AddDays(-2),
+            LastSlotSpinReset = DateTime.UtcNow,
+        };
+        await stateRepo.CreateAsync(state);
+
+        // First login: streak goes 0→1, no spin yet
+        Assert.False(await service.RecordLoginAndCheckStreakAsync(1));
+        Assert.Equal(1, (await stateRepo.GetByUserIdAsync(1))!.LoginStreak);
+
+        // Simulate next-day login
+        (await stateRepo.GetByUserIdAsync(1))!.LastLoginDate = DateTime.UtcNow.Date.AddDays(-1);
+        await stateRepo.UpdateAsync((await stateRepo.GetByUserIdAsync(1))!);
+
+        // Second login: streak goes 1→2, still no spin
+        Assert.False(await service.RecordLoginAndCheckStreakAsync(1));
+        Assert.Equal(2, (await stateRepo.GetByUserIdAsync(1))!.LoginStreak);
+
+        // Simulate next-day login again
+        (await stateRepo.GetByUserIdAsync(1))!.LastLoginDate = DateTime.UtcNow.Date.AddDays(-1);
+        await stateRepo.UpdateAsync((await stateRepo.GetByUserIdAsync(1))!);
+
+        // Third login: streak reaches 3 → bonus spin granted, streak reset to 0
+        Assert.True(await service.RecordLoginAndCheckStreakAsync(1));
+
+        var finalState = (await stateRepo.GetByUserIdAsync(1))!;
+        Assert.Equal(0, finalState.LoginStreak);   // SM.33: streak reset
+        Assert.Equal(1, finalState.BonusSpins);    // SM.32: spin awarded
+    }
+
+    [Fact]
+    public async Task RecordLoginAndCheckStreakAsync_BreaksStreakAfterMissedDay()
+    {
+        var stateRepo = new InMemoryStateRepo();
+        var service = new SlotMachineService(stateRepo, new InMemoryMovieRepo(), new InMemoryEventRepo(), new InMemoryDiscountRepo());
+
+        // User had a streak of 2 but missed yesterday
+        var state = new UserSpinData
+        {
+            UserId = 1,
+            DailySpinsRemaining = 5,
+            BonusSpins = 0,
+            LoginStreak = 2,
+            LastLoginDate = DateTime.UtcNow.Date.AddDays(-3), // missed a day
+            LastSlotSpinReset = DateTime.UtcNow,
+        };
+        await stateRepo.CreateAsync(state);
+
+        Assert.False(await service.RecordLoginAndCheckStreakAsync(1));
+
+        var finalState = (await stateRepo.GetByUserIdAsync(1))!;
+        Assert.Equal(1, finalState.LoginStreak);  // streak restarted
+        Assert.Equal(0, finalState.BonusSpins);
+    }
+
+    [Fact]
+    public async Task RecordLoginAndCheckStreakAsync_IsIdempotentOnSameDay()
+    {
+        var stateRepo = new InMemoryStateRepo();
+        var service = new SlotMachineService(stateRepo, new InMemoryMovieRepo(), new InMemoryEventRepo(), new InMemoryDiscountRepo());
+
+        var state = new UserSpinData
+        {
+            UserId = 1,
+            DailySpinsRemaining = 5,
+            BonusSpins = 0,
+            LoginStreak = 1,
+            LastLoginDate = DateTime.UtcNow.Date, // already logged in today
+            LastSlotSpinReset = DateTime.UtcNow,
+        };
+        await stateRepo.CreateAsync(state);
+
+        // Calling again on the same day must not change the streak
+        Assert.False(await service.RecordLoginAndCheckStreakAsync(1));
+        Assert.Equal(1, (await stateRepo.GetByUserIdAsync(1))!.LoginStreak);
+    }
 }

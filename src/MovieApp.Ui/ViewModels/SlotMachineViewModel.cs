@@ -146,7 +146,9 @@ public sealed class SlotMachineViewModel : ViewModelBase
         {
             await LoadUserStateAsync(cancellationToken);
             UpdateIsSpinButtonEnabled();
-            StatusMessage = "Ready to spin!";
+            StatusMessage = App.StreakSpinGrantedOnLogin
+                ? "🔥 3-day streak! Bonus spin awarded. Ready to spin!"
+                : "Ready to spin!";
         }
         catch (Exception ex)
         {

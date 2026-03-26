@@ -125,6 +125,33 @@ public sealed class SlotMachineService
         return false;
     }
 
+    /// <summary>
+    /// Records the current login against the user's streak counter and, if a
+    /// three-day consecutive streak is reached (SM.32), grants one bonus spin
+    /// and resets the streak counter (SM.33).
+    /// Safe to call once per app session; calling more than once on the same day
+    /// is idempotent because <see cref="UserSpinData.UpdateLoginStreak"/> only
+    /// increments when the last login was on the previous calendar day.
+    /// </summary>
+    /// <returns><c>true</c> if a streak bonus spin was awarded.</returns>
+    public async Task<bool> RecordLoginAndCheckStreakAsync(int userId)
+    {
+        var state = await _stateRepository.GetByUserIdAsync(userId) ?? throw new InvalidOperationException("User state not found");
+
+        state.UpdateLoginStreak();
+
+        bool granted = false;
+        if (state.LoginStreak >= 3)
+        {
+            state.BonusSpins++;
+            state.LoginStreak = 0; // SM.33: reset after awarding
+            granted = true;
+        }
+
+        await _stateRepository.UpdateAsync(state);
+        return granted;
+    }
+
     public async Task<bool> GrantStreakSpinAsync(int userId)
     {
         var state = await _stateRepository.GetByUserIdAsync(userId) ?? throw new InvalidOperationException("User state not found");
