@@ -152,6 +152,10 @@ public sealed partial class EventCard : UserControl
             var button = (Microsoft.UI.Xaml.Controls.Primitives.ToggleButton)sender;
             var isWatching = button.IsChecked ?? false;
 
+<<<<<<< HEAD
+=======
+            // Folosim folderul sigur pentru Windows, care nu dă erori în WinUI 3 Unpackaged
+>>>>>>> d820978 (feat(KAN-338): implement price watchlist tab with event names)
             var folderPath = System.IO.Path.Combine(System.Environment.GetFolderPath(System.Environment.SpecialFolder.LocalApplicationData), "MovieApp");
             System.IO.Directory.CreateDirectory(folderPath);
             
@@ -206,12 +210,20 @@ public sealed partial class EventCard : UserControl
                     }
                     else
                     {
+<<<<<<< HEAD
                         button.IsChecked = false;
+=======
+                        button.IsChecked = false; // A introdus text invalid
+>>>>>>> d820978 (feat(KAN-338): implement price watchlist tab with event names)
                     }
                 }
                 else
                 {
+<<<<<<< HEAD
                     button.IsChecked = false;
+=======
+                    button.IsChecked = false; // A apasat Cancel
+>>>>>>> d820978 (feat(KAN-338): implement price watchlist tab with event names)
                 }
             }
             else
@@ -235,10 +247,13 @@ public sealed partial class EventCard : UserControl
         var repo = new MovieApp.Infrastructure.LocalPriceWatcherRepository(folderPath);
         WatcherButton.IsChecked = await repo.IsWatchingAsync(EventModel.Id);
     }
+<<<<<<< HEAD
 
     /// <summary>
     /// Recomputes the generated bindings when a new event model is assigned.
     /// </summary>
+=======
+>>>>>>> d820978 (feat(KAN-338): implement price watchlist tab with event names)
     private void RefreshComputedProperties()
     {
         Bindings.Update();
