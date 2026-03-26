@@ -174,7 +174,6 @@ public sealed class SqlMarathonRepository : IMarathonRepository
         var weekString = $"{now.Year}-W" +
             System.Globalization.ISOWeek.GetWeekOfYear(now).ToString("D2");
 
-        // Monday = start, Sunday 23:59:59 = end
         var daysFromMonday = ((int)now.DayOfWeek + 6) % 7;
         var monday = now.Date.AddDays(-daysFromMonday);
         var sunday = monday.AddDays(6).AddHours(23).AddMinutes(59).AddSeconds(59);
@@ -187,7 +186,6 @@ public sealed class SqlMarathonRepository : IMarathonRepository
     {
         var (_, _, weekEnd) = GetCurrentWeekBounds();
 
-        // If it's past Sunday night, this week is over — return nothing
         if (DateTime.UtcNow > weekEnd)
             return [];
 
@@ -230,9 +228,6 @@ public sealed class SqlMarathonRepository : IMarathonRepository
     public async Task AssignWeeklyMarathonsAsync(
     int userId, string weekString, int count = 10)
     {
-        // Pick 'count' random marathons that:
-        // 1. The user has never completed
-        // 2. Don't already have a WeekScoping for this week
         const string selectSql = """
         SELECT TOP (@count) Id
         FROM dbo.Marathons
@@ -263,7 +258,6 @@ public sealed class SqlMarathonRepository : IMarathonRepository
 
         if (ids.Count == 0) return;
 
-        // Deactivate previous week's marathons
         const string deactivateSql = """
         UPDATE dbo.Marathons
         SET IsActive = 0
@@ -275,7 +269,6 @@ public sealed class SqlMarathonRepository : IMarathonRepository
         deactivateCmd.Parameters.AddWithValue("@week", weekString);
         await deactivateCmd.ExecuteNonQueryAsync();
 
-        // Stamp the selected marathons with this week and activate them
         foreach (var id in ids)
         {
             const string updateSql = """
