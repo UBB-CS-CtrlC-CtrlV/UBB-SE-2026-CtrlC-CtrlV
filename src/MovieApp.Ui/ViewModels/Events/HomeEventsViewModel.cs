@@ -144,12 +144,12 @@ public sealed class HomeEventsViewModel : EventListPageViewModel
     /// </summary>
     /// <remarks>
     /// This method preserves the incoming event order inside each section so the
-    /// active list sort mode remains consistent on the home screen.
+    /// active list sort mode remains consistent on the home screen, while the
+    /// sections themselves are ordered by title for stable rendering.
     /// </remarks>
     private static IReadOnlyList<EventSection> BuildSections(IEnumerable<Event> events)
     {
         var sectionsByType = new Dictionary<string, EventSection>(StringComparer.OrdinalIgnoreCase);
-        var orderedSections = new List<EventSection>();
 
         foreach (var @event in events.Where(e => !string.IsNullOrWhiteSpace(e.EventType)))
         {
@@ -163,12 +163,13 @@ public sealed class HomeEventsViewModel : EventListPageViewModel
                     Events = new List<Event>(),
                 };
                 sectionsByType[eventType] = section;
-                orderedSections.Add(section);
             }
 
             ((List<Event>)section.Events).Add(@event);
         }
 
-        return orderedSections;
+        return sectionsByType.Values
+            .OrderBy(section => section.Title, StringComparer.OrdinalIgnoreCase)
+            .ToList();
     }
 }

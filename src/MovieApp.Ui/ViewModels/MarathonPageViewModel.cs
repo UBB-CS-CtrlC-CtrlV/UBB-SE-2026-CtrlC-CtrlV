@@ -17,6 +17,7 @@ public sealed class MarathonPageViewModel : ViewModelBase
     private IReadOnlyList<MarathonProgress> _leaderboard = [];
     private MarathonProgress? _currentProgress;
     private bool _isLocked;
+    private int _currentUserId;
 
     /// <summary>
     /// Creates the marathon page view model.
@@ -120,6 +121,7 @@ public sealed class MarathonPageViewModel : ViewModelBase
             return;
         }
 
+        _currentUserId = userId;
         var list = await _marathonService!.GetWeeklyMarathonsAsync(userId);
         Marathons = list.ToList();
     }
@@ -148,11 +150,11 @@ public sealed class MarathonPageViewModel : ViewModelBase
         Leaderboard = leaderboard.ToList();
 
         IsLocked = false;
-        if (marathon.PrerequisiteMarathonId is int prereqId
-            && CurrentProgress is not null)
+        if (marathon.PrerequisiteMarathonId is int prereqId)
         {
+            var userId = CurrentProgress?.UserId ?? _currentUserId;
             var prereqDone = await _marathonRepository
-                .IsPrerequisiteCompletedAsync(CurrentProgress.UserId, prereqId);
+                .IsPrerequisiteCompletedAsync(userId, prereqId);
             IsLocked = !prereqDone;
         }
     }

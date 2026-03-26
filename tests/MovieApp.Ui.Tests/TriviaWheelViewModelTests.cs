@@ -27,20 +27,20 @@ public sealed class TriviaWheelViewModelTests
     public async Task LoadQuestionsAsync_StartsSession_WhenCategoryHasQuestions()
     {
         var triviaRepository = new StubTriviaRepository(
-        [
-            new TriviaQuestion
-            {
-                Id = 1,
-                QuestionText = "Who directed Inception?",
-                Category = "Directors",
-                OptionA = "Ridley Scott",
-                OptionB = "Christopher Nolan",
-                OptionC = "Steven Spielberg",
-                OptionD = "James Cameron",
-                CorrectOption = 'B',
-                MovieId = null,
-            },
-        ]);
+            Enumerable.Range(1, 20)
+                .Select(index => new TriviaQuestion
+                {
+                    Id = index,
+                    QuestionText = $"Who directed film {index}?",
+                    Category = "Directors",
+                    OptionA = "Ridley Scott",
+                    OptionB = "Christopher Nolan",
+                    OptionC = "Steven Spielberg",
+                    OptionD = "James Cameron",
+                    CorrectOption = 'B',
+                    MovieId = null,
+                })
+                .ToList());
         var rewardRepository = new StubTriviaRewardRepository();
         var spinRepository = new StubUserSpinRepository();
         var viewModel = new TriviaWheelViewModel(triviaRepository, rewardRepository, spinRepository, 1);
@@ -50,7 +50,7 @@ public sealed class TriviaWheelViewModelTests
         Assert.False(viewModel.NoQuestionsAvailable);
         Assert.True(viewModel.IsPlaying);
         Assert.NotNull(viewModel.CurrentQuestion);
-        Assert.Equal("Who directed Inception?", viewModel.CurrentQuestion!.QuestionText);
+        Assert.StartsWith("Who directed film ", viewModel.CurrentQuestion!.QuestionText);
         Assert.Equal("1/20", viewModel.ProgressText);
     }
 
