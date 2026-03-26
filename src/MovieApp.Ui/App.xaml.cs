@@ -21,6 +21,8 @@ public partial class App : Application
     public static IAmbassadorRepository? AmbassadorRepository { get; private set; }
     public static MovieApp.Core.Services.IReferralValidator? ReferralValidator { get; private set; }
     public static MainWindow? CurrentMainWindow { get; private set; }
+    public static IConfigurationRoot? Configuration { get; private set; }
+    public static IMarathonRepository? MarathonRepository { get; private set; }
 
     public App()
     {
@@ -36,6 +38,7 @@ public partial class App : Application
         try
         {
             var configuration = BuildConfiguration();
+            Configuration = configuration;
             var databaseOptions = new DatabaseOptions
             {
                 ConnectionString = configuration["Database:ConnectionString"]
@@ -53,6 +56,7 @@ public partial class App : Application
             var eventRepository = new SqlEventRepository(databaseOptions);
             var triviaRepository = new SqlTriviaRepository(databaseOptions);
             var ambassadorRepository = new SqlAmbassadorRepository(databaseOptions);
+            var marathonRepository = new SqlMarathonRepository(databaseOptions);
 
             _currentUserService = new CurrentUserService(userRepository, bootstrapUserOptions);
             await _currentUserService.InitializeAsync();
@@ -61,6 +65,7 @@ public partial class App : Application
             EventRepository = eventRepository;
             TriviaRepository = triviaRepository;
             AmbassadorRepository = ambassadorRepository;
+            MarathonRepository = marathonRepository;
             ReferralValidator = new MovieApp.Core.Services.ReferralValidator(ambassadorRepository);
 
             viewModel = new MainViewModel(_currentUserService.CurrentUser);
