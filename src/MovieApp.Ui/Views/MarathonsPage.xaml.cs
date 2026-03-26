@@ -13,7 +13,6 @@ public sealed partial class MarathonsPage : Page
     private MarathonTriviaViewModel? _triviaVm;
     private int _currentMovieId;
     private int _currentUserId;
-    private int _leaderboardRankCounter;
 
     public MarathonPageViewModel ViewModel { get; }
 
@@ -43,15 +42,12 @@ public sealed partial class MarathonsPage : Page
 
         await ViewModel.SelectMarathonAsync(marathon, _currentUserId);
 
-        // Update header
         DetailTitle.Text = marathon.Title;
         DetailTheme.Text = marathon.Theme ?? string.Empty;
         LeaderboardSubtitle.Text = $"{ViewModel.Leaderboard.Count} participants";
 
-        // Update progress bar
         RefreshProgressBar();
 
-        // Update locked / join visibility
         LockedBanner.Visibility = ViewModel.IsLocked
             ? Visibility.Visible : Visibility.Collapsed;
         JoinButton.Visibility = ViewModel.ShowJoinButton
@@ -59,7 +55,7 @@ public sealed partial class MarathonsPage : Page
         JoinPromptText.Visibility = ViewModel.ShowJoinButton
             ? Visibility.Visible : Visibility.Collapsed;
 
-        // Show the right middle content
+        
         if (ViewModel.IsJoined)
             ShowMovieList();
         else if (!ViewModel.IsLocked)
@@ -193,7 +189,6 @@ public sealed partial class MarathonsPage : Page
         OptionD.Content = q.OptionD; OptionD.Tag = 'D';
         SubmitButton.IsEnabled = false;
 
-        // Enable submit only when an option is selected
         foreach (var r in new[] { OptionA, OptionB, OptionC, OptionD })
             r.Checked += (_, _) => SubmitButton.IsEnabled = true;
     }
@@ -209,7 +204,6 @@ public sealed partial class MarathonsPage : Page
         ProgressBar.Value = (double)verified / ViewModel.Movies.Count;
     }
 
-    // Panel helpers
     private void ShowIdle()
     {
         MovieListPanel.Visibility = Visibility.Collapsed;
