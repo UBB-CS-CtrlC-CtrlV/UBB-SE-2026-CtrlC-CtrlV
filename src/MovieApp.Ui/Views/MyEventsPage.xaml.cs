@@ -1,5 +1,7 @@
+using System.Threading.Tasks;
 using Microsoft.UI.Xaml;
 using Microsoft.UI.Xaml.Controls;
+using Microsoft.UI.Xaml.Navigation;
 using MovieApp.Ui.ViewModels.Events;
 
 namespace MovieApp.Ui.Views;
@@ -37,6 +39,17 @@ public sealed partial class MyEventsPage : Page
         await InitializeViewModelAsync();
     }
 
+    protected override async void OnNavigatedTo(NavigationEventArgs e)
+    {
+        base.OnNavigatedTo(e);
+        await ViewModel.LoadWatchlistAsync();
+    }
+
+    private async void WatchlistSaveButton_Click(object sender, RoutedEventArgs e)
+    {
+        await ViewModel.SaveSelectedWatchlistAsync();
+    }
+
     /// <summary>
     /// Centralizes the initial view-model load path for the page.
     /// </summary>
@@ -44,6 +57,7 @@ public sealed partial class MyEventsPage : Page
     {
         return ViewModel.InitializeAsync();
     }
+<<<<<<< HEAD
 
     /// <summary>
     /// Applies the shared event search behavior to the current personal event-list state.
@@ -61,3 +75,6 @@ public sealed partial class MyEventsPage : Page
         ViewModel.SetSortOption(sortOption);
     }
 }
+=======
+}
+>>>>>>> d820978 (feat(KAN-338): implement price watchlist tab with event names)

@@ -24,6 +24,25 @@
                 Background="{ThemeResource CardBackgroundFillColorSecondaryBrush}"
                 CornerRadius="8,8,0,0">
                 <Grid>
+                    <ToggleButton
+                        x:Name="WatcherButton"
+                        Width="36"
+                        Height="36"
+                        Margin="8"
+                        Padding="0"
+                        HorizontalAlignment="Right"
+                        VerticalAlignment="Top"
+                        Background="{ThemeResource ControlFillColorDefaultBrush}"
+                        BorderBrush="{ThemeResource CardStrokeColorDefaultBrush}"
+                        BorderThickness="1"
+                        Click="WatcherButton_Click"
+                        CornerRadius="18"
+                        ToolTipService.ToolTip="Set price alert">
+                        <FontIcon
+                            FontSize="16"
+                            Glyph="&#xEA8F;" />
+                    </ToggleButton>
+
                     <Grid Padding="16">
                         <Grid.RowDefinitions>
                             <RowDefinition Height="Auto" />

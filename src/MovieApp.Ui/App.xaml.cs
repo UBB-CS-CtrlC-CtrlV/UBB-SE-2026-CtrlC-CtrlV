@@ -6,19 +6,18 @@ using MovieApp.Infrastructure;
 using MovieApp.Ui.Services;
 using MovieApp.Ui.ViewModels;
 using MovieApp.Ui.Views;
+using System;
+using System.IO;
 
 namespace MovieApp.Ui;
 
-/// <summary>
-/// WinUI application entry point responsible for configuration loading,
-/// shared dependency construction, and main-window startup.
-/// </summary>
 public partial class App : Application
 {
     private Window? _window;
     private ICurrentUserService? _currentUserService;
 
     public static ICurrentUserService? CurrentUserService { get; private set; }
+    public static IPriceWatcherRepository? PriceWatcherRepository { get; private set; }
     public static IEventRepository? EventRepository { get; private set; }
     public static ITriviaRepository? TriviaRepository { get; private set; }
     public static ITriviaRewardRepository? TriviaRewardRepository { get; private set; }
@@ -43,7 +42,6 @@ public partial class App : Application
         InitializeComponent();
     }
 
-    /// <inheritdoc />
     protected override async void OnLaunched(LaunchActivatedEventArgs args)
     {
         MainViewModel viewModel;
@@ -54,10 +52,9 @@ public partial class App : Application
             var configuration = BuildConfiguration();
             Configuration = configuration;
 
-            var connectionString = configuration["Database:ConnectionString"];
             var databaseOptions = new DatabaseOptions
             {
-                ConnectionString = connectionString
+                ConnectionString = configuration["Database:ConnectionString"]
                     ?? throw new InvalidOperationException("Missing configuration value 'Database:ConnectionString'."),
             };
             var bootstrapUserOptions = new BootstrapUserOptions
@@ -99,6 +96,10 @@ public partial class App : Application
             ScreeningRepository = screeningRepository;
             MarathonRepository = marathonRepository;
 
+            string localDataFolder = Path.Combine(Environment.GetFolderPath(Environment.SpecialFolder.LocalApplicationData), "MovieApp");
+            Directory.CreateDirectory(localDataFolder);
+            PriceWatcherRepository = new LocalPriceWatcherRepository(localDataFolder);
+
             SlotMachineService = new SlotMachineService(
                 slotMachineStateRepository,
                 movieRepository,
@@ -115,10 +116,9 @@ public partial class App : Application
             viewModel = MainViewModel.CreateStartupError(BuildStartupErrorMessage(exception));
         }
 
-        CurrentMainWindow = new MainWindow(viewModel);
+        CurrentMainWindow = new MainWindow(viewModel, EventRepository!);
         _window = CurrentMainWindow;
         _window.Activate();
-
     }
 
     private static IConfigurationRoot BuildConfiguration()
@@ -129,10 +129,6 @@ public partial class App : Application
             .Build();
     }
 
-    /// <summary>
-    /// Clears the application-wide runtime services before a new startup attempt
-    /// or after a startup failure.
-    /// </summary>
     private void ResetRuntimeServices()
     {
         _currentUserService = null;
@@ -146,6 +142,7 @@ public partial class App : Application
         MarathonRepository = null;
         FavoriteEventService = null;
         NotificationService = null;
+        PriceWatcherRepository = null;
         CurrentUserId = 0;
         MovieRepository = null;
         SlotMachineStateRepository = null;
