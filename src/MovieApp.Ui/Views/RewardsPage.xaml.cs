@@ -38,10 +38,13 @@ public sealed partial class RewardsPage : Page
     {
         base.OnNavigatedTo(e);
 
-        // Load referral reward balance
-        if (App.AmbassadorRepository is not null && App.CurrentUserService?.CurrentUser is { } currentUser)
+        // Load referral reward balance and slot rewards
+        if (App.CurrentUserService?.CurrentUser is { } currentUser)
         {
-            RewardBalance = await App.AmbassadorRepository.GetRewardBalanceAsync(currentUser.Id);
+            if (App.AmbassadorRepository is not null)
+                RewardBalance = await App.AmbassadorRepository.GetRewardBalanceAsync(currentUser.Id);
+
+            await LoadSlotRewardsAsync(currentUser.Id);
         }
 
         // Load trivia reward
@@ -79,8 +82,6 @@ public sealed partial class RewardsPage : Page
             RedeemedBanner.Visibility = Visibility.Collapsed;
             RewardEarnedDateText.Text = $"Earned on {_viewModel.TriviaReward.CreatedAt:dd MMM yyyy}";
         }
-
-        await LoadSlotRewardsAsync(currentUser.Id);
     }
 
     private async Task LoadSlotRewardsAsync(int userId)
@@ -154,7 +155,7 @@ public sealed partial class RewardsPage : Page
         if (App.UserMovieDiscountRepository is null || App.CurrentUserService?.CurrentUser is null)
             return;
 
-        await App.UserMovieDiscountRepository.RedeemAsync(item.RewardId);
+        await App.UserMovieDiscountRepository.MarkRedeemedAsync(item.RewardId);
 
         item.IsRedeemed = true;
         DetailStatusBox.Text = "Redeemed";
@@ -166,6 +167,15 @@ public sealed partial class RewardsPage : Page
         // Keep the shared discount dictionary current so HomePage badges
         // reflect the redemption without requiring an app restart.
         await EventCard.RefreshDiscountsAsync();
+    }
+
+    private async void TriviaRedeemButton_Click(object sender, RoutedEventArgs e)
+    {
+        if (_viewModel is null) return;
+
+        TriviaRedeemButton.IsEnabled = false;
+        await _viewModel.RedeemTriviaRewardAsync();
+        UpdateTriviaRewardUI();
     }
 }
 
@@ -183,14 +193,4 @@ public sealed class SlotRewardItem
         IsRedeemed
             ? Windows.UI.Color.FromArgb(0x33, 0x94, 0x94, 0x94)
             : Windows.UI.Color.FromArgb(0x33, 0x16, 0xA3, 0x4A));
-}
-
-    private async void RedeemButton_Click(object sender, RoutedEventArgs e)
-    {
-        if (_viewModel is null) return;
-
-        RedeemButton.IsEnabled = false;
-        await _viewModel.RedeemTriviaRewardAsync();
-        UpdateTriviaRewardUI();
-    }
 }

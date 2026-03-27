@@ -29,7 +29,7 @@
                             <StackPanel Orientation="Horizontal" Spacing="12" VerticalAlignment="Center">
                                 <FontIcon Glyph="&#xE8D1;" FontSize="28" Foreground="{ThemeResource SystemAccentColor}" />
                                 <TextBlock
-                                    Text="{x:Bind RewardBalance, Mode=OneWay}"
+                                    Text="{x:Bind RewardBalance, Mode=OneTime}"
                                     FontSize="32"
                                     FontWeight="Bold"
                                     VerticalAlignment="Center" />
@@ -97,9 +97,9 @@
                                     Style="{StaticResource SectionCaptionTextStyle}" />
 
                                 <Button
-                                    x:Name="RedeemButton"
+                                    x:Name="TriviaRedeemButton"
                                     Content="Redeem at checkout"
-                                    Click="RedeemButton_Click" />
+                                    Click="TriviaRedeemButton_Click" />
                             </StackPanel>
                         </Border>
 
