@@ -14,3 +14,5 @@ GO
 :r .\008-seed-extra-catalog-and-trivia.sql
 :r .\009-seed-engagement-and-rewards.sql
 :r .\010-seed-screenings-and-marathons.sql
+:r .\011-seed-marathons.sql
+:r .\012-seed-marathon-testing-data.sql

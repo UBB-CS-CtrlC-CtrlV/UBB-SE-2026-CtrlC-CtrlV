@@ -17,3 +17,5 @@
 :r .\015-create-referral-log.sql
 :r .\016-create-screenings.sql
 :r .\019-create-trivia-rewards.sql
+:r .\020-alter-user-movie-discounts-add-redeemed.sql
+:r .\021-create-user-event-attendance.sql
