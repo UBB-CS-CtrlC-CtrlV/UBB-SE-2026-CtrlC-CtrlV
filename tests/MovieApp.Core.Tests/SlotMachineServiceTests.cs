@@ -81,6 +81,7 @@ public sealed class SlotMachineServiceTests
         public Task<bool> UpdateAsync(Event @event, CancellationToken cancellationToken = default) => throw new NotImplementedException();
         public Task<bool> UpdateEnrollmentAsync(int eventId, int newCount, CancellationToken cancellationToken = default) => throw new NotImplementedException();
         public Task UpdateEventAsync(Event updatedEvent, CancellationToken cancellationToken = default) => Task.CompletedTask;
+        public Task<bool> DeleteAsync(int eventId, CancellationToken cancellationToken = default) => throw new NotImplementedException();
     }
 
     private sealed class InMemoryDiscountRepo : IUserMovieDiscountRepository

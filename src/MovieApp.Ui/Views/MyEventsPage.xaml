@@ -5,12 +5,9 @@
     xmlns:d="http://schemas.microsoft.com/expression/blend/2008"
     xmlns:mc="http://schemas.openxmlformats.org/markup-compatibility/2006"
     xmlns:controls="using:Microsoft.UI.Xaml.Controls"
-<<<<<<< HEAD
     xmlns:views="using:MovieApp.Ui.Views"
     xmlns:ui="using:MovieApp.Ui.Controls"
-=======
     xmlns:models="using:MovieApp.Core.Models"
->>>>>>> d820978 (feat(KAN-338): implement price watchlist tab with event names)
     mc:Ignorable="d">
 
     <ScrollViewer

@@ -59,4 +59,12 @@ public class FakeEventRepository : IEventRepository
     {
         return UpdateAsync(updatedEvent, cancellationToken);
     }
+
+    public Task<bool> DeleteAsync(int eventId, CancellationToken cancellationToken = default)
+    {
+        var item = Items.FirstOrDefault(e => e.Id == eventId);
+        if (item is null) return Task.FromResult(false);
+        Items.Remove(item);
+        return Task.FromResult(true);
+    }
 }

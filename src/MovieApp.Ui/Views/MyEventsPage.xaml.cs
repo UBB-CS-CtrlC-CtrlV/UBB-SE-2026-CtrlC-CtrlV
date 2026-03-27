@@ -57,11 +57,6 @@ public sealed partial class MyEventsPage : Page
     {
         return ViewModel.InitializeAsync();
     }
-<<<<<<< HEAD
-
-    /// <summary>
-    /// Applies the shared event search behavior to the current personal event-list state.
-    /// </summary>
     private void SearchBox_SearchTextChanged(object? sender, string searchText)
     {
         ViewModel.SetSearchText(searchText);
@@ -75,6 +70,3 @@ public sealed partial class MyEventsPage : Page
         ViewModel.SetSortOption(sortOption);
     }
 }
-=======
-}
->>>>>>> d820978 (feat(KAN-338): implement price watchlist tab with event names)

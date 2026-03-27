@@ -207,5 +207,20 @@ public sealed class MarathonServiceTests
             AssignWeeklyMarathonsCalled = true;
             return Task.CompletedTask;
         }
+
+        public Task<IEnumerable<MovieApp.Core.Models.Movie.Movie>> GetMoviesForMarathonAsync(int marathonId)
+        {
+            return Task.FromResult<IEnumerable<MovieApp.Core.Models.Movie.Movie>>([]);
+        }
+
+        public Task<IEnumerable<LeaderboardEntry>> GetLeaderboardWithUsernamesAsync(int marathonId)
+        {
+            return Task.FromResult<IEnumerable<LeaderboardEntry>>([]);
+        }
+
+        public Task<int> GetParticipantCountAsync(int marathonId)
+        {
+            return Task.FromResult(0);
+        }
     }
 }
