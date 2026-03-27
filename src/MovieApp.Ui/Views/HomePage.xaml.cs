@@ -118,6 +118,8 @@ public sealed partial class HomePage : Page
 
                 freePassButton.Click += async (_, _) =>
                 {
+                    dialog.Hide();
+
                     var confirmDialog = new ContentDialog
                     {
                         XamlRoot = XamlRoot,

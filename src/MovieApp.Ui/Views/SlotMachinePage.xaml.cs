@@ -210,6 +210,15 @@ public sealed partial class SlotMachinePage : Page
         var selectedEvent = item.Event;
         var content = BuildEventDialogContent(selectedEvent, item.IsJackpotEvent);
 
+        var dialog = new ContentDialog
+        {
+            XamlRoot = XamlRoot,
+            Title = selectedEvent.Title,
+            PrimaryButtonText = "Close",
+            DefaultButton = ContentDialogButton.Primary,
+            Content = content,
+        };
+
         // Check reward balance and add a Free Pass button if available
         if (App.AmbassadorRepository is not null && App.CurrentUserService?.CurrentUser is { } currentUser)
         {
@@ -224,6 +233,8 @@ public sealed partial class SlotMachinePage : Page
 
                 freePassButton.Click += async (_, _) =>
                 {
+                    dialog.Hide();
+
                     var confirmDialog = new ContentDialog
                     {
                         XamlRoot = XamlRoot,
@@ -246,15 +257,6 @@ public sealed partial class SlotMachinePage : Page
                 layout.Children.Add(freePassButton);
             }
         }
-
-        var dialog = new ContentDialog
-        {
-            XamlRoot = XamlRoot,
-            Title = selectedEvent.Title,
-            PrimaryButtonText = "Close",
-            DefaultButton = ContentDialogButton.Primary,
-            Content = content,
-        };
 
         await dialog.ShowAsync();
         this.Focus(FocusState.Programmatic);
