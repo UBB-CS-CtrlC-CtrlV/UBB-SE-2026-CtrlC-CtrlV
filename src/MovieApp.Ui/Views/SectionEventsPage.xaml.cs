@@ -132,6 +132,24 @@ public sealed partial class SectionEventsPage : Page
             Text = $"Seats: {EventCard.GetCapacityText(selectedEvent)}",
         });
 
+        var willAttendBtn = new Button { Content = "Will attend", Tag = "Joined!" };
+        var buyTicketBtn = new Button { Content = "Buy ticket", Tag = "Ticket purchased!" };
+        EventCard.AttachJoinEventHandler(willAttendBtn, selectedEvent.Id);
+        EventCard.AttachJoinEventHandler(buyTicketBtn, selectedEvent.Id);
+
+        layout.Children.Add(new StackPanel
+        {
+            Orientation = Orientation.Horizontal,
+            Spacing = 8,
+            Children =
+            {
+                willAttendBtn,
+                buyTicketBtn,
+                new Button { Content = "Favorite" },
+                new Button { Content = "Seat guide" },
+            },
+        });
+
         return layout;
     }
 }

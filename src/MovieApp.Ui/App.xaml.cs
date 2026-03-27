@@ -33,6 +33,7 @@ public partial class App : Application
     public static IUserSlotMachineStateRepository? SlotMachineStateRepository { get; private set; }
     public static IUserMovieDiscountRepository? UserMovieDiscountRepository { get; private set; }
     public static IScreeningRepository? ScreeningRepository { get; private set; }
+    public static IUserEventAttendanceRepository? UserEventAttendanceRepository { get; private set; }
     public static SlotMachineService? SlotMachineService { get; private set; }
     public static SlotMachineResultService? SlotMachineResultService { get; private set; }
     public static ReelAnimationService? ReelAnimationService { get; private set; }
@@ -77,6 +78,7 @@ public partial class App : Application
             var slotMachineStateRepository = new SqlUserSlotMachineStateRepository(databaseOptions);
             var userMovieDiscountRepository = new SqlUserRewardRepository(databaseOptions);
             var screeningRepository = new SqlScreeningRepository(databaseOptions);
+            var userEventAttendanceRepository = new SqlUserEventAttendanceRepository(databaseOptions);
             var marathonRepository = new SqlMarathonRepository(databaseOptions);
 
             _currentUserService = new CurrentUserService(userRepository, bootstrapUserOptions);
@@ -105,6 +107,7 @@ public partial class App : Application
             SlotMachineStateRepository = slotMachineStateRepository;
             UserMovieDiscountRepository = userMovieDiscountRepository;
             ScreeningRepository = screeningRepository;
+            UserEventAttendanceRepository = userEventAttendanceRepository;
             SlotMachineService = slotMachineService;
             SlotMachineResultService = slotMachineResultService;
             ReelAnimationService = reelAnimationService;

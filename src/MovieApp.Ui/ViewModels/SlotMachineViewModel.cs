@@ -154,6 +154,15 @@ public sealed class SlotMachineViewModel : ViewModelBase
         }
     }
 
+    /// <summary>
+    /// Lightweight refresh of the spin counter only (SM.30).
+    /// Call after an external action may have changed the user's available spins.
+    /// </summary>
+    public async Task RefreshSpinCountAsync()
+    {
+        AvailableSpins = await _slotMachineService.GetAvailableSpinsAsync(_userId);
+    }
+
     private async Task LoadUserStateAsync(CancellationToken cancellationToken = default)
     {
         var availableSpins = await _slotMachineService.GetAvailableSpinsAsync(_userId);

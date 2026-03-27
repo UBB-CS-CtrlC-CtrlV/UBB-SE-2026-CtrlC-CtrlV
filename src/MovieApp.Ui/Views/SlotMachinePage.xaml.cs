@@ -176,6 +176,10 @@ public sealed partial class SlotMachinePage : Page
         };
 
         await dialog.ShowAsync();
+
+        // SM.30: immediately update the spin counter after a possible bonus-spin grant
+        if (DataContext is SlotMachineViewModel vm)
+            await vm.RefreshSpinCountAsync();
     }
 
     private static UIElement BuildEventDialogContent(Event selectedEvent, bool isJackpotEvent)
@@ -268,14 +272,19 @@ public sealed partial class SlotMachinePage : Page
             Children = { referralTextBox, validationButton },
         });
 
+        var willAttendBtn = new Button { Content = "Will attend", Tag = "Joined!" };
+        var buyTicketBtn = new Button { Content = "Buy ticket", Tag = "Ticket purchased!" };
+        EventCard.AttachJoinEventHandler(willAttendBtn, selectedEvent.Id);
+        EventCard.AttachJoinEventHandler(buyTicketBtn, selectedEvent.Id);
+
         layout.Children.Add(new StackPanel
         {
             Orientation = Orientation.Horizontal,
             Spacing = 8,
             Children =
             {
-                new Button { Content = "Will attend" },
-                new Button { Content = "Buy ticket" },
+                willAttendBtn,
+                buyTicketBtn,
                 new Button { Content = "Favorite" },
                 new Button { Content = "Seat guide" },
             },

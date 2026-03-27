@@ -156,4 +156,47 @@ public sealed class SlotMachineServiceTests
 
         await Assert.ThrowsAsync<InvalidOperationException>(() => service.SpinAsync(2));
     }
+
+    [Fact]
+    public async Task GrantBonusSpinForEventParticipation_GrantsOneSpinAndUpdatesCount()
+    {
+        // SM.28 + SM.30: joining an event grants a bonus spin and the count reflects it immediately
+        var stateRepo = new InMemoryStateRepo();
+        var movieRepo = new InMemoryMovieRepo();
+        var eventRepo = new InMemoryEventRepo();
+        var discountRepo = new InMemoryDiscountRepo();
+
+        var state = new UserSpinData { UserId = 1, DailySpinsRemaining = 2, BonusSpins = 0, LoginStreak = 0, EventSpinRewardsToday = 0, LastSlotSpinReset = DateTime.UtcNow };
+        await stateRepo.CreateAsync(state);
+
+        var service = new SlotMachineService(stateRepo, movieRepo, eventRepo, discountRepo);
+
+        var granted = await service.GrantBonusSpinForEventParticipationAsync(1);
+        Assert.True(granted);
+
+        var spins = await service.GetAvailableSpinsAsync(1);
+        Assert.Equal(3, spins); // 2 daily + 1 bonus
+    }
+
+    [Fact]
+    public async Task GrantBonusSpinForEventParticipation_CapsAtTwoPerDay()
+    {
+        // SM.29: max 2 bonus spins from event participation per day
+        var stateRepo = new InMemoryStateRepo();
+        var movieRepo = new InMemoryMovieRepo();
+        var eventRepo = new InMemoryEventRepo();
+        var discountRepo = new InMemoryDiscountRepo();
+
+        var state = new UserSpinData { UserId = 1, DailySpinsRemaining = 5, BonusSpins = 0, LoginStreak = 0, EventSpinRewardsToday = 0, LastSlotSpinReset = DateTime.UtcNow };
+        await stateRepo.CreateAsync(state);
+
+        var service = new SlotMachineService(stateRepo, movieRepo, eventRepo, discountRepo);
+
+        Assert.True(await service.GrantBonusSpinForEventParticipationAsync(1));  // 1st
+        Assert.True(await service.GrantBonusSpinForEventParticipationAsync(1));  // 2nd
+        Assert.False(await service.GrantBonusSpinForEventParticipationAsync(1)); // 3rd denied
+
+        var spins = await service.GetAvailableSpinsAsync(1);
+        Assert.Equal(7, spins); // 5 daily + 2 bonus (not 3)
+    }
 }

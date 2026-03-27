@@ -59,6 +59,78 @@ public sealed partial class EventCard : UserControl
         DiscountByEventId = result;
     }
 
+    /// <summary>
+    /// Event IDs the current user has already joined (loaded via <see cref="RefreshJoinedEventIdsAsync"/>).
+    /// </summary>
+    internal static HashSet<int> JoinedEventIds { get; private set; } = [];
+
+    /// <summary>
+    /// Reloads <see cref="JoinedEventIds"/> from the database for the current user.
+    /// Safe to call on every navigation alongside <see cref="RefreshDiscountsAsync"/>.
+    /// </summary>
+    public static async Task RefreshJoinedEventIdsAsync()
+    {
+        if (App.UserEventAttendanceRepository is null ||
+            App.CurrentUserService?.CurrentUser is not { } user)
+        {
+            JoinedEventIds = [];
+            return;
+        }
+
+        var ids = await App.UserEventAttendanceRepository.GetJoinedEventIdsAsync(user.Id);
+        JoinedEventIds = [..ids];
+    }
+
+    /// <summary>
+    /// Configures <paramref name="button"/> for event-join behaviour:
+    /// shows a locked "Already joined" state if the user has previously joined
+    /// <paramref name="eventId"/>, otherwise attaches a handler that persists the
+    /// join, grants a bonus spin (SM.28/SM.29), and updates the label immediately (SM.30).
+    /// </summary>
+    public static void AttachJoinEventHandler(Button button, int eventId)
+    {
+        if (JoinedEventIds.Contains(eventId))
+        {
+            button.Content = "✅ Already joined";
+            button.IsEnabled = false;
+            return;
+        }
+
+        button.Click += async (sender, _) =>
+        {
+            if (sender is not Button btn) return;
+
+            btn.IsEnabled = false;
+
+            if (App.CurrentUserService?.CurrentUser is { } user)
+            {
+                // Persist immediately so re-opened dialogs also see the locked state
+                JoinedEventIds.Add(eventId);
+
+                if (App.UserEventAttendanceRepository is not null)
+                    await App.UserEventAttendanceRepository.JoinAsync(user.Id, eventId);
+
+                if (App.SlotMachineService is not null)
+                {
+                    var granted = await App.SlotMachineService
+                        .GrantBonusSpinForEventParticipationAsync(user.Id);
+
+                    btn.Content = granted
+                        ? $"✅ {btn.Tag} +1 bonus spin 🎰"
+                        : $"✅ {btn.Tag}";
+                }
+                else
+                {
+                    btn.Content = $"✅ {btn.Tag}";
+                }
+            }
+            else
+            {
+                btn.Content = $"✅ {btn.Tag}";
+            }
+        };
+    }
+
     public static readonly DependencyProperty ModelProperty = DependencyProperty.Register(
         nameof(Model),
         typeof(object),

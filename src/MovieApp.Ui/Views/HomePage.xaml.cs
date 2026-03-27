@@ -52,6 +52,7 @@ public sealed partial class HomePage : Page
         // Refresh discounts every navigation so badges stay current after
         // jackpot wins or redeems on other pages.
         await EventCard.RefreshDiscountsAsync();
+        await EventCard.RefreshJoinedEventIdsAsync();
         await ViewModel.InitializeAsync();
     }
 
@@ -236,21 +237,26 @@ public sealed partial class HomePage : Page
             Children = { referralTextBox, validationButton },
         });
 
-        var seatGuideButton = new Button
-        {
-            Content = "Seat guide",
-        };
-        seatGuideButton.Click += async (_, _) =>
-        {
-            parentDialog.Hide();
+var willAttendBtn = new Button { Content = "Will attend", Tag = "Joined!" };
+var buyTicketBtn = new Button { Content = "Buy ticket", Tag = "Ticket purchased!" };
+EventCard.AttachJoinEventHandler(willAttendBtn, selectedEvent.Id);
+EventCard.AttachJoinEventHandler(buyTicketBtn, selectedEvent.Id);
 
-            int capacity = selectedEvent.MaxCapacity > 0 ? selectedEvent.MaxCapacity : 50;
-            var seatDialog = new SeatGuideDialog(capacity)
-            {
-                XamlRoot = parentDialog.XamlRoot,
-            };
-            await seatDialog.ShowAsync();
-        };
+var seatGuideButton = new Button
+{
+    Content = "Seat guide",
+};
+seatGuideButton.Click += async (_, _) =>
+{
+    parentDialog.Hide();
+
+    int capacity = selectedEvent.MaxCapacity > 0 ? selectedEvent.MaxCapacity : 50;
+    var seatDialog = new SeatGuideDialog(capacity)
+    {
+        XamlRoot = parentDialog.XamlRoot,
+    };
+    await seatDialog.ShowAsync();
+};
 
         layout.Children.Add(new StackPanel
         {
@@ -258,8 +264,8 @@ public sealed partial class HomePage : Page
             Spacing = 8,
             Children =
             {
-                new Button { Content = "Will attend" },
-                new Button { Content = "Buy ticket" },
+                willAttendBtn,
+                buyTicketBtn,
                 new Button { Content = "Favorite" },
                 seatGuideButton,
             },
