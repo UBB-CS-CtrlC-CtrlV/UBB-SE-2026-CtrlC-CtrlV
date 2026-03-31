@@ -1,7 +1,6 @@
 using System.Security.Cryptography;
 using System.Text;
 using BankApp.Infrastructure.Services.Infrastructure.Interfaces;
-using Microsoft.Extensions.Caching.Memory;
 
 namespace BankApp.Infrastructure.Services.Infrastructure.Implementations
 {

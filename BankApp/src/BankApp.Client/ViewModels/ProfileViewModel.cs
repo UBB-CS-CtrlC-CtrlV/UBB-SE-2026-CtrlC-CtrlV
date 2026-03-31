@@ -5,7 +5,6 @@ using BankApp.Core.Enums;
 using System;
 using System.Collections.Generic;
 using System.Threading.Tasks;
-using Windows.UI.Text.Core;
 
 namespace BankApp.Client.ViewModels
 {

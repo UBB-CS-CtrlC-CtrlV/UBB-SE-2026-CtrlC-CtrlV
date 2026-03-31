@@ -1,8 +1,6 @@
 using Microsoft.AspNetCore.Mvc;
-using BankApp.Infrastructure.Services.Interfaces;
 using BankApp.Core.DTOs.Auth;
-using BankApp.Infrastructure.DataAccess;
-using Microsoft.AspNetCore.Connections.Features;
+using BankApp.Infrastructure.Services.Interfaces;
 
 namespace BankApp.Server.Controllers
 {

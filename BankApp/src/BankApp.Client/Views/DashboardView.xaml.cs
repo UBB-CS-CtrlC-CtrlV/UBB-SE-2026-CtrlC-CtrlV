@@ -1,15 +1,14 @@
 using BankApp.Client.Utilities;
 using BankApp.Client.ViewModels;
 using BankApp.Core.Enums;
-using BankApp.Core.Entities;
 using Microsoft.UI.Xaml;
 using Microsoft.UI.Xaml.Controls;
 using Microsoft.UI.Xaml.Input;
 using Microsoft.UI.Xaml.Media;
 using Microsoft.UI.Xaml.Shapes;
 using System;
-using Windows.UI;
 using System.Threading.Tasks;
+using Windows.UI;
 
 namespace BankApp.Client.Views
 {
@@ -157,7 +156,7 @@ namespace BankApp.Client.Views
             // TODO: add an ErrorInfoBar to the XAML like LoginView has - for later
         }
 
-        private async System.Threading.Tasks.Task ShowAlertAsync(string title, string message)
+        private async Task ShowAlertAsync(string title, string message)
         {
             var dialog = new ContentDialog
             {

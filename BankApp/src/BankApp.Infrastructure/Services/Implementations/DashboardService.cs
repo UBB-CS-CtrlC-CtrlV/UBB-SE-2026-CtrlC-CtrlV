@@ -1,13 +1,7 @@
-using System;
-using System.Collections.Generic;
-using System.Linq;
-using System.Text;
-using System.Threading.Tasks;
-
 using BankApp.Core.Entities;
-using BankApp.Infrastructure.Services.Interfaces;
-using BankApp.Infrastructure.Repositories.Interfaces;
 using BankApp.Core.DTOs.Dashboard;
+using BankApp.Infrastructure.Repositories.Interfaces;
+using BankApp.Infrastructure.Services.Interfaces;
 
 namespace BankApp.Infrastructure.Services.Implementations
 {
