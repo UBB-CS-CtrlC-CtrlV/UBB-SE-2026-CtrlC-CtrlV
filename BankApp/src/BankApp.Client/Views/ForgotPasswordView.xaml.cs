@@ -7,7 +7,7 @@ using BankApp.Core.Enums;
 
 namespace BankApp.Client.Views
 {
-    public sealed partial class ForgotPasswordView : Page, Observer<ForgotPasswordState>
+    public sealed partial class ForgotPasswordView : Page, IStateObserver<ForgotPasswordState>
     {
         private readonly ForgotPasswordViewModel _viewModel;
 
@@ -15,7 +15,7 @@ namespace BankApp.Client.Views
         {
             this.InitializeComponent();
 
-            _viewModel = new ForgotPasswordViewModel(App.ApiService);
+            _viewModel = new ForgotPasswordViewModel(App.ApiClient);
             _viewModel.State.AddObserver(this);
         }
 
@@ -187,3 +187,4 @@ namespace BankApp.Client.Views
         }
     }
 }
+

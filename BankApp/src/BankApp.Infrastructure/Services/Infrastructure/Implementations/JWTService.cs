@@ -6,10 +6,10 @@ using System.Text;
 
 namespace BankApp.Infrastructure.Services.Infrastructure.Implementations
 {
-    public class JWTService : IJWTService
+    public class JwtService : IJwtService
     {
         private readonly string _secret;
-        public JWTService(string secret)
+        public JwtService(string secret)
         {
             _secret = secret;
         }

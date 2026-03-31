@@ -4,10 +4,10 @@ using BankApp.Infrastructure.DataAccess.Interfaces;
 
 namespace BankApp.Infrastructure.DataAccess.Implementations
 {
-    public class PasswordResetTokenDAO : IPasswordResetTokenDAO
+    public class PasswordResetTokenDataAccess : IPasswordResetTokenDataAccess
     {
         private readonly AppDbContext _context;
-        public PasswordResetTokenDAO(AppDbContext context)
+        public PasswordResetTokenDataAccess(AppDbContext context)
         {
             _context = context;
         }
@@ -67,5 +67,6 @@ namespace BankApp.Infrastructure.DataAccess.Implementations
         }
     }
 }
+
 
 

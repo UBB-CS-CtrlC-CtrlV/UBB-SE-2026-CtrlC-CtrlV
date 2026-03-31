@@ -1,5 +1,4 @@
 using BankApp.Client.Utilities;
-using BankApp.Client.ViewModels.Base;
 using BankApp.Core.DTOs.Profile;
 using BankApp.Core.Entities;
 using BankApp.Core.Enums;
@@ -10,21 +9,21 @@ using Windows.UI.Text.Core;
 
 namespace BankApp.Client.ViewModels
 {
-    public class ProfileViewModel : BaseViewModel
+    public class ProfileViewModel 
     {
-        private readonly ApiService _apiService;
+        private readonly ApiClient _apiClient;
         private bool _disposed;
         
-        public Observable<ProfileState> State { get; private set; }
+        public ObservableState<ProfileState> State { get; private set; }
         public ProfileInfo ProfileInfo { get; private set; }
         public List<OAuthLink> OAuthLinks { get; private set; }
         public List<Session> ActiveSessions { get; private set; }
         public List<NotificationPreference> NotificationPreferences { get; private set; }
 
-        public ProfileViewModel(ApiService apiService)
+        public ProfileViewModel(ApiClient apiClient)
         {
-            _apiService = apiService;
-            State = new Observable<ProfileState>(ProfileState.Idle);
+            _apiClient = apiClient;
+            State = new ObservableState<ProfileState>(ProfileState.Idle);
         }
 
         public async Task<bool> LoadProfile()
@@ -33,7 +32,7 @@ namespace BankApp.Client.ViewModels
             {
                 State.SetValue(ProfileState.Loading);
 
-                GetProfileResponse? profileResponse = await _apiService.GetAsync<GetProfileResponse>(
+                GetProfileResponse? profileResponse = await _apiClient.GetAsync<GetProfileResponse>(
                     $"api/profile/");
 
                 if (profileResponse == null || !profileResponse.Success || profileResponse.ProfileInfo == null)
@@ -44,7 +43,7 @@ namespace BankApp.Client.ViewModels
 
                 ProfileInfo = profileResponse.ProfileInfo;
 
-                List<OAuthLink>? oauthResponse = await _apiService.GetAsync<List<OAuthLink>>(
+                List<OAuthLink>? oauthResponse = await _apiClient.GetAsync<List<OAuthLink>>(
                     $"api/profile/oauthlinks");
 
                 if (oauthResponse == null)
@@ -55,7 +54,7 @@ namespace BankApp.Client.ViewModels
 
                 OAuthLinks = oauthResponse;
 
-                List<NotificationPreference>? prefsResponse = await _apiService.GetAsync<List<NotificationPreference>>(
+                List<NotificationPreference>? prefsResponse = await _apiClient.GetAsync<List<NotificationPreference>>(
                     $"api/profile/notifications/preferences");
 
                 if (prefsResponse == null)
@@ -94,7 +93,7 @@ namespace BankApp.Client.ViewModels
 
                 UpdateProfileRequest request = new UpdateProfileRequest(ProfileInfo.UserId, phone, address);
                 
-                UpdateProfileResponse? response = await _apiService.PutAsync<UpdateProfileRequest, UpdateProfileResponse>(
+                UpdateProfileResponse? response = await _apiClient.PutAsync<UpdateProfileRequest, UpdateProfileResponse>(
                     $"api/profile/", request);
 
                 if (response == null)
@@ -139,7 +138,7 @@ namespace BankApp.Client.ViewModels
 
                 ChangePasswordRequest request = new ChangePasswordRequest(ProfileInfo.UserId.Value, currentPassword, newPassword);
 
-                ChangePasswordResponse? result = await _apiService.PutAsync<ChangePasswordRequest, ChangePasswordResponse>(
+                ChangePasswordResponse? result = await _apiClient.PutAsync<ChangePasswordRequest, ChangePasswordResponse>(
                     $"api/profile/password", request);
 
                 if (result == null || !result.Success)
@@ -166,7 +165,7 @@ namespace BankApp.Client.ViewModels
 
                 var request = new { Method = method };
 
-                var result = await _apiService.PutAsync<object, Toggle2FAResponse>(
+                var result = await _apiClient.PutAsync<object, Toggle2FAResponse>(
                     $"api/profile/2fa/enable", request);
 
                 if (result?.Success == true)
@@ -195,7 +194,7 @@ namespace BankApp.Client.ViewModels
             {
                 State.SetValue(ProfileState.Loading);
 
-                var result = await _apiService.PutAsync<object, Toggle2FAResponse>(
+                var result = await _apiClient.PutAsync<object, Toggle2FAResponse>(
                     $"api/profile/2fa/disable", new { });
 
                 if (result?.Success == true)
@@ -234,7 +233,7 @@ namespace BankApp.Client.ViewModels
 
                 var request = new { Provider = provider.Trim() };
 
-                var result = await _apiService.PostAsync<object, bool>(
+                var result = await _apiClient.PostAsync<object, bool>(
                     $"api/profile/oauth/link", request);
 
                 if (result)
@@ -311,7 +310,7 @@ namespace BankApp.Client.ViewModels
 
                 State.SetValue(ProfileState.Loading);
 
-                var result = await _apiService.PutAsync<List<NotificationPreference>, bool>(
+                var result = await _apiClient.PutAsync<List<NotificationPreference>, bool>(
                     $"api/profile/notifications/preferences", preferences);
 
                 if (result)
@@ -346,7 +345,7 @@ namespace BankApp.Client.ViewModels
                     return false;
                 }
 
-                bool? response = await _apiService.PostAsync<string, bool>(
+                bool? response = await _apiClient.PostAsync<string, bool>(
                     $"api/profile/verify-password", password);
 
                 bool result = response ?? false;
@@ -368,7 +367,7 @@ namespace BankApp.Client.ViewModels
             }
         }
 
-        public override void Dispose()
+        public void Dispose()
         {
             if (_disposed) return;
             _disposed = true;
@@ -379,3 +378,5 @@ namespace BankApp.Client.ViewModels
             Console.Error.WriteLine($"[ProfileViewModel] {method}: {ex.Message}");
     }
 }
+
+

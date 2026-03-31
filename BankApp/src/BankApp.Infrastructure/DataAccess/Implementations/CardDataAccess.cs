@@ -3,10 +3,10 @@ using BankApp.Infrastructure.DataAccess.Interfaces;
 
 namespace BankApp.Infrastructure.DataAccess.Implementations
 {
-    public class CardDAO : ICardDAO
+    public class CardDataAccess : ICardDataAccess
     {
         private readonly AppDbContext _dbContext;
-        public CardDAO(AppDbContext dbContext) 
+        public CardDataAccess(AppDbContext dbContext) 
         {
             _dbContext = dbContext;
         }
@@ -59,5 +59,6 @@ namespace BankApp.Infrastructure.DataAccess.Implementations
         }
     }
 }
+
 
 

@@ -1,5 +1,4 @@
 using BankApp.Client.Utilities;
-using BankApp.Client.ViewModels.Base;
 using BankApp.Core.DTOs.Dashboard;
 using BankApp.Core.Entities;
 using BankApp.Core.Enums;
@@ -9,20 +8,20 @@ using System.Collections.Generic;
 
 namespace BankApp.Client.ViewModels
 {
-    public class DashboardViewModel : BaseViewModel
+    public class DashboardViewModel 
     {
-        public Observable<DashboardState> State { get; private set; }
+        public ObservableState<DashboardState> State { get; private set; }
         public User CurrentUser { get; private set; }
         public List<Card> Cards { get; private set; }
         public List<Transaction> RecentTransactions { get; private set; }
         public int UnreadNotificationCount { get; private set; }
 
-        private readonly ApiService _apiService;
+        private readonly ApiClient _apiClient;
 
-        public DashboardViewModel(ApiService apiService)
+        public DashboardViewModel(ApiClient apiClient)
         {
-            _apiService = apiService;
-            State = new Observable<DashboardState>(DashboardState.Loading);
+            _apiClient = apiClient;
+            State = new ObservableState<DashboardState>(DashboardState.Loading);
             Cards = new List<Card>();
             RecentTransactions = new List<Transaction>();
             UnreadNotificationCount = 0;
@@ -30,22 +29,22 @@ namespace BankApp.Client.ViewModels
 
         public async void LoadDashboard()
         {
-            SetState(State, DashboardState.Loading);
+            State.SetValue(DashboardState.Loading);
             try
             {
-                int? userId = _apiService.GetCurrentUserId();
+                int? userId = _apiClient.GetCurrentUserId();
                 if (userId == null)
                 {
-                    SetState(State, DashboardState.Error);
+                    State.SetValue(DashboardState.Error);
                     return;
                 }
 
-                DashboardResponse? response = await _apiService.GetAsync<DashboardResponse>(
+                DashboardResponse? response = await _apiClient.GetAsync<DashboardResponse>(
                     $"/api/dashboard/");
 
                 if (response == null)
                 {
-                    SetState(State, DashboardState.Error);
+                    State.SetValue(DashboardState.Error);
                     return;
                 }
 
@@ -53,14 +52,16 @@ namespace BankApp.Client.ViewModels
                 Cards = response.Cards;
                 RecentTransactions = response.RecentTransactions;
                 UnreadNotificationCount = response.UnreadNotificationCount;
-                SetState(State, DashboardState.Success);
+                State.SetValue(DashboardState.Success);
             }
             catch (Exception)
             {
-                SetState(State, DashboardState.Error);
+                State.SetValue(DashboardState.Error);
             }
         }
 
-        public override void Dispose() { }
+        public void Dispose() { }
     }
 }
+
+

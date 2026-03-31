@@ -13,7 +13,7 @@ namespace BankApp.Infrastructure.Middleware
             _next = next;
         }
 
-        public async Task Invoke(HttpContext context, IAuthRepository authRepository, IJWTService jwtService)
+        public async Task Invoke(HttpContext context, IAuthRepository authRepository, IJwtService jwtService)
         {
             var path = context.Request.Path.Value?.ToLower();
 

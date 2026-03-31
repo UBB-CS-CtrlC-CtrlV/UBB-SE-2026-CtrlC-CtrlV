@@ -4,10 +4,10 @@ using System.Data;
 
 namespace BankApp.Infrastructure.DataAccess.Implementations
 {
-    public class TransactionDAO : ITransactionDAO
+    public class TransactionDataAccess : ITransactionDataAccess
     {
         private readonly AppDbContext _dbContext;
-        public TransactionDAO(AppDbContext dbContext)
+        public TransactionDataAccess(AppDbContext dbContext)
         {
             _dbContext = dbContext;
         }
@@ -56,5 +56,6 @@ namespace BankApp.Infrastructure.DataAccess.Implementations
         }
     }
 }
+
 
 

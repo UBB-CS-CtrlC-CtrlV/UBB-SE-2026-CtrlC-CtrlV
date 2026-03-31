@@ -4,10 +4,10 @@ using BankApp.Infrastructure.DataAccess.Interfaces;
 namespace BankApp.Infrastructure.DataAccess.Implementations
 {
 
-    public class NotificationDAO : INotificationDAO
+    public class NotificationDataAccess : INotificationDataAccess
     {
         private readonly AppDbContext _dbContext;
-        public NotificationDAO(AppDbContext dbContext)
+        public NotificationDataAccess(AppDbContext dbContext)
         {
             _dbContext = dbContext;
         }
@@ -58,5 +58,6 @@ namespace BankApp.Infrastructure.DataAccess.Implementations
 
     }
 }
+
 
 

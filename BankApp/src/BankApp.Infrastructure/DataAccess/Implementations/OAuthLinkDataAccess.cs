@@ -5,10 +5,10 @@ using System.Data;
 
 namespace BankApp.Infrastructure.DataAccess.Implementations
 {
-    public class OAuthLinkDAO : IOAuthLinkDAO
+    public class OAuthLinkDataAccess : IOAuthLinkDataAccess
     {
         private readonly AppDbContext _context;
-        public OAuthLinkDAO(AppDbContext context)
+        public OAuthLinkDataAccess(AppDbContext context)
         {
             _context = context;
         }
@@ -64,5 +64,6 @@ namespace BankApp.Infrastructure.DataAccess.Implementations
         }
     }
 }
+
 
 

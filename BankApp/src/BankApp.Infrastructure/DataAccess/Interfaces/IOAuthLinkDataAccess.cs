@@ -1,7 +1,7 @@
 using BankApp.Core.Entities;
 namespace BankApp.Infrastructure.DataAccess.Interfaces
 {
-    public interface IOAuthLinkDAO
+    public interface IOAuthLinkDataAccess
     {
         OAuthLink? FindByProvider(string provider, string providerUserId);
         List<OAuthLink> FindByUserId(int userId);
@@ -9,4 +9,5 @@ namespace BankApp.Infrastructure.DataAccess.Interfaces
         void Delete(int id);
     }
 }
+
 

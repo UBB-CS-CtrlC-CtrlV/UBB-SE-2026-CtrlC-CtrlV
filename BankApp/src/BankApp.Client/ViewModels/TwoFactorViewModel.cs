@@ -6,33 +6,33 @@ using BankApp.Core.Enums;
 
 namespace BankApp.Client.ViewModels
 {
-    public class TwoFactorViewModel : BaseViewModel
+    public class TwoFactorViewModel 
     {
-        private readonly ApiService _apiService;
-        public Observable<TwoFactorState> State { get; private set; }
+        private readonly ApiClient _apiClient;
+        public ObservableState<TwoFactorState> State { get; private set; }
 
-        public TwoFactorViewModel(ApiService apiService)
+        public TwoFactorViewModel(ApiClient apiClient)
         {
-            _apiService = apiService ?? throw new ArgumentNullException(nameof(apiService));
-            State = new Observable<TwoFactorState>(TwoFactorState.Idle);
+            _apiClient = apiClient ?? throw new ArgumentNullException(nameof(apiClient));
+            State = new ObservableState<TwoFactorState>(TwoFactorState.Idle);
         }
 
         public async Task VerifyOTP(string otp)
         {
             if (string.IsNullOrWhiteSpace(otp))
             {
-                SetState(State, TwoFactorState.InvalidOTP);
+                State.SetValue(TwoFactorState.InvalidOTP);
                 return;
             }
 
-            SetState(State, TwoFactorState.Verifying);
+            State.SetValue(TwoFactorState.Verifying);
 
             try
             {
-                int? userId = _apiService.GetCurrentUserId();
+                int? userId = _apiClient.GetCurrentUserId();
                 if (userId == null)
                 {
-                    SetState(State, TwoFactorState.InvalidOTP);
+                    State.SetValue(TwoFactorState.InvalidOTP);
                     return;
                 }
 
@@ -42,32 +42,32 @@ namespace BankApp.Client.ViewModels
                     OTPCode = otp
                 };
 
-                var response = await _apiService.PostAsync<VerifyOTPRequest, LoginResponse>("/api/auth/verify-otp", request);
+                var response = await _apiClient.PostAsync<VerifyOTPRequest, LoginResponse>("/api/auth/verify-otp", request);
 
                 if (response != null && response.Success)
                 {
-                    _apiService.SetToken(response.Token!);
-                    SetState(State, TwoFactorState.Success);
+                    _apiClient.SetToken(response.Token!);
+                    State.SetValue(TwoFactorState.Success);
                 }
                 else
                 {
-                    SetState(State, TwoFactorState.InvalidOTP);
+                    State.SetValue(TwoFactorState.InvalidOTP);
                 }
             }
             catch (Exception)
             {
-                SetState(State, TwoFactorState.InvalidOTP);
+                State.SetValue(TwoFactorState.InvalidOTP);
             }
         }
 
         public async Task ResendOTP()
         {
-            SetState(State, TwoFactorState.Idle);
+            State.SetValue(TwoFactorState.Idle);
             try
             {
-                int? userId = _apiService.GetCurrentUserId();
+                int? userId = _apiClient.GetCurrentUserId();
                 if (userId == null) return;
-                await _apiService.PostAsync<object, object>($"/api/auth/resend-otp?userId={userId.Value}", null);
+                await _apiClient.PostAsync<object, object>($"/api/auth/resend-otp?userId={userId.Value}", null);
             }
             catch (Exception)
             {
@@ -75,9 +75,10 @@ namespace BankApp.Client.ViewModels
             }
         }
 
-        public override void Dispose()
+        public void Dispose()
         {
-            State = null;
         }
     }
 }
+
+

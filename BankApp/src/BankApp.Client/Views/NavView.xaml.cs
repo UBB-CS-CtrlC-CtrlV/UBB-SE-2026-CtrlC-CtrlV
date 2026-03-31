@@ -1,4 +1,4 @@
-﻿using BankApp.Client.Utilities;
+using BankApp.Client.Utilities;
 using Microsoft.UI.Xaml;
 using Microsoft.UI.Xaml.Controls;
 using Microsoft.UI.Xaml.Input;
@@ -104,8 +104,8 @@ namespace BankApp.Client.Views
 
         private async void LogoutButton_Click(object sender, RoutedEventArgs e)
         {
-            //await App.ApiService.PostAsync("/api/auth/logout", null);
-            App.ApiService.ClearToken();
+            //await App.ApiClient.PostAsync("/api/auth/logout", null);
+            App.ApiClient.ClearToken();
             App.NavigationService.NavigateTo<LoginView>();
         }
     }

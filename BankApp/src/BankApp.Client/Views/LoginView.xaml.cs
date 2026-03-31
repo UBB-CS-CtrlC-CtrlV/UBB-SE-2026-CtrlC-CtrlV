@@ -6,7 +6,7 @@ using BankApp.Core.Enums;
 
 namespace BankApp.Client.Views
 {
-    public sealed partial class LoginView : Page, Observer<LoginState>
+    public sealed partial class LoginView : Page, IStateObserver<LoginState>
     {
         private readonly LoginViewModel _viewModel;
 
@@ -14,7 +14,7 @@ namespace BankApp.Client.Views
         {
             this.InitializeComponent();
 
-            _viewModel = new LoginViewModel(App.ApiService);
+            _viewModel = new LoginViewModel(App.ApiClient);
             _viewModel.State.AddObserver(this);
         }
 
@@ -112,3 +112,4 @@ namespace BankApp.Client.Views
         }
     }
 }
+

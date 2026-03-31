@@ -1,6 +1,6 @@
 namespace BankApp.Infrastructure.Services.Infrastructure.Interfaces;
 
-public interface IOTPService
+public interface IOtpService
 {
     string GenerateTOTP(int userId);
     bool VerifyTOTP(int userId, string code);

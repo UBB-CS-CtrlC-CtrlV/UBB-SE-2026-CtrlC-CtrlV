@@ -3,11 +3,11 @@ using BankApp.Infrastructure.DataAccess.Interfaces;
 
 namespace BankApp.Infrastructure.DataAccess
 {
-    public class SessionDAO : ISessionDAO
+    public class SessionDataAccess : ISessionDataAccess
     {
         private readonly AppDbContext _db;
 
-        public SessionDAO(AppDbContext db)
+        public SessionDataAccess(AppDbContext db)
         {
             _db = db;
         }
@@ -92,4 +92,5 @@ namespace BankApp.Infrastructure.DataAccess
         }
     }
 }
+
 

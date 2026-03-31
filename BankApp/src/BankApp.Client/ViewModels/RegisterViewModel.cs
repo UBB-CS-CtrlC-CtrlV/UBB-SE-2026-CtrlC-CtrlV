@@ -1,5 +1,4 @@
 using BankApp.Client.Utilities;
-using BankApp.Client.ViewModels.Base;
 using BankApp.Core.Enums;
 using BankApp.Core.DTOs.Auth;
 using System;
@@ -8,16 +7,16 @@ using System.Linq;
 
 namespace BankApp.Client.ViewModels
 {
-    public class RegisterViewModel : BaseViewModel
+    public class RegisterViewModel 
     {
-        public Observable<RegisterState> State { get; private set; }
+        public ObservableState<RegisterState> State { get; private set; }
 
-        private readonly ApiService _apiService;
+        private readonly ApiClient _apiClient;
 
-        public RegisterViewModel(ApiService apiService)
+        public RegisterViewModel(ApiClient apiClient)
         {
-            State = new Observable<RegisterState>(RegisterState.Idle);
-            _apiService = apiService;
+            State = new ObservableState<RegisterState>(RegisterState.Idle);
+            _apiClient = apiClient;
         }
 
         public async void Register(string email, string password, string confirmPassword, string fullName)
@@ -26,11 +25,11 @@ namespace BankApp.Client.ViewModels
             RegisterState? validationError = ValidateLocally(email, password, confirmPassword, fullName);
             if (validationError != null)
             {
-                SetState(State, validationError.Value);
+                State.SetValue(validationError.Value);
                 return;
             }
 
-            SetState(State, RegisterState.Loading);
+            State.SetValue(RegisterState.Loading);
 
             try
             {
@@ -41,12 +40,12 @@ namespace BankApp.Client.ViewModels
                     FullName = fullName
                 };
 
-                RegisterResponse? response = await _apiService.PostAsync<RegisterRequest, RegisterResponse>(
+                RegisterResponse? response = await _apiClient.PostAsync<RegisterRequest, RegisterResponse>(
                     "/api/auth/register", request);
 
                 if (response == null)
                 {
-                    SetState(State, RegisterState.Error);
+                    State.SetValue(RegisterState.Error);
                     return;
                 }
 
@@ -56,17 +55,17 @@ namespace BankApp.Client.ViewModels
                     return;
                 }
 
-                SetState(State, RegisterState.Success);
+                State.SetValue(RegisterState.Success);
             }
             catch (Exception)
             {
-                SetState(State, RegisterState.Error);
+                State.SetValue(RegisterState.Error);
             }
         }
 
         public async void OAuthRegister(string email, string provider)
         {
-            SetState(State, RegisterState.Loading);
+            State.SetValue(RegisterState.Loading);
 
             try
             {
@@ -75,8 +74,8 @@ namespace BankApp.Client.ViewModels
                     var options = new Duende.IdentityModel.OidcClient.OidcClientOptions
                     {
                         Authority = "https://accounts.google.com",
-                        ClientId = OAuthSecrets.ClientId,
-                        ClientSecret = OAuthSecrets.ClientSecret,
+                        ClientId = OAuthSecretsTemplate.ClientId,
+                        ClientSecret = OAuthSecretsTemplate.ClientSecret,
                         Scope = "openid email profile",
                         RedirectUri = "http://127.0.0.1:7890/",
                         Browser = new BankApp.Client.Utilities.SystemBrowser(7890)
@@ -88,7 +87,7 @@ namespace BankApp.Client.ViewModels
 
                     if (loginResult.IsError)
                     {
-                        SetState(State, RegisterState.Error);
+                        State.SetValue(RegisterState.Error);
                         return;
                     }
 
@@ -98,24 +97,24 @@ namespace BankApp.Client.ViewModels
                         ProviderToken = loginResult.IdentityToken
                     };
 
-                    LoginResponse? response = await _apiService.PostAsync<OAuthLoginRequest, LoginResponse>(
+                    LoginResponse? response = await _apiClient.PostAsync<OAuthLoginRequest, LoginResponse>(
                         "/api/auth/oauth-login", apiRequest);
 
                     if (response == null || !response.Success)
                     {
-                        SetState(State, RegisterState.Error);
+                        State.SetValue(RegisterState.Error);
                         return;
                     }
 
-                    _apiService.SetToken(response.Token!);
-                    _apiService.SetCurrentUserId(response.UserId!.Value);
+                    _apiClient.SetToken(response.Token!);
+                    _apiClient.SetCurrentUserId(response.UserId!.Value);
 
-                    SetState(State, RegisterState.AutoLoggedIn);
+                    State.SetValue(RegisterState.AutoLoggedIn);
                 }
             }
             catch (Exception)
             {
-                SetState(State, RegisterState.Error);
+                State.SetValue(RegisterState.Error);
             }
         }
 
@@ -138,18 +137,20 @@ namespace BankApp.Client.ViewModels
         private void HandleRegisterError(RegisterResponse response)
         {
             if (response.Error != null && response.Error.Contains("already registered"))
-                SetState(State, RegisterState.EmailAlreadyExists);
+                State.SetValue(RegisterState.EmailAlreadyExists);
             else if (response.Error != null && response.Error.Contains("email"))
-                SetState(State, RegisterState.InvalidEmail);
+                State.SetValue(RegisterState.InvalidEmail);
             else if (response.Error != null && response.Error.Contains("Password"))
-                SetState(State, RegisterState.WeakPassword);
+                State.SetValue(RegisterState.WeakPassword);
             else
-                SetState(State, RegisterState.Error);
+                State.SetValue(RegisterState.Error);
         }
 
-        public override void Dispose()
+        public void Dispose()
         {
             // Clean up observers if needed
         }
     }
 }
+
+

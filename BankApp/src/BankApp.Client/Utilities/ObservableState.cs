@@ -1,15 +1,15 @@
-﻿using System.Collections.Generic;
+using System.Collections.Generic;
 
 namespace BankApp.Client.Utilities
 {
-    public class Observable<T>
+    public class ObservableState<T>
     {
         public T Value { get; private set; }
-        private List<Observer<T>> _observers;
+        private readonly List<IStateObserver<T>> _observers;
 
-        public Observable(T value)
+        public ObservableState(T value)
         {
-            _observers = new List<Observer<T>>();
+            _observers = new List<IStateObserver<T>>();
             Value = value;
         }
 
@@ -19,12 +19,12 @@ namespace BankApp.Client.Utilities
             NotifyObservers();
         }
 
-        public void AddObserver(Observer<T> observer)
+        public void AddObserver(IStateObserver<T> observer)
         {
             _observers.Add(observer);
         }
 
-        public void RemoveObserver(Observer<T> observer)
+        public void RemoveObserver(IStateObserver<T> observer)
         {
             _observers.Remove(observer);
         }
@@ -38,3 +38,4 @@ namespace BankApp.Client.Utilities
         }
     }
 }
+

@@ -10,12 +10,12 @@ using BankApp.Core.Extensions;
 using BankApp.Core.Enums;
 namespace BankApp.Infrastructure.DataAccess
 {
-     internal class NotificationPreferenceDAO : INotificationPreferenceDAO
+     internal class NotificationPreferenceDataAccess : INotificationPreferenceDataAccess
     {
 
         private AppDbContext _appDbContext;
 
-        public NotificationPreferenceDAO(AppDbContext appDbContext)
+        public NotificationPreferenceDataAccess(AppDbContext appDbContext)
         {
             _appDbContext = appDbContext;
         }
@@ -99,5 +99,6 @@ namespace BankApp.Infrastructure.DataAccess
         }
     }
 }
+
 
 

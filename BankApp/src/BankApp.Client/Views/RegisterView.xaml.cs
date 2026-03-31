@@ -6,7 +6,7 @@ using BankApp.Core.Enums;
 
 namespace BankApp.Client.Views
 {
-    public sealed partial class RegisterView : Page, Observer<RegisterState>
+    public sealed partial class RegisterView : Page, IStateObserver<RegisterState>
     {
         private readonly RegisterViewModel _viewModel;
 
@@ -14,7 +14,7 @@ namespace BankApp.Client.Views
         {
             this.InitializeComponent();
 
-            _viewModel = new RegisterViewModel(App.ApiService);
+            _viewModel = new RegisterViewModel(App.ApiClient);
             _viewModel.State.AddObserver(this);
         }
 
@@ -128,3 +128,4 @@ namespace BankApp.Client.Views
         }
     }
 }
+

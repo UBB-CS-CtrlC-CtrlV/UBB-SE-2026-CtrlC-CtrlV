@@ -1,8 +1,8 @@
-﻿using Microsoft.UI.Xaml.Controls;
+using Microsoft.UI.Xaml.Controls;
 
 namespace BankApp.Client.Master
 {
-    public class NavigationService : INavigationService
+    public class AppNavigationService : IAppNavigationService
     {
         private Frame? _frame;
         private Frame? _contentFrame;

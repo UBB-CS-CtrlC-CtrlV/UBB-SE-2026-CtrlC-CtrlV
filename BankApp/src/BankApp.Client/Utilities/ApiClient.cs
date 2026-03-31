@@ -1,17 +1,17 @@
-﻿using System.Net.Http;
+using System.Net.Http;
 using System.Net.Http.Json;
 using System.Threading.Tasks;
 using System;
 
 namespace BankApp.Client.Utilities
 {
-    public class ApiService
+    public class ApiClient
     {
         private readonly HttpClient _httpClient;
         private string? _token;
         private int? _currentUserId;
 
-        public ApiService(string baseUrl = "http://localhost:5024")
+        public ApiClient(string baseUrl = "http://localhost:5024")
         {
             _httpClient = new HttpClient
             {
@@ -83,3 +83,4 @@ namespace BankApp.Client.Utilities
         }
     }
 }
+

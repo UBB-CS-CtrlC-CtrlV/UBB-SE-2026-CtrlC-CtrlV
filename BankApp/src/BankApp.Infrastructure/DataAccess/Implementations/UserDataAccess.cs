@@ -3,10 +3,10 @@ using BankApp.Infrastructure.DataAccess.Interfaces;
 
 namespace BankApp.Infrastructure.DataAccess.Implementations
 {
-    public class UserDAO : IUserDAO
+    public class UserDataAccess : IUserDataAccess
     {
         private readonly AppDbContext _db;
-        public UserDAO(AppDbContext db)
+        public UserDataAccess(AppDbContext db)
         {
             _db = db;
         }
@@ -135,5 +135,6 @@ namespace BankApp.Infrastructure.DataAccess.Implementations
         }
     }
 }
+
 
 

@@ -1,7 +1,7 @@
 using BankApp.Core.Entities;
 namespace BankApp.Infrastructure.DataAccess.Interfaces
 {
-    public interface IUserDAO
+    public interface IUserDataAccess
     {
         User? FindByEmail(string email);
         User? FindById(int id);
@@ -13,4 +13,5 @@ namespace BankApp.Infrastructure.DataAccess.Interfaces
         void LockAccount(int userId, DateTime lockoutEnd);
     }
 }
+
 

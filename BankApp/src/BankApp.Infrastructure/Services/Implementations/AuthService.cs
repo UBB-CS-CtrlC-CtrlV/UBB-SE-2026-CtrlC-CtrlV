@@ -13,14 +13,14 @@ namespace BankApp.Infrastructure.Services.Implementations
     {
         private readonly IAuthRepository _authRepository;
         private readonly IHashService _hashService;
-        private readonly IJWTService _jwtService;
-        private readonly IOTPService _otpService;
+        private readonly IJwtService _jwtService;
+        private readonly IOtpService _otpService;
         private readonly IEmailService _emailService;
 
         private const int MaxFailedAttempts = 5;
         private const int LockoutMinutes = 30;
 
-        public AuthService(IAuthRepository authRepository, IHashService hashService, IJWTService jwtService, IOTPService otpService, IEmailService emailService)
+        public AuthService(IAuthRepository authRepository, IHashService hashService, IJwtService jwtService, IOtpService otpService, IEmailService emailService)
         {
             _authRepository = authRepository;
             _hashService = hashService;
@@ -31,7 +31,7 @@ namespace BankApp.Infrastructure.Services.Implementations
 
         public LoginResponse Login(LoginRequest request)
         {
-            if (!ValidationUtil.IsValidEmail(request.Email))
+            if (!ValidationUtilities.IsValidEmail(request.Email))
             {
                 return new LoginResponse { Success = false, Error = "Invalid mail format." };
             }
@@ -158,7 +158,7 @@ namespace BankApp.Infrastructure.Services.Implementations
 
         public RegisterResponse OAuthRegister(OAuthRegisterRequest request)
         {
-            if (!ValidationUtil.IsValidEmail(request.Email))
+            if (!ValidationUtilities.IsValidEmail(request.Email))
             {
                 return new RegisterResponse { Success = false, Error = "Invalid email format." };
             }
@@ -360,10 +360,10 @@ namespace BankApp.Infrastructure.Services.Implementations
             // There should also be client-side validation, this is last resort
             // can't trust the client
 
-            if (!ValidationUtil.IsValidEmail(request.Email))
+            if (!ValidationUtilities.IsValidEmail(request.Email))
                 return "Invalid email format.";
 
-            if (!ValidationUtil.IsStrongPassword(request.Password))
+            if (!ValidationUtilities.IsStrongPassword(request.Password))
                 return "Password must be at least 8 characters with uppercase, lowercase, and a digit.";
 
             if (string.IsNullOrWhiteSpace(request.FullName))
@@ -410,5 +410,6 @@ namespace BankApp.Infrastructure.Services.Implementations
         }
     }
 }
+
 
 

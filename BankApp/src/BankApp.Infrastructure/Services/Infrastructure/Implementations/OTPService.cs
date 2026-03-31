@@ -5,13 +5,13 @@ using Microsoft.Extensions.Caching.Memory;
 
 namespace BankApp.Infrastructure.Services.Infrastructure.Implementations
 {
-    public class OTPService : IOTPService
+    public class OtpService : IOtpService
     {
         private static readonly Dictionary<int, (string Code, DateTime ExpiryTime)> _temporarySmsStorage = new();
         private const int SmsOtpExpiryMinutes = 5;
         private const int TotpWindowSeconds = 300;
 
-        public OTPService() {}
+        public OtpService() {}
 
         public string GenerateSMSOTP(int userId)
         {

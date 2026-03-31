@@ -1,5 +1,4 @@
 using BankApp.Client.Utilities;
-using BankApp.Client.ViewModels.Base;
 using BankApp.Core.DTOs.Auth;
 using BankApp.Core.Enums;
 using Duende.IdentityModel.OidcClient;
@@ -8,20 +7,20 @@ using System.Threading.Tasks;
 
 namespace BankApp.Client.ViewModels
 {
-    public class LoginViewModel : BaseViewModel
+    public class LoginViewModel 
     {
-        public Observable<LoginState> State { get; private set; }
-        private readonly ApiService _apiService;
+        public ObservableState<LoginState> State { get; private set; }
+        private readonly ApiClient _apiClient;
 
-        public LoginViewModel(ApiService apiService)
+        public LoginViewModel(ApiClient apiClient)
         {
-            State = new Observable<LoginState>(LoginState.Idle);
-            _apiService = apiService;
+            State = new ObservableState<LoginState>(LoginState.Idle);
+            _apiClient = apiClient;
         }
 
         public async void Login(string email, string password)
         {
-            SetState(State, LoginState.Loading);
+            State.SetValue(LoginState.Loading);
 
             try
             {
@@ -31,12 +30,12 @@ namespace BankApp.Client.ViewModels
                     Password = password
                 };
 
-                LoginResponse? response = await _apiService.PostAsync<BankApp.Core.DTOs.Auth.LoginRequest, LoginResponse>(
+                LoginResponse? response = await _apiClient.PostAsync<BankApp.Core.DTOs.Auth.LoginRequest, LoginResponse>(
                     "/api/auth/login", request);
 
                 if (response == null)
                 {
-                    SetState(State, LoginState.Error);
+                    State.SetValue(LoginState.Error);
                     return;
                 }
 
@@ -48,27 +47,27 @@ namespace BankApp.Client.ViewModels
 
                 if (response.Requires2FA)
                 {
-                    _apiService.SetCurrentUserId(response.UserId!.Value);
+                    _apiClient.SetCurrentUserId(response.UserId!.Value);
 
-                    SetState(State, LoginState.Require2FA);
+                    State.SetValue(LoginState.Require2FA);
                     return;
                 }
 
                 // Login successful
                 // Store the token and userId for future requests
-                _apiService.SetToken(response.Token!);
-                _apiService.SetCurrentUserId(response.UserId!.Value);
-                SetState(State, LoginState.Success);
+                _apiClient.SetToken(response.Token!);
+                _apiClient.SetCurrentUserId(response.UserId!.Value);
+                State.SetValue(LoginState.Success);
             }
             catch (Exception)
             {
-                SetState(State, LoginState.Error);
+                State.SetValue(LoginState.Error);
             }
         }
 
         public async void OAuthLogin(string email, string provider)
         {
-            SetState(State, LoginState.Loading);
+            State.SetValue(LoginState.Loading);
 
             try
             {
@@ -77,8 +76,8 @@ namespace BankApp.Client.ViewModels
                     var options = new OidcClientOptions
                     {
                         Authority = "https://accounts.google.com",
-                        ClientId = OAuthSecrets.ClientId,
-                        ClientSecret = OAuthSecrets.ClientSecret,
+                        ClientId = OAuthSecretsTemplate.ClientId,
+                        ClientSecret = OAuthSecretsTemplate.ClientSecret,
                         Scope = "openid email profile",
                         RedirectUri = "http://127.0.0.1:7890/",
                         Browser = new BankApp.Client.Utilities.SystemBrowser(7890)
@@ -92,7 +91,7 @@ namespace BankApp.Client.ViewModels
 
                     if (loginResult.IsError)
                     {
-                        SetState(State, LoginState.Error);
+                        State.SetValue(LoginState.Error);
                         return;
                     }
 
@@ -102,30 +101,30 @@ namespace BankApp.Client.ViewModels
                         ProviderToken = loginResult.IdentityToken
                     };
 
-                    LoginResponse? response = await _apiService.PostAsync<OAuthLoginRequest, LoginResponse>(
+                    LoginResponse? response = await _apiClient.PostAsync<OAuthLoginRequest, LoginResponse>(
                         "/api/auth/oauth-login", apiRequest);
 
                     if (response == null || !response.Success)
                     {
-                        SetState(State, LoginState.Error);
+                        State.SetValue(LoginState.Error);
                         return;
                     }
 
                     if (response.Requires2FA)
                     {
-                        _apiService.SetCurrentUserId(response.UserId!.Value);
-                        SetState(State, LoginState.Require2FA);
+                        _apiClient.SetCurrentUserId(response.UserId!.Value);
+                        State.SetValue(LoginState.Require2FA);
                         return;
                     }
 
-                    _apiService.SetToken(response.Token!);
-                    _apiService.SetCurrentUserId(response.UserId!.Value);
-                    SetState(State, LoginState.Success);
+                    _apiClient.SetToken(response.Token!);
+                    _apiClient.SetCurrentUserId(response.UserId!.Value);
+                    State.SetValue(LoginState.Success);
                 }
             }
             catch (Exception ex)
             {
-                SetState(State, LoginState.Error);
+                State.SetValue(LoginState.Error);
             }
         }
 
@@ -133,17 +132,19 @@ namespace BankApp.Client.ViewModels
         {
             if (response.Error != null && response.Error.Contains("locked"))
             {
-                SetState(State, LoginState.AccountLocked);
+                State.SetValue(LoginState.AccountLocked);
             }
             else
             {
-                SetState(State, LoginState.InvalidCredentials);
+                State.SetValue(LoginState.InvalidCredentials);
             }
         }
 
-        public override void Dispose()
+        public void Dispose()
         {
             throw new NotImplementedException();
         }
     }
 }
+
+

@@ -1,7 +1,7 @@
 using BankApp.Core.Entities;
 namespace BankApp.Infrastructure.DataAccess.Interfaces
 {
-    public interface ISessionDAO
+    public interface ISessionDataAccess
     {
         Session Create(int userId, string token, string? deviceInfo, string? browser, string? ip);
         Session? FindByToken(string token);
@@ -10,4 +10,5 @@ namespace BankApp.Infrastructure.DataAccess.Interfaces
         void RevokeAll(int userId);
     }
 }
+
 

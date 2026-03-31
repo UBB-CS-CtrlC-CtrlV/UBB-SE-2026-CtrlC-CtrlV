@@ -23,19 +23,19 @@ public static class ServiceCollectionExtensions
 
         services.AddScoped<AppDbContext>(_ => new AppDbContext(connectionString));
 
-        services.AddScoped<IUserDAO, UserDAO>();
-        services.AddScoped<ISessionDAO, SessionDAO>();
-        services.AddScoped<IOAuthLinkDAO, OAuthLinkDAO>();
-        services.AddScoped<IPasswordResetTokenDAO, PasswordResetTokenDAO>();
-        services.AddScoped<INotificationPreferenceDAO, NotificationPreferenceDAO>();
-        services.AddScoped<IAccountDAO, AccountDAO>();
-        services.AddScoped<ICardDAO, CardDAO>();
-        services.AddScoped<ITransactionDAO, TransactionDAO>();
-        services.AddScoped<INotificationDAO, NotificationDAO>();
+        services.AddScoped<IUserDataAccess, UserDataAccess>();
+        services.AddScoped<ISessionDataAccess, SessionDataAccess>();
+        services.AddScoped<IOAuthLinkDataAccess, OAuthLinkDataAccess>();
+        services.AddScoped<IPasswordResetTokenDataAccess, PasswordResetTokenDataAccess>();
+        services.AddScoped<INotificationPreferenceDataAccess, NotificationPreferenceDataAccess>();
+        services.AddScoped<IAccountDataAccess, AccountDataAccess>();
+        services.AddScoped<ICardDataAccess, CardDataAccess>();
+        services.AddScoped<ITransactionDataAccess, TransactionDataAccess>();
+        services.AddScoped<INotificationDataAccess, NotificationDataAccess>();
 
         services.AddScoped<IHashService, HashService>();
-        services.AddScoped<IJWTService>(_ => new JWTService(jwtSecret));
-        services.AddScoped<IOTPService, OTPService>();
+        services.AddScoped<IJwtService>(_ => new JwtService(jwtSecret));
+        services.AddScoped<IOtpService, OtpService>();
         services.AddScoped<IEmailService, EmailService>();
 
         services.AddScoped<IAuthRepository, AuthRepository>();
@@ -49,3 +49,4 @@ public static class ServiceCollectionExtensions
         return services;
     }
 }
+

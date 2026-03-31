@@ -8,14 +8,14 @@ namespace BankApp.Infrastructure.Repositories.Implementations
 {
     public class AuthRepository : IAuthRepository
     {
-        private readonly IUserDAO _userDao;
-        private readonly ISessionDAO _sessionDao;
-        private readonly IOAuthLinkDAO _oAuthLinkDao;
-        private readonly IPasswordResetTokenDAO _passwordResetTokenDao;
-        private readonly INotificationPreferenceDAO _notificationPreferenceDao;
+        private readonly IUserDataAccess _userDao;
+        private readonly ISessionDataAccess _sessionDao;
+        private readonly IOAuthLinkDataAccess _oAuthLinkDao;
+        private readonly IPasswordResetTokenDataAccess _passwordResetTokenDao;
+        private readonly INotificationPreferenceDataAccess _notificationPreferenceDao;
 
-        public AuthRepository(IUserDAO userDao, ISessionDAO sessionDao, IOAuthLinkDAO oAuthLinkDao,
-            IPasswordResetTokenDAO passwordResetTokenDao, INotificationPreferenceDAO notificationPreferenceDao)
+        public AuthRepository(IUserDataAccess userDao, ISessionDataAccess sessionDao, IOAuthLinkDataAccess oAuthLinkDao,
+            IPasswordResetTokenDataAccess passwordResetTokenDao, INotificationPreferenceDataAccess notificationPreferenceDao)
         {
             _userDao = userDao;
             _sessionDao = sessionDao;
@@ -136,5 +136,6 @@ namespace BankApp.Infrastructure.Repositories.Implementations
         }
     }
 }
+
 
 

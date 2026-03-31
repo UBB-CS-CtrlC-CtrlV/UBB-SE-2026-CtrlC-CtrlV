@@ -71,7 +71,7 @@ namespace BankApp.Server.Controllers
                 return BadRequest(new { error = "Token and new password are required." });
             }
 
-            if (!BankApp.Infrastructure.Utilities.ValidationUtil.IsStrongPassword(request.NewPassword))
+            if (!BankApp.Infrastructure.Utilities.ValidationUtilities.IsStrongPassword(request.NewPassword))
             {
                 return BadRequest(new { error = "Password must be at least 8 characters with uppercase, lowercase, a digit, and a special character." });
             }
@@ -150,4 +150,5 @@ namespace BankApp.Server.Controllers
 
     }
 }
+
 

@@ -12,41 +12,41 @@ namespace BankApp.Client.ViewModels
         public string? error { get; set; }
     }
 
-    public class ForgotPasswordViewModel : BaseViewModel
+    public class ForgotPasswordViewModel 
     {
-        private readonly ApiService _apiService;
-        public Observable<ForgotPasswordState> State { get; private set; }
+        private readonly ApiClient _apiClient;
+        public ObservableState<ForgotPasswordState> State { get; private set; }
 
-        public ForgotPasswordViewModel(ApiService apiService)
+        public ForgotPasswordViewModel(ApiClient apiClient)
         {
-            _apiService = apiService ?? throw new ArgumentNullException(nameof(apiService));
-            State = new Observable<ForgotPasswordState>(ForgotPasswordState.Idle);
+            _apiClient = apiClient ?? throw new ArgumentNullException(nameof(apiClient));
+            State = new ObservableState<ForgotPasswordState>(ForgotPasswordState.Idle);
         }
 
         public async Task ForgotPassword(string email)
         {
             if (string.IsNullOrWhiteSpace(email))
             {
-                SetState(State, ForgotPasswordState.Error);
+                State.SetValue(ForgotPasswordState.Error);
                 return;
             }
 
             try
             {
                 var request = new ForgotPasswordRequest { Email = email };
-                var response = await _apiService.PostAsync<ForgotPasswordRequest, ApiResponse>("/api/auth/forgot-password", request);
+                var response = await _apiClient.PostAsync<ForgotPasswordRequest, ApiResponse>("/api/auth/forgot-password", request);
                 if (response != null && response.error == null)
                 {
-                    SetState(State, ForgotPasswordState.EmailSent);
+                    State.SetValue(ForgotPasswordState.EmailSent);
                 }
                 else
                 {
-                    SetState(State, ForgotPasswordState.Error);
+                    State.SetValue(ForgotPasswordState.Error);
                 }
             }
             catch (Exception)
             {
-                SetState(State, ForgotPasswordState.Error);
+                State.SetValue(ForgotPasswordState.Error);
             }
         }
 
@@ -54,7 +54,7 @@ namespace BankApp.Client.ViewModels
         {
             if (string.IsNullOrWhiteSpace(newPassword) || string.IsNullOrWhiteSpace(code))
             {
-                SetState(State, ForgotPasswordState.Error);
+                State.SetValue(ForgotPasswordState.Error);
                 return;
             }
 
@@ -65,26 +65,26 @@ namespace BankApp.Client.ViewModels
                     Token = code,
                     NewPassword = newPassword
                 };
-                var response = await _apiService.PostAsync<ResetPasswordRequest, ApiResponse>("/api/auth/reset-password", request);
+                var response = await _apiClient.PostAsync<ResetPasswordRequest, ApiResponse>("/api/auth/reset-password", request);
                 if (response != null && response.error == null)
                 {
-                    SetState(State, ForgotPasswordState.PasswordResetSuccess);
+                    State.SetValue(ForgotPasswordState.PasswordResetSuccess);
                 }
                 else
                 {
                     if (response?.error != null && response.error.Contains("expired", StringComparison.OrdinalIgnoreCase))
                     {
-                        SetState(State, ForgotPasswordState.TokenExpired);
+                        State.SetValue(ForgotPasswordState.TokenExpired);
                     }
                     else
                     {
-                        SetState(State, ForgotPasswordState.Error);
+                        State.SetValue(ForgotPasswordState.Error);
                     }
                 }
             }
             catch (Exception)
             {
-                SetState(State, ForgotPasswordState.Error);
+                State.SetValue(ForgotPasswordState.Error);
             }
         }
 
@@ -92,33 +92,34 @@ namespace BankApp.Client.ViewModels
         {
             if (string.IsNullOrWhiteSpace(code))
             {
-                SetState(State, ForgotPasswordState.Error);
+                State.SetValue(ForgotPasswordState.Error);
                 return;
             }
 
             try
             {
-                var response = await _apiService.PostAsync<object, ApiResponse>("/api/auth/verify-reset-token", new { Token = code });
+                var response = await _apiClient.PostAsync<object, ApiResponse>("/api/auth/verify-reset-token", new { Token = code });
 
                 if (response != null && response.error == null)
                 {
-                    SetState(State, ForgotPasswordState.TokenValid);
+                    State.SetValue(ForgotPasswordState.TokenValid);
                 }
                 else
                 {
-                    SetState(State, ForgotPasswordState.TokenExpired);
+                    State.SetValue(ForgotPasswordState.TokenExpired);
                 }
             }
             catch (Exception)
             {
-                SetState(State, ForgotPasswordState.Error);
+                State.SetValue(ForgotPasswordState.Error);
             }
         }
 
 
-        public override void Dispose()
+        public void Dispose()
         {
-            State = null;
         }
     }
 }
+
+

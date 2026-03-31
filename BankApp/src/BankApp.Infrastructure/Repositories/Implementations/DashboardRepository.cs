@@ -6,12 +6,12 @@ namespace BankApp.Infrastructure.Repositories.Implementations
 {
 	public class DashboardRepository : IDashboardRepository
 	{
-		private readonly IAccountDAO _accountDAO;
-		private readonly ICardDAO _cardDAO;
-		private readonly ITransactionDAO _transactionDAO;
-		private readonly INotificationDAO _notificationDAO;
+		private readonly IAccountDataAccess _accountDAO;
+		private readonly ICardDataAccess _cardDAO;
+		private readonly ITransactionDataAccess _transactionDAO;
+		private readonly INotificationDataAccess _notificationDAO;
 
-		public DashboardRepository(IAccountDAO accountDAO, ICardDAO cardDAO, ITransactionDAO transactionDAO, INotificationDAO notificationDAO)
+		public DashboardRepository(IAccountDataAccess accountDAO, ICardDataAccess cardDAO, ITransactionDataAccess transactionDAO, INotificationDataAccess notificationDAO)
 		{
 			_accountDAO = accountDAO;
 			_cardDAO = cardDAO;
@@ -37,4 +37,5 @@ namespace BankApp.Infrastructure.Repositories.Implementations
 		}
 	}
 }
+
 

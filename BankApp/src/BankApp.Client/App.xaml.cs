@@ -1,4 +1,4 @@
-﻿using Microsoft.UI.Xaml;
+using Microsoft.UI.Xaml;
 using BankApp.Client.Utilities;
 using BankApp.Client.Master;
 
@@ -6,9 +6,9 @@ namespace BankApp.Client
 {
     public partial class App : Application
     {
-        // Shared services, accessible from anywhere via App.ApiService, App.NavigationService
-        public static ApiService ApiService { get; private set; } = new ApiService();
-        public static NavigationService NavigationService { get; private set; } = new NavigationService();
+        // Shared services, accessible from anywhere via App.ApiClient, App.NavigationService
+        public static ApiClient ApiClient { get; } = new ApiClient();
+        public static IAppNavigationService NavigationService { get; } = new AppNavigationService();
 
         private Window? m_window;
 

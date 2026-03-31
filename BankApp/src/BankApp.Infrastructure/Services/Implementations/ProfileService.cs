@@ -42,7 +42,7 @@ namespace BankApp.Infrastructure.Services.Implementations
             // Check and update phone number
             if (request.PhoneNumber != null)
             {
-                if (!ValidationUtil.IsValidPhoneNumber(request.PhoneNumber))
+                if (!ValidationUtilities.IsValidPhoneNumber(request.PhoneNumber))
                 {
                     return new UpdateProfileResponse(false, "Invalid phone number.");
                 }
@@ -74,7 +74,7 @@ namespace BankApp.Infrastructure.Services.Implementations
                 return new ChangePasswordResponse(false, "User not found.");
             }
 
-            if (!ValidationUtil.IsStrongPassword(request.NewPassword))
+            if (!ValidationUtilities.IsStrongPassword(request.NewPassword))
             {
                 return new ChangePasswordResponse(false, "Password must contain at least one digit, one uppercase and one special symbol.");
             }
@@ -176,4 +176,5 @@ namespace BankApp.Infrastructure.Services.Implementations
         }
     }
 }
+
 

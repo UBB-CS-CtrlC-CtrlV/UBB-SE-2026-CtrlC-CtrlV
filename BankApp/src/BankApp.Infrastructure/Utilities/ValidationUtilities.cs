@@ -3,7 +3,7 @@ using System.Net.Mail;
 
 namespace BankApp.Infrastructure.Utilities
 {
-    public static class ValidationUtil
+    public static class ValidationUtilities
     {
         public static bool IsValidEmail(string email)
         {
@@ -53,3 +53,4 @@ namespace BankApp.Infrastructure.Utilities
         }
     }
 }
+

@@ -1,7 +1,7 @@
 using BankApp.Core.Entities;
 namespace BankApp.Infrastructure.DataAccess.Interfaces
 {
-    public interface IPasswordResetTokenDAO
+    public interface IPasswordResetTokenDataAccess
     {
         PasswordResetToken Create(int userId, string tokenHash, DateTime expiresAt);
         PasswordResetToken? FindByToken(string tokenHash);
@@ -9,4 +9,5 @@ namespace BankApp.Infrastructure.DataAccess.Interfaces
         void DeleteExpired();
     }
 }
+
 

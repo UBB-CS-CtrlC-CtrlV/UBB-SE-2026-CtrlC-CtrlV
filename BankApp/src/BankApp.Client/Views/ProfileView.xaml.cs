@@ -14,7 +14,7 @@ using BankApp.Core.Extensions;
 
 namespace BankApp.Client.Views
 {
-    public sealed partial class ProfileView : Page, Observer<ProfileState>
+    public sealed partial class ProfileView : Page, IStateObserver<ProfileState>
     {
         private ProfileViewModel _viewModel;
 
@@ -31,7 +31,7 @@ namespace BankApp.Client.Views
         {
             this.InitializeComponent();
 
-            _viewModel = new ProfileViewModel(App.ApiService);
+            _viewModel = new ProfileViewModel(App.ApiClient);
             _viewModel.State.AddObserver(this);
         }
 
@@ -600,3 +600,4 @@ namespace BankApp.Client.Views
 
     }
 }
+

@@ -5,11 +5,11 @@ using System.Data;
 
 namespace BankApp.Infrastructure.DataAccess.Implementations
 {
-    public class AccountDAO : IAccountDAO
+    public class AccountDataAccess : IAccountDataAccess
     {
         private readonly AppDbContext _dbContext;
 
-        public AccountDAO(AppDbContext dbContext)
+        public AccountDataAccess(AppDbContext dbContext)
         {
             _dbContext = dbContext;
         }
@@ -55,5 +55,6 @@ namespace BankApp.Infrastructure.DataAccess.Implementations
         }
     }
 }
+
 
 

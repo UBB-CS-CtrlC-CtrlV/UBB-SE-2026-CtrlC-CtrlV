@@ -7,13 +7,13 @@ using BankApp.Infrastructure.DataAccess.Interfaces;
 using BankApp.Infrastructure.Repositories.Interfaces;
 public class UserRepository : IUserRepository
 {
-    private readonly IUserDAO _userDao;
-    private readonly ISessionDAO _sessionDao;
-    private readonly IOAuthLinkDAO _oAuthLinkDao;
-    private readonly INotificationPreferenceDAO _notificationPreferenceDao;
+    private readonly IUserDataAccess _userDao;
+    private readonly ISessionDataAccess _sessionDao;
+    private readonly IOAuthLinkDataAccess _oAuthLinkDao;
+    private readonly INotificationPreferenceDataAccess _notificationPreferenceDao;
 
-    public UserRepository(IUserDAO userDao, ISessionDAO sessionDao, IOAuthLinkDAO oAuthLinkDao,
-        INotificationPreferenceDAO notificationPreferenceDao)
+    public UserRepository(IUserDataAccess userDao, ISessionDataAccess sessionDao, IOAuthLinkDataAccess oAuthLinkDao,
+        INotificationPreferenceDataAccess notificationPreferenceDao)
     {
         _userDao = userDao;
         _sessionDao = sessionDao;
@@ -71,4 +71,5 @@ public class UserRepository : IUserRepository
         return _notificationPreferenceDao.Update(userId, prefs);
     }
 }
+
 

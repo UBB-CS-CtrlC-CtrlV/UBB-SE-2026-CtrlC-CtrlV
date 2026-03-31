@@ -13,7 +13,7 @@ using System.Threading.Tasks;
 
 namespace BankApp.Client.Views
 {
-    public sealed partial class DashboardView : Page, Observer<DashboardState>
+    public sealed partial class DashboardView : Page, IStateObserver<DashboardState>
     {
         private readonly DashboardViewModel _viewModel;
         private int _currentCardIndex = 0;
@@ -22,7 +22,7 @@ namespace BankApp.Client.Views
         {
             this.InitializeComponent();
 
-            _viewModel = new DashboardViewModel(App.ApiService);
+            _viewModel = new DashboardViewModel(App.ApiClient);
             _viewModel.State.AddObserver(this);
             _viewModel.LoadDashboard();
         }
@@ -199,4 +199,5 @@ namespace BankApp.Client.Views
         }
     }
 }
+
 

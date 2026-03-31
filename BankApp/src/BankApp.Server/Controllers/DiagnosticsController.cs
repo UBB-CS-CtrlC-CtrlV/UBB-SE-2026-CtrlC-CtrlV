@@ -11,7 +11,7 @@ namespace BankApp.Server.Controllers
 
     [ApiController]
     [Route("api/[controller]")]
-    public class TestController : ControllerBase
+    public class DiagnosticsController : ControllerBase
     {
         [HttpGet("db")]
         public IActionResult TestDb([FromServices] AppDbContext db)
@@ -31,7 +31,7 @@ namespace BankApp.Server.Controllers
         }
 
         [HttpGet("user/find/{email}")]
-        public IActionResult FindUser([FromServices] IUserDAO userDao, string email)
+        public IActionResult FindUser([FromServices] IUserDataAccess userDao, string email)
         {
             try
             {
@@ -72,7 +72,7 @@ namespace BankApp.Server.Controllers
         }
 
         [HttpGet("jwt/generate/{userId}")]
-        public IActionResult TestJwtGenerate([FromServices] IJWTService jwt, int userId)
+        public IActionResult TestJwtGenerate([FromServices] IJwtService jwt, int userId)
         {
             try
             {
@@ -86,7 +86,7 @@ namespace BankApp.Server.Controllers
         }
 
         [HttpGet("jwt/validate/{token}")]
-        public IActionResult TestJwtValidate([FromServices] IJWTService jwt, string token)
+        public IActionResult TestJwtValidate([FromServices] IJwtService jwt, string token)
         {
             try
             {
@@ -100,4 +100,5 @@ namespace BankApp.Server.Controllers
         }
     }
 }
+
 
