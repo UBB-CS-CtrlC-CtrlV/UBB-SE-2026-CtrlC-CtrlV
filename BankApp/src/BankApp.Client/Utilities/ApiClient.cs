@@ -1,67 +1,92 @@
+// <copyright file="ApiClient.cs" company="CtrlC CtrlV">
+// Copyright (c) CtrlC CtrlV. All rights reserved.
+// </copyright>
+
+using System;
 using System.Net.Http;
 using System.Net.Http.Json;
-using System.Net;
 using System.Threading;
 using System.Threading.Tasks;
-using System;
 
 namespace BankApp.Client.Utilities
 {
+    /// <summary>
+    /// Provides a thin wrapper around <see cref="HttpClient"/> for the application's API calls.
+    /// </summary>
     public class ApiClient
     {
-        private readonly HttpClient _httpClient;
-        private string? _token;
-        private int? _currentUserId;
+        private readonly HttpClient httpClient;
+        private string? token;
+        private int? currentUserId;
 
+        /// <summary>
+        /// Initializes a new instance of the <see cref="ApiClient"/> class.
+        /// </summary>
+        /// <param name="baseUrl">The API base URL.</param>
         public ApiClient(string baseUrl = "http://localhost:5024")
         {
-            _httpClient = new HttpClient
+            this.httpClient = new HttpClient
             {
-                BaseAddress = new Uri(baseUrl)
+                BaseAddress = new Uri(baseUrl),
             };
         }
 
-        public void SetToken(string token)
+        /// <summary>
+        /// Gets or sets the identifier of the currently authenticated user.
+        /// </summary>
+        public int? CurrentUserId
         {
-            _token = token;
-            _httpClient.DefaultRequestHeaders.Authorization =
-                new System.Net.Http.Headers.AuthenticationHeaderValue("Bearer", token);
+            get => this.currentUserId;
+            set => this.currentUserId = value;
         }
 
-        public void SetCurrentUserId(int userId)
+        /// <summary>
+        /// Sets the bearer token used for authenticated requests.
+        /// </summary>
+        /// <param name="tokenStr">The token value.</param>
+        public void SetToken(string tokenStr)
         {
-            _currentUserId = userId;
+            this.token = tokenStr;
+            this.httpClient.DefaultRequestHeaders.Authorization =
+                new System.Net.Http.Headers.AuthenticationHeaderValue("Bearer", tokenStr);
         }
 
-        public int? GetCurrentUserId()
-        {
-            return _currentUserId;
-        }
-
+        /// <summary>
+        /// Clears the stored authentication state from the client.
+        /// </summary>
         public void ClearToken()
         {
-            _token = null;
-            _currentUserId = null;
-            _httpClient.DefaultRequestHeaders.Authorization = null;
+            this.token = null;
+            this.currentUserId = null;
+            this.httpClient.DefaultRequestHeaders.Authorization = null;
         }
 
+        /// <summary>
+        /// Gets the currently configured bearer token.
+        /// </summary>
+        /// <returns>The configured bearer token, if one exists.</returns>
         public string? GetToken()
         {
-            return _token;
+            return this.token;
         }
 
+        /// <summary>
+        /// Sends a POST request to the provided endpoint and deserializes the response body.
+        /// </summary>
+        /// <typeparam name="TRequest">The request model type.</typeparam>
+        /// <typeparam name="TResponse">The response model type.</typeparam>
+        /// <param name="endpoint">The relative endpoint to call.</param>
+        /// <param name="data">The request body to serialize.</param>
+        /// <returns>The deserialized response body, if available.</returns>
         public async Task<TResponse?> PostAsync<TRequest, TResponse>(string endpoint, TRequest data)
         {
             try
             {
-                var response = await _httpClient.PostAsJsonAsync(endpoint, data);
-                if (response.IsSuccessStatusCode)
-                    return await response.Content.ReadFromJsonAsync<TResponse>();
+                var response = await this.httpClient.PostAsJsonAsync(endpoint, data);
                 return await response.Content.ReadFromJsonAsync<TResponse>();
             }
             catch (Exception ex)
             {
-                // Put a breakpoint here and check ex.Message
                 Console.WriteLine($"HTTP ERROR: {ex.Message}");
                 Console.WriteLine($"Inner: {ex.InnerException?.Message}");
                 throw;
@@ -77,39 +102,32 @@ namespace BankApp.Client.Utilities
         /// <returns>The deserialized response body, if available.</returns>
         public virtual async Task<TResponse?> GetAsync<TResponse>(string endpoint, CancellationToken cancellationToken = default)
         {
-            var response = await _httpClient.GetAsync(endpoint, cancellationToken);
-            if (!response.IsSuccessStatusCode)
+            var response = await this.httpClient.GetAsync(endpoint, cancellationToken);
+            if (response.IsSuccessStatusCode)
             {
-                var errorBody = await response.Content.ReadAsStringAsync(cancellationToken);
-                throw new ApiException(
-                    response.StatusCode,
-                    string.IsNullOrWhiteSpace(errorBody)
-                        ? $"Request to '{endpoint}' failed with status {(int)response.StatusCode}."
-                        : errorBody);
+                return await response.Content.ReadFromJsonAsync<TResponse>(cancellationToken: cancellationToken);
             }
 
-            return await response.Content.ReadFromJsonAsync<TResponse>(cancellationToken: cancellationToken);
+            var errorBody = await response.Content.ReadAsStringAsync(cancellationToken);
+            var errorMessage = string.IsNullOrWhiteSpace(errorBody)
+                ? $"Request to '{endpoint}' failed with status {(int)response.StatusCode}."
+                : errorBody;
+
+            throw new ApiException(response.StatusCode, errorMessage);
         }
 
+        /// <summary>
+        /// Sends a PUT request to the provided endpoint and deserializes the response body.
+        /// </summary>
+        /// <typeparam name="TRequest">The request model type.</typeparam>
+        /// <typeparam name="TResponse">The response model type.</typeparam>
+        /// <param name="endpoint">The relative endpoint to call.</param>
+        /// <param name="data">The request body to serialize.</param>
+        /// <returns>The deserialized response body, if available.</returns>
         public async Task<TResponse?> PutAsync<TRequest, TResponse>(string endpoint, TRequest data)
         {
-            var response = await _httpClient.PutAsJsonAsync(endpoint, data);
-            if (response.IsSuccessStatusCode)
-                return await response.Content.ReadFromJsonAsync<TResponse>();
-
-            // Try to read error response
+            var response = await this.httpClient.PutAsJsonAsync(endpoint, data);
             return await response.Content.ReadFromJsonAsync<TResponse>();
         }
-    }
-
-    public class ApiException : Exception
-    {
-        public ApiException(HttpStatusCode statusCode, string message)
-            : base(message)
-        {
-            this.StatusCode = statusCode;
-        }
-
-        public HttpStatusCode StatusCode { get; }
     }
 }
