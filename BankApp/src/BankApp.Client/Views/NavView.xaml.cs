@@ -9,13 +9,16 @@ namespace BankApp.Client.Views
 {
     public sealed partial class NavView : Page
     {
-        private Button _activeNavButton;
+        public static NavView? Current { get; private set; }
+
+        private Button? _activeNavButton;
 
         private readonly List<Button> _navButtons;
 
         public NavView()
         {
             this.InitializeComponent();
+            Current = this;
             _navButtons = new List<Button>
             {
                 NavDashboard, NavTransfers, NavBillPayments, NavCards,
@@ -85,7 +88,7 @@ namespace BankApp.Client.Views
         private async void NavSupport_Click(object sender, RoutedEventArgs e) =>
             await ShowComingSoonAsync("Support");
 
-        private async System.Threading.Tasks.Task ShowComingSoonAsync(string feature)
+        public async System.Threading.Tasks.Task ShowComingSoonAsync(string feature)
         {
             var dialog = new ContentDialog
             {
@@ -99,7 +102,11 @@ namespace BankApp.Client.Views
 
         private void NotificationBell_PointerPressed(object sender, PointerRoutedEventArgs e)
         {
-            // TODO: show notifications panel
+            var message = NotificationBadge.Visibility == Visibility.Visible
+                ? $"You have {NotificationBadgeText.Text} unread notifications."
+                : "You have no unread notifications.";
+
+            _ = this.ShowAlertAsync("Notifications", message);
         }
 
         private async void LogoutButton_Click(object sender, RoutedEventArgs e)
@@ -107,6 +114,19 @@ namespace BankApp.Client.Views
             //await App.ApiClient.PostAsync("/api/auth/logout", null);
             App.ApiClient.ClearToken();
             App.NavigationService.NavigateTo<LoginView>();
+        }
+
+        private async System.Threading.Tasks.Task ShowAlertAsync(string title, string message)
+        {
+            var dialog = new ContentDialog
+            {
+                Title = title,
+                Content = message,
+                CloseButtonText = "OK",
+                XamlRoot = this.XamlRoot
+            };
+
+            await dialog.ShowAsync();
         }
     }
 }

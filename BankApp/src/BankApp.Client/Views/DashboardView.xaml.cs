@@ -1,3 +1,10 @@
+// <copyright file="DashboardView.xaml.cs" company="CtrlC CtrlV">
+// Copyright (c) CtrlC CtrlV. All rights reserved.
+// </copyright>
+
+using System;
+using System.Threading;
+using System.Threading.Tasks;
 using BankApp.Client.Utilities;
 using BankApp.Client.ViewModels;
 using BankApp.Core.Enums;
@@ -5,155 +12,222 @@ using Microsoft.UI.Xaml;
 using Microsoft.UI.Xaml.Controls;
 using Microsoft.UI.Xaml.Input;
 using Microsoft.UI.Xaml.Media;
+using Microsoft.UI.Xaml.Navigation;
 using Microsoft.UI.Xaml.Shapes;
-using System;
-using System.Threading.Tasks;
 using Windows.UI;
 
 namespace BankApp.Client.Views
 {
-    public sealed partial class DashboardView : Page, IStateObserver<DashboardState>
+    /// <summary>
+    /// Create the Dashboard View.
+    /// </summary>
+    public sealed partial class DashboardView : IStateObserver<DashboardState>
     {
-        private readonly DashboardViewModel _viewModel;
-        private int _currentCardIndex = 0;
+        private readonly DashboardViewModel viewModel;
+        private int currentCardIndex;
+        private bool isObserverAttached;
+        private CancellationTokenSource? loadCancellationTokenSource;
 
+        /// <summary>
+        /// Initializes a new instance of the <see cref="DashboardView"/> class.
+        /// </summary>
         public DashboardView()
         {
             this.InitializeComponent();
 
-            _viewModel = new DashboardViewModel(App.ApiClient);
-            _viewModel.State.AddObserver(this);
-            _viewModel.LoadDashboard();
+            this.viewModel = new DashboardViewModel(App.ApiClient);
         }
 
+        /// <inheritdoc/>
         public void Update(DashboardState state)
         {
-            OnStateChanged(state);
+            this.OnStateChanged(state);
         }
 
+        /// <summary>
+        /// Reacts to dashboard state updates from the view model.
+        /// </summary>
+        /// <param name="state">The new state.</param>
         public void OnStateChanged(DashboardState state)
         {
-            DispatcherQueue.TryEnqueue(() =>
+            this.DispatcherQueue.TryEnqueue(() =>
             {
                 switch (state)
                 {
                     case DashboardState.Loading:
-                        ShowLoading();
+                        this.ShowLoading();
                         break;
 
                     case DashboardState.Success:
-                        HideLoading();
-                        RefreshUI();
+                        this.HideLoading();
+                        this.ErrorInfoBar.IsOpen = false;
+                        this.RefreshUi();
                         break;
 
                     case DashboardState.Error:
-                        HideLoading();
-                        ShowError("Failed to load dashboard. Please try again.");
+                        this.HideLoading();
+                        this.ShowError(this.viewModel.ErrorMessage);
                         break;
                 }
             });
         }
 
-
-        private void RefreshUI()
+        /// <inheritdoc/>
+        protected override void OnNavigatedTo(NavigationEventArgs e)
         {
-            UserNameText.Text = _viewModel.CurrentUser?.FullName ?? string.Empty;
-            TransactionsList.ItemsSource = _viewModel.RecentTransactions;
-            BuildCardDots();
-            ShowCard(_currentCardIndex);
+            base.OnNavigatedTo(e);
+            this.AttachObserver();
+            _ = this.RunUiTaskAsync(this.LoadDashboardAsync);
+        }
+
+        /// <inheritdoc/>
+        protected override void OnNavigatedFrom(NavigationEventArgs e)
+        {
+            base.OnNavigatedFrom(e);
+            this.CancelPendingLoad();
+            this.DetachObserver();
+        }
+
+        private async Task LoadDashboardAsync()
+        {
+            this.CancelPendingLoad();
+            this.loadCancellationTokenSource = new CancellationTokenSource();
+
+            try
+            {
+                await this.viewModel.LoadDashboard(this.loadCancellationTokenSource.Token);
+            }
+            catch (OperationCanceledException)
+            {
+            }
+        }
+
+        private void RefreshUi()
+        {
+            this.UserNameText.Text = this.viewModel.CurrentUser?.FullName ?? string.Empty;
+            this.TransactionsList.ItemsSource = this.viewModel.RecentTransactionItems;
+            this.EmptyTransactionsState.Visibility =
+                this.viewModel.RecentTransactionItems.Count == 0 ? Visibility.Visible : Visibility.Collapsed;
+
+            this.BuildCardDots();
+            this.ShowCard(this.currentCardIndex);
+            NavView.Current?.UpdateNotificationBadge(this.viewModel.UnreadNotificationCount);
         }
 
         private void ShowCard(int index)
         {
-            var cards = _viewModel.Cards;
-            if (cards == null || cards.Count == 0) return;
+            var cards = this.viewModel.Cards;
+            if (cards.Count == 0)
+            {
+                this.currentCardIndex = 0;
+                this.CardVisual.Visibility = Visibility.Collapsed;
+                this.EmptyCardsState.Visibility = Visibility.Visible;
+                this.ClearCardDisplay();
+                this.UpdateCardNavigationState();
+                return;
+            }
 
             index = Math.Clamp(index, 0, cards.Count - 1);
-            _currentCardIndex = index;
+            this.currentCardIndex = index;
+            this.CardVisual.Visibility = Visibility.Visible;
+            this.EmptyCardsState.Visibility = Visibility.Collapsed;
 
             var card = cards[index];
 
-            CardBankName.Text = "PC𐂂BAMBI";
-            CardBrandName.Text = string.IsNullOrEmpty(card.CardBrand) ? "Mastercard" : card.CardBrand;
-            CardHolderText.Text = card.CardholderName.ToUpper();
-            CardExpiryText.Text = card.ExpiryDate.ToString("MM/yy");
+            this.CardBankName.Text = "BankApp";
+            this.CardBrandName.Text = string.IsNullOrWhiteSpace(card.CardBrand)
+                ? card.CardType
+                : card.CardBrand;
+            this.CardHolderText.Text = string.IsNullOrWhiteSpace(card.CardholderName)
+                ? "CARD HOLDER"
+                : card.CardholderName.ToUpperInvariant();
+            this.CardExpiryText.Text = card.ExpiryDate.ToString("MM/yy");
+            this.CardNumberText.Text = this.MaskCardNumber(card.CardNumber);
 
-            var number = card.CardNumber;
-            CardNumberText.Text = number.Length >= 4
-                ? $"**** **** **** {number[^4..]}"
-                : "**** **** **** ****";
-
-            UpdateCardDots();
+            this.UpdateCardDots();
+            this.UpdateCardNavigationState();
         }
 
         private void BuildCardDots()
         {
-            CardDots.Children.Clear();
-            var count = _viewModel.Cards?.Count ?? 0;
-            for (int i = 0; i < count; i++)
+            this.CardDots.Children.Clear();
+            var count = this.viewModel.Cards?.Count ?? 0;
+            this.CardDots.Visibility = count > 1 ? Visibility.Visible : Visibility.Collapsed;
+            for (var i = 0; i < count; i++)
             {
                 var dot = new Ellipse
                 {
-                    Width = i == _currentCardIndex ? 18 : 8,
+                    Width = i == this.currentCardIndex ? 18 : 8,
                     Height = 8,
-                    Fill = new SolidColorBrush(i == _currentCardIndex
+                    Fill = new SolidColorBrush(
+                        i == this.currentCardIndex
                         ? Color.FromArgb(255, 78, 205, 196)
-                        : Color.FromArgb(100, 78, 205, 196))
+                        : Color.FromArgb(100, 78, 205, 196)),
                 };
-                CardDots.Children.Add(dot);
+                this.CardDots.Children.Add(dot);
             }
         }
 
         private void UpdateCardDots()
         {
-            for (int i = 0; i < CardDots.Children.Count; i++)
+            for (var i = 0; i < this.CardDots.Children.Count; i++)
             {
-                if (CardDots.Children[i] is Ellipse dot)
+                if (this.CardDots.Children[i] is not Ellipse dot)
                 {
-                    dot.Width = i == _currentCardIndex ? 18 : 8;
-                    dot.Fill = new SolidColorBrush(i == _currentCardIndex
-                        ? Color.FromArgb(255, 78, 205, 196)
-                        : Color.FromArgb(100, 78, 205, 196));
+                    continue;
                 }
+
+                dot.Width = i == this.currentCardIndex ? 18 : 8;
+                dot.Fill = new SolidColorBrush(
+                    i == this.currentCardIndex
+                    ? Color.FromArgb(255, 78, 205, 196)
+                    : Color.FromArgb(100, 78, 205, 196));
             }
         }
 
         private void PrevCardButton_Click(object sender, RoutedEventArgs e)
         {
-            if (_currentCardIndex > 0)
-                ShowCard(_currentCardIndex - 1);
+            if (this.currentCardIndex > 0)
+            {
+                this.ShowCard(this.currentCardIndex - 1);
+            }
         }
 
         private void NextCardButton_Click(object sender, RoutedEventArgs e)
         {
-            var count = _viewModel.Cards?.Count ?? 0;
-            if (_currentCardIndex < count - 1)
-                ShowCard(_currentCardIndex + 1);
+            var count = this.viewModel.Cards?.Count ?? 0;
+            if (this.currentCardIndex < count - 1)
+            {
+                this.ShowCard(this.currentCardIndex + 1);
+            }
         }
 
-        private async void TransferButton_Click(object sender, RoutedEventArgs e)
+        private void TransferButton_Click(object sender, RoutedEventArgs e)
         {
-            await ShowAlertAsync("Transfer", "Transfer feature works!");
+            _ = this.RunUiTaskAsync(() => this.ShowComingSoonAsync("Transfers"));
         }
 
-        private async void PayBillButton_Click(object sender, RoutedEventArgs e)
+        private void PayBillButton_Click(object sender, RoutedEventArgs e)
         {
-            await ShowAlertAsync("Pay Bill", "Pay Bill feature works!");
+            _ = this.RunUiTaskAsync(() => this.ShowComingSoonAsync("Bill Payments"));
         }
 
-        private async void ExchangeButton_Click(object sender, RoutedEventArgs e)
+        private void ExchangeButton_Click(object sender, RoutedEventArgs e)
         {
-            await ShowAlertAsync("Currency Exchange", "Currency Exchange feature works!");
+            _ = this.RunUiTaskAsync(() => this.ShowComingSoonAsync("Currency Exchange"));
         }
 
-        private async void TxHistoryButton_Click(object sender, RoutedEventArgs e)
+        private void TxHistoryButton_Click(object sender, RoutedEventArgs e)
         {
-            await ShowAlertAsync("Transaction History", "Transaction History feature works!");
+            _ = this.RunUiTaskAsync(() => this.ShowComingSoonAsync("Transaction History"));
         }
 
         private void ShowError(string msg)
         {
-            // TODO: add an ErrorInfoBar to the XAML like LoginView has - for later
+            this.ErrorInfoBar.Message = string.IsNullOrWhiteSpace(msg)
+                ? "We couldn't load your dashboard right now."
+                : msg;
+            this.ErrorInfoBar.IsOpen = true;
         }
 
         private async Task ShowAlertAsync(string title, string message)
@@ -163,40 +237,145 @@ namespace BankApp.Client.Views
                 Title = title,
                 Content = message,
                 CloseButtonText = "OK",
-                XamlRoot = this.XamlRoot
+                XamlRoot = this.XamlRoot,
             };
             await dialog.ShowAsync();
         }
-        private async void CardVisual_PointerPressed(object sender, PointerRoutedEventArgs e)
+
+        private void CardVisual_PointerPressed(object sender, PointerRoutedEventArgs e)
         {
-            var cards = _viewModel.Cards;
-            if (cards == null || cards.Count == 0) return;
+            _ = this.RunUiTaskAsync(this.ShowCurrentCardDetailsAsync);
+        }
 
-            var card = cards[_currentCardIndex];
+        private async Task ShowCurrentCardDetailsAsync()
+        {
+            var cards = this.viewModel.Cards;
+            if (cards.Count == 0)
+            {
+                return;
+            }
 
-            string details =
+            var card = cards[this.currentCardIndex];
+
+            var details =
                 $"Card Type:     {card.CardType}\n" +
                 $"Card Brand:    {card.CardBrand ?? "Mastercard"}\n" +
-                $"Card Number:     {card.CardNumber}\n" +
+                $"Card Number:   {this.MaskCardNumber(card.CardNumber)}\n" +
                 $"Cardholder:    {card.CardholderName}\n" +
                 $"Expiry Date:   {card.ExpiryDate:MM/yy}\n" +
                 $"Status:        {card.Status}\n" +
                 $"Contactless:   {(card.IsContactlessEnabled ? "Enabled" : "Disabled")}\n" +
                 $"Online Payments: {(card.IsOnlineEnabled ? "Enabled" : "Disabled")}";
 
-            await ShowAlertAsync("Card Details", details);
+            await this.ShowAlertAsync("Card Details", details);
         }
 
         private void ShowLoading()
         {
-            LoadingOverlay.Visibility = Visibility.Visible;
+            this.LoadingOverlay.Visibility = Visibility.Visible;
         }
 
         private void HideLoading()
         {
-            LoadingOverlay.Visibility = Visibility.Collapsed;
+            this.LoadingOverlay.Visibility = Visibility.Collapsed;
+        }
+
+        private void RetryButton_Click(object sender, RoutedEventArgs e)
+        {
+            _ = this.RunUiTaskAsync(this.LoadDashboardAsync);
+        }
+
+        private void AttachObserver()
+        {
+            if (this.isObserverAttached)
+            {
+                return;
+            }
+
+            this.viewModel.State.AddObserver(this);
+            this.isObserverAttached = true;
+        }
+
+        private void DetachObserver()
+        {
+            if (!this.isObserverAttached)
+            {
+                return;
+            }
+
+            this.viewModel.State.RemoveObserver(this);
+            this.isObserverAttached = false;
+        }
+
+        private void CancelPendingLoad()
+        {
+            if (this.loadCancellationTokenSource == null)
+            {
+                return;
+            }
+
+            this.loadCancellationTokenSource.Cancel();
+            this.loadCancellationTokenSource.Dispose();
+            this.loadCancellationTokenSource = null;
+        }
+
+        private void ClearCardDisplay()
+        {
+            this.CardBankName.Text = string.Empty;
+            this.CardBrandName.Text = string.Empty;
+            this.CardHolderText.Text = string.Empty;
+            this.CardExpiryText.Text = string.Empty;
+            this.CardNumberText.Text = "**** **** **** ****";
+        }
+
+        private void UpdateCardNavigationState()
+        {
+            var count = this.viewModel.Cards.Count;
+            var hasCards = count > 0;
+
+            this.PrevCardButton.IsEnabled = hasCards && this.currentCardIndex > 0;
+            this.NextCardButton.IsEnabled = hasCards && this.currentCardIndex < count - 1;
+            this.PrevCardButton.Visibility = hasCards ? Visibility.Visible : Visibility.Collapsed;
+            this.NextCardButton.Visibility = hasCards ? Visibility.Visible : Visibility.Collapsed;
+        }
+
+        private string MaskCardNumber(string? cardNumber)
+        {
+            if (string.IsNullOrWhiteSpace(cardNumber))
+            {
+                return "**** **** **** ****";
+            }
+
+            return cardNumber.Length >= 4
+                ? $"**** **** **** {cardNumber[^4..]}"
+                : "**** **** **** ****";
+        }
+
+        private async Task ShowComingSoonAsync(string feature)
+        {
+            if (NavView.Current != null)
+            {
+                await NavView.Current.ShowComingSoonAsync(feature);
+                return;
+            }
+
+            await this.ShowAlertAsync(feature, $"{feature} is coming soon.");
+        }
+
+        private async Task RunUiTaskAsync(Func<Task> action)
+        {
+            try
+            {
+                await action();
+            }
+            catch (OperationCanceledException)
+            {
+            }
+            catch (Exception ex)
+            {
+                this.HideLoading();
+                this.ShowError($"Unexpected error: {ex.Message}");
+            }
         }
     }
 }
-
-

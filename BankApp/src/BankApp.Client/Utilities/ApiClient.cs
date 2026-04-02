@@ -1,5 +1,7 @@
 using System.Net.Http;
 using System.Net.Http.Json;
+using System.Net;
+using System.Threading;
 using System.Threading.Tasks;
 using System;
 
@@ -66,10 +68,27 @@ namespace BankApp.Client.Utilities
             }
         }
 
-        public async Task<TResponse?> GetAsync<TResponse>(string endpoint)
+        /// <summary>
+        /// Sends a GET request to the provided endpoint and deserializes the response body.
+        /// </summary>
+        /// <typeparam name="TResponse">The response model type.</typeparam>
+        /// <param name="endpoint">The relative endpoint to call.</param>
+        /// <param name="cancellationToken">A token that can cancel the request.</param>
+        /// <returns>The deserialized response body, if available.</returns>
+        public virtual async Task<TResponse?> GetAsync<TResponse>(string endpoint, CancellationToken cancellationToken = default)
         {
-            var response = await _httpClient.GetAsync(endpoint);
-            return await response.Content.ReadFromJsonAsync<TResponse>();
+            var response = await _httpClient.GetAsync(endpoint, cancellationToken);
+            if (!response.IsSuccessStatusCode)
+            {
+                var errorBody = await response.Content.ReadAsStringAsync(cancellationToken);
+                throw new ApiException(
+                    response.StatusCode,
+                    string.IsNullOrWhiteSpace(errorBody)
+                        ? $"Request to '{endpoint}' failed with status {(int)response.StatusCode}."
+                        : errorBody);
+            }
+
+            return await response.Content.ReadFromJsonAsync<TResponse>(cancellationToken: cancellationToken);
         }
 
         public async Task<TResponse?> PutAsync<TRequest, TResponse>(string endpoint, TRequest data)
@@ -82,5 +101,15 @@ namespace BankApp.Client.Utilities
             return await response.Content.ReadFromJsonAsync<TResponse>();
         }
     }
-}
 
+    public class ApiException : Exception
+    {
+        public ApiException(HttpStatusCode statusCode, string message)
+            : base(message)
+        {
+            this.StatusCode = statusCode;
+        }
+
+        public HttpStatusCode StatusCode { get; }
+    }
+}
