@@ -44,11 +44,27 @@ namespace BankApp.Client.Views
             this.OnStateChanged(state);
         }
 
+        /// <inheritdoc/>
+        protected override void OnNavigatedTo(NavigationEventArgs e)
+        {
+            base.OnNavigatedTo(e);
+            this.AttachObserver();
+            _ = this.RunUiTaskAsync(this.LoadDashboardAsync);
+        }
+
+        /// <inheritdoc/>
+        protected override void OnNavigatedFrom(NavigationEventArgs e)
+        {
+            base.OnNavigatedFrom(e);
+            this.CancelPendingLoad();
+            this.DetachObserver();
+        }
+
         /// <summary>
         /// Reacts to dashboard state updates from the view model.
         /// </summary>
         /// <param name="state">The new state.</param>
-        public void OnStateChanged(DashboardState state)
+        private void OnStateChanged(DashboardState state)
         {
             this.DispatcherQueue.TryEnqueue(() =>
             {
@@ -70,22 +86,6 @@ namespace BankApp.Client.Views
                         break;
                 }
             });
-        }
-
-        /// <inheritdoc/>
-        protected override void OnNavigatedTo(NavigationEventArgs e)
-        {
-            base.OnNavigatedTo(e);
-            this.AttachObserver();
-            _ = this.RunUiTaskAsync(this.LoadDashboardAsync);
-        }
-
-        /// <inheritdoc/>
-        protected override void OnNavigatedFrom(NavigationEventArgs e)
-        {
-            base.OnNavigatedFrom(e);
-            this.CancelPendingLoad();
-            this.DetachObserver();
         }
 
         private async Task LoadDashboardAsync()
@@ -151,7 +151,7 @@ namespace BankApp.Client.Views
         private void BuildCardDots()
         {
             this.CardDots.Children.Clear();
-            var count = this.viewModel.Cards?.Count ?? 0;
+            var count = this.viewModel.Cards.Count;
             this.CardDots.Visibility = count > 1 ? Visibility.Visible : Visibility.Collapsed;
             for (var i = 0; i < count; i++)
             {
@@ -195,7 +195,7 @@ namespace BankApp.Client.Views
 
         private void NextCardButton_Click(object sender, RoutedEventArgs e)
         {
-            var count = this.viewModel.Cards?.Count ?? 0;
+            var count = this.viewModel.Cards.Count;
             if (this.currentCardIndex < count - 1)
             {
                 this.ShowCard(this.currentCardIndex + 1);
