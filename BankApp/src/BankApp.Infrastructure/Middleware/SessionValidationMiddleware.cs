@@ -6,15 +6,29 @@ using Microsoft.AspNetCore.Http;
 
 namespace BankApp.Infrastructure.Middleware
 {
+    /// <summary>
+    /// Middleware that validates bearer tokens and active sessions on non-public endpoints.
+    /// </summary>
     public class SessionValidationMiddleware
     {
         private readonly RequestDelegate next;
 
+        /// <summary>
+        /// Initializes a new instance of the <see cref="SessionValidationMiddleware"/> class.
+        /// </summary>
+        /// <param name="next">The next middleware in the request pipeline.</param>
         public SessionValidationMiddleware(RequestDelegate next)
         {
             this.next = next;
         }
 
+        /// <summary>
+        /// Validates the authorization token and session, then invokes the next middleware.
+        /// </summary>
+        /// <param name="context">The current HTTP context.</param>
+        /// <param name="authRepository">The authentication repository used to verify sessions.</param>
+        /// <param name="jwtService">The JWT service used to extract and validate tokens.</param>
+        /// <returns>A <see cref="Task"/> representing the asynchronous operation.</returns>
         public async Task Invoke(HttpContext context, IAuthRepository authRepository, IJwtService jwtService)
         {
             var path = context.Request.Path.Value?.ToLower();
