@@ -8,6 +8,11 @@ namespace BankApp.Infrastructure.Utilities
     /// </summary>
     public static class ValidationUtilities
     {
+        private const int MinPasswordLength = 8;
+        private const int OtpCodeLength = 6;
+        private const int MinPhoneNumberLength = 7;
+        private const int MaxPhoneNumberLength = 15;
+
         /// <summary>
         /// Determines whether the specified string is a valid email address.
         /// </summary>
@@ -24,8 +29,8 @@ namespace BankApp.Infrastructure.Utilities
 
             try
             {
-                MailAddress addr = new MailAddress(email);
-                return addr.Address == email;
+                MailAddress mailAddress = new MailAddress(email);
+                return mailAddress.Address == email;
             }
             catch
             {
@@ -46,11 +51,11 @@ namespace BankApp.Infrastructure.Utilities
                 return false;
             }
 
-            return password.Length >= 8
+            return password.Length >= MinPasswordLength
                 && password.Any(char.IsUpper)
                 && password.Any(char.IsLower)
                 && password.Any(char.IsDigit)
-                && password.Any(ch => !char.IsLetterOrDigit(ch));
+                && password.Any(character => !char.IsLetterOrDigit(character));
         }
 
         /// <summary>
@@ -60,23 +65,23 @@ namespace BankApp.Infrastructure.Utilities
         /// <returns><see langword="true"/> if the OTP is valid; otherwise, <see langword="false"/>.</returns>
         public static bool IsValidOTP(string otp)
         {
-            return !string.IsNullOrWhiteSpace(otp) && otp.Length == 6 && otp.All(char.IsDigit);
+            return !string.IsNullOrWhiteSpace(otp) && otp.Length == OtpCodeLength && otp.All(char.IsDigit);
         }
 
         /// <summary>
         /// Determines whether two password strings are equal.
         /// </summary>
-        /// <param name="a">The first password.</param>
-        /// <param name="b">The second password.</param>
+        /// <param name="firstPassword">The first password.</param>
+        /// <param name="secondPassword">The second password.</param>
         /// <returns><see langword="true"/> if both passwords are non-null and equal; otherwise, <see langword="false"/>.</returns>
-        public static bool PasswordsMatch(string a, string b)
+        public static bool PasswordsMatch(string firstPassword, string secondPassword)
         {
-            if (a == null || b == null)
+            if (firstPassword == null || secondPassword == null)
             {
                 return false;
             }
 
-            return a == b;
+            return firstPassword == secondPassword;
         }
 
         /// <summary>
@@ -91,7 +96,7 @@ namespace BankApp.Infrastructure.Utilities
                 return false;
             }
 
-            return Regex.IsMatch(phone, @"^\+?[\d\s\-().]{7,15}$");
+            return Regex.IsMatch(phone, $@"^\+?[\d\s\-().]{{{MinPhoneNumberLength},{MaxPhoneNumberLength}}}$");
         }
     }
 }
