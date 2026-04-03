@@ -3,7 +3,7 @@ namespace BankApp.Infrastructure.Services.Interfaces
 {
     public interface IDashboardService
     {
-        DashboardResponse GetDashboardData(int userId);
+        DashboardResponse? GetDashboardData(int userId);
     }
 }
 
