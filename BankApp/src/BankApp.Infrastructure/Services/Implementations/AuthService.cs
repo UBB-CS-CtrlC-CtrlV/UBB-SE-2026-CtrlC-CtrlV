@@ -23,6 +23,9 @@ namespace BankApp.Infrastructure.Services.Implementations
 
         private const int MaxFailedAttempts = 5;
         private const int LockoutMinutes = 30;
+        private const int PasswordResetTokenExpiryMinutes = 5;
+        private const int OtpRangeMinimum = 100000;
+        private const int OtpRangeMaximum = 999999;
 
         /// <summary>
         /// Initializes a new instance of the <see cref="AuthService"/> class.
@@ -271,10 +274,10 @@ namespace BankApp.Infrastructure.Services.Implementations
                 return;
             }
 
-            string otp = otpService.GenerateTOTP(user.Id);
+            string oneTimePassword = otpService.GenerateTOTP(user.Id);
             if (method == "email" || user.Preferred2FAMethod == "email")
             {
-                emailService.SendOTPCode(user.Email, otp);
+                emailService.SendOTPCode(user.Email, oneTimePassword);
             }
         }
 
@@ -287,12 +290,12 @@ namespace BankApp.Infrastructure.Services.Implementations
                 return;
             }
 
-            string rawToken = System.Security.Cryptography.RandomNumberGenerator.GetInt32(100000, 999999).ToString();
+            string rawToken = System.Security.Cryptography.RandomNumberGenerator.GetInt32(OtpRangeMinimum, OtpRangeMaximum).ToString();
             PasswordResetToken resetToken = new PasswordResetToken
             {
                 UserId = user.Id,
                 TokenHash = rawToken,
-                ExpiresAt = DateTime.UtcNow.AddMinutes(5),
+                ExpiresAt = DateTime.UtcNow.AddMinutes(PasswordResetTokenExpiryMinutes),
                 CreatedAt = DateTime.UtcNow
             };
 
@@ -363,11 +366,11 @@ namespace BankApp.Infrastructure.Services.Implementations
 
         private LoginResponse Handle2FA(User user)
         {
-            string otp = otpService.GenerateTOTP(user.Id);
+            string oneTimePassword = otpService.GenerateTOTP(user.Id);
 
             if (user.Preferred2FAMethod == "email")
             {
-                emailService.SendOTPCode(user.Email, otp);
+                emailService.SendOTPCode(user.Email, oneTimePassword);
             }
 
             return new LoginResponse

@@ -10,15 +10,16 @@ namespace BankApp.Infrastructure.Services.Infrastructure.Implementations
     /// </summary>
     public class EmailService : IEmailService
     {
-        private readonly IConfiguration config;
+        private readonly IConfiguration configuration;
+        private const int DefaultSmtpPort = 587;
 
         /// <summary>
         /// Initializes a new instance of the <see cref="EmailService"/> class.
         /// </summary>
-        /// <param name="config">The application configuration containing SMTP settings.</param>
-        public EmailService(IConfiguration config)
+        /// <param name="configuration">The application configuration containing SMTP settings.</param>
+        public EmailService(IConfiguration configuration)
         {
-            this.config = config;
+            this.configuration = configuration;
         }
 
         /// <inheritdoc />
@@ -57,18 +58,18 @@ namespace BankApp.Infrastructure.Services.Infrastructure.Implementations
         {
             try
             {
-                string host = config["Email:SmtpHost"] ?? throw new Exception("SMTP Host is missing.");
-                int port = int.Parse(config["Email:SmtpPort"] ?? "587");
-                string user = config["Email:SmtpUser"] ?? throw new Exception("SMTP User is missing.");
-                string pass = config["Email:SmtpPass"] ?? throw new Exception("SMTP Password is missing.");
-                string from = config["Email:FromAddress"] ?? user;
+                string host = configuration["Email:SmtpHost"] ?? throw new Exception("SMTP Host is missing.");
+                int port = int.Parse(configuration["Email:SmtpPort"] ?? DefaultSmtpPort.ToString());
+                string smtpUsername = configuration["Email:SmtpUser"] ?? throw new Exception("SMTP User is missing.");
+                string smtpPassword = configuration["Email:SmtpPass"] ?? throw new Exception("SMTP Password is missing.");
+                string fromAddress = configuration["Email:FromAddress"] ?? smtpUsername;
                 using var client = new SmtpClient(host, port)
                 {
-                    Credentials = new NetworkCredential(user, pass),
+                    Credentials = new NetworkCredential(smtpUsername, smtpPassword),
                     EnableSsl = true,
                     UseDefaultCredentials = false
                 };
-                using var mailMessage = new MailMessage(from, toEmail, subject, body);
+                using var mailMessage = new MailMessage(fromAddress, toEmail, subject, body);
                 client.Send(mailMessage);
             }
             catch (Exception)

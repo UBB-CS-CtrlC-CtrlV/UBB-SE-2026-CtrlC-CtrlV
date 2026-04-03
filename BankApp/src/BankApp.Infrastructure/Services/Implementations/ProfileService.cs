@@ -81,7 +81,6 @@ namespace BankApp.Infrastructure.Services.Implementations
             User? user = userRepository.FindById(request.UserId);
             if (user == null)
             {
-                // Just making sure, should never happen though
                 return new ChangePasswordResponse(false, "User not found.");
             }
 
@@ -135,7 +134,6 @@ namespace BankApp.Infrastructure.Services.Implementations
             User? user = userRepository.FindById(userId);
             if (user == null)
             {
-                // Just making sure, should never happen though
                 return new List<OAuthLink>();
             }
 
@@ -160,7 +158,6 @@ namespace BankApp.Infrastructure.Services.Implementations
             User? user = userRepository.FindById(userId);
             if (user == null)
             {
-                // AGAIN just making sure, should never happen
                 return new List<NotificationPreference>();
             }
 
@@ -168,16 +165,15 @@ namespace BankApp.Infrastructure.Services.Implementations
         }
 
         /// <inheritdoc />
-        public bool UpdateNotificationPreferences(int userId, List<NotificationPreference> prefs)
+        public bool UpdateNotificationPreferences(int userId, List<NotificationPreference> preferences)
         {
             User? user = userRepository.FindById(userId);
             if (user == null)
             {
-                // Last time just making sure, should never happen
                 return false;
             }
 
-            return userRepository.UpdateNotificationPreferences(userId, prefs);
+            return userRepository.UpdateNotificationPreferences(userId, preferences);
         }
 
         /// <inheritdoc />
@@ -187,7 +183,6 @@ namespace BankApp.Infrastructure.Services.Implementations
 
             if (user == null)
             {
-                // ACTUAL last time making sure, should never happen though
                 return false;
             }
 

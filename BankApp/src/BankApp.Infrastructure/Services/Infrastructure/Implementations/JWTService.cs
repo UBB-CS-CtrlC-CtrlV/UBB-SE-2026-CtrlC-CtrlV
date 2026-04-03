@@ -12,6 +12,7 @@ namespace BankApp.Infrastructure.Services.Infrastructure.Implementations
     public class JwtService : IJwtService
     {
         private readonly string secret;
+        private const int TokenExpirationDays = 7;
 
         /// <summary>
         /// Initializes a new instance of the <see cref="JwtService"/> class.
@@ -35,7 +36,7 @@ namespace BankApp.Infrastructure.Services.Infrastructure.Implementations
 
             var token = new JwtSecurityToken(
                 claims: claims,
-                expires: DateTime.UtcNow.AddDays(7),
+                expires: DateTime.UtcNow.AddDays(TokenExpirationDays),
                 signingCredentials: credentials);
 
             return new JwtSecurityTokenHandler().WriteToken(token);
