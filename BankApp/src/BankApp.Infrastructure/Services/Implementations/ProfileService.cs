@@ -8,22 +8,32 @@ using BankApp.Infrastructure.Utilities;
 
 namespace BankApp.Infrastructure.Services.Implementations
 {
+    /// <summary>
+    /// Provides user profile management operations including personal info, passwords, 2FA, OAuth, and notifications.
+    /// </summary>
     public class ProfileService : IProfileService
     {
         private readonly IUserRepository userRepository;
         private readonly IHashService hashService;
 
+        /// <summary>
+        /// Initializes a new instance of the <see cref="ProfileService"/> class.
+        /// </summary>
+        /// <param name="userRepository">The user repository.</param>
+        /// <param name="hashService">The password hashing service.</param>
         public ProfileService(IUserRepository userRepository, IHashService hashService)
         {
             this.userRepository = userRepository;
             this.hashService = hashService;
         }
 
+        /// <inheritdoc />
         public User? GetUserById(int userId)
         {
             return userRepository.FindById(userId);
         }
 
+        /// <inheritdoc />
         public UpdateProfileResponse UpdatePersonalInfo(UpdateProfileRequest request)
         {
             if (request.UserId == null)
@@ -65,6 +75,7 @@ namespace BankApp.Infrastructure.Services.Implementations
             return new UpdateProfileResponse(true, "User profile updated successfully.");
         }
 
+        /// <inheritdoc />
         public ChangePasswordResponse ChangePassword(ChangePasswordRequest request)
         {
             User? user = userRepository.FindById(request.UserId);
@@ -91,6 +102,7 @@ namespace BankApp.Infrastructure.Services.Implementations
             }
         }
 
+        /// <inheritdoc />
         public bool Enable2FA(int userId, TwoFactorMethod method)
         {
             User? user = userRepository.FindById(userId);
@@ -103,6 +115,7 @@ namespace BankApp.Infrastructure.Services.Implementations
             return userRepository.UpdateUser(user);
         }
 
+        /// <inheritdoc />
         public bool Disable2FA(int userId)
         {
             User? user = userRepository.FindById(userId);
@@ -116,6 +129,7 @@ namespace BankApp.Infrastructure.Services.Implementations
             return userRepository.UpdateUser(user);
         }
 
+        /// <inheritdoc />
         public List<OAuthLink> GetOAuthLinks(int userId)
         {
             User? user = userRepository.FindById(userId);
@@ -128,16 +142,19 @@ namespace BankApp.Infrastructure.Services.Implementations
             return userRepository.GetLinkedProviders(userId);
         }
 
+        /// <inheritdoc />
         public bool LinkOAuth(int userId, string provider)
         {
             throw new NotImplementedException();
         }
 
+        /// <inheritdoc />
         public bool UnlinkOAuth(int userId, string provider)
         {
             throw new NotImplementedException();
         }
 
+        /// <inheritdoc />
         public List<NotificationPreference> GetNotificationPreferences(int userId)
         {
             User? user = userRepository.FindById(userId);
@@ -150,6 +167,7 @@ namespace BankApp.Infrastructure.Services.Implementations
             return userRepository.GetNotificationPreferences(userId);
         }
 
+        /// <inheritdoc />
         public bool UpdateNotificationPreferences(int userId, List<NotificationPreference> prefs)
         {
             User? user = userRepository.FindById(userId);
@@ -162,6 +180,7 @@ namespace BankApp.Infrastructure.Services.Implementations
             return userRepository.UpdateNotificationPreferences(userId, prefs);
         }
 
+        /// <inheritdoc />
         public bool VerifyPassword(int userId, string password)
         {
             User? user = userRepository.FindById(userId);

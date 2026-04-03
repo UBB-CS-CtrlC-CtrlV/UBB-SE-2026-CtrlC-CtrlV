@@ -10,6 +10,9 @@ using Google.Apis.Auth;
 
 namespace BankApp.Infrastructure.Services.Implementations
 {
+    /// <summary>
+    /// Provides authentication, registration, OTP verification, and password management operations.
+    /// </summary>
     public class AuthService : IAuthService
     {
         private readonly IAuthRepository authRepository;
@@ -21,6 +24,14 @@ namespace BankApp.Infrastructure.Services.Implementations
         private const int MaxFailedAttempts = 5;
         private const int LockoutMinutes = 30;
 
+        /// <summary>
+        /// Initializes a new instance of the <see cref="AuthService"/> class.
+        /// </summary>
+        /// <param name="authRepository">The authentication repository.</param>
+        /// <param name="hashService">The password hashing service.</param>
+        /// <param name="jwtService">The JWT token service.</param>
+        /// <param name="otpService">The one-time password service.</param>
+        /// <param name="emailService">The email delivery service.</param>
         public AuthService(IAuthRepository authRepository, IHashService hashService, IJwtService jwtService, IOtpService otpService, IEmailService emailService)
         {
             this.authRepository = authRepository;
@@ -30,6 +41,7 @@ namespace BankApp.Infrastructure.Services.Implementations
             this.emailService = emailService;
         }
 
+        /// <inheritdoc />
         public LoginResponse Login(LoginRequest request)
         {
             if (!ValidationUtilities.IsValidEmail(request.Email))
@@ -62,6 +74,7 @@ namespace BankApp.Infrastructure.Services.Implementations
             return CompleteLogin(user);
         }
 
+        /// <inheritdoc />
         public RegisterResponse Register(RegisterRequest request)
         {
             string? validationError = ValidateRegistration(request);
@@ -87,6 +100,7 @@ namespace BankApp.Infrastructure.Services.Implementations
             return new RegisterResponse { Success = true };
         }
 
+        /// <inheritdoc />
         public async Task<LoginResponse> OAuthLoginAsync(OAuthLoginRequest request)
         {
             if (request.Provider.Equals("Google", StringComparison.OrdinalIgnoreCase))
@@ -165,6 +179,7 @@ namespace BankApp.Infrastructure.Services.Implementations
             return new LoginResponse { Success = false, Error = "Unsupported OAuth Provider." };
         }
 
+        /// <inheritdoc />
         public RegisterResponse OAuthRegister(OAuthRegisterRequest request)
         {
             if (!ValidationUtilities.IsValidEmail(request.Email))
@@ -230,6 +245,7 @@ namespace BankApp.Infrastructure.Services.Implementations
             return new RegisterResponse { Success = true };
         }
 
+        /// <inheritdoc />
         public LoginResponse VerifyOTP(VerifyOTPRequest request)
         {
             User? user = authRepository.FindUserById(request.UserId);
@@ -246,6 +262,7 @@ namespace BankApp.Infrastructure.Services.Implementations
             return CompleteLogin(user);
         }
 
+        /// <inheritdoc />
         public void ResendOTP(int userId, string method)
         {
             User? user = authRepository.FindUserById(userId);
@@ -261,6 +278,7 @@ namespace BankApp.Infrastructure.Services.Implementations
             }
         }
 
+        /// <inheritdoc />
         public void RequestPasswordReset(string email)
         {
             User? user = authRepository.FindUserByEmail(email);
@@ -282,6 +300,7 @@ namespace BankApp.Infrastructure.Services.Implementations
             emailService.SendPasswordResetLink(user.Email, rawToken);
         }
 
+        /// <inheritdoc />
         public ResetPasswordResult ResetPassword(string token, string newPassword)
         {
             PasswordResetToken? resetToken = authRepository.FindPasswordResetToken(token);
@@ -411,6 +430,7 @@ namespace BankApp.Infrastructure.Services.Implementations
             };
         }
 
+        /// <inheritdoc />
         public ResetTokenValidationResult VerifyResetToken(string token)
         {
             PasswordResetToken? resetToken = authRepository.FindPasswordResetToken(token);
@@ -437,6 +457,7 @@ namespace BankApp.Infrastructure.Services.Implementations
             return ResetTokenValidationResult.Valid;
         }
 
+        /// <inheritdoc />
         public bool Logout(string token)
         {
             Session? session = authRepository.FindSessionByToken(token);

@@ -6,14 +6,23 @@ using Microsoft.IdentityModel.Tokens;
 
 namespace BankApp.Infrastructure.Services.Infrastructure.Implementations
 {
+    /// <summary>
+    /// Provides JWT generation, validation, and claim extraction using HMAC-SHA256.
+    /// </summary>
     public class JwtService : IJwtService
     {
         private readonly string secret;
+
+        /// <summary>
+        /// Initializes a new instance of the <see cref="JwtService"/> class.
+        /// </summary>
+        /// <param name="secret">The symmetric key used for signing tokens.</param>
         public JwtService(string secret)
         {
             this.secret = secret;
         }
 
+        /// <inheritdoc />
         public string GenerateToken(int userId)
         {
             var key = new SymmetricSecurityKey(Encoding.UTF8.GetBytes(secret));
@@ -32,6 +41,7 @@ namespace BankApp.Infrastructure.Services.Infrastructure.Implementations
             return new JwtSecurityTokenHandler().WriteToken(token);
         }
 
+        /// <inheritdoc />
         public ClaimsPrincipal? ValidateToken(string token)
         {
             var key = new SymmetricSecurityKey(Encoding.UTF8.GetBytes(secret));
@@ -55,6 +65,7 @@ namespace BankApp.Infrastructure.Services.Infrastructure.Implementations
             }
         }
 
+        /// <inheritdoc />
         public int? ExtractUserId(string token)
         {
             var principal = ValidateToken(token);
