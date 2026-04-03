@@ -41,7 +41,7 @@ public class DashboardViewModel
     /// <summary>
     /// Gets the state.
     /// </summary>
-    public ObservableState<DashboardState> State { get; private set; }
+    public ObservableState<DashboardState> State { get; }
 
     /// <summary>
     /// Gets the current user whose dashboard data has been loaded.
@@ -88,7 +88,7 @@ public class DashboardViewModel
 
         try
         {
-            DashboardResponse? response = await this.apiClient.GetAsync<DashboardResponse>(
+            var response = await this.apiClient.GetAsync<DashboardResponse>(
                 "/api/dashboard/",
                 cancellationToken);
 
