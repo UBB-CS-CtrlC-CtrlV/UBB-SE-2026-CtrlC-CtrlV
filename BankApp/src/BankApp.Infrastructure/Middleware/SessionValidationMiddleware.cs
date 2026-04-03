@@ -87,7 +87,7 @@ namespace BankApp.Infrastructure.Middleware
 
         private async Task RejectRequest(HttpContext context, string error)
         {
-            context.Response.StatusCode = 401;
+            context.Response.StatusCode = StatusCodes.Status401Unauthorized;
             context.Response.ContentType = "application/json";
             await context.Response.WriteAsJsonAsync(new { error });
         }
