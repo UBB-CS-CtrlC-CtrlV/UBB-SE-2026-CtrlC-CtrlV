@@ -12,6 +12,13 @@ namespace BankApp.Infrastructure.Services.Infrastructure.Implementations
         private static readonly Dictionary<int, (string Code, DateTime ExpiryTime)> TemporarySmsStorage = new ();
         private const int SmsOtpExpiryMinutes = 5;
         private const int TotpWindowSeconds = 300;
+        private const int OtpRangeMinimum = 100000;
+        private const int OtpRangeMaximum = 999999;
+        private const int OtpModulus = 1000000;
+        private const int OtpDigitCount = 6;
+        private const int TruncationOffsetMask = 0x0F;
+        private const int SignBitMask = 0x7F;
+        private const int ByteMask = 0xFF;
 
         /// <summary>
         /// Initializes a new instance of the <see cref="OtpService"/> class.
@@ -23,7 +30,7 @@ namespace BankApp.Infrastructure.Services.Infrastructure.Implementations
         /// <inheritdoc />
         public string GenerateSMSOTP(int userId)
         {
-            string code = RandomNumberGenerator.GetInt32(100000, 999999).ToString();
+            string code = RandomNumberGenerator.GetInt32(OtpRangeMinimum, OtpRangeMaximum).ToString();
             DateTime expiryTime = DateTime.UtcNow.AddMinutes(SmsOtpExpiryMinutes);
             TemporarySmsStorage[userId] = (code, expiryTime);
             return code;
@@ -51,14 +58,14 @@ namespace BankApp.Infrastructure.Services.Infrastructure.Implementations
         /// <inheritdoc />
         public bool VerifySMSOTP(int userId, string code)
         {
-            if (TemporarySmsStorage.TryGetValue(userId, out var storedData))
+            if (TemporarySmsStorage.TryGetValue(userId, out var storedOtpData))
             {
-                if (DateTime.UtcNow > storedData.ExpiryTime)
+                if (DateTime.UtcNow > storedOtpData.ExpiryTime)
                 {
                     InvalidateOTP(userId);
                     return false;
                 }
-                if (storedData.Code == code)
+                if (storedOtpData.Code == code)
                 {
                     InvalidateOTP(userId);
                     return true;
@@ -89,12 +96,12 @@ namespace BankApp.Infrastructure.Services.Infrastructure.Implementations
             string secret = $"User_Secret_Key_{userId}_BankApp";
             using var hmac = new HMACSHA1(Encoding.UTF8.GetBytes(secret));
             byte[] hash = hmac.ComputeHash(BitConverter.GetBytes(timeWindow));
-            int offset = hash[hash.Length - 1] & 0x0F;
-            int binary = ((hash[offset] & 0x7F) << 24) |
-                         ((hash[offset + 1] & 0xFF) << 16) |
-                         ((hash[offset + 2] & 0xFF) << 8) |
-                         (hash[offset + 3] & 0xFF);
-            return (binary % 1000000).ToString("D6");
+            int offset = hash[hash.Length - 1] & TruncationOffsetMask;
+            int binary = ((hash[offset] & SignBitMask) << 24) |
+                         ((hash[offset + 1] & ByteMask) << 16) |
+                         ((hash[offset + 2] & ByteMask) << 8) |
+                         (hash[offset + 3] & ByteMask);
+            return (binary % OtpModulus).ToString($"D{OtpDigitCount}");
         }
     }
 }

@@ -12,6 +12,7 @@ namespace BankApp.Infrastructure.Services.Implementations
     {
         private readonly IDashboardRepository dashboardRepository;
         private readonly IUserRepository userRepository;
+        private const int DefaultRecentTransactionLimit = 10;
 
         /// <summary>
         /// Initializes a new instance of the <see cref="DashboardService"/> class.
@@ -25,11 +26,10 @@ namespace BankApp.Infrastructure.Services.Implementations
         }
 
         /// <inheritdoc />
-        public DashboardResponse? GetDashboardData(int id)
+        public DashboardResponse? GetDashboardData(int userId)
         {
-            User? user = userRepository.FindById(id);
+            User? user = userRepository.FindById(userId);
 
-            // if there is no ID returns null, otherwise returns the dashboard data for the user with the given ID
             if (user == null)
             {
                 return null;
@@ -38,9 +38,9 @@ namespace BankApp.Infrastructure.Services.Implementations
             return new DashboardResponse
             {
                 CurrentUser = user,
-                Cards = dashboardRepository.GetCardsByUser(id),
-                RecentTransactions = dashboardRepository.GetRecentTransactions(id, 10),
-                UnreadNotificationCount = dashboardRepository.GetUnreadNotificationCount(id)
+                Cards = dashboardRepository.GetCardsByUser(userId),
+                RecentTransactions = dashboardRepository.GetRecentTransactions(userId, DefaultRecentTransactionLimit),
+                UnreadNotificationCount = dashboardRepository.GetUnreadNotificationCount(userId)
             };
         }
     }
