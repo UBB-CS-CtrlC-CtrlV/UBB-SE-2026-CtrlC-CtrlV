@@ -9,48 +9,48 @@ namespace BankApp.Infrastructure.Repositories.Implementations
 	/// </summary>
 	public class DashboardRepository : IDashboardRepository
 	{
-		private readonly IAccountDataAccess accountDAO;
-		private readonly ICardDataAccess cardDAO;
-		private readonly ITransactionDataAccess transactionDAO;
-		private readonly INotificationDataAccess notificationDAO;
+		private readonly IAccountDataAccess accountDataAccess;
+		private readonly ICardDataAccess cardDataAccess;
+		private readonly ITransactionDataAccess transactionDataAccess;
+		private readonly INotificationDataAccess notificationDataAccess;
 
 		/// <summary>
 		/// Initializes a new instance of the <see cref="DashboardRepository"/> class.
 		/// </summary>
-		/// <param name="accountDAO">The account data access component.</param>
-		/// <param name="cardDAO">The card data access component.</param>
-		/// <param name="transactionDAO">The transaction data access component.</param>
-		/// <param name="notificationDAO">The notification data access component.</param>
-		public DashboardRepository(IAccountDataAccess accountDAO, ICardDataAccess cardDAO, ITransactionDataAccess transactionDAO, INotificationDataAccess notificationDAO)
+		/// <param name="accountDataAccess">The account data access component.</param>
+		/// <param name="cardDataAccess">The card data access component.</param>
+		/// <param name="transactionDataAccess">The transaction data access component.</param>
+		/// <param name="notificationDataAccess">The notification data access component.</param>
+		public DashboardRepository(IAccountDataAccess accountDataAccess, ICardDataAccess cardDataAccess, ITransactionDataAccess transactionDataAccess, INotificationDataAccess notificationDataAccess)
 		{
-			this.accountDAO = accountDAO;
-			this.cardDAO = cardDAO;
-			this.transactionDAO = transactionDAO;
-			this.notificationDAO = notificationDAO;
+			this.accountDataAccess = accountDataAccess;
+			this.cardDataAccess = cardDataAccess;
+			this.transactionDataAccess = transactionDataAccess;
+			this.notificationDataAccess = notificationDataAccess;
 		}
 
 		/// <inheritdoc />
 		public List<Account> GetAccountsByUser(int userId)
 		{
-			return accountDAO.FindByUserId(userId);
+			return accountDataAccess.FindByUserId(userId);
 		}
 
 		/// <inheritdoc />
 		public List<Card> GetCardsByUser(int userId)
 		{
-			return cardDAO.FindByUserId(userId);
+			return cardDataAccess.FindByUserId(userId);
 		}
 
 		/// <inheritdoc />
 		public List<Transaction> GetRecentTransactions(int accountId, int limit = 10)
 		{
-			return transactionDAO.FindRecentByAccountId(accountId, limit);
+			return transactionDataAccess.FindRecentByAccountId(accountId, limit);
 		}
 
 		/// <inheritdoc />
 		public int GetUnreadNotificationCount(int userId)
 		{
-			return notificationDAO.CountUnreadByUserId(userId);
+			return notificationDataAccess.CountUnreadByUserId(userId);
 		}
 	}
 }
