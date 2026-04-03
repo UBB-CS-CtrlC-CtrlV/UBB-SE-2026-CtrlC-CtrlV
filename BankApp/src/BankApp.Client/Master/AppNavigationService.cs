@@ -14,46 +14,31 @@ namespace BankApp.Client.Master
         private Frame? frame;
         private Frame? contentFrame;
 
-        /// <summary>
-        /// Sets the main navigation frame for the application.
-        /// </summary>
-        /// <param name="frame"></param>
+        /// <inheritdoc />
         public void SetFrame(Frame frame)
         {
             this.frame = frame;
         }
 
-        /// <summary>
-        /// Sets the content frame used to display navigation content.
-        /// </summary>
-        /// <param name="frame">The frame that will be used to host and display navigable content. Cannot be null.</param>
+        /// <inheritdoc />
         public void SetContentFrame(Frame frame)
         {
             this.contentFrame = frame;
         }
 
-        /// <summary>
-        /// Navigates to a specified page type within the main navigation frame.
-        /// </summary>
-        /// <typeparam name="TPage"></typeparam>
+        /// <inheritdoc />
         public void NavigateTo<TPage>()
         {
             this.frame?.Navigate(typeof(TPage));
         }
 
-        /// <summary>
-        /// Navigates to a specified page type within the content frame,
-        /// allowing for separation of main navigation.
-        /// </summary>
-        /// <typeparam name="TPage"></typeparam>
+        /// <inheritdoc />
         public void NavigateToContent<TPage>()
         {
             this.contentFrame?.Navigate(typeof(TPage));
         }
 
-        /// <summary>
-        /// Goes back to the previous page in the navigation history of the main frame, if possible.
-        /// </summary>
+        /// <inheritdoc />
         public void GoBack()
         {
             if (this.CanGoBack())
@@ -62,11 +47,7 @@ namespace BankApp.Client.Master
             }
         }
 
-        /// <summary>
-        /// Checks if there is a previous page in the navigation history
-        /// of the main frame that can be navigated back to.
-        /// </summary>
-        /// <returns></returns>
+        /// <inheritdoc />
         public bool CanGoBack()
         {
             return this.frame?.CanGoBack ?? false;
