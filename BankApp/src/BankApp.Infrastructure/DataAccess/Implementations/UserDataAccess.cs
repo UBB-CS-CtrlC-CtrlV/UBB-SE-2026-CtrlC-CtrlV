@@ -5,10 +5,10 @@ namespace BankApp.Infrastructure.DataAccess.Implementations
 {
     public class UserDataAccess : IUserDataAccess
     {
-        private readonly AppDbContext _db;
+        private readonly AppDbContext db;
         public UserDataAccess(AppDbContext db)
         {
-            _db = db;
+            this.db = db;
         }
 
         public User? FindByEmail(string email)
@@ -18,7 +18,7 @@ namespace BankApp.Infrastructure.DataAccess.Implementations
                         IsLocked, LockoutEnd, FailedLoginAttempts, CreatedAt, UpdatedAt
                         FROM [User] WHERE Email = @p0";
 
-            using var reader = _db.ExecuteQuery(sql, new object[] { email });
+            using var reader = db.ExecuteQuery(sql, new object[] { email });
             if (reader.Read())
             {
                 return MapUser(reader);
@@ -33,7 +33,7 @@ namespace BankApp.Infrastructure.DataAccess.Implementations
                         IsLocked, LockoutEnd, FailedLoginAttempts, CreatedAt, UpdatedAt
                         FROM [User] WHERE Id = @p0";
 
-            using var reader = _db.ExecuteQuery(sql, new object[] { id });
+            using var reader = db.ExecuteQuery(sql, new object[] { id });
             if (reader.Read())
             {
                 return MapUser(reader);
@@ -47,7 +47,7 @@ namespace BankApp.Infrastructure.DataAccess.Implementations
                         [Address], Nationality, PreferredLanguage, Is2FAEnabled, Preferred2FAMethod)
                         VALUES (@p0, @p1, @p2, @p3, @p4, @p5, @p6, @p7, @p8, @p9)";
 
-            var rows = _db.ExecuteNonQuery(sql, new object[]
+            var rows = db.ExecuteNonQuery(sql, new object[]
             {
                 user.Email,
                 user.PasswordHash,
@@ -71,7 +71,7 @@ namespace BankApp.Infrastructure.DataAccess.Implementations
                         UpdatedAt = GETUTCDATE()
                         WHERE Id = @p9";
 
-            var rows = _db.ExecuteNonQuery(sql, new object[]
+            var rows = db.ExecuteNonQuery(sql, new object[]
             {
                 user.Email,
                 user.FullName,
@@ -90,25 +90,25 @@ namespace BankApp.Infrastructure.DataAccess.Implementations
         public bool UpdatePassword(int userId, string newPasswordHash)
         {
             var sql = "UPDATE [User] SET PasswordHash = @p0, UpdatedAt = GETUTCDATE() WHERE Id = @p1";
-            return _db.ExecuteNonQuery(sql, new object[] { newPasswordHash, userId }) > 0;
+            return db.ExecuteNonQuery(sql, new object[] { newPasswordHash, userId }) > 0;
         }
 
         public void IncrementFailedAttempts(int userId)
         {
             var sql = "UPDATE [User] SET FailedLoginAttempts = FailedLoginAttempts + 1 WHERE Id = @p0";
-            _db.ExecuteNonQuery(sql, new object[] { userId });
+            db.ExecuteNonQuery(sql, new object[] { userId });
         }
 
         public void ResetFailedAttempts(int userId)
         {
             var sql = "UPDATE [User] SET FailedLoginAttempts = 0 WHERE Id = @p0";
-            _db.ExecuteNonQuery(sql, new object[] { userId });
+            db.ExecuteNonQuery(sql, new object[] { userId });
         }
 
         public void LockAccount(int userId, DateTime lockoutEnd)
         {
             var sql = "UPDATE [User] SET IsLocked = 1, LockoutEnd = @p0 WHERE Id = @p1";
-            _db.ExecuteNonQuery(sql, new object[] { lockoutEnd, userId });
+            db.ExecuteNonQuery(sql, new object[] { lockoutEnd, userId });
         }
 
         private User MapUser(System.Data.IDataReader r)

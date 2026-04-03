@@ -5,17 +5,19 @@ namespace BankApp.Infrastructure.DataAccess.Implementations
 {
     public class CardDataAccess : ICardDataAccess
     {
-        private readonly AppDbContext _dbContext;
-        public CardDataAccess(AppDbContext dbContext) 
+        private readonly AppDbContext dbContext;
+        public CardDataAccess(AppDbContext dbContext)
         {
-            _dbContext = dbContext;
+            this.dbContext = dbContext;
         }
         public Card? FindById(int id)
         {
             var query = @"SELECT * FROM Card where Id = @p0";
-            using var reader = _dbContext.ExecuteQuery(query, new object[] { id });
+            using var reader = dbContext.ExecuteQuery(query, new object[] { id });
             if (reader.Read())
+            {
                 return MapToCard(reader);
+            }
             return null;
         }
 
@@ -23,7 +25,7 @@ namespace BankApp.Infrastructure.DataAccess.Implementations
         {
             var cards = new List<Card>();
             var query = @"SELECT * FROM Card where UserId = @p0";
-            using var reader = _dbContext.ExecuteQuery(query, new object[] { userId });
+            using var reader = dbContext.ExecuteQuery(query, new object[] { userId });
             while (reader.Read())
             {
                 cards.Add(MapToCard(reader));

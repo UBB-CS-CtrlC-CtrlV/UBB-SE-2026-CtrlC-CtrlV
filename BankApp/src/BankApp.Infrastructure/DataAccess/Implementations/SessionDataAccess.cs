@@ -5,11 +5,11 @@ namespace BankApp.Infrastructure.DataAccess
 {
     public class SessionDataAccess : ISessionDataAccess
     {
-        private readonly AppDbContext _db;
+        private readonly AppDbContext db;
 
         public SessionDataAccess(AppDbContext db)
         {
-            _db = db;
+            this.db = db;
         }
 
         public Session Create(int userId, string token, string? deviceInfo, string? browser, string? ip)
@@ -20,7 +20,7 @@ namespace BankApp.Infrastructure.DataAccess
                                INSERTED.ExpiresAt, INSERTED.IsRevoked, INSERTED.CreatedAt
                         VALUES (@p0, @p1, @p2, @p3, @p4, GETUTCDATE(), DATEADD(DAY, 7, GETUTCDATE()))";
 
-            using var reader = _db.ExecuteQuery(sql, new object[]
+            using var reader = db.ExecuteQuery(sql, new object[]
             {
                 userId,
                 token,
@@ -39,7 +39,7 @@ namespace BankApp.Infrastructure.DataAccess
                         LastActiveAt, ExpiresAt, IsRevoked, CreatedAt
                         FROM [Session] WHERE Token = @p0 AND IsRevoked = 0 AND ExpiresAt > GETUTCDATE()";
 
-            using var reader = _db.ExecuteQuery(sql, new object[] { token });
+            using var reader = db.ExecuteQuery(sql, new object[] { token });
             if (reader.Read())
             {
                 return MapSession(reader);
@@ -53,7 +53,7 @@ namespace BankApp.Infrastructure.DataAccess
                         LastActiveAt, ExpiresAt, IsRevoked, CreatedAt
                         FROM [Session] WHERE UserId = @p0 AND IsRevoked = 0 AND ExpiresAt > GETUTCDATE()";
 
-            using var reader = _db.ExecuteQuery(sql, new object[] { userId });
+            using var reader = db.ExecuteQuery(sql, new object[] { userId });
             var sessions = new List<Session>();
             while (reader.Read())
             {
@@ -65,13 +65,13 @@ namespace BankApp.Infrastructure.DataAccess
         public void Revoke(int sessionId)
         {
             var sql = "UPDATE [Session] SET IsRevoked = 1 WHERE Id = @p0";
-            _db.ExecuteNonQuery(sql, new object[] { sessionId });
+            db.ExecuteNonQuery(sql, new object[] { sessionId });
         }
 
         public void RevokeAll(int userId)
         {
             var sql = "UPDATE [Session] SET IsRevoked = 1 WHERE UserId = @p0 AND IsRevoked = 0";
-            _db.ExecuteNonQuery(sql, new object[] { userId });
+            db.ExecuteNonQuery(sql, new object[] { userId });
         }
 
         private Session MapSession(System.Data.IDataReader r)

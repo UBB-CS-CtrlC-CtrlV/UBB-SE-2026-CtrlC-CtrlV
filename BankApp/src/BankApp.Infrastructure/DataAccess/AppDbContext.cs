@@ -1,33 +1,34 @@
-using Microsoft.Data.SqlClient;
 using System.Data;
+using Microsoft.Data.SqlClient;
+
 namespace BankApp.Infrastructure.DataAccess
 {
     public class AppDbContext : IDbContext
     {
-        private readonly string _connectionString;
-        private SqlConnection? _connection;
-        private SqlTransaction? _currentTransaction;
+        private readonly string connectionString;
+        private SqlConnection? connection;
+        private SqlTransaction? currentTransaction;
 
         public AppDbContext(string connectionString)
         {
-            _connectionString = connectionString;
+            this.connectionString = connectionString;
         }
 
         public SqlConnection GetConnection()
         {
-            if (_connection == null || _connection.State == ConnectionState.Closed)
+            if (connection == null || connection.State == ConnectionState.Closed)
             {
                 try
                 {
-                    _connection = new SqlConnection(_connectionString);
-                    _connection.Open();
+                    connection = new SqlConnection(connectionString);
+                    connection.Open();
                 }
                 catch (SqlException e)
                 {
                     throw new Exception($"Failed to connect to the database: {e.Message}", e);
                 }
             }
-            return _connection;
+            return connection;
         }
 
         public SqlTransaction BeginTransaction()
@@ -35,36 +36,36 @@ namespace BankApp.Infrastructure.DataAccess
             SqlConnection conn = GetConnection();
             try
             {
-                _currentTransaction = conn.BeginTransaction();
+                currentTransaction = conn.BeginTransaction();
             }
             catch (SqlException e)
             {
                 throw new Exception($"Failed to begin transaction: {e.Message}", e);
             }
-            return _currentTransaction;
+            return currentTransaction;
         }
 
         public void CommitTransaction()
         {
-            if (_currentTransaction != null)
+            if (currentTransaction != null)
             {
-                _currentTransaction.Commit();
-                _currentTransaction = null;
+                currentTransaction.Commit();
+                currentTransaction = null;
             }
         }
 
         public void RollbackTransaction()
         {
-            if (_currentTransaction != null)
+            if (currentTransaction != null)
             {
-                _currentTransaction.Rollback();
-                _currentTransaction = null;
+                currentTransaction.Rollback();
+                currentTransaction = null;
             }
         }
 
         public SqlTransaction? GetCurrentTransaction()
         {
-            return _currentTransaction;
+            return currentTransaction;
         }
 
         private void AddParameters(SqlCommand cmd, object[] parameters)
@@ -82,7 +83,7 @@ namespace BankApp.Infrastructure.DataAccess
         public IDataReader ExecuteQuery(string sqlStatement, object[] parameters)
         {
             var conn = GetConnection();
-            var cmd = new SqlCommand(sqlStatement, conn, _currentTransaction);
+            var cmd = new SqlCommand(sqlStatement, conn, currentTransaction);
             AddParameters(cmd, parameters);
             return cmd.ExecuteReader(); // returns rows back
         }
@@ -90,24 +91,27 @@ namespace BankApp.Infrastructure.DataAccess
         public int ExecuteNonQuery(string sqlStatement, object[] parameters)
         {
             var conn = GetConnection();
-            using var cmd = new SqlCommand(sqlStatement, conn, _currentTransaction); // disposes the command when done with it
+            using var cmd = new SqlCommand(sqlStatement, conn, currentTransaction); // disposes the command when done with it
             AddParameters(cmd, parameters);
             return cmd.ExecuteNonQuery(); // how many rows are affected
         }
 
         public void Dispose()
         {
-            if (_currentTransaction != null)
+            if (currentTransaction != null)
             {
-                _currentTransaction.Dispose();
+                currentTransaction.Dispose();
             }
 
-            if (_connection != null)
+            if (connection != null)
             {
-                if (_connection.State != ConnectionState.Closed)
-                    _connection.Close();
-                _connection.Dispose();
-                _connection = null;
+                if (connection.State != ConnectionState.Closed)
+                {
+                    connection.Close();
+                }
+
+                connection.Dispose();
+                connection = null;
             }
         }
     }
