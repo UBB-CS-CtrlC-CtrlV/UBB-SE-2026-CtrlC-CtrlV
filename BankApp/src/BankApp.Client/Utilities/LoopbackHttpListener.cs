@@ -13,7 +13,7 @@ namespace BankApp.Client.Utilities;
 /// <summary>
 /// Hosts a temporary loopback HTTP endpoint used to capture browser-based authentication callbacks.
 /// </summary>
-public class LoopbackHttpListener : IDisposable
+public partial class LoopbackHttpListener : IDisposable
 {
     private const int DefaultTimeout = 60 * 5;
     private readonly HttpListener listener;
@@ -28,7 +28,7 @@ public class LoopbackHttpListener : IDisposable
         path = path ?? string.Empty;
         if (path.StartsWith("/"))
         {
-            path = path.Substring(1);
+            path = path[1..];
         }
 
         var url1 = $"http://127.0.0.1:{port}/{path}";
