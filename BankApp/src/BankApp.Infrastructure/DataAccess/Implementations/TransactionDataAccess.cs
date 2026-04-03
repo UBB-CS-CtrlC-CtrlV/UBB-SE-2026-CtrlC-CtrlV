@@ -4,13 +4,23 @@ using BankApp.Infrastructure.DataAccess.Interfaces;
 
 namespace BankApp.Infrastructure.DataAccess.Implementations
 {
+    /// <summary>
+    /// Provides SQL Server data access for financial transaction records.
+    /// </summary>
     public class TransactionDataAccess : ITransactionDataAccess
     {
         private readonly AppDbContext dbContext;
+
+        /// <summary>
+        /// Initializes a new instance of the <see cref="TransactionDataAccess"/> class.
+        /// </summary>
+        /// <param name="dbContext">The database context used for executing queries.</param>
         public TransactionDataAccess(AppDbContext dbContext)
         {
             this.dbContext = dbContext;
         }
+
+        /// <inheritdoc />
         public List<Transaction> FindRecentByAccountId(int accountId, int limit = 10)
         {
             var transactions = new List<Transaction>();

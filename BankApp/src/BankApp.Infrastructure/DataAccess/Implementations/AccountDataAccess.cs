@@ -4,15 +4,23 @@ using BankApp.Infrastructure.DataAccess.Interfaces;
 
 namespace BankApp.Infrastructure.DataAccess.Implementations
 {
+    /// <summary>
+    /// Provides SQL Server data access for bank account records.
+    /// </summary>
     public class AccountDataAccess : IAccountDataAccess
     {
         private readonly AppDbContext dbContext;
 
+        /// <summary>
+        /// Initializes a new instance of the <see cref="AccountDataAccess"/> class.
+        /// </summary>
+        /// <param name="dbContext">The database context used for executing queries.</param>
         public AccountDataAccess(AppDbContext dbContext)
         {
             this.dbContext = dbContext;
         }
 
+        /// <inheritdoc />
         public Account? FindById(int id)
         {
             var query =
@@ -25,6 +33,7 @@ namespace BankApp.Infrastructure.DataAccess.Implementations
             return null;
         }
 
+        /// <inheritdoc />
         public List<Account> FindByUserId(int userId)
         {
             var accounts = new List<Account>();

@@ -11,15 +11,23 @@ using BankApp.Core.Enums;
 
 namespace BankApp.Infrastructure.DataAccess.Implementations
 {
+     /// <summary>
+     /// Provides SQL Server data access for notification preference records.
+     /// </summary>
      internal class NotificationPreferenceDataAccess : INotificationPreferenceDataAccess
      {
         private AppDbContext appDbContext;
 
+        /// <summary>
+        /// Initializes a new instance of the <see cref="NotificationPreferenceDataAccess"/> class.
+        /// </summary>
+        /// <param name="appDbContext">The database context used for executing queries.</param>
         public NotificationPreferenceDataAccess(AppDbContext appDbContext)
         {
             this.appDbContext = appDbContext;
         }
 
+        /// <inheritdoc />
         public bool Create(int userId, string category)
         {
             try
@@ -39,6 +47,7 @@ namespace BankApp.Infrastructure.DataAccess.Implementations
             }
         }
 
+        /// <inheritdoc />
         public List<NotificationPreference> FindByUserId(int userId)
         {
             List<NotificationPreference> result = new List<NotificationPreference>();
@@ -64,6 +73,8 @@ namespace BankApp.Infrastructure.DataAccess.Implementations
 
             return result;
         }
+
+        /// <inheritdoc />
         public bool Update(int userId, List<NotificationPreference> prefs)
         {
             try

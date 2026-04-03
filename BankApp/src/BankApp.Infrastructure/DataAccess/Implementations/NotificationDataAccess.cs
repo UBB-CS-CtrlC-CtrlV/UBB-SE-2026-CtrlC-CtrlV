@@ -3,14 +3,23 @@ using BankApp.Infrastructure.DataAccess.Interfaces;
 
 namespace BankApp.Infrastructure.DataAccess.Implementations
 {
+    /// <summary>
+    /// Provides SQL Server data access for notification records.
+    /// </summary>
     public class NotificationDataAccess : INotificationDataAccess
     {
         private readonly AppDbContext dbContext;
+
+        /// <summary>
+        /// Initializes a new instance of the <see cref="NotificationDataAccess"/> class.
+        /// </summary>
+        /// <param name="dbContext">The database context used for executing queries.</param>
         public NotificationDataAccess(AppDbContext dbContext)
         {
             this.dbContext = dbContext;
         }
 
+        /// <inheritdoc />
         public int CountUnreadByUserId(int userId)
         {
             var query = @"SELECT COUNT(*) FROM Notification WHERE UserId = @p0 and IsRead = 0";
@@ -22,6 +31,7 @@ namespace BankApp.Infrastructure.DataAccess.Implementations
             return 0;
         }
 
+        /// <inheritdoc />
         public List<Notification> FindByUserId(int userId)
         {
             var notifications = new List<Notification>();

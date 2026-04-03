@@ -3,14 +3,23 @@ using BankApp.Infrastructure.DataAccess.Interfaces;
 
 namespace BankApp.Infrastructure.DataAccess.Implementations
 {
+    /// <summary>
+    /// Provides SQL Server data access for user account records.
+    /// </summary>
     public class UserDataAccess : IUserDataAccess
     {
         private readonly AppDbContext db;
+
+        /// <summary>
+        /// Initializes a new instance of the <see cref="UserDataAccess"/> class.
+        /// </summary>
+        /// <param name="db">The database context used for executing queries.</param>
         public UserDataAccess(AppDbContext db)
         {
             this.db = db;
         }
 
+        /// <inheritdoc />
         public User? FindByEmail(string email)
         {
             var sql = @"SELECT Id, Email, PasswordHash, FullName, PhoneNumber, DateOfBirth,
@@ -26,6 +35,7 @@ namespace BankApp.Infrastructure.DataAccess.Implementations
             return null;
         }
 
+        /// <inheritdoc />
         public User? FindById(int id)
         {
             var sql = @"SELECT Id, Email, PasswordHash, FullName, PhoneNumber, DateOfBirth,
@@ -41,6 +51,7 @@ namespace BankApp.Infrastructure.DataAccess.Implementations
             return null;
         }
 
+        /// <inheritdoc />
         public bool Create(User user)
         {
             var sql = @"INSERT INTO [User] (Email, PasswordHash, FullName, PhoneNumber, DateOfBirth,
@@ -63,6 +74,7 @@ namespace BankApp.Infrastructure.DataAccess.Implementations
             return rows > 0;
         }
 
+        /// <inheritdoc />
         public bool Update(User user)
         {
             var sql = @"UPDATE [User] SET Email = @p0, FullName = @p1, PhoneNumber = @p2,
@@ -87,24 +99,28 @@ namespace BankApp.Infrastructure.DataAccess.Implementations
             return rows > 0;
         }
 
+        /// <inheritdoc />
         public bool UpdatePassword(int userId, string newPasswordHash)
         {
             var sql = "UPDATE [User] SET PasswordHash = @p0, UpdatedAt = GETUTCDATE() WHERE Id = @p1";
             return db.ExecuteNonQuery(sql, new object[] { newPasswordHash, userId }) > 0;
         }
 
+        /// <inheritdoc />
         public void IncrementFailedAttempts(int userId)
         {
             var sql = "UPDATE [User] SET FailedLoginAttempts = FailedLoginAttempts + 1 WHERE Id = @p0";
             db.ExecuteNonQuery(sql, new object[] { userId });
         }
 
+        /// <inheritdoc />
         public void ResetFailedAttempts(int userId)
         {
             var sql = "UPDATE [User] SET FailedLoginAttempts = 0 WHERE Id = @p0";
             db.ExecuteNonQuery(sql, new object[] { userId });
         }
 
+        /// <inheritdoc />
         public void LockAccount(int userId, DateTime lockoutEnd)
         {
             var sql = "UPDATE [User] SET IsLocked = 1, LockoutEnd = @p0 WHERE Id = @p1";
