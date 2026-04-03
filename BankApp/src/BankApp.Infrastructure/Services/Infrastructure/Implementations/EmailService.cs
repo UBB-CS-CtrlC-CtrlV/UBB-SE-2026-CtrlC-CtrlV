@@ -5,14 +5,23 @@ using Microsoft.Extensions.Configuration;
 
 namespace BankApp.Infrastructure.Services.Infrastructure.Implementations
 {
+    /// <summary>
+    /// Sends transactional emails using SMTP configuration from application settings.
+    /// </summary>
     public class EmailService : IEmailService
     {
         private readonly IConfiguration config;
+
+        /// <summary>
+        /// Initializes a new instance of the <see cref="EmailService"/> class.
+        /// </summary>
+        /// <param name="config">The application configuration containing SMTP settings.</param>
         public EmailService(IConfiguration config)
         {
             this.config = config;
         }
 
+        /// <inheritdoc />
         public void SendLockNotification(string email)
         {
             string subject = "BankApp - Account Locked";
@@ -20,6 +29,7 @@ namespace BankApp.Infrastructure.Services.Infrastructure.Implementations
             SendEmail(email, subject, body);
         }
 
+        /// <inheritdoc />
         public void SendLoginAlert(string email)
         {
             string subject = "BankApp - New Login Detected";
@@ -27,6 +37,7 @@ namespace BankApp.Infrastructure.Services.Infrastructure.Implementations
             SendEmail(email, subject, body);
         }
 
+        /// <inheritdoc />
         public void SendOTPCode(string email, string code)
         {
             string subject = "Your BankApp Login Code";
@@ -34,6 +45,7 @@ namespace BankApp.Infrastructure.Services.Infrastructure.Implementations
             SendEmail(email, subject, body);
         }
 
+        /// <inheritdoc />
         public void SendPasswordResetLink(string email, string token)
         {
             string subject = "BankApp - Password Reset Code";

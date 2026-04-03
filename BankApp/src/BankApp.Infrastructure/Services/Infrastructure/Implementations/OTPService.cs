@@ -4,16 +4,23 @@ using BankApp.Infrastructure.Services.Infrastructure.Interfaces;
 
 namespace BankApp.Infrastructure.Services.Infrastructure.Implementations
 {
+    /// <summary>
+    /// Provides HMAC-based TOTP and in-memory SMS OTP generation and verification.
+    /// </summary>
     public class OtpService : IOtpService
     {
         private static readonly Dictionary<int, (string Code, DateTime ExpiryTime)> TemporarySmsStorage = new ();
         private const int SmsOtpExpiryMinutes = 5;
         private const int TotpWindowSeconds = 300;
 
+        /// <summary>
+        /// Initializes a new instance of the <see cref="OtpService"/> class.
+        /// </summary>
         public OtpService()
         {
         }
 
+        /// <inheritdoc />
         public string GenerateSMSOTP(int userId)
         {
             string code = RandomNumberGenerator.GetInt32(100000, 999999).ToString();
@@ -22,22 +29,26 @@ namespace BankApp.Infrastructure.Services.Infrastructure.Implementations
             return code;
         }
 
+        /// <inheritdoc />
         public string GenerateTOTP(int userId)
         {
             long currentWindow = DateTimeOffset.UtcNow.ToUnixTimeSeconds() / TotpWindowSeconds;
             return GenerateHmacCode(userId, currentWindow);
         }
 
+        /// <inheritdoc />
         public void InvalidateOTP(int userId)
         {
             TemporarySmsStorage.Remove(userId);
         }
 
+        /// <inheritdoc />
         public bool IsExpired(DateTime expiredAt)
         {
             return DateTime.UtcNow > expiredAt;
         }
 
+        /// <inheritdoc />
         public bool VerifySMSOTP(int userId, string code)
         {
             if (TemporarySmsStorage.TryGetValue(userId, out var storedData))
@@ -56,6 +67,7 @@ namespace BankApp.Infrastructure.Services.Infrastructure.Implementations
             return false;
         }
 
+        /// <inheritdoc />
         public bool VerifyTOTP(int userId, string code)
         {
             long currentWindow = DateTimeOffset.UtcNow.ToUnixTimeSeconds() / TotpWindowSeconds;
