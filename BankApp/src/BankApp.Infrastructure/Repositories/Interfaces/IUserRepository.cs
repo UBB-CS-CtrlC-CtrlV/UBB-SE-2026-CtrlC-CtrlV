@@ -75,9 +75,9 @@ namespace BankApp.Infrastructure.Repositories.Interfaces
         /// Replaces all notification preferences for the specified user.
         /// </summary>
         /// <param name="userId">The identifier of the user.</param>
-        /// <param name="prefs">The updated list of notification preferences.</param>
+        /// <param name="preferences">The updated list of notification preferences.</param>
         /// <returns><see langword="true"/> if the update succeeded; otherwise, <see langword="false"/>.</returns>
-        bool UpdateNotificationPreferences(int userId, List<NotificationPreference> prefs);
+        bool UpdateNotificationPreferences(int userId, List<NotificationPreference> preferences);
     }
 }
 

@@ -11,46 +11,46 @@ namespace BankApp.Infrastructure.Repositories.Implementations
     /// </summary>
     public class AuthRepository : IAuthRepository
     {
-        private readonly IUserDataAccess userDao;
-        private readonly ISessionDataAccess sessionDao;
-        private readonly IOAuthLinkDataAccess oAuthLinkDao;
-        private readonly IPasswordResetTokenDataAccess passwordResetTokenDao;
-        private readonly INotificationPreferenceDataAccess notificationPreferenceDao;
+        private readonly IUserDataAccess userDataAccess;
+        private readonly ISessionDataAccess sessionDataAccess;
+        private readonly IOAuthLinkDataAccess oAuthLinkDataAccess;
+        private readonly IPasswordResetTokenDataAccess passwordResetTokenDataAccess;
+        private readonly INotificationPreferenceDataAccess notificationPreferenceDataAccess;
 
         /// <summary>
         /// Initializes a new instance of the <see cref="AuthRepository"/> class.
         /// </summary>
-        /// <param name="userDao">The user data access component.</param>
-        /// <param name="sessionDao">The session data access component.</param>
-        /// <param name="oAuthLinkDao">The OAuth link data access component.</param>
-        /// <param name="passwordResetTokenDao">The password reset token data access component.</param>
-        /// <param name="notificationPreferenceDao">The notification preference data access component.</param>
-        public AuthRepository(IUserDataAccess userDao, ISessionDataAccess sessionDao, IOAuthLinkDataAccess oAuthLinkDao,
-            IPasswordResetTokenDataAccess passwordResetTokenDao, INotificationPreferenceDataAccess notificationPreferenceDao)
+        /// <param name="userDataAccess">The user data access component.</param>
+        /// <param name="sessionDataAccess">The session data access component.</param>
+        /// <param name="oAuthLinkDataAccess">The OAuth link data access component.</param>
+        /// <param name="passwordResetTokenDataAccess">The password reset token data access component.</param>
+        /// <param name="notificationPreferenceDataAccess">The notification preference data access component.</param>
+        public AuthRepository(IUserDataAccess userDataAccess, ISessionDataAccess sessionDataAccess, IOAuthLinkDataAccess oAuthLinkDataAccess,
+            IPasswordResetTokenDataAccess passwordResetTokenDataAccess, INotificationPreferenceDataAccess notificationPreferenceDataAccess)
         {
-            this.userDao = userDao;
-            this.sessionDao = sessionDao;
-            this.oAuthLinkDao = oAuthLinkDao;
-            this.passwordResetTokenDao = passwordResetTokenDao;
-            this.notificationPreferenceDao = notificationPreferenceDao;
+            this.userDataAccess = userDataAccess;
+            this.sessionDataAccess = sessionDataAccess;
+            this.oAuthLinkDataAccess = oAuthLinkDataAccess;
+            this.passwordResetTokenDataAccess = passwordResetTokenDataAccess;
+            this.notificationPreferenceDataAccess = notificationPreferenceDataAccess;
         }
 
         /// <inheritdoc />
         public User? FindUserByEmail(string email)
         {
-            return userDao.FindByEmail(email);
+            return userDataAccess.FindByEmail(email);
         }
 
         /// <inheritdoc />
         public bool CreateUser(User user)
         {
-            bool success = userDao.Create(user);
+            bool success = userDataAccess.Create(user);
             if (!success)
             {
                 return false;
             }
 
-            User? createdUser = userDao.FindByEmail(user.Email);
+            User? createdUser = userDataAccess.FindByEmail(user.Email);
             if (createdUser == null)
             {
                 return false;
@@ -58,7 +58,7 @@ namespace BankApp.Infrastructure.Repositories.Implementations
 
             foreach (NotificationType type in Enum.GetValues(typeof(NotificationType)))
             {
-                success = notificationPreferenceDao.Create(createdUser.Id, NotificationTypeExtensions.ToDisplayName(type));
+                success = notificationPreferenceDataAccess.Create(createdUser.Id, NotificationTypeExtensions.ToDisplayName(type));
                 if (!success)
                 {
                     return false;
@@ -71,37 +71,37 @@ namespace BankApp.Infrastructure.Repositories.Implementations
         /// <inheritdoc />
         public OAuthLink? FindOAuthLink(string provider, string providerUserId)
         {
-            return oAuthLinkDao.FindByProvider(provider, providerUserId);
+            return oAuthLinkDataAccess.FindByProvider(provider, providerUserId);
         }
 
         /// <inheritdoc />
         public bool CreateOAuthLink(OAuthLink link)
         {
-            return oAuthLinkDao.Create(link.UserId, link.Provider, link.ProviderUserId, link.ProviderEmail);
+            return oAuthLinkDataAccess.Create(link.UserId, link.Provider, link.ProviderUserId, link.ProviderEmail);
         }
 
         /// <inheritdoc />
-        public Session CreateSession(int userId, string token, string? deviceInfo, string? browser, string? ip)
+        public Session CreateSession(int userId, string token, string? deviceInfo, string? browser, string? ipAddress)
         {
-            return sessionDao.Create(userId, token, deviceInfo, browser, ip);
+            return sessionDataAccess.Create(userId, token, deviceInfo, browser, ipAddress);
         }
 
         /// <inheritdoc />
         public Session? FindSessionByToken(string token)
         {
-            return sessionDao.FindByToken(token);
+            return sessionDataAccess.FindByToken(token);
         }
 
         /// <inheritdoc />
         public void InvalidateAllSessions(int userId)
         {
-            sessionDao.RevokeAll(userId);
+            sessionDataAccess.RevokeAll(userId);
         }
 
         /// <inheritdoc />
         public List<Session> FindSessionsByUserId(int userId)
         {
-            return sessionDao.FindByUserId(userId);
+            return sessionDataAccess.FindByUserId(userId);
         }
 
         /// <inheritdoc />
@@ -109,56 +109,56 @@ namespace BankApp.Infrastructure.Repositories.Implementations
         {
             // Revoke the old session
             // the service layer will create a new one
-            sessionDao.Revoke(sessionId);
+            sessionDataAccess.Revoke(sessionId);
             return true;
         }
 
         /// <inheritdoc />
         public void SavePasswordResetToken(PasswordResetToken token)
         {
-            passwordResetTokenDao.Create(token.UserId, token.TokenHash, token.ExpiresAt);
+            passwordResetTokenDataAccess.Create(token.UserId, token.TokenHash, token.ExpiresAt);
         }
 
         /// <inheritdoc />
         public PasswordResetToken? FindPasswordResetToken(string tokenHash)
         {
-            return passwordResetTokenDao.FindByToken(tokenHash);
+            return passwordResetTokenDataAccess.FindByToken(tokenHash);
         }
 
         /// <inheritdoc />
         public void MarkPasswordResetTokenAsUsed(int tokenId)
         {
-            passwordResetTokenDao.MarkAsUsed(tokenId);
+            passwordResetTokenDataAccess.MarkAsUsed(tokenId);
         }
 
         /// <inheritdoc />
         public void IncrementFailedAttempts(int userId)
         {
-            userDao.IncrementFailedAttempts(userId);
+            userDataAccess.IncrementFailedAttempts(userId);
         }
 
         /// <inheritdoc />
         public void ResetFailedAttempts(int userId)
         {
-            userDao.ResetFailedAttempts(userId);
+            userDataAccess.ResetFailedAttempts(userId);
         }
 
         /// <inheritdoc />
         public void LockAccount(int userId, DateTime lockoutEnd)
         {
-            userDao.LockAccount(userId, lockoutEnd);
+            userDataAccess.LockAccount(userId, lockoutEnd);
         }
 
         /// <inheritdoc />
         public User? FindUserById(int id)
         {
-            return userDao.FindById(id);
+            return userDataAccess.FindById(id);
         }
 
         /// <inheritdoc />
         public bool UpdatePassword(int userId, string newPasswordHash)
         {
-            return userDao.UpdatePassword(userId, newPasswordHash);
+            return userDataAccess.UpdatePassword(userId, newPasswordHash);
         }
     }
 }

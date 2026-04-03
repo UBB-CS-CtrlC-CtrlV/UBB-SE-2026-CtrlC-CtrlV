@@ -11,85 +11,85 @@ using BankApp.Infrastructure.Repositories.Interfaces;
 /// </summary>
 public class UserRepository : IUserRepository
 {
-    private readonly IUserDataAccess userDao;
-    private readonly ISessionDataAccess sessionDao;
-    private readonly IOAuthLinkDataAccess oAuthLinkDao;
-    private readonly INotificationPreferenceDataAccess notificationPreferenceDao;
+    private readonly IUserDataAccess userDataAccess;
+    private readonly ISessionDataAccess sessionDataAccess;
+    private readonly IOAuthLinkDataAccess oAuthLinkDataAccess;
+    private readonly INotificationPreferenceDataAccess notificationPreferenceDataAccess;
 
     /// <summary>
     /// Initializes a new instance of the <see cref="UserRepository"/> class.
     /// </summary>
-    /// <param name="userDao">The user data access component.</param>
-    /// <param name="sessionDao">The session data access component.</param>
-    /// <param name="oAuthLinkDao">The OAuth link data access component.</param>
-    /// <param name="notificationPreferenceDao">The notification preference data access component.</param>
-    public UserRepository(IUserDataAccess userDao, ISessionDataAccess sessionDao, IOAuthLinkDataAccess oAuthLinkDao,
-        INotificationPreferenceDataAccess notificationPreferenceDao)
+    /// <param name="userDataAccess">The user data access component.</param>
+    /// <param name="sessionDataAccess">The session data access component.</param>
+    /// <param name="oAuthLinkDataAccess">The OAuth link data access component.</param>
+    /// <param name="notificationPreferenceDataAccess">The notification preference data access component.</param>
+    public UserRepository(IUserDataAccess userDataAccess, ISessionDataAccess sessionDataAccess, IOAuthLinkDataAccess oAuthLinkDataAccess,
+        INotificationPreferenceDataAccess notificationPreferenceDataAccess)
     {
-        this.userDao = userDao;
-        this.sessionDao = sessionDao;
-        this.notificationPreferenceDao = notificationPreferenceDao;
-        this.oAuthLinkDao = oAuthLinkDao;
+        this.userDataAccess = userDataAccess;
+        this.sessionDataAccess = sessionDataAccess;
+        this.notificationPreferenceDataAccess = notificationPreferenceDataAccess;
+        this.oAuthLinkDataAccess = oAuthLinkDataAccess;
     }
 
     /// <inheritdoc />
     public User? FindById(int id)
     {
-        return userDao.FindById(id);
+        return userDataAccess.FindById(id);
     }
 
     /// <inheritdoc />
     public bool UpdateUser(User user)
     {
-        return userDao.Update(user);
+        return userDataAccess.Update(user);
     }
 
     /// <inheritdoc />
     public bool UpdatePassword(int userId, string newPasswordHash)
     {
-        return userDao.UpdatePassword(userId, newPasswordHash);
+        return userDataAccess.UpdatePassword(userId, newPasswordHash);
     }
 
     /// <inheritdoc />
     public List<Session> GetActiveSessions(int userId)
     {
-        return sessionDao.FindByUserId(userId);
+        return sessionDataAccess.FindByUserId(userId);
     }
 
     /// <inheritdoc />
     public void RevokeSession(int sessionId)
     {
-        sessionDao.Revoke(sessionId);
+        sessionDataAccess.Revoke(sessionId);
     }
 
     /// <inheritdoc />
     public List<OAuthLink> GetLinkedProviders(int userId)
     {
-        return oAuthLinkDao.FindByUserId(userId);
+        return oAuthLinkDataAccess.FindByUserId(userId);
     }
 
     /// <inheritdoc />
     public bool SaveOAuthLink(int userId, string provider, string providerUserId, string? email)
     {
-        return oAuthLinkDao.Create(userId, provider, providerUserId, email);
+        return oAuthLinkDataAccess.Create(userId, provider, providerUserId, email);
     }
 
     /// <inheritdoc />
     public void DeleteOAuthLink(int linkId)
     {
-        oAuthLinkDao.Delete(linkId);
+        oAuthLinkDataAccess.Delete(linkId);
     }
 
     /// <inheritdoc />
     public List<NotificationPreference> GetNotificationPreferences(int userId)
     {
-        return notificationPreferenceDao.FindByUserId(userId);
+        return notificationPreferenceDataAccess.FindByUserId(userId);
     }
 
     /// <inheritdoc />
-    public bool UpdateNotificationPreferences(int userId, List<NotificationPreference> prefs)
+    public bool UpdateNotificationPreferences(int userId, List<NotificationPreference> preferences)
     {
-        return notificationPreferenceDao.Update(userId, prefs);
+        return notificationPreferenceDataAccess.Update(userId, preferences);
     }
 }
 
