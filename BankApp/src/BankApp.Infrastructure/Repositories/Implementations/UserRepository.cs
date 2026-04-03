@@ -7,68 +7,68 @@ using BankApp.Infrastructure.DataAccess.Interfaces;
 using BankApp.Infrastructure.Repositories.Interfaces;
 public class UserRepository : IUserRepository
 {
-    private readonly IUserDataAccess _userDao;
-    private readonly ISessionDataAccess _sessionDao;
-    private readonly IOAuthLinkDataAccess _oAuthLinkDao;
-    private readonly INotificationPreferenceDataAccess _notificationPreferenceDao;
+    private readonly IUserDataAccess userDao;
+    private readonly ISessionDataAccess sessionDao;
+    private readonly IOAuthLinkDataAccess oAuthLinkDao;
+    private readonly INotificationPreferenceDataAccess notificationPreferenceDao;
 
     public UserRepository(IUserDataAccess userDao, ISessionDataAccess sessionDao, IOAuthLinkDataAccess oAuthLinkDao,
         INotificationPreferenceDataAccess notificationPreferenceDao)
     {
-        _userDao = userDao;
-        _sessionDao = sessionDao;
-        _notificationPreferenceDao = notificationPreferenceDao;
-        _oAuthLinkDao = oAuthLinkDao;
+        this.userDao = userDao;
+        this.sessionDao = sessionDao;
+        this.notificationPreferenceDao = notificationPreferenceDao;
+        this.oAuthLinkDao = oAuthLinkDao;
     }
 
     public User? FindById(int id)
     {
-        return _userDao.FindById(id);
+        return userDao.FindById(id);
     }
 
     public bool UpdateUser(User user)
     {
-        return _userDao.Update(user);
+        return userDao.Update(user);
     }
 
     public bool UpdatePassword(int userId, string newPasswordHash)
     {
-        return _userDao.UpdatePassword(userId, newPasswordHash);
+        return userDao.UpdatePassword(userId, newPasswordHash);
     }
 
     public List<Session> GetActiveSessions(int userId)
     {
-        return _sessionDao.FindByUserId(userId);
+        return sessionDao.FindByUserId(userId);
     }
 
     public void RevokeSession(int sessionId)
     {
-        _sessionDao.Revoke(sessionId);
+        sessionDao.Revoke(sessionId);
     }
 
     public List<OAuthLink> GetLinkedProviders(int userId)
     {
-        return _oAuthLinkDao.FindByUserId(userId);
+        return oAuthLinkDao.FindByUserId(userId);
     }
 
     public bool SaveOAuthLink(int userId, string provider, string providerUserId, string? email)
     {
-        return _oAuthLinkDao.Create(userId, provider, providerUserId, email);
+        return oAuthLinkDao.Create(userId, provider, providerUserId, email);
     }
 
     public void DeleteOAuthLink(int linkId)
     {
-        _oAuthLinkDao.Delete(linkId);
+        oAuthLinkDao.Delete(linkId);
     }
 
     public List<NotificationPreference> GetNotificationPreferences(int userId)
     {
-        return _notificationPreferenceDao.FindByUserId(userId);
+        return notificationPreferenceDao.FindByUserId(userId);
     }
 
     public bool UpdateNotificationPreferences(int userId, List<NotificationPreference> prefs)
     {
-        return _notificationPreferenceDao.Update(userId, prefs);
+        return notificationPreferenceDao.Update(userId, prefs);
     }
 }
 
