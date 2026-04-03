@@ -1,6 +1,10 @@
-using Microsoft.UI.Xaml;
-using BankApp.Client.Utilities;
+// <copyright file="App.xaml.cs" company="CtrlC CtrlV">
+// Copyright (c) CtrlC CtrlV. All rights reserved.
+// </copyright>
+
 using BankApp.Client.Master;
+using BankApp.Client.Utilities;
+using Microsoft.UI.Xaml;
 
 namespace BankApp.Client
 {

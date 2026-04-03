@@ -52,7 +52,7 @@ public class ForgotPasswordViewModel
             var request = new ForgotPasswordRequest { Email = email };
             var response = await this.apiClient.PostAsync<ForgotPasswordRequest, ApiResponse>("/api/auth/forgot-password", request);
             this.State.SetValue(
-                response is { error: null } ? ForgotPasswordState.EmailSent : ForgotPasswordState.Error);
+                response is { Error: null } ? ForgotPasswordState.EmailSent : ForgotPasswordState.Error);
         }
         catch (Exception)
         {
@@ -117,12 +117,12 @@ public class ForgotPasswordViewModel
 
     private ForgotPasswordState MapResetTokenState(ApiResponse? response, ForgotPasswordState successState)
     {
-        if (response is { error: null })
+        if (response is { Error: null })
         {
             return successState;
         }
 
-        return response?.errorCode switch
+        return response?.ErrorCode switch
         {
             "token_expired" => ForgotPasswordState.TokenExpired,
             "token_already_used" => ForgotPasswordState.TokenAlreadyUsed,

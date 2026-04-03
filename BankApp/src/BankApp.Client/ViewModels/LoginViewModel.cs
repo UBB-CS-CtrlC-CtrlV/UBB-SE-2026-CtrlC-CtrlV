@@ -1,9 +1,12 @@
+// <copyright file="LoginViewModel.cs" company="CtrlC CtrlV">
+// Copyright (c) CtrlC CtrlV. All rights reserved.
+// </copyright>
+
+using System;
 using BankApp.Client.Utilities;
 using BankApp.Core.DTOs.Auth;
 using BankApp.Core.Enums;
 using Duende.IdentityModel.OidcClient;
-using System;
-using System.Threading.Tasks;
 
 namespace BankApp.Client.ViewModels
 {

@@ -1,16 +1,18 @@
+// <copyright file="ProfileView.xaml.cs" company="CtrlC CtrlV">
+// Copyright (c) CtrlC CtrlV. All rights reserved.
+// </copyright>
+
+using System;
+using System.Collections.Generic;
 using BankApp.Client.Utilities;
 using BankApp.Client.ViewModels;
 using BankApp.Core.Entities;
 using BankApp.Core.Enums;
+using BankApp.Core.Extensions;
 using Microsoft.UI.Xaml;
 using Microsoft.UI.Xaml.Controls;
 using Microsoft.UI.Xaml.Media;
 using Microsoft.UI.Xaml.Navigation;
-using System;
-using System.Collections.Generic;
-using System.Threading.Tasks;
-using Windows.Foundation;
-using BankApp.Core.Extensions;
 
 namespace BankApp.Client.Views
 {

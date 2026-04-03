@@ -12,15 +12,15 @@ public class ApiResponse
     /// <summary>
     /// Gets or sets the success message returned by the API.
     /// </summary>
-    public string? message { get; set; }
+    public string? Message { get; set; }
 
     /// <summary>
     /// Gets or sets the error message returned by the API.
     /// </summary>
-    public string? error { get; set; }
+    public string? Error { get; set; }
 
     /// <summary>
     /// Gets or sets the machine-readable error code returned by the API.
     /// </summary>
-    public string? errorCode { get; set; }
+    public string? ErrorCode { get; set; }
 }

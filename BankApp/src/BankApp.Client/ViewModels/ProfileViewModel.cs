@@ -1,10 +1,14 @@
+// <copyright file="ProfileViewModel.cs" company="CtrlC CtrlV">
+// Copyright (c) CtrlC CtrlV. All rights reserved.
+// </copyright>
+
+using System;
+using System.Collections.Generic;
+using System.Threading.Tasks;
 using BankApp.Client.Utilities;
 using BankApp.Core.DTOs.Profile;
 using BankApp.Core.Entities;
 using BankApp.Core.Enums;
-using System;
-using System.Collections.Generic;
-using System.Threading.Tasks;
 
 namespace BankApp.Client.ViewModels
 {

@@ -1,9 +1,13 @@
+// <copyright file="TwoFactorView.xaml.cs" company="CtrlC CtrlV">
+// Copyright (c) CtrlC CtrlV. All rights reserved.
+// </copyright>
+
 using System;
-using Microsoft.UI.Xaml;
-using Microsoft.UI.Xaml.Controls;
 using BankApp.Client.Utilities;
 using BankApp.Client.ViewModels;
 using BankApp.Core.Enums;
+using Microsoft.UI.Xaml;
+using Microsoft.UI.Xaml.Controls;
 
 namespace BankApp.Client.Views
 {

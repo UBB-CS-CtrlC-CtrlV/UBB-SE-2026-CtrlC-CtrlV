@@ -1,9 +1,12 @@
-using BankApp.Client.Utilities;
+// <copyright file="NavView.xaml.cs" company="CtrlC CtrlV">
+// Copyright (c) CtrlC CtrlV. All rights reserved.
+// </copyright>
+
+using System;
+using System.Collections.Generic;
 using Microsoft.UI.Xaml;
 using Microsoft.UI.Xaml.Controls;
 using Microsoft.UI.Xaml.Input;
-using System;
-using System.Collections.Generic;
 
 namespace BankApp.Client.Views
 {

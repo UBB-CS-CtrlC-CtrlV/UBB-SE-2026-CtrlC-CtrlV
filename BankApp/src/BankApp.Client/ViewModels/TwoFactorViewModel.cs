@@ -1,3 +1,7 @@
+// <copyright file="TwoFactorViewModel.cs" company="CtrlC CtrlV">
+// Copyright (c) CtrlC CtrlV. All rights reserved.
+// </copyright>
+
 using System;
 using System.Threading.Tasks;
 using BankApp.Client.Utilities;

@@ -1,9 +1,12 @@
-using BankApp.Client.Utilities;
-using BankApp.Core.Enums;
-using BankApp.Core.DTOs.Auth;
+// <copyright file="RegisterViewModel.cs" company="CtrlC CtrlV">
+// Copyright (c) CtrlC CtrlV. All rights reserved.
+// </copyright>
+
 using System;
-using System.Threading.Tasks;
 using System.Linq;
+using BankApp.Client.Utilities;
+using BankApp.Core.DTOs.Auth;
+using BankApp.Core.Enums;
 
 namespace BankApp.Client.ViewModels
 {

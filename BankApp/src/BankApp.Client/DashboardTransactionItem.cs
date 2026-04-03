@@ -13,32 +13,30 @@ using BankApp.Core.DTOs.Dashboard;
 using BankApp.Core.Entities;
 using BankApp.Core.Enums;
 
-namespace BankApp.Client.ViewModels
+namespace BankApp.Client.ViewModels;
+
+/// <summary>
+/// Represents a formatted transaction row for dashboard display.
+/// </summary>
+public class DashboardTransactionItem
 {
+    /// <summary>
+    /// Gets or sets the merchant or fallback display name.
+    /// </summary>
+    public string MerchantDisplayName { get; set; } = string.Empty;
 
     /// <summary>
-    /// Represents a formatted transaction row for dashboard display.
+    /// Gets or sets the transaction type.
     /// </summary>
-    public class DashboardTransactionItem
-    {
-        /// <summary>
-        /// Gets or sets the merchant or fallback display name.
-        /// </summary>
-        public string MerchantDisplayName { get; set; } = string.Empty;
+    public string Type { get; set; } = string.Empty;
 
-        /// <summary>
-        /// Gets or sets the transaction type.
-        /// </summary>
-        public string Type { get; set; } = string.Empty;
+    /// <summary>
+    /// Gets or sets the formatted amount string.
+    /// </summary>
+    public string AmountDisplay { get; set; } = string.Empty;
 
-        /// <summary>
-        /// Gets or sets the formatted amount string.
-        /// </summary>
-        public string AmountDisplay { get; set; } = string.Empty;
-
-        /// <summary>
-        /// Gets or sets the currency code.
-        /// </summary>
-        public string Currency { get; set; } = string.Empty;
-    }
+    /// <summary>
+    /// Gets or sets the currency code.
+    /// </summary>
+    public string Currency { get; set; } = string.Empty;
 }
