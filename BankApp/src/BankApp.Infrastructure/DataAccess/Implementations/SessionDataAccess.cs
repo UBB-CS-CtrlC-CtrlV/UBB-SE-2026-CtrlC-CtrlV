@@ -8,33 +8,35 @@ namespace BankApp.Infrastructure.DataAccess
     /// </summary>
     public class SessionDataAccess : ISessionDataAccess
     {
-        private readonly AppDbContext db;
+        private readonly AppDbContext dbContext;
+        private const int SessionExpirationDays = 7;
 
         /// <summary>
         /// Initializes a new instance of the <see cref="SessionDataAccess"/> class.
         /// </summary>
-        /// <param name="db">The database context used for executing queries.</param>
-        public SessionDataAccess(AppDbContext db)
+        /// <param name="dbContext">The database context used for executing queries.</param>
+        public SessionDataAccess(AppDbContext dbContext)
         {
-            this.db = db;
+            this.dbContext = dbContext;
         }
 
         /// <inheritdoc />
-        public Session Create(int userId, string token, string? deviceInfo, string? browser, string? ip)
+        public Session Create(int userId, string token, string? deviceInfo, string? browser, string? ipAddress)
         {
             var sql = @"INSERT INTO [Session] (UserId, Token, DeviceInfo, Browser, IpAddress, LastActiveAt, ExpiresAt)
                         OUTPUT INSERTED.Id, INSERTED.UserId, INSERTED.Token, INSERTED.DeviceInfo,
                                INSERTED.Browser, INSERTED.IpAddress, INSERTED.LastActiveAt,
                                INSERTED.ExpiresAt, INSERTED.IsRevoked, INSERTED.CreatedAt
-                        VALUES (@p0, @p1, @p2, @p3, @p4, GETUTCDATE(), DATEADD(DAY, 7, GETUTCDATE()))";
+                        VALUES (@p0, @p1, @p2, @p3, @p4, GETUTCDATE(), DATEADD(DAY, @p5, GETUTCDATE()))";
 
-            using var reader = db.ExecuteQuery(sql, new object[]
+            using var reader = dbContext.ExecuteQuery(sql, new object[]
             {
                 userId,
                 token,
                 deviceInfo ?? (object)DBNull.Value,
                 browser ?? (object)DBNull.Value,
-                ip ?? (object)DBNull.Value
+                ipAddress ?? (object)DBNull.Value,
+                SessionExpirationDays
             });
 
             reader.Read();
@@ -48,7 +50,7 @@ namespace BankApp.Infrastructure.DataAccess
                         LastActiveAt, ExpiresAt, IsRevoked, CreatedAt
                         FROM [Session] WHERE Token = @p0 AND IsRevoked = 0 AND ExpiresAt > GETUTCDATE()";
 
-            using var reader = db.ExecuteQuery(sql, new object[] { token });
+            using var reader = dbContext.ExecuteQuery(sql, new object[] { token });
             if (reader.Read())
             {
                 return MapSession(reader);
@@ -63,7 +65,7 @@ namespace BankApp.Infrastructure.DataAccess
                         LastActiveAt, ExpiresAt, IsRevoked, CreatedAt
                         FROM [Session] WHERE UserId = @p0 AND IsRevoked = 0 AND ExpiresAt > GETUTCDATE()";
 
-            using var reader = db.ExecuteQuery(sql, new object[] { userId });
+            using var reader = dbContext.ExecuteQuery(sql, new object[] { userId });
             var sessions = new List<Session>();
             while (reader.Read())
             {
@@ -76,30 +78,30 @@ namespace BankApp.Infrastructure.DataAccess
         public void Revoke(int sessionId)
         {
             var sql = "UPDATE [Session] SET IsRevoked = 1 WHERE Id = @p0";
-            db.ExecuteNonQuery(sql, new object[] { sessionId });
+            dbContext.ExecuteNonQuery(sql, new object[] { sessionId });
         }
 
         /// <inheritdoc />
         public void RevokeAll(int userId)
         {
             var sql = "UPDATE [Session] SET IsRevoked = 1 WHERE UserId = @p0 AND IsRevoked = 0";
-            db.ExecuteNonQuery(sql, new object[] { userId });
+            dbContext.ExecuteNonQuery(sql, new object[] { userId });
         }
 
-        private Session MapSession(System.Data.IDataReader r)
+        private Session MapSession(System.Data.IDataReader reader)
         {
             return new Session
             {
-                Id = r.GetInt32(r.GetOrdinal("Id")),
-                UserId = r.GetInt32(r.GetOrdinal("UserId")),
-                Token = r.GetString(r.GetOrdinal("Token")),
-                DeviceInfo = r.IsDBNull(r.GetOrdinal("DeviceInfo")) ? null : r.GetString(r.GetOrdinal("DeviceInfo")),
-                Browser = r.IsDBNull(r.GetOrdinal("Browser")) ? null : r.GetString(r.GetOrdinal("Browser")),
-                IpAddress = r.IsDBNull(r.GetOrdinal("IpAddress")) ? null : r.GetString(r.GetOrdinal("IpAddress")),
-                LastActiveAt = r.IsDBNull(r.GetOrdinal("LastActiveAt")) ? null : r.GetDateTime(r.GetOrdinal("LastActiveAt")),
-                ExpiresAt = r.GetDateTime(r.GetOrdinal("ExpiresAt")),
-                IsRevoked = r.GetBoolean(r.GetOrdinal("IsRevoked")),
-                CreatedAt = r.GetDateTime(r.GetOrdinal("CreatedAt"))
+                Id = reader.GetInt32(reader.GetOrdinal("Id")),
+                UserId = reader.GetInt32(reader.GetOrdinal("UserId")),
+                Token = reader.GetString(reader.GetOrdinal("Token")),
+                DeviceInfo = reader.IsDBNull(reader.GetOrdinal("DeviceInfo")) ? null : reader.GetString(reader.GetOrdinal("DeviceInfo")),
+                Browser = reader.IsDBNull(reader.GetOrdinal("Browser")) ? null : reader.GetString(reader.GetOrdinal("Browser")),
+                IpAddress = reader.IsDBNull(reader.GetOrdinal("IpAddress")) ? null : reader.GetString(reader.GetOrdinal("IpAddress")),
+                LastActiveAt = reader.IsDBNull(reader.GetOrdinal("LastActiveAt")) ? null : reader.GetDateTime(reader.GetOrdinal("LastActiveAt")),
+                ExpiresAt = reader.GetDateTime(reader.GetOrdinal("ExpiresAt")),
+                IsRevoked = reader.GetBoolean(reader.GetOrdinal("IsRevoked")),
+                CreatedAt = reader.GetDateTime(reader.GetOrdinal("CreatedAt"))
             };
         }
     }

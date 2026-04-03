@@ -38,30 +38,30 @@ namespace BankApp.Infrastructure.DataAccess.Implementations
             return transactions;
         }
 
-        private Transaction MapToTransaction(IDataReader r)
+        private Transaction MapToTransaction(IDataReader reader)
         {
             return new Transaction
             {
-                Id = r.GetInt32(r.GetOrdinal("Id")),
-                AccountId = r.GetInt32(r.GetOrdinal("AccountId")),
-                CardId = r.IsDBNull(r.GetOrdinal("CardId")) ? null : r.GetInt32(r.GetOrdinal("CardId")),
-                TransactionRef = r.GetString(r.GetOrdinal("TransactionRef")),
-                Type = r.GetString(r.GetOrdinal("Type")),
-                Direction = r.GetString(r.GetOrdinal("Direction")),
-                Amount = r.GetDecimal(r.GetOrdinal("Amount")),
-                Currency = r.GetString(r.GetOrdinal("Currency")),
-                BalanceAfter = r.GetDecimal(r.GetOrdinal("BalanceAfter")),
-                CounterpartyName = r.IsDBNull(r.GetOrdinal("CounterpartyName")) ? null : r.GetString(r.GetOrdinal("CounterpartyName")),
-                CounterpartyIBAN = r.IsDBNull(r.GetOrdinal("CounterpartyIBAN")) ? null : r.GetString(r.GetOrdinal("CounterpartyIBAN")),
-                MerchantName = r.IsDBNull(r.GetOrdinal("MerchantName")) ? null : r.GetString(r.GetOrdinal("MerchantName")),
-                CategoryId = r.IsDBNull(r.GetOrdinal("CategoryId")) ? null : r.GetInt32(r.GetOrdinal("CategoryId")),
-                Description = r.IsDBNull(r.GetOrdinal("Description")) ? null : r.GetString(r.GetOrdinal("Description")),
-                Fee = r.GetDecimal(r.GetOrdinal("Fee")),
-                ExchangeRate = r.IsDBNull(r.GetOrdinal("ExchangeRate")) ? null : r.GetDecimal(r.GetOrdinal("ExchangeRate")),
-                Status = r.GetString(r.GetOrdinal("Status")),
-                RelatedEntityType = r.IsDBNull(r.GetOrdinal("RelatedEntityType")) ? null : r.GetString(r.GetOrdinal("RelatedEntityType")),
-                RelatedEntityId = r.IsDBNull(r.GetOrdinal("RelatedEntityId")) ? null : r.GetInt32(r.GetOrdinal("RelatedEntityId")),
-                CreatedAt = r.GetDateTime(r.GetOrdinal("CreatedAt"))
+                Id = reader.GetInt32(reader.GetOrdinal("Id")),
+                AccountId = reader.GetInt32(reader.GetOrdinal("AccountId")),
+                CardId = reader.IsDBNull(reader.GetOrdinal("CardId")) ? null : reader.GetInt32(reader.GetOrdinal("CardId")),
+                TransactionRef = reader.GetString(reader.GetOrdinal("TransactionRef")),
+                Type = reader.GetString(reader.GetOrdinal("Type")),
+                Direction = reader.GetString(reader.GetOrdinal("Direction")),
+                Amount = reader.GetDecimal(reader.GetOrdinal("Amount")),
+                Currency = reader.GetString(reader.GetOrdinal("Currency")),
+                BalanceAfter = reader.GetDecimal(reader.GetOrdinal("BalanceAfter")),
+                CounterpartyName = reader.IsDBNull(reader.GetOrdinal("CounterpartyName")) ? null : reader.GetString(reader.GetOrdinal("CounterpartyName")),
+                CounterpartyIBAN = reader.IsDBNull(reader.GetOrdinal("CounterpartyIBAN")) ? null : reader.GetString(reader.GetOrdinal("CounterpartyIBAN")),
+                MerchantName = reader.IsDBNull(reader.GetOrdinal("MerchantName")) ? null : reader.GetString(reader.GetOrdinal("MerchantName")),
+                CategoryId = reader.IsDBNull(reader.GetOrdinal("CategoryId")) ? null : reader.GetInt32(reader.GetOrdinal("CategoryId")),
+                Description = reader.IsDBNull(reader.GetOrdinal("Description")) ? null : reader.GetString(reader.GetOrdinal("Description")),
+                Fee = reader.GetDecimal(reader.GetOrdinal("Fee")),
+                ExchangeRate = reader.IsDBNull(reader.GetOrdinal("ExchangeRate")) ? null : reader.GetDecimal(reader.GetOrdinal("ExchangeRate")),
+                Status = reader.GetString(reader.GetOrdinal("Status")),
+                RelatedEntityType = reader.IsDBNull(reader.GetOrdinal("RelatedEntityType")) ? null : reader.GetString(reader.GetOrdinal("RelatedEntityType")),
+                RelatedEntityId = reader.IsDBNull(reader.GetOrdinal("RelatedEntityId")) ? null : reader.GetInt32(reader.GetOrdinal("RelatedEntityId")),
+                CreatedAt = reader.GetDateTime(reader.GetOrdinal("CreatedAt"))
             };
         }
     }

@@ -34,9 +34,9 @@ namespace BankApp.Infrastructure.DataAccess
                     connection = new SqlConnection(connectionString);
                     connection.Open();
                 }
-                catch (SqlException e)
+                catch (SqlException sqlException)
                 {
-                    throw new Exception($"Failed to connect to the database: {e.Message}", e);
+                    throw new Exception($"Failed to connect to the database: {sqlException.Message}", sqlException);
                 }
             }
             return connection;
@@ -45,14 +45,14 @@ namespace BankApp.Infrastructure.DataAccess
         /// <inheritdoc />
         public SqlTransaction BeginTransaction()
         {
-            SqlConnection conn = GetConnection();
+            SqlConnection activeConnection = GetConnection();
             try
             {
-                currentTransaction = conn.BeginTransaction();
+                currentTransaction = activeConnection.BeginTransaction();
             }
-            catch (SqlException e)
+            catch (SqlException sqlException)
             {
-                throw new Exception($"Failed to begin transaction: {e.Message}", e);
+                throw new Exception($"Failed to begin transaction: {sqlException.Message}", sqlException);
             }
             return currentTransaction;
         }
@@ -86,34 +86,34 @@ namespace BankApp.Infrastructure.DataAccess
             return currentTransaction;
         }
 
-        private void AddParameters(SqlCommand cmd, object[] parameters)
+        private void AddParameters(SqlCommand command, object[] parameters)
         {
             if (parameters == null)
             {
                 return;
             }
-            for (int i = 0; i < parameters.Length; i++)
+            for (int parameterIndex = 0; parameterIndex < parameters.Length; parameterIndex++)
             {
-                cmd.Parameters.AddWithValue($"@p{i}", parameters[i] ?? DBNull.Value);
+                command.Parameters.AddWithValue($"@p{parameterIndex}", parameters[parameterIndex] ?? DBNull.Value);
             }
         }
 
         /// <inheritdoc />
         public IDataReader ExecuteQuery(string sqlStatement, object[] parameters)
         {
-            var conn = GetConnection();
-            var cmd = new SqlCommand(sqlStatement, conn, currentTransaction);
-            AddParameters(cmd, parameters);
-            return cmd.ExecuteReader(); // returns rows back
+            var activeConnection = GetConnection();
+            var command = new SqlCommand(sqlStatement, activeConnection, currentTransaction);
+            AddParameters(command, parameters);
+            return command.ExecuteReader();
         }
 
         /// <inheritdoc />
         public int ExecuteNonQuery(string sqlStatement, object[] parameters)
         {
-            var conn = GetConnection();
-            using var cmd = new SqlCommand(sqlStatement, conn, currentTransaction); // disposes the command when done with it
-            AddParameters(cmd, parameters);
-            return cmd.ExecuteNonQuery(); // how many rows are affected
+            var activeConnection = GetConnection();
+            using var command = new SqlCommand(sqlStatement, activeConnection, currentTransaction);
+            AddParameters(command, parameters);
+            return command.ExecuteNonQuery();
         }
 
         /// <inheritdoc />

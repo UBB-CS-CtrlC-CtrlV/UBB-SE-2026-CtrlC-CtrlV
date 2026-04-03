@@ -45,29 +45,29 @@ namespace BankApp.Infrastructure.DataAccess.Implementations
             return cards;
         }
 
-        private Card MapToCard(System.Data.IDataReader r)
+        private Card MapToCard(System.Data.IDataReader reader)
         {
             return new Card
             {
-                Id = r.GetInt32(r.GetOrdinal("Id")),
-                AccountId = r.GetInt32(r.GetOrdinal("AccountId")),
-                UserId = r.GetInt32(r.GetOrdinal("UserId")),
-                CardNumber = r.GetString(r.GetOrdinal("CardNumber")),
-                CardholderName = r.GetString(r.GetOrdinal("CardholderName")),
-                ExpiryDate = r.GetDateTime(r.GetOrdinal("ExpiryDate")),
-                CVV = r.GetString(r.GetOrdinal("CVV")),
-                CardType = r.GetString(r.GetOrdinal("CardType")),
-                CardBrand = r.IsDBNull(r.GetOrdinal("CardBrand")) ? null : r.GetString(r.GetOrdinal("CardBrand")),
-                Status = r.GetString(r.GetOrdinal("Status")),
-                DailyTransactionLimit = r.IsDBNull(r.GetOrdinal("DailyTransactionLimit")) ? null : r.GetDecimal(r.GetOrdinal("DailyTransactionLimit")),
-                MonthlySpendingCap = r.IsDBNull(r.GetOrdinal("MonthlySpendingCap")) ? null : r.GetDecimal(r.GetOrdinal("MonthlySpendingCap")),
-                AtmWithdrawalLimit = r.IsDBNull(r.GetOrdinal("AtmWithdrawalLimit")) ? null : r.GetDecimal(r.GetOrdinal("AtmWithdrawalLimit")),
-                ContactlessLimit = r.IsDBNull(r.GetOrdinal("ContactlessLimit")) ? null : r.GetDecimal(r.GetOrdinal("ContactlessLimit")),
-                IsContactlessEnabled = r.GetBoolean(r.GetOrdinal("IsContactlessEnabled")),
-                IsOnlineEnabled = r.GetBoolean(r.GetOrdinal("IsOnlineEnabled")),
-                SortOrder = r.GetInt32(r.GetOrdinal("SortOrder")),
-                CancelledAt = r.IsDBNull(r.GetOrdinal("CancelledAt")) ? null : r.GetDateTime(r.GetOrdinal("CancelledAt")),
-                CreatedAt = r.GetDateTime(r.GetOrdinal("CreatedAt"))
+                Id = reader.GetInt32(reader.GetOrdinal("Id")),
+                AccountId = reader.GetInt32(reader.GetOrdinal("AccountId")),
+                UserId = reader.GetInt32(reader.GetOrdinal("UserId")),
+                CardNumber = reader.GetString(reader.GetOrdinal("CardNumber")),
+                CardholderName = reader.GetString(reader.GetOrdinal("CardholderName")),
+                ExpiryDate = reader.GetDateTime(reader.GetOrdinal("ExpiryDate")),
+                CVV = reader.GetString(reader.GetOrdinal("CVV")),
+                CardType = reader.GetString(reader.GetOrdinal("CardType")),
+                CardBrand = reader.IsDBNull(reader.GetOrdinal("CardBrand")) ? null : reader.GetString(reader.GetOrdinal("CardBrand")),
+                Status = reader.GetString(reader.GetOrdinal("Status")),
+                DailyTransactionLimit = reader.IsDBNull(reader.GetOrdinal("DailyTransactionLimit")) ? null : reader.GetDecimal(reader.GetOrdinal("DailyTransactionLimit")),
+                MonthlySpendingCap = reader.IsDBNull(reader.GetOrdinal("MonthlySpendingCap")) ? null : reader.GetDecimal(reader.GetOrdinal("MonthlySpendingCap")),
+                AtmWithdrawalLimit = reader.IsDBNull(reader.GetOrdinal("AtmWithdrawalLimit")) ? null : reader.GetDecimal(reader.GetOrdinal("AtmWithdrawalLimit")),
+                ContactlessLimit = reader.IsDBNull(reader.GetOrdinal("ContactlessLimit")) ? null : reader.GetDecimal(reader.GetOrdinal("ContactlessLimit")),
+                IsContactlessEnabled = reader.GetBoolean(reader.GetOrdinal("IsContactlessEnabled")),
+                IsOnlineEnabled = reader.GetBoolean(reader.GetOrdinal("IsOnlineEnabled")),
+                SortOrder = reader.GetInt32(reader.GetOrdinal("SortOrder")),
+                CancelledAt = reader.IsDBNull(reader.GetOrdinal("CancelledAt")) ? null : reader.GetDateTime(reader.GetOrdinal("CancelledAt")),
+                CreatedAt = reader.GetDateTime(reader.GetOrdinal("CreatedAt"))
             };
         }
     }

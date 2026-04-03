@@ -45,22 +45,22 @@ namespace BankApp.Infrastructure.DataAccess.Implementations
             return notifications;
         }
 
-        private Notification MapToNotification(System.Data.IDataReader r)
+        private Notification MapToNotification(System.Data.IDataReader reader)
         {
             return new Notification
             {
-                Id = r.GetInt32(r.GetOrdinal("Id")),
-                UserId = r.GetInt32(r.GetOrdinal("UserId")),
-                Title = r.GetString(r.GetOrdinal("Title")),
-                Message = r.GetString(r.GetOrdinal("Message")),
-                Type = r.GetString(r.GetOrdinal("Type")),
-                Channel = r.GetString(r.GetOrdinal("Channel")),
-                IsRead = r.GetBoolean(r.GetOrdinal("IsRead")),
-                RelatedEntityType = r.IsDBNull(r.GetOrdinal("RelatedEntityType"))
-                    ? null : r.GetString(r.GetOrdinal("RelatedEntityType")),
-                RelatedEntityId = r.IsDBNull(r.GetOrdinal("RelatedEntityId"))
-                    ? null : r.GetInt32(r.GetOrdinal("RelatedEntityId")),
-                CreatedAt = r.GetDateTime(r.GetOrdinal("CreatedAt"))
+                Id = reader.GetInt32(reader.GetOrdinal("Id")),
+                UserId = reader.GetInt32(reader.GetOrdinal("UserId")),
+                Title = reader.GetString(reader.GetOrdinal("Title")),
+                Message = reader.GetString(reader.GetOrdinal("Message")),
+                Type = reader.GetString(reader.GetOrdinal("Type")),
+                Channel = reader.GetString(reader.GetOrdinal("Channel")),
+                IsRead = reader.GetBoolean(reader.GetOrdinal("IsRead")),
+                RelatedEntityType = reader.IsDBNull(reader.GetOrdinal("RelatedEntityType"))
+                    ? null : reader.GetString(reader.GetOrdinal("RelatedEntityType")),
+                RelatedEntityId = reader.IsDBNull(reader.GetOrdinal("RelatedEntityId"))
+                    ? null : reader.GetInt32(reader.GetOrdinal("RelatedEntityId")),
+                CreatedAt = reader.GetDateTime(reader.GetOrdinal("CreatedAt"))
             };
         }
     }

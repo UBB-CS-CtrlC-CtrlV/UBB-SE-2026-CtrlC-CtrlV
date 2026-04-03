@@ -13,9 +13,9 @@ namespace BankApp.Infrastructure.DataAccess.Interfaces
         /// <param name="token">The unique session token.</param>
         /// <param name="deviceInfo">Optional device information.</param>
         /// <param name="browser">Optional browser name.</param>
-        /// <param name="ip">Optional IP address.</param>
+        /// <param name="ipAddress">Optional IP address.</param>
         /// <returns>The newly created <see cref="Session"/>.</returns>
-        Session Create(int userId, string token, string? deviceInfo, string? browser, string? ip);
+        Session Create(int userId, string token, string? deviceInfo, string? browser, string? ipAddress);
 
         /// <summary>
         /// Finds an active session by its token.

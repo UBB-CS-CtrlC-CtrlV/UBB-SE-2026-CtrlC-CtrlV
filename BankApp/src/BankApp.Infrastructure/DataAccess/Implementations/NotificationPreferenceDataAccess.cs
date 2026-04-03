@@ -50,32 +50,32 @@ namespace BankApp.Infrastructure.DataAccess.Implementations
         /// <inheritdoc />
         public List<NotificationPreference> FindByUserId(int userId)
         {
-            List<NotificationPreference> result = new List<NotificationPreference>();
+            List<NotificationPreference> notificationPreferences = new List<NotificationPreference>();
             string selectQuery = @"SELECT * FROM NotificationPreference WHERE userId = @p0";
 
-            using IDataReader data = this.appDbContext.ExecuteQuery(selectQuery, new object[] { userId });
+            using IDataReader reader = this.appDbContext.ExecuteQuery(selectQuery, new object[] { userId });
 
-            while (data.Read())
+            while (reader.Read())
             {
                 NotificationPreference notificationPreference = new NotificationPreference
                 {
-                    Id = Convert.ToInt32(data["Id"]),
-                    UserId = Convert.ToInt32(data["UserId"]),
-                    Category = NotificationTypeExtensions.FromString(Convert.ToString(data["Category"]) ?? string.Empty),
-                    PushEnabled = Convert.ToBoolean(data["PushEnabled"]),
-                    EmailEnabled = Convert.ToBoolean(data["EmailEnabled"]),
-                    SmsEnabled = Convert.ToBoolean(data["SmsEnabled"]),
-                    MinAmountThreshold = data["MinAmountThreshold"] == DBNull.Value ? null : Convert.ToDecimal(data["MinAmountThreshold"])
+                    Id = Convert.ToInt32(reader["Id"]),
+                    UserId = Convert.ToInt32(reader["UserId"]),
+                    Category = NotificationTypeExtensions.FromString(Convert.ToString(reader["Category"]) ?? string.Empty),
+                    PushEnabled = Convert.ToBoolean(reader["PushEnabled"]),
+                    EmailEnabled = Convert.ToBoolean(reader["EmailEnabled"]),
+                    SmsEnabled = Convert.ToBoolean(reader["SmsEnabled"]),
+                    MinAmountThreshold = reader["MinAmountThreshold"] == DBNull.Value ? null : Convert.ToDecimal(reader["MinAmountThreshold"])
                 };
 
-                result.Add(notificationPreference);
+                notificationPreferences.Add(notificationPreference);
             }
 
-            return result;
+            return notificationPreferences;
         }
 
         /// <inheritdoc />
-        public bool Update(int userId, List<NotificationPreference> prefs)
+        public bool Update(int userId, List<NotificationPreference> preferences)
         {
             try
             {
@@ -87,7 +87,7 @@ namespace BankApp.Infrastructure.DataAccess.Implementations
                                     (@p0, @p1, @p2, @p3, @p4, @p5);
                                 ";
 
-                foreach (NotificationPreference preference in prefs)
+                foreach (NotificationPreference preference in preferences)
                 {
                     this.appDbContext.ExecuteNonQuery(insertQuery, new object[]
                     {

@@ -48,19 +48,19 @@ namespace BankApp.Infrastructure.DataAccess.Implementations
             return accounts;
         }
 
-        private Account MapToAccount(IDataReader r)
+        private Account MapToAccount(IDataReader reader)
         {
             return new Account
             {
-                Id = r.GetInt32(r.GetOrdinal("Id")),
-                UserId = r.GetInt32(r.GetOrdinal("UserId")),
-                AccountName = r.IsDBNull(r.GetOrdinal("AccountName")) ? null : r.GetString(r.GetOrdinal("AccountName")),
-                IBAN = r.GetString(r.GetOrdinal("IBAN")),
-                Currency = r.GetString(r.GetOrdinal("Currency")),
-                Balance = r.GetDecimal(r.GetOrdinal("Balance")),
-                AccountType = r.GetString(r.GetOrdinal("AccountType")),
-                Status = r.GetString(r.GetOrdinal("Status")),
-                CreatedAt = r.GetDateTime(r.GetOrdinal("CreatedAt"))
+                Id = reader.GetInt32(reader.GetOrdinal("Id")),
+                UserId = reader.GetInt32(reader.GetOrdinal("UserId")),
+                AccountName = reader.IsDBNull(reader.GetOrdinal("AccountName")) ? null : reader.GetString(reader.GetOrdinal("AccountName")),
+                IBAN = reader.GetString(reader.GetOrdinal("IBAN")),
+                Currency = reader.GetString(reader.GetOrdinal("Currency")),
+                Balance = reader.GetDecimal(reader.GetOrdinal("Balance")),
+                AccountType = reader.GetString(reader.GetOrdinal("AccountType")),
+                Status = reader.GetString(reader.GetOrdinal("Status")),
+                CreatedAt = reader.GetDateTime(reader.GetOrdinal("CreatedAt"))
             };
         }
     }

@@ -67,11 +67,11 @@ namespace BankApp.Infrastructure.DataAccess.Implementations
         {
             return new OAuthLink
             {
-                Id = reader.GetInt32(0),
-                UserId = reader.GetInt32(1),
-                Provider = reader.GetString(2),
-                ProviderUserId = reader.GetString(3),
-                ProviderEmail = reader.IsDBNull(4) ? null : reader.GetString(4)
+                Id = reader.GetInt32(reader.GetOrdinal("Id")),
+                UserId = reader.GetInt32(reader.GetOrdinal("UserId")),
+                Provider = reader.GetString(reader.GetOrdinal("Provider")),
+                ProviderUserId = reader.GetString(reader.GetOrdinal("ProviderUserId")),
+                ProviderEmail = reader.IsDBNull(reader.GetOrdinal("ProviderEmail")) ? null : reader.GetString(reader.GetOrdinal("ProviderEmail"))
             };
         }
     }
