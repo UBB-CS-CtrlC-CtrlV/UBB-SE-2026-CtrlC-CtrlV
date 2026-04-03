@@ -6,17 +6,19 @@ namespace BankApp.Infrastructure.Services.Infrastructure.Implementations
 {
     public class OtpService : IOtpService
     {
-        private static readonly Dictionary<int, (string Code, DateTime ExpiryTime)> _temporarySmsStorage = new();
+        private static readonly Dictionary<int, (string Code, DateTime ExpiryTime)> TemporarySmsStorage = new ();
         private const int SmsOtpExpiryMinutes = 5;
         private const int TotpWindowSeconds = 300;
 
-        public OtpService() {}
+        public OtpService()
+        {
+        }
 
         public string GenerateSMSOTP(int userId)
         {
             string code = RandomNumberGenerator.GetInt32(100000, 999999).ToString();
             DateTime expiryTime = DateTime.UtcNow.AddMinutes(SmsOtpExpiryMinutes);
-            _temporarySmsStorage[userId] = (code, expiryTime);
+            TemporarySmsStorage[userId] = (code, expiryTime);
             return code;
         }
 
@@ -28,7 +30,7 @@ namespace BankApp.Infrastructure.Services.Infrastructure.Implementations
 
         public void InvalidateOTP(int userId)
         {
-            _temporarySmsStorage.Remove(userId);
+            TemporarySmsStorage.Remove(userId);
         }
 
         public bool IsExpired(DateTime expiredAt)
@@ -38,7 +40,7 @@ namespace BankApp.Infrastructure.Services.Infrastructure.Implementations
 
         public bool VerifySMSOTP(int userId, string code)
         {
-            if (_temporarySmsStorage.TryGetValue(userId, out var storedData))
+            if (TemporarySmsStorage.TryGetValue(userId, out var storedData))
             {
                 if (DateTime.UtcNow > storedData.ExpiryTime)
                 {
@@ -58,9 +60,15 @@ namespace BankApp.Infrastructure.Services.Infrastructure.Implementations
         {
             long currentWindow = DateTimeOffset.UtcNow.ToUnixTimeSeconds() / TotpWindowSeconds;
             if (code == GenerateHmacCode(userId, currentWindow))
+            {
                 return true;
+            }
+
             if (code == GenerateHmacCode(userId, currentWindow - 1))
+            {
                 return true;
+            }
+
             return false;
         }
 

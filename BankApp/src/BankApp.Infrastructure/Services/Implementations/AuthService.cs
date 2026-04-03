@@ -12,22 +12,22 @@ namespace BankApp.Infrastructure.Services.Implementations
 {
     public class AuthService : IAuthService
     {
-        private readonly IAuthRepository _authRepository;
-        private readonly IHashService _hashService;
-        private readonly IJwtService _jwtService;
-        private readonly IOtpService _otpService;
-        private readonly IEmailService _emailService;
+        private readonly IAuthRepository authRepository;
+        private readonly IHashService hashService;
+        private readonly IJwtService jwtService;
+        private readonly IOtpService otpService;
+        private readonly IEmailService emailService;
 
         private const int MaxFailedAttempts = 5;
         private const int LockoutMinutes = 30;
 
         public AuthService(IAuthRepository authRepository, IHashService hashService, IJwtService jwtService, IOtpService otpService, IEmailService emailService)
         {
-            _authRepository = authRepository;
-            _hashService = hashService;
-            _jwtService = jwtService;
-            _otpService = otpService;
-            _emailService = emailService;
+            this.authRepository = authRepository;
+            this.hashService = hashService;
+            this.jwtService = jwtService;
+            this.otpService = otpService;
+            this.emailService = emailService;
         }
 
         public LoginResponse Login(LoginRequest request)
@@ -37,7 +37,7 @@ namespace BankApp.Infrastructure.Services.Implementations
                 return new LoginResponse { Success = false, Error = "Invalid mail format." };
             }
 
-            User? user = _authRepository.FindUserByEmail(request.Email);
+            User? user = authRepository.FindUserByEmail(request.Email);
             if (user == null)
             {
                 return new LoginResponse { Success = false, Error = "Invalid email or password." };
@@ -49,7 +49,7 @@ namespace BankApp.Infrastructure.Services.Implementations
                 return lockCheck;
             }
 
-            if (!_hashService.Verify(request.Password, user.PasswordHash))
+            if (!hashService.Verify(request.Password, user.PasswordHash))
             {
                 return HandleFailedPassword(user);
             }
@@ -70,14 +70,14 @@ namespace BankApp.Infrastructure.Services.Implementations
                 return new RegisterResponse { Success = false, Error = validationError };
             }
 
-            User? existingUser = _authRepository.FindUserByEmail(request.Email);
+            User? existingUser = authRepository.FindUserByEmail(request.Email);
             if (existingUser != null)
             {
                 return new RegisterResponse { Success = false, Error = "Email is already registered." };
             }
 
             User user = CreateUserFromRequest(request);
-            bool created = _authRepository.CreateUser(user);
+            bool created = authRepository.CreateUser(user);
 
             if (!created)
             {
@@ -105,24 +105,24 @@ namespace BankApp.Infrastructure.Services.Implementations
                 string email = payload.Email;
                 string fullName = payload.Name;
 
-                OAuthLink? link = _authRepository.FindOAuthLink(request.Provider, providerUserId);
+                OAuthLink? link = authRepository.FindOAuthLink(request.Provider, providerUserId);
                 User? user = null;
 
                 if (link != null)
                 {
-                    user = _authRepository.FindUserById(link.UserId);
+                    user = authRepository.FindUserById(link.UserId);
                 }
 
                 if (user == null)
                 {
-                    user = _authRepository.FindUserByEmail(email);
+                    user = authRepository.FindUserByEmail(email);
                     if (user == null)
                     {
                         string randomPassword = Guid.NewGuid().ToString() + "A1a!";
                         user = new User
                         {
                             Email = email,
-                            PasswordHash = _hashService.GetHash(randomPassword),
+                            PasswordHash = hashService.GetHash(randomPassword),
                             FullName = fullName,
                             PreferredLanguage = "en",
                             Is2FAEnabled = false,
@@ -130,10 +130,12 @@ namespace BankApp.Infrastructure.Services.Implementations
                             FailedLoginAttempts = 0
                         };
 
-                        if (!_authRepository.CreateUser(user))
+                        if (!authRepository.CreateUser(user))
+                        {
                             return new LoginResponse { Success = false, Error = "Failed to create user account." };
+                        }
 
-                        user = _authRepository.FindUserByEmail(email);
+                        user = authRepository.FindUserByEmail(email);
                     }
 
                     OAuthLink newLink = new OAuthLink
@@ -143,13 +145,19 @@ namespace BankApp.Infrastructure.Services.Implementations
                         ProviderUserId = providerUserId,
                         ProviderEmail = email
                     };
-                    _authRepository.CreateOAuthLink(newLink);
+                    authRepository.CreateOAuthLink(newLink);
                 }
 
                 LoginResponse? lockCheck = CheckAccountLock(user);
-                if (lockCheck != null) return lockCheck;
+                if (lockCheck != null)
+                {
+                    return lockCheck;
+                }
 
-                if (user.Is2FAEnabled) return Handle2FA(user);
+                if (user.Is2FAEnabled)
+                {
+                    return Handle2FA(user);
+                }
 
                 return CompleteLogin(user);
             }
@@ -164,13 +172,13 @@ namespace BankApp.Infrastructure.Services.Implementations
                 return new RegisterResponse { Success = false, Error = "Invalid email format." };
             }
 
-            OAuthLink? existingLink = _authRepository.FindOAuthLink(request.Provider, request.ProviderToken);
+            OAuthLink? existingLink = authRepository.FindOAuthLink(request.Provider, request.ProviderToken);
             if (existingLink != null)
             {
                 return new RegisterResponse { Success = false, Error = "This OAuth account is already registered. Please login." };
             }
 
-            User? existingUser = _authRepository.FindUserByEmail(request.Email);
+            User? existingUser = authRepository.FindUserByEmail(request.Email);
             int targetUserId;
             if (existingUser != null)
             {
@@ -182,7 +190,7 @@ namespace BankApp.Infrastructure.Services.Implementations
                 User newUser = new User
                 {
                     Email = request.Email,
-                    PasswordHash = _hashService.GetHash(randomPassword),
+                    PasswordHash = hashService.GetHash(randomPassword),
                     FullName = request.FullName,
                     PreferredLanguage = "en",
                     Is2FAEnabled = false,
@@ -190,13 +198,13 @@ namespace BankApp.Infrastructure.Services.Implementations
                     FailedLoginAttempts = 0
                 };
 
-                bool created = _authRepository.CreateUser(newUser);
+                bool created = authRepository.CreateUser(newUser);
                 if (!created)
                 {
                     return new RegisterResponse { Success = false, Error = "Failed to create user account." };
                 }
 
-                User? savedUser = _authRepository.FindUserByEmail(request.Email);
+                User? savedUser = authRepository.FindUserByEmail(request.Email);
                 if (savedUser == null)
                 {
                     return new RegisterResponse { Success = false, Error = "Error retrieving created user." };
@@ -213,7 +221,7 @@ namespace BankApp.Infrastructure.Services.Implementations
                 ProviderEmail = request.Email
             };
 
-            bool linkCreated = _authRepository.CreateOAuthLink(newLink);
+            bool linkCreated = authRepository.CreateOAuthLink(newLink);
             if (!linkCreated)
             {
                 return new RegisterResponse { Success = false, Error = "Failed to link OAuth account to user." };
@@ -224,35 +232,42 @@ namespace BankApp.Infrastructure.Services.Implementations
 
         public LoginResponse VerifyOTP(VerifyOTPRequest request)
         {
-            User? user = _authRepository.FindUserById(request.UserId);
+            User? user = authRepository.FindUserById(request.UserId);
             if (user == null)
             {
                 return new LoginResponse { Success = false, Error = "User not found." };
             }
-            bool isValid = _otpService.VerifyTOTP(request.UserId, request.OTPCode);
+            bool isValid = otpService.VerifyTOTP(request.UserId, request.OTPCode);
             if (!isValid)
             {
                 return new LoginResponse { Success = false, Error = "Invalid or expired OTP code." };
             }
-            _otpService.InvalidateOTP(user.Id);
+            otpService.InvalidateOTP(user.Id);
             return CompleteLogin(user);
         }
 
         public void ResendOTP(int userId, string method)
         {
-            User? user = _authRepository.FindUserById(userId);
-            if (user == null) return;
-            string otp = _otpService.GenerateTOTP(user.Id);
+            User? user = authRepository.FindUserById(userId);
+            if (user == null)
+            {
+                return;
+            }
+
+            string otp = otpService.GenerateTOTP(user.Id);
             if (method == "email" || user.Preferred2FAMethod == "email")
             {
-                _emailService.sendOTPCode(user.Email, otp);
+                emailService.SendOTPCode(user.Email, otp);
             }
         }
 
         public void RequestPasswordReset(string email)
         {
-            User? user = _authRepository.FindUserByEmail(email);
-            if (user == null) return;
+            User? user = authRepository.FindUserByEmail(email);
+            if (user == null)
+            {
+                return;
+            }
 
             string rawToken = System.Security.Cryptography.RandomNumberGenerator.GetInt32(100000, 999999).ToString();
             PasswordResetToken resetToken = new PasswordResetToken
@@ -263,13 +278,13 @@ namespace BankApp.Infrastructure.Services.Implementations
                 CreatedAt = DateTime.UtcNow
             };
 
-            _authRepository.SavePasswordResetToken(resetToken);
-            _emailService.sendPasswordResetLink(user.Email, rawToken);
+            authRepository.SavePasswordResetToken(resetToken);
+            emailService.SendPasswordResetLink(user.Email, rawToken);
         }
 
         public ResetPasswordResult ResetPassword(string token, string newPassword)
         {
-            PasswordResetToken? resetToken = _authRepository.FindPasswordResetToken(token);
+            PasswordResetToken? resetToken = authRepository.FindPasswordResetToken(token);
             ResetTokenValidationResult validationResult = this.GetResetTokenValidationResult(resetToken);
             if (validationResult != ResetTokenValidationResult.Valid)
             {
@@ -281,16 +296,16 @@ namespace BankApp.Infrastructure.Services.Implementations
                 };
             }
 
-            string finalPasswordHash = _hashService.GetHash(newPassword);
-            bool updated = _authRepository.UpdatePassword(resetToken!.UserId, finalPasswordHash);
+            string finalPasswordHash = hashService.GetHash(newPassword);
+            bool updated = authRepository.UpdatePassword(resetToken!.UserId, finalPasswordHash);
 
             if (!updated)
             {
                 return ResetPasswordResult.InvalidToken;
             }
 
-            _authRepository.MarkPasswordResetTokenAsUsed(resetToken.Id);
-            _authRepository.InvalidateAllSessions(resetToken.UserId);
+            authRepository.MarkPasswordResetTokenAsUsed(resetToken.Id);
+            authRepository.InvalidateAllSessions(resetToken.UserId);
 
             return ResetPasswordResult.Success;
         }
@@ -302,25 +317,25 @@ namespace BankApp.Infrastructure.Services.Implementations
             {
                 return null;
             }
-                
+
             if (user.LockoutEnd.HasValue && user.LockoutEnd.Value > DateTime.UtcNow)
             {
                 return new LoginResponse { Success = false, Error = "Account is locked. Try again later." };
             }
 
             // Lockout expired, reset and allow login attempt
-            _authRepository.ResetFailedAttempts(user.Id);
+            authRepository.ResetFailedAttempts(user.Id);
             return null;
         }
 
         private LoginResponse HandleFailedPassword(User user)
         {
-            _authRepository.IncrementFailedAttempts(user.Id);
+            authRepository.IncrementFailedAttempts(user.Id);
 
             if (user.FailedLoginAttempts + 1 >= MaxFailedAttempts)
             {
-                _authRepository.LockAccount(user.Id, DateTime.UtcNow.AddMinutes(LockoutMinutes));
-                _emailService.sendLockNotification(user.Email);
+                authRepository.LockAccount(user.Id, DateTime.UtcNow.AddMinutes(LockoutMinutes));
+                emailService.SendLockNotification(user.Email);
                 return new LoginResponse { Success = false, Error = "Account locked due to too many failed attempts." };
             }
 
@@ -329,11 +344,11 @@ namespace BankApp.Infrastructure.Services.Implementations
 
         private LoginResponse Handle2FA(User user)
         {
-            string otp = _otpService.GenerateTOTP(user.Id);
+            string otp = otpService.GenerateTOTP(user.Id);
 
             if (user.Preferred2FAMethod == "email")
             {
-                _emailService.sendOTPCode(user.Email, otp);
+                emailService.SendOTPCode(user.Email, otp);
             }
 
             return new LoginResponse
@@ -347,10 +362,10 @@ namespace BankApp.Infrastructure.Services.Implementations
 
         private LoginResponse CompleteLogin(User user)
         {
-            _authRepository.ResetFailedAttempts(user.Id);
-            string token = _jwtService.GenerateToken(user.Id);
-            _authRepository.CreateSession(user.Id, token, null, null, null);
-            _emailService.SendLoginAlert(user.Email);
+            authRepository.ResetFailedAttempts(user.Id);
+            string token = jwtService.GenerateToken(user.Id);
+            authRepository.CreateSession(user.Id, token, null, null, null);
+            emailService.SendLoginAlert(user.Email);
             return new LoginResponse
             {
                 Success = true,
@@ -364,15 +379,20 @@ namespace BankApp.Infrastructure.Services.Implementations
         {
             // There should also be client-side validation, this is last resort
             // can't trust the client
-
             if (!ValidationUtilities.IsValidEmail(request.Email))
+            {
                 return "Invalid email format.";
+            }
 
             if (!ValidationUtilities.IsStrongPassword(request.Password))
+            {
                 return "Password must be at least 8 characters with uppercase, lowercase, and a digit.";
+            }
 
             if (string.IsNullOrWhiteSpace(request.FullName))
+            {
                 return "Full name is required.";
+            }
 
             return null;
         }
@@ -382,7 +402,7 @@ namespace BankApp.Infrastructure.Services.Implementations
             return new User
             {
                 Email = request.Email,
-                PasswordHash = _hashService.GetHash(request.Password),
+                PasswordHash = hashService.GetHash(request.Password),
                 FullName = request.FullName,
                 PreferredLanguage = "en",
                 Is2FAEnabled = false,
@@ -393,7 +413,7 @@ namespace BankApp.Infrastructure.Services.Implementations
 
         public ResetTokenValidationResult VerifyResetToken(string token)
         {
-            PasswordResetToken? resetToken = _authRepository.FindPasswordResetToken(token);
+            PasswordResetToken? resetToken = authRepository.FindPasswordResetToken(token);
             return this.GetResetTokenValidationResult(resetToken);
         }
 
@@ -419,12 +439,12 @@ namespace BankApp.Infrastructure.Services.Implementations
 
         public bool Logout(string token)
         {
-            Session? session = _authRepository.FindSessionByToken(token);
+            Session? session = authRepository.FindSessionByToken(token);
             if (session == null)
             {
                 return false;
             }
-            _authRepository.UpdateSessionToken(session.Id);
+            authRepository.UpdateSessionToken(session.Id);
             return true;
         }
     }
