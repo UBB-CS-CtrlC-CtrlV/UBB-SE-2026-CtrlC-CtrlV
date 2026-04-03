@@ -8,11 +8,11 @@ namespace BankApp.Infrastructure.Middleware
 {
     public class SessionValidationMiddleware
     {
-        private readonly RequestDelegate _next;
+        private readonly RequestDelegate next;
 
         public SessionValidationMiddleware(RequestDelegate next)
         {
-            _next = next;
+            this.next = next;
         }
 
         public async Task Invoke(HttpContext context, IAuthRepository authRepository, IJwtService jwtService)
@@ -22,7 +22,7 @@ namespace BankApp.Infrastructure.Middleware
             // Public endpoints, no token needed
             if (IsPublicEndpoint(path))
             {
-                await _next(context);
+                await next(context);
                 return;
             }
 
@@ -56,12 +56,15 @@ namespace BankApp.Infrastructure.Middleware
             // Store userId so controllers can use it
             context.Items["UserId"] = userId;
 
-            await _next(context);
+            await next(context);
         }
 
         private bool IsPublicEndpoint(string? path)
         {
-            if (path == null) return false;
+            if (path == null)
+            {
+                return false;
+            }
 
             return path.Contains("/auth/")
                 || path.Contains("/swagger")
