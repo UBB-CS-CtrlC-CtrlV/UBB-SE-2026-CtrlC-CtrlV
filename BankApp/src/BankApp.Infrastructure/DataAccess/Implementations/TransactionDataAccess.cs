@@ -1,15 +1,15 @@
+using System.Data;
 using BankApp.Core.Entities;
 using BankApp.Infrastructure.DataAccess.Interfaces;
-using System.Data;
 
 namespace BankApp.Infrastructure.DataAccess.Implementations
 {
     public class TransactionDataAccess : ITransactionDataAccess
     {
-        private readonly AppDbContext _dbContext;
+        private readonly AppDbContext dbContext;
         public TransactionDataAccess(AppDbContext dbContext)
         {
-            _dbContext = dbContext;
+            this.dbContext = dbContext;
         }
         public List<Transaction> FindRecentByAccountId(int accountId, int limit = 10)
         {
@@ -18,7 +18,7 @@ namespace BankApp.Infrastructure.DataAccess.Implementations
                   WHERE AccountId = @p0 
                   ORDER BY CreatedAt DESC";
 
-            using var reader = _dbContext.ExecuteQuery(query, new object[] { accountId, limit });
+            using var reader = dbContext.ExecuteQuery(query, new object[] { accountId, limit });
 
             while (reader.Read())
             {

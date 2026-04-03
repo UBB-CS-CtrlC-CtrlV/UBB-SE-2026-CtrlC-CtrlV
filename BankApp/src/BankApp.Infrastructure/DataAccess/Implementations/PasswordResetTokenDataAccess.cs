@@ -6,10 +6,10 @@ namespace BankApp.Infrastructure.DataAccess.Implementations
 {
     public class PasswordResetTokenDataAccess : IPasswordResetTokenDataAccess
     {
-        private readonly AppDbContext _context;
+        private readonly AppDbContext context;
         public PasswordResetTokenDataAccess(AppDbContext context)
         {
-            _context = context;
+            this.context = context;
         }
 
         public PasswordResetToken Create(int userId, string tokenHash, DateTime expiresAt)
@@ -19,7 +19,7 @@ namespace BankApp.Infrastructure.DataAccess.Implementations
                 OUTPUT INSERTED.Id, INSERTED.UserId, INSERTED.TokenHash, INSERTED.ExpiresAt, INSERTED.UsedAt, INSERTED.CreatedAt
                 VALUES (@p0, @p1, @p2)";
 
-            using var reader = _context.ExecuteQuery(sql, new object[] { userId, tokenHash, expiresAt });
+            using var reader = context.ExecuteQuery(sql, new object[] { userId, tokenHash, expiresAt });
 
             if (reader.Read())
             {
@@ -32,13 +32,13 @@ namespace BankApp.Infrastructure.DataAccess.Implementations
         public void DeleteExpired()
         {
             string sql = "DELETE FROM PasswordResetToken WHERE ExpiresAt < GETUTCDATE()";
-            _context.ExecuteNonQuery(sql, Array.Empty<object>());
+            context.ExecuteNonQuery(sql, Array.Empty<object>());
         }
 
         public PasswordResetToken? FindByToken(string tokenHash)
         {
             string sql = "SELECT Id, UserId, TokenHash, ExpiresAt, UsedAt, CreatedAt FROM PasswordResetToken WHERE TokenHash = @p0";
-            using var reader = _context.ExecuteQuery(sql, new object[] { tokenHash });
+            using var reader = context.ExecuteQuery(sql, new object[] { tokenHash });
 
             if (reader.Read())
             {
@@ -50,7 +50,7 @@ namespace BankApp.Infrastructure.DataAccess.Implementations
         public void MarkAsUsed(int tokenId)
         {
             string sql = "UPDATE PasswordResetToken SET UsedAt = GETUTCDATE() WHERE Id = @p0";
-            _context.ExecuteNonQuery(sql, new object[] { tokenId });
+            context.ExecuteNonQuery(sql, new object[] { tokenId });
         }
 
         private PasswordResetToken MapToPRT(IDataReader reader)

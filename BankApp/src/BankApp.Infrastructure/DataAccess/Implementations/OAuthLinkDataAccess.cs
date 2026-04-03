@@ -1,35 +1,35 @@
+using System.Data;
 using BankApp.Core.Entities;
 using BankApp.Infrastructure.DataAccess.Interfaces;
 using Microsoft.Data.SqlClient;
-using System.Data;
 
 namespace BankApp.Infrastructure.DataAccess.Implementations
 {
     public class OAuthLinkDataAccess : IOAuthLinkDataAccess
     {
-        private readonly AppDbContext _context;
+        private readonly AppDbContext context;
         public OAuthLinkDataAccess(AppDbContext context)
         {
-            _context = context;
+            this.context = context;
         }
 
         public bool Create(int userId, string provider, string providerUserId, string? providerEmail)
         {
             string sql = "INSERT INTO OAuthLink (UserId, Provider, ProviderUserId, ProviderEmail) VALUES (@p0, @p1, @p2, @p3)";
-            int rowsAffected = _context.ExecuteNonQuery(sql, new object[] { userId, provider, providerUserId, (object?)providerEmail ?? DBNull.Value });
+            int rowsAffected = context.ExecuteNonQuery(sql, new object[] { userId, provider, providerUserId, (object?)providerEmail ?? DBNull.Value });
             return rowsAffected > 0;
         }
 
         public void Delete(int id)
         {
             string sql = "DELETE FROM OAuthLink WHERE Id = @p0";
-            _context.ExecuteNonQuery(sql, new object[] { id });
+            context.ExecuteNonQuery(sql, new object[] { id });
         }
 
         public OAuthLink? FindByProvider(string provider, string providerUserId)
         {
             string sql = "SELECT Id, UserId, Provider, ProviderUserId, ProviderEmail FROM OAuthLink WHERE Provider = @p0 AND ProviderUserId = @p1";
-            using IDataReader reader = _context.ExecuteQuery(sql, new object[] { provider, providerUserId });
+            using IDataReader reader = context.ExecuteQuery(sql, new object[] { provider, providerUserId });
 
             if (reader.Read())
             {
@@ -42,7 +42,7 @@ namespace BankApp.Infrastructure.DataAccess.Implementations
         {
             string sql = "SELECT Id, UserId, Provider, ProviderUserId, ProviderEmail FROM OAuthLink WHERE UserId = @p0";
             List<OAuthLink> links = new List<OAuthLink>();
-            using IDataReader reader = _context.ExecuteQuery(sql, new object[] { userId });
+            using IDataReader reader = context.ExecuteQuery(sql, new object[] { userId });
 
             while (reader.Read())
             {

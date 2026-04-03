@@ -3,19 +3,18 @@ using BankApp.Infrastructure.DataAccess.Interfaces;
 
 namespace BankApp.Infrastructure.DataAccess.Implementations
 {
-
     public class NotificationDataAccess : INotificationDataAccess
     {
-        private readonly AppDbContext _dbContext;
+        private readonly AppDbContext dbContext;
         public NotificationDataAccess(AppDbContext dbContext)
         {
-            _dbContext = dbContext;
+            this.dbContext = dbContext;
         }
 
         public int CountUnreadByUserId(int userId)
         {
             var query = @"SELECT COUNT(*) FROM Notification WHERE UserId = @p0 and IsRead = 0";
-            using var reader = _dbContext.ExecuteQuery(query, new object[] { userId });
+            using var reader = dbContext.ExecuteQuery(query, new object[] { userId });
             if (reader.Read())
             {
                 return reader.GetInt32(0);
@@ -27,7 +26,7 @@ namespace BankApp.Infrastructure.DataAccess.Implementations
         {
             var notifications = new List<Notification>();
             var query = @"SELECT * FROM Notification where UserId = @p0";
-            using var reader = _dbContext.ExecuteQuery(query, new object[] { userId });
+            using var reader = dbContext.ExecuteQuery(query, new object[] { userId });
             while (reader.Read())
             {
                 notifications.Add(MapToNotification(reader));
@@ -54,8 +53,6 @@ namespace BankApp.Infrastructure.DataAccess.Implementations
                 CreatedAt = r.GetDateTime(r.GetOrdinal("CreatedAt"))
             };
         }
-
-
     }
 }
 

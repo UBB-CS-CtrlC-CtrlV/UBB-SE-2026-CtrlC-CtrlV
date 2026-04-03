@@ -1,26 +1,27 @@
+using System.Data;
 using BankApp.Core.Entities;
 using BankApp.Infrastructure.DataAccess.Interfaces;
-using System.Data;
-
 
 namespace BankApp.Infrastructure.DataAccess.Implementations
 {
     public class AccountDataAccess : IAccountDataAccess
     {
-        private readonly AppDbContext _dbContext;
+        private readonly AppDbContext dbContext;
 
         public AccountDataAccess(AppDbContext dbContext)
         {
-            _dbContext = dbContext;
+            this.dbContext = dbContext;
         }
 
         public Account? FindById(int id)
         {
             var query =
                 @"SELECT Id, UserId, AccountName, IBAN, Currency, Balance, AccountType, Status, CreatedAt from Account where Id = @p0";
-            using var reader = _dbContext.ExecuteQuery(query, new object[] { id });
+            using var reader = dbContext.ExecuteQuery(query, new object[] { id });
             if (reader.Read())
+            {
                 return MapToAccount(reader);
+            }
             return null;
         }
 
@@ -29,7 +30,7 @@ namespace BankApp.Infrastructure.DataAccess.Implementations
             var accounts = new List<Account>();
             var query =
                 @"SELECT Id, UserId, AccountName, IBAN, Currency, Balance, AccountType, Status, CreatedAt from Account where UserId = @p0";
-            using var reader = _dbContext.ExecuteQuery(query, new object[] { userId });
+            using var reader = dbContext.ExecuteQuery(query, new object[] { userId });
             while (reader.Read())
             {
                 accounts.Add(MapToAccount(reader));
