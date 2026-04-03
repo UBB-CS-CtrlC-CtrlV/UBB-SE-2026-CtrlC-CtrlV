@@ -1,5 +1,6 @@
 using Microsoft.AspNetCore.Mvc;
 using BankApp.Core.DTOs.Auth;
+using BankApp.Core.Enums;
 using BankApp.Infrastructure.Services.Interfaces;
 
 namespace BankApp.Server.Controllers
@@ -74,10 +75,15 @@ namespace BankApp.Server.Controllers
                 return BadRequest(new { error = "Password must be at least 8 characters with uppercase, lowercase, a digit, and a special character." });
             }
 
-            bool isSuccess = _authService.ResetPassword(request.Token, request.NewPassword);
-            if (!isSuccess)
+            ResetPasswordResult result = _authService.ResetPassword(request.Token, request.NewPassword);
+            if (result != ResetPasswordResult.Success)
             {
-                return BadRequest(new { error = "Invalid, expired, or already used reset token." });
+                return result switch
+                {
+                    ResetPasswordResult.ExpiredToken => BadRequest(new { error = "The reset token has expired.", errorCode = "token_expired" }),
+                    ResetPasswordResult.TokenAlreadyUsed => BadRequest(new { error = "The reset token has already been used.", errorCode = "token_already_used" }),
+                    _ => BadRequest(new { error = "The reset token is invalid.", errorCode = "token_invalid" }),
+                };
             }
 
             return Ok(new { message = "Password reset successfully. You may now log in with your new password." });
@@ -137,10 +143,15 @@ namespace BankApp.Server.Controllers
                 return BadRequest(new { error = "Token is required." });
             }
 
-            bool isValid = _authService.VerifyResetToken(request.Token);
-            if (!isValid)
+            ResetTokenValidationResult result = _authService.VerifyResetToken(request.Token);
+            if (result != ResetTokenValidationResult.Valid)
             {
-                return BadRequest(new { error = "Invalid or expired token." });
+                return result switch
+                {
+                    ResetTokenValidationResult.Expired => BadRequest(new { error = "The reset token has expired.", errorCode = "token_expired" }),
+                    ResetTokenValidationResult.AlreadyUsed => BadRequest(new { error = "The reset token has already been used.", errorCode = "token_already_used" }),
+                    _ => BadRequest(new { error = "The reset token is invalid.", errorCode = "token_invalid" }),
+                };
             }
 
             return Ok(new { message = "Token is valid." });
@@ -148,5 +159,4 @@ namespace BankApp.Server.Controllers
 
     }
 }
-
 

@@ -1,4 +1,21 @@
+// <copyright file="ForgotPasswordState.cs" company="CtrlC CtrlV">
+// Copyright (c) CtrlC CtrlV. All rights reserved.
+// </copyright>
+
 namespace BankApp.Core.Enums
 {
-    public enum ForgotPasswordState { Idle, EmailSent, TokenValid, TokenExpired, TokenAlreadyUsed, PasswordResetSuccess, Error }
+    /// <summary>
+    /// Represents the UI state of the forgot-password flow.
+    /// </summary>
+    public enum ForgotPasswordState
+    {
+        Idle,
+        EmailSent,
+        TokenValid,
+        TokenInvalid,
+        TokenExpired,
+        TokenAlreadyUsed,
+        PasswordResetSuccess,
+        Error,
+    }
 }

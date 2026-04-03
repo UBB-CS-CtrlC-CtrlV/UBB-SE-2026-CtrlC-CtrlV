@@ -15,7 +15,7 @@ namespace BankApp.Client.Views
     /// <summary>
     /// Displays the account recovery flow for requesting a reset code and setting a new password.
     /// </summary>
-    public sealed partial class ForgotPasswordView : Page, IStateObserver<ForgotPasswordState>
+    public sealed partial class ForgotPasswordView : IStateObserver<ForgotPasswordState>
     {
         private readonly ForgotPasswordViewModel viewModel;
 
@@ -74,6 +74,10 @@ namespace BankApp.Client.Views
                         this.ResendPanel.Visibility = Visibility.Collapsed;
                         this.TokenBox.IsEnabled = false;
                         this.Step3Panel.Visibility = Visibility.Visible;
+                        break;
+
+                    case ForgotPasswordState.TokenInvalid:
+                        this.ShowMessage("The recovery code is invalid. Please check it or request a new one.", InfoBarSeverity.Error);
                         break;
 
                     case ForgotPasswordState.TokenExpired:
@@ -138,7 +142,7 @@ namespace BankApp.Client.Views
             }
 
             this.ShowLoading();
-            await this.viewModel.ResetPassword(this.EmailBox.Text.Trim(), newPassword, code);
+            await this.viewModel.ResetPassword(newPassword, code);
         }
 
         private async Task VerifyTokenButton_Click(object sender, RoutedEventArgs e)

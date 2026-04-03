@@ -11,6 +11,7 @@ namespace BankApp.Infrastructure.Repositories.Interfaces
         Session? FindSessionByToken(string token);
         void SavePasswordResetToken(PasswordResetToken token);
         PasswordResetToken? FindPasswordResetToken(string tokenHash);
+        void MarkPasswordResetTokenAsUsed(int tokenId);
         void InvalidateAllSessions(int userId);
         User? FindUserById(int id);
         bool UpdatePassword(int userId, string newPasswordHash);
@@ -23,4 +24,3 @@ namespace BankApp.Infrastructure.Repositories.Interfaces
         void LockAccount(int userId, DateTime lockoutEnd);
     }
 }
-
