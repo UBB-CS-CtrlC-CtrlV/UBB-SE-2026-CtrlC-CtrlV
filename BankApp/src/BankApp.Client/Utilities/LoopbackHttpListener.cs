@@ -5,13 +5,13 @@
 using System;
 using System.Net;
 using System.Text;
+using System.Threading;
 using System.Threading.Tasks;
 
 namespace BankApp.Client.Utilities;
 
 /// <summary>
-/// TODO: improve docs
-/// Loopback Http Listener.
+/// Hosts a temporary loopback HTTP endpoint used to capture browser-based authentication callbacks.
 /// </summary>
 public class LoopbackHttpListener : IDisposable
 {
@@ -44,54 +44,42 @@ public class LoopbackHttpListener : IDisposable
     }
 
     /// <summary>
-    /// Wait for callback.
+    /// Waits for the first callback request received by the loopback listener.
     /// </summary>
     /// <param name="timeoutInSeconds">Timeout period in seconds.</param>
-    /// <returns>A <see cref="Task{TResult}"/> representing the result of the asynchronous operation.</returns>
+    /// <returns>The callback URL received from the browser.</returns>
     public async Task<string> WaitForCallbackAsync(int timeoutInSeconds = DefaultTimeout)
     {
-        var source = new TaskCompletionSource<string>();
+        using var cancellationTokenSource = new CancellationTokenSource(TimeSpan.FromSeconds(timeoutInSeconds));
+        var contextTask = Task.Factory.FromAsync(
+            this.listener.BeginGetContext,
+            this.listener.EndGetContext,
+            null);
+        var completedTask = await Task.WhenAny(contextTask, Task.Delay(Timeout.Infinite, cancellationTokenSource.Token));
 
-        // TODO: get rid of the lambda
-        this.listener.BeginGetContext(
-            async void (result) =>
-        {
-            try
-            {
-                var context = this.listener.EndGetContext(result);
-                var request = context.Request;
-                var response = context.Response;
-
-                const string responseString = "<html><head><style>body{font-family:sans-serif;display:flex;justify-content:center;align-items:center;height:100vh;margin:0;background:#f0f2f5;} .card{background:white;padding:2rem;border-radius:8px;box-shadow:0 4px 12px rgba(0,0,0,0.1);text-align:center;}</style></head><body><div class='card'><h2>Authentication Complete!</h2><p>You can now safely close this browser tab and return to the Bank App.</p></div></body></html>";
-                var buffer = Encoding.UTF8.GetBytes(responseString);
-                response.ContentLength64 = buffer.Length;
-
-                var responseOutput = response.OutputStream;
-                await responseOutput.WriteAsync(buffer, 0, buffer.Length);
-                responseOutput.Close();
-
-                source.SetResult(request.Url!.ToString());
-            }
-            catch (Exception ex)
-            {
-                source.SetException(ex);
-            }
-        },
-            this.listener);
-
-        await Task.WhenAny(source.Task, Task.Delay(timeoutInSeconds * 1000));
-
-        if (!source.Task.IsCompleted)
+        if (completedTask != contextTask)
         {
             throw new TaskCanceledException("Browser authentication timed out.");
         }
 
-        return await source.Task;
+        var context = await contextTask;
+        await this.WriteCompletionResponseAsync(context.Response);
+        return context.Request.Url!.ToString();
     }
 
     /// <inheritdoc/>
     public void Dispose()
     {
         this.listener.Stop();
+    }
+
+    private async Task WriteCompletionResponseAsync(HttpListenerResponse response)
+    {
+        const string responseString = "<html><head><style>body{font-family:sans-serif;display:flex;justify-content:center;align-items:center;height:100vh;margin:0;background:#f0f2f5;} .card{background:white;padding:2rem;border-radius:8px;box-shadow:0 4px 12px rgba(0,0,0,0.1);text-align:center;}</style></head><body><div class='card'><h2>Authentication Complete!</h2><p>You can now safely close this browser tab and return to the Bank App.</p></div></body></html>";
+        var buffer = Encoding.UTF8.GetBytes(responseString);
+        response.ContentLength64 = buffer.Length;
+
+        await response.OutputStream.WriteAsync(buffer, 0, buffer.Length);
+        response.OutputStream.Close();
     }
 }

@@ -54,11 +54,6 @@ namespace BankApp.Client.ViewModels
         public List<Card> Cards { get; private set; }
 
         /// <summary>
-        /// Gets the recent transactions.
-        /// </summary>
-        public List<Transaction> RecentTransactions { get; private set; }
-
-        /// <summary>
         /// Gets the formatted dashboard transaction rows for display.
         /// </summary>
         public List<DashboardTransactionItem> RecentTransactionItems { get; private set; }
@@ -72,6 +67,11 @@ namespace BankApp.Client.ViewModels
         /// Gets the latest load error message.
         /// </summary>
         public string ErrorMessage { get; private set; }
+
+        /// <summary>
+        /// Gets or sets the recent transactions.
+        /// </summary>
+        private List<Transaction> RecentTransactions { get; set; }
 
         /// <summary>
         /// Fetches dashboard data for the currently authenticated user.
@@ -100,8 +100,8 @@ namespace BankApp.Client.ViewModels
                 }
 
                 this.CurrentUser = response.CurrentUser;
-                this.Cards = response.Cards ?? new List<Card>();
-                this.RecentTransactions = response.RecentTransactions ?? new List<Transaction>();
+                this.Cards = response.Cards;
+                this.RecentTransactions = response.RecentTransactions;
                 this.RecentTransactionItems = this.BuildTransactionItems(this.RecentTransactions);
                 this.UnreadNotificationCount = response.UnreadNotificationCount;
                 this.State.SetValue(DashboardState.Success);
@@ -148,7 +148,8 @@ namespace BankApp.Client.ViewModels
                     ? "-"
                     : string.Equals(transaction.Direction, "In", StringComparison.OrdinalIgnoreCase) ? "+" : string.Empty;
 
-                items.Add(new DashboardTransactionItem
+                items.Add(
+                    new DashboardTransactionItem
                 {
                     MerchantDisplayName = merchantDisplayName,
                     Type = string.IsNullOrWhiteSpace(transaction.Type) ? "Unknown" : transaction.Type,
@@ -162,31 +163,5 @@ namespace BankApp.Client.ViewModels
 
         private void LogError(string method, Exception ex) =>
             Console.Error.WriteLine($"[DashboardViewModel] {method}: {ex.Message}");
-    }
-
-    /// <summary>
-    /// Represents a formatted transaction row for dashboard display.
-    /// </summary>
-    public class DashboardTransactionItem
-    {
-        /// <summary>
-        /// Gets or sets the merchant or fallback display name.
-        /// </summary>
-        public string MerchantDisplayName { get; set; } = string.Empty;
-
-        /// <summary>
-        /// Gets or sets the transaction type.
-        /// </summary>
-        public string Type { get; set; } = string.Empty;
-
-        /// <summary>
-        /// Gets or sets the formatted amount string.
-        /// </summary>
-        public string AmountDisplay { get; set; } = string.Empty;
-
-        /// <summary>
-        /// Gets or sets the currency code.
-        /// </summary>
-        public string Currency { get; set; } = string.Empty;
     }
 }

@@ -18,6 +18,7 @@ namespace BankApp.Client.Utilities
     public class SystemBrowser : IBrowser
     {
         private readonly string? path;
+        private readonly int port;
 
         /// <summary>
         /// Initializes a new instance of the <see cref="SystemBrowser"/> class.
@@ -27,18 +28,13 @@ namespace BankApp.Client.Utilities
         public SystemBrowser(int? port = null, string? path = null)
         {
             this.path = path;
-            this.Port = port ?? this.GetRandomUnusedPort();
+            this.port = port ?? this.GetRandomUnusedPort();
         }
-
-        /// <summary>
-        /// Gets the port.
-        /// </summary>
-        public int Port { get; } // TODO: consider making Port private
 
         /// <inheritdoc/>
         public async Task<BrowserResult> InvokeAsync(BrowserOptions options, CancellationToken cancellationToken = default)
         {
-            using var listener = new LoopbackHttpListener(this.Port, this.path);
+            using var listener = new LoopbackHttpListener(this.port, this.path);
 
             OpenBrowser(options.StartUrl);
 

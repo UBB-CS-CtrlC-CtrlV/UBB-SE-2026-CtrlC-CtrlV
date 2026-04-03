@@ -13,7 +13,7 @@ using Microsoft.UI.Xaml.Controls;
 namespace BankApp.Client.Views
 {
     /// <summary>
-    /// TODO: add docs.
+    /// Displays the account recovery flow for requesting a reset code and setting a new password.
     /// </summary>
     public sealed partial class ForgotPasswordView : Page, IStateObserver<ForgotPasswordState>
     {
@@ -178,7 +178,7 @@ namespace BankApp.Client.Views
         }
 
         /// <summary>
-        /// TODO: add documentation.
+        /// Shows a status message in the view's info bar.
         /// </summary>
         /// <param name="msg">The message.</param>
         /// <param name="severity">The severity.</param>
