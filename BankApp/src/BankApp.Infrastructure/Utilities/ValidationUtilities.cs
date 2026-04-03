@@ -13,7 +13,7 @@ namespace BankApp.Infrastructure.Utilities
             }
 
             email = email.Trim().ToLower();
-             
+
             try
             {
                 MailAddress addr = new MailAddress(email);
@@ -27,7 +27,11 @@ namespace BankApp.Infrastructure.Utilities
 
         public static bool IsStrongPassword(string password)
         {
-            if (string.IsNullOrWhiteSpace(password)) { return false; }
+            if (string.IsNullOrWhiteSpace(password))
+            {
+                return false;
+            }
+
             return password.Length >= 8
                 && password.Any(char.IsUpper)
                 && password.Any(char.IsLower)
@@ -42,13 +46,21 @@ namespace BankApp.Infrastructure.Utilities
 
         public static bool PasswordsMatch(string a, string b)
         {
-            if (a == null || b == null) return false;
+            if (a == null || b == null)
+            {
+                return false;
+            }
+
             return a == b;
         }
 
         public static bool IsValidPhoneNumber(string phone)
         {
-            if (string.IsNullOrWhiteSpace(phone)) return false;
+            if (string.IsNullOrWhiteSpace(phone))
+            {
+                return false;
+            }
+
             return Regex.IsMatch(phone, @"^\+?[\d\s\-().]{7,15}$");
         }
     }
