@@ -13,8 +13,20 @@ using Microsoft.Extensions.DependencyInjection;
 
 namespace BankApp.Infrastructure.DependencyInjection;
 
+/// <summary>
+/// Provides extension methods for registering infrastructure services with the dependency injection container.
+/// </summary>
 public static class ServiceCollectionExtensions
 {
+    /// <summary>
+    /// Registers all infrastructure services, data access components, and repositories with the service collection.
+    /// </summary>
+    /// <param name="services">The service collection to configure.</param>
+    /// <param name="configuration">The application configuration used to resolve connection strings and secrets.</param>
+    /// <returns>The same <see cref="IServiceCollection"/> instance for chaining.</returns>
+    /// <exception cref="InvalidOperationException">
+    /// Thrown when the <c>DefaultConnection</c> connection string or <c>Jwt:Secret</c> configuration value is missing.
+    /// </exception>
     public static IServiceCollection AddInfrastructure(this IServiceCollection services, IConfiguration configuration)
     {
         string connectionString = configuration.GetConnectionString("DefaultConnection")
