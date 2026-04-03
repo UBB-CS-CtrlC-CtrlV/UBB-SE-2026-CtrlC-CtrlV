@@ -17,7 +17,6 @@ namespace BankApp.Client.Utilities
     {
         private readonly HttpClient httpClient;
         private string? token;
-        private int? currentUserId;
 
         /// <summary>
         /// Initializes a new instance of the <see cref="ApiClient"/> class.
@@ -34,11 +33,13 @@ namespace BankApp.Client.Utilities
         /// <summary>
         /// Gets or sets the identifier of the currently authenticated user.
         /// </summary>
-        public int? CurrentUserId
-        {
-            get => this.currentUserId;
-            set => this.currentUserId = value;
-        }
+        public int? CurrentUserId { get; set; }
+
+        /// <summary>
+        /// Gets the currently configured bearer token.
+        /// </summary>
+        /// <returns>The configured bearer token, if one exists.</returns>
+        public string? Token { get; }
 
         /// <summary>
         /// Sets the bearer token used for authenticated requests.
@@ -57,17 +58,8 @@ namespace BankApp.Client.Utilities
         public void ClearToken()
         {
             this.token = null;
-            this.currentUserId = null;
+            this.CurrentUserId = null;
             this.httpClient.DefaultRequestHeaders.Authorization = null;
-        }
-
-        /// <summary>
-        /// Gets the currently configured bearer token.
-        /// </summary>
-        /// <returns>The configured bearer token, if one exists.</returns>
-        public string? GetToken()
-        {
-            return this.token;
         }
 
         /// <summary>
