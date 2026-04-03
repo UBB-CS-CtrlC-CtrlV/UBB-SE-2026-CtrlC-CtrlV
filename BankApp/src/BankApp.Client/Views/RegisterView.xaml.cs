@@ -10,30 +10,37 @@ using Microsoft.UI.Xaml.Controls;
 
 namespace BankApp.Client.Views
 {
+    /// <summary>
+    /// Displays the registration flow for creating a new account.
+    /// </summary>
     public sealed partial class RegisterView : Page, IStateObserver<RegisterState>
     {
-        private readonly RegisterViewModel _viewModel;
+        private readonly RegisterViewModel viewModel;
 
+        /// <summary>
+        /// Initializes a new instance of the <see cref="RegisterView"/> class.
+        /// </summary>
         public RegisterView()
         {
             this.InitializeComponent();
 
-            _viewModel = new RegisterViewModel(App.ApiClient);
-            _viewModel.State.AddObserver(this);
+            this.viewModel = new RegisterViewModel(App.ApiClient);
+            this.viewModel.State.AddObserver(this);
         }
 
+        /// <inheritdoc/>
         public void Update(RegisterState state)
         {
-            OnStateChanged(state);
+            this.OnStateChanged(state);
         }
 
-        public void OnStateChanged(RegisterState state)
+        private void OnStateChanged(RegisterState state)
         {
-            DispatcherQueue.TryEnqueue(() =>
+            this.DispatcherQueue.TryEnqueue(() =>
             {
-                HideLoading();
-                ErrorInfoBar.IsOpen = false;
-                SuccessInfoBar.IsOpen = false;
+                this.HideLoading();
+                this.ErrorInfoBar.IsOpen = false;
+                this.SuccessInfoBar.IsOpen = false;
 
                 switch (state)
                 {
@@ -41,12 +48,12 @@ namespace BankApp.Client.Views
                         break;
 
                     case RegisterState.Loading:
-                        ShowLoading();
+                        this.ShowLoading();
                         break;
 
                     case RegisterState.Success:
-                        SuccessInfoBar.IsOpen = true;
-                        ClearForm();
+                        this.SuccessInfoBar.IsOpen = true;
+                        this.ClearForm();
                         break;
 
                     case RegisterState.AutoLoggedIn:
@@ -54,76 +61,81 @@ namespace BankApp.Client.Views
                         break;
 
                     case RegisterState.EmailAlreadyExists:
-                        ShowError("This email is already registered.");
+                        this.ShowError("This email is already registered.");
                         break;
 
                     case RegisterState.InvalidEmail:
-                        ShowError("Please enter a valid email address.");
+                        this.ShowError("Please enter a valid email address.");
                         break;
 
                     case RegisterState.WeakPassword:
-                        ShowError("Password must be at least 8 characters with uppercase, lowercase, a digit and a special character.");
+                        this.ShowError("Password must be at least 8 characters with uppercase, lowercase, a digit and a special character.");
                         break;
 
                     case RegisterState.PasswordMismatch:
-                        ShowError("Passwords do not match.");
+                        this.ShowError("Passwords do not match.");
                         break;
 
                     case RegisterState.Error:
-                        ShowError("Something went wrong. Please try again.");
+                        this.ShowError("Something went wrong. Please try again.");
+                        break;
+
+                    default:
                         break;
                 }
             });
         }
 
-        public void ShowError(string msg)
+        private void ShowError(string msg)
         {
-            ErrorInfoBar.Message = msg;
-            ErrorInfoBar.IsOpen = true;
+            this.ErrorInfoBar.Message = msg;
+            this.ErrorInfoBar.IsOpen = true;
         }
 
-        public void ShowLoading()
+        private void ShowLoading()
         {
-            LoadingRing.IsActive = true;
-            LoadingRing.Visibility = Visibility.Visible;
-            RegisterButton.IsEnabled = false;
+            this.LoadingRing.IsActive = true;
+            this.LoadingRing.Visibility = Visibility.Visible;
+            this.RegisterButton.IsEnabled = false;
         }
 
-        public void HideLoading()
+        private void HideLoading()
         {
-            LoadingRing.IsActive = false;
-            LoadingRing.Visibility = Visibility.Collapsed;
-            RegisterButton.IsEnabled = true;
+            this.LoadingRing.IsActive = false;
+            this.LoadingRing.Visibility = Visibility.Collapsed;
+            this.RegisterButton.IsEnabled = true;
         }
 
         private void ClearForm()
         {
-            FullNameBox.Text = "";
-            EmailBox.Text = "";
-            PasswordBox.Password = "";
-            ConfirmPasswordBox.Password = "";
+            this.FullNameBox.Text = string.Empty;
+            this.EmailBox.Text = string.Empty;
+            this.PasswordBox.Password = string.Empty;
+            this.ConfirmPasswordBox.Password = string.Empty;
         }
 
-        private void RegisterButton_Click(object sender, RoutedEventArgs e)
+        private async void RegisterButton_Click(object sender, RoutedEventArgs e)
         {
-            var fullName = FullNameBox.Text.Trim();
-            var email = EmailBox.Text.Trim();
-            var password = PasswordBox.Password;
-            var confirmPassword = ConfirmPasswordBox.Password;
+            string fullName = this.FullNameBox.Text.Trim();
+            string email = this.EmailBox.Text.Trim();
+            string password = this.PasswordBox.Password;
+            string confirmPassword = this.ConfirmPasswordBox.Password;
 
-            if (string.IsNullOrWhiteSpace(fullName) || string.IsNullOrWhiteSpace(email)
-                || string.IsNullOrWhiteSpace(password) || string.IsNullOrWhiteSpace(confirmPassword))
+            if (string.IsNullOrWhiteSpace(fullName)
+                || string.IsNullOrWhiteSpace(email)
+                || string.IsNullOrWhiteSpace(password)
+                || string.IsNullOrWhiteSpace(confirmPassword))
             {
-                ShowError("Please fill in all fields.");
+                this.ShowError("Please fill in all fields.");
                 return;
             }
 
-            _viewModel.Register(email, password, confirmPassword, fullName);
+            await this.viewModel.Register(email, password, confirmPassword, fullName);
         }
 
-        private void GoogleRegisterButton_Click(object sender, RoutedEventArgs e)
+        private async void GoogleRegisterButton_Click(object sender, RoutedEventArgs e)
         {
-            _viewModel.OAuthRegister(EmailBox.Text.Trim(), "Google");
+            await this.viewModel.OAuthRegister("Google");
         }
 
         private void SignInButton_Click(object sender, RoutedEventArgs e)
@@ -132,4 +144,3 @@ namespace BankApp.Client.Views
         }
     }
 }
-

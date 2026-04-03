@@ -38,8 +38,25 @@ namespace BankApp.Client.Utilities
         /// <summary>
         /// Gets the currently configured bearer token.
         /// </summary>
-        /// <returns>The configured bearer token, if one exists.</returns>
-        public string? Token { get; }
+        public string? Token => this.token;
+
+        /// <summary>
+        /// Gets the identifier of the currently authenticated user.
+        /// </summary>
+        /// <returns>The authenticated user identifier, if one exists.</returns>
+        public int? GetCurrentUserId()
+        {
+            return this.CurrentUserId;
+        }
+
+        /// <summary>
+        /// Sets the identifier of the currently authenticated user.
+        /// </summary>
+        /// <param name="userId">The authenticated user identifier.</param>
+        public void SetCurrentUserId(int userId)
+        {
+            this.CurrentUserId = userId;
+        }
 
         /// <summary>
         /// Sets the bearer token used for authenticated requests.

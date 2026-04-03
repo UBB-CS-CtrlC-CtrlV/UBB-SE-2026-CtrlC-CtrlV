@@ -3,7 +3,6 @@
 // </copyright>
 
 using System;
-using System.Threading.Tasks;
 using BankApp.Client.Utilities;
 using BankApp.Client.ViewModels;
 using BankApp.Core.Enums;
@@ -96,7 +95,7 @@ namespace BankApp.Client.Views
             this.SignInButton.IsEnabled = true;
         }
 
-        private async Task SignInButton_Click(object sender, RoutedEventArgs e)
+        private async void SignInButton_Click(object sender, RoutedEventArgs e)
         {
             var email = this.EmailBox.Text.Trim();
             var password = this.PasswordBox.Password;
@@ -110,7 +109,7 @@ namespace BankApp.Client.Views
             await this.viewModel.Login(email, password);
         }
 
-        private async Task GoogleLoginButton_Click(object sender, RoutedEventArgs e)
+        private async void GoogleLoginButton_Click(object sender, RoutedEventArgs e)
         {
             await this.viewModel.OAuthLogin("Google");
         }

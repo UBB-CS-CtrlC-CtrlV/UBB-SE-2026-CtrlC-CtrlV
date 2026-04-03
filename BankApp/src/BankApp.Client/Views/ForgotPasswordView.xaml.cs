@@ -3,7 +3,6 @@
 // </copyright>
 
 using System;
-using System.Threading.Tasks;
 using BankApp.Client.Utilities;
 using BankApp.Client.ViewModels;
 using BankApp.Core.Enums;
@@ -76,10 +75,6 @@ namespace BankApp.Client.Views
                         this.Step3Panel.Visibility = Visibility.Visible;
                         break;
 
-                    case ForgotPasswordState.TokenInvalid:
-                        this.ShowMessage("The recovery code is invalid. Please check it or request a new one.", InfoBarSeverity.Error);
-                        break;
-
                     case ForgotPasswordState.TokenExpired:
                         this.ShowMessage("The recovery code has expired. Please request a new one.", InfoBarSeverity.Error);
                         break;
@@ -97,7 +92,7 @@ namespace BankApp.Client.Views
             });
         }
 
-        private async Task SendCodeButton_Click(object sender, RoutedEventArgs e)
+        private async void SendCodeButton_Click(object sender, RoutedEventArgs e)
         {
             this.StatusInfoBar.IsOpen = false;
             var email = this.EmailBox.Text.Trim();
@@ -112,7 +107,7 @@ namespace BankApp.Client.Views
             await this.viewModel.ForgotPassword(email);
         }
 
-        private async Task ResetPasswordButton_Click(object sender, RoutedEventArgs e)
+        private async void ResetPasswordButton_Click(object sender, RoutedEventArgs e)
         {
             this.StatusInfoBar.IsOpen = false;
             var code = this.TokenBox.Text.Trim();
@@ -145,7 +140,7 @@ namespace BankApp.Client.Views
             await this.viewModel.ResetPassword(newPassword, code);
         }
 
-        private async Task VerifyTokenButton_Click(object sender, RoutedEventArgs e)
+        private async void VerifyTokenButton_Click(object sender, RoutedEventArgs e)
         {
             this.StatusInfoBar.IsOpen = false;
             var code = this.TokenBox.Text.Trim();
@@ -160,7 +155,7 @@ namespace BankApp.Client.Views
             await this.viewModel.VerifyToken(code);
         }
 
-        private async Task ResendCodeButton_Click(object sender, RoutedEventArgs e)
+        private async void ResendCodeButton_Click(object sender, RoutedEventArgs e)
         {
             this.StatusInfoBar.IsOpen = false;
             var email = this.EmailBox.Text.Trim();

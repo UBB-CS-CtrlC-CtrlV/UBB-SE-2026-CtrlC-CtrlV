@@ -126,7 +126,6 @@ public class ForgotPasswordViewModel
         {
             "token_expired" => ForgotPasswordState.TokenExpired,
             "token_already_used" => ForgotPasswordState.TokenAlreadyUsed,
-            "token_invalid" => ForgotPasswordState.TokenInvalid,
             _ => ForgotPasswordState.Error,
         };
     }

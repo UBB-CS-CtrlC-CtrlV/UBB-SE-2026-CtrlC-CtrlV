@@ -1,41 +1,36 @@
 using System.Collections.Generic;
 
-namespace BankApp.Client.Utilities
+namespace BankApp.Client.Utilities;
+
+public class ObservableState<T>(T value)
 {
-    public class ObservableState<T>
+    private readonly List<IStateObserver<T>> observers =
+    [
+    ];
+
+    public T Value { get; private set; } = value;
+
+    public void SetValue(T value)
     {
-        public T Value { get; private set; }
-        private readonly List<IStateObserver<T>> _observers;
+        this.Value = value;
+        this.NotifyObservers();
+    }
 
-        public ObservableState(T value)
-        {
-            _observers = new List<IStateObserver<T>>();
-            Value = value;
-        }
+    public void AddObserver(IStateObserver<T> observer)
+    {
+        this.observers.Add(observer);
+    }
 
-        public void SetValue(T value)
-        {
-            Value = value;
-            NotifyObservers();
-        }
+    public void RemoveObserver(IStateObserver<T> observer)
+    {
+        this.observers.Remove(observer);
+    }
 
-        public void AddObserver(IStateObserver<T> observer)
+    private void NotifyObservers()
+    {
+        foreach (var observer in this.observers)
         {
-            _observers.Add(observer);
-        }
-
-        public void RemoveObserver(IStateObserver<T> observer)
-        {
-            _observers.Remove(observer);
-        }
-
-        private void NotifyObservers()
-        {
-            foreach (var observer in _observers)
-            {
-                observer.Update(Value);
-            }
+            observer.Update(this.Value);
         }
     }
 }
-
