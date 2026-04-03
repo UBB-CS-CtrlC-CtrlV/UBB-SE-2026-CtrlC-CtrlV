@@ -1,41 +1,54 @@
+// <copyright file="TwoFactorView.xaml.cs" company="CtrlC CtrlV">
+// Copyright (c) CtrlC CtrlV. All rights reserved.
+// </copyright>
+
 using System;
-using Microsoft.UI.Xaml;
-using Microsoft.UI.Xaml.Controls;
 using BankApp.Client.Utilities;
 using BankApp.Client.ViewModels;
 using BankApp.Core.Enums;
+using Microsoft.UI.Xaml;
+using Microsoft.UI.Xaml.Controls;
 
 namespace BankApp.Client.Views
 {
+    /// <summary>
+    /// Displays the OTP verification step of the login flow.
+    /// </summary>
     public sealed partial class TwoFactorView : Page, IStateObserver<TwoFactorState>
     {
-        private readonly TwoFactorViewModel _viewModel;
-        private DispatcherTimer _countdownTimer;
-        private int _secondsRemaining = 30;
+        private readonly DispatcherTimer countdownTimer;
+        private readonly TwoFactorViewModel viewModel;
+        private int secondsRemaining = 30;
 
+        /// <summary>
+        /// Initializes a new instance of the <see cref="TwoFactorView"/> class.
+        /// </summary>
         public TwoFactorView()
         {
             this.InitializeComponent();
 
-            _viewModel = new TwoFactorViewModel(App.ApiClient);
-            _viewModel.State.AddObserver(this);
+            this.viewModel = new TwoFactorViewModel(App.ApiClient);
+            this.viewModel.State.AddObserver(this);
 
-            _countdownTimer = new DispatcherTimer();
-            _countdownTimer.Interval = TimeSpan.FromSeconds(1);
-            _countdownTimer.Tick += CountdownTimer_Tick;
+            this.countdownTimer = new DispatcherTimer
+            {
+                Interval = TimeSpan.FromSeconds(1),
+            };
+            this.countdownTimer.Tick += this.CountdownTimerTick;
         }
 
+        /// <inheritdoc/>
         public void Update(TwoFactorState state)
         {
-            OnStateChanged(state);
+            this.OnStateChanged(state);
         }
 
-        public void OnStateChanged(TwoFactorState state)
+        private void OnStateChanged(TwoFactorState state)
         {
-            DispatcherQueue.TryEnqueue(() =>
+            this.DispatcherQueue.TryEnqueue(() =>
             {
-                HideLoading();
-                ErrorInfoBar.IsOpen = false;
+                this.HideLoading();
+                this.ErrorInfoBar.IsOpen = false;
 
                 switch (state)
                 {
@@ -43,7 +56,7 @@ namespace BankApp.Client.Views
                         break;
 
                     case TwoFactorState.Verifying:
-                        ShowLoading();
+                        this.ShowLoading();
                         break;
 
                     case TwoFactorState.Success:
@@ -51,83 +64,84 @@ namespace BankApp.Client.Views
                         break;
 
                     case TwoFactorState.InvalidOTP:
-                        ShowError("The code you entered is incorrect.");
+                        this.ShowError("The code you entered is incorrect.");
                         break;
 
                     case TwoFactorState.Expired:
-                        ShowError("This code has expired. Please request a new one.");
+                        this.ShowError("This code has expired. Please request a new one.");
                         break;
 
                     case TwoFactorState.MaxAttemptsReached:
-                        ShowError("Maximum attempts reached. Your account has been locked.");
-                        VerifyButton.IsEnabled = false;
-                        OtpBox.IsEnabled = false;
+                        this.ShowError("Maximum attempts reached. Your account has been locked.");
+                        this.VerifyButton.IsEnabled = false;
+                        this.OtpBox.IsEnabled = false;
                         break;
+
+                    default:
+                        throw new ArgumentOutOfRangeException(nameof(state), state, null);
                 }
             });
         }
 
-        public void ShowError(string msg)
+        private void ShowError(string msg)
         {
-            ErrorInfoBar.Message = msg;
-            ErrorInfoBar.IsOpen = true;
+            this.ErrorInfoBar.Message = msg;
+            this.ErrorInfoBar.IsOpen = true;
         }
 
-        public void ShowLoading()
+        private void ShowLoading()
         {
-            LoadingRing.IsActive = true;
-            LoadingRing.Visibility = Visibility.Visible;
-            VerifyButton.IsEnabled = false;
-            OtpBox.IsEnabled = false;
+            this.LoadingRing.IsActive = true;
+            this.LoadingRing.Visibility = Visibility.Visible;
+            this.VerifyButton.IsEnabled = false;
+            this.OtpBox.IsEnabled = false;
         }
 
-        public void HideLoading()
+        private void HideLoading()
         {
-            LoadingRing.IsActive = false;
-            LoadingRing.Visibility = Visibility.Collapsed;
-            VerifyButton.IsEnabled = true;
-            OtpBox.IsEnabled = true;
+            this.LoadingRing.IsActive = false;
+            this.LoadingRing.Visibility = Visibility.Collapsed;
+            this.VerifyButton.IsEnabled = true;
+            this.OtpBox.IsEnabled = true;
         }
 
         private async void VerifyButton_Click(object sender, RoutedEventArgs e)
         {
-            var otp = OtpBox.Text.Trim();
+            string otp = this.OtpBox.Text.Trim();
 
             if (string.IsNullOrWhiteSpace(otp) || otp.Length != 6)
             {
-                ShowError("Please enter a valid 6-digit code.");
+                this.ShowError("Please enter a valid 6-digit code.");
                 return;
             }
 
-            await _viewModel.VerifyOTP(otp);
+            await this.viewModel.VerifyOtp(otp);
         }
 
         private async void ResendButton_Click(object sender, RoutedEventArgs e)
         {
-            ResendButton.IsEnabled = false;
-            _secondsRemaining = 30;
-            CountdownText.Text = $"Available in {_secondsRemaining}s";
-            CountdownText.Visibility = Visibility.Visible;
+            this.ResendButton.IsEnabled = false;
+            this.secondsRemaining = 30;
+            this.CountdownText.Text = $"Available in {this.secondsRemaining}s";
+            this.CountdownText.Visibility = Visibility.Visible;
 
-            _countdownTimer.Start();
-
-            await _viewModel.ResendOTP();
+            this.countdownTimer.Start();
+            await this.viewModel.ResendOtp();
         }
 
-        private void CountdownTimer_Tick(object sender, object e)
+        private void CountdownTimerTick(object? sender, object e)
         {
-            _secondsRemaining--;
+            this.secondsRemaining--;
 
-            if (_secondsRemaining <= 0)
+            if (this.secondsRemaining <= 0)
             {
-                _countdownTimer.Stop();
-                ResendButton.IsEnabled = true;
-                CountdownText.Visibility = Visibility.Collapsed;
+                this.countdownTimer.Stop();
+                this.ResendButton.IsEnabled = true;
+                this.CountdownText.Visibility = Visibility.Collapsed;
+                return;
             }
-            else
-            {
-                CountdownText.Text = $"Available in {_secondsRemaining}s";
-            }
+
+            this.CountdownText.Text = $"Available in {this.secondsRemaining}s";
         }
 
         private void BackToLoginButton_Click(object sender, RoutedEventArgs e)
@@ -137,4 +151,3 @@ namespace BankApp.Client.Views
         }
     }
 }
-

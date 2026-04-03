@@ -1,34 +1,45 @@
-using Microsoft.UI.Xaml;
-using Microsoft.UI.Xaml.Controls;
+// <copyright file="LoginView.xaml.cs" company="CtrlC CtrlV">
+// Copyright (c) CtrlC CtrlV. All rights reserved.
+// </copyright>
+
+using System;
 using BankApp.Client.Utilities;
 using BankApp.Client.ViewModels;
 using BankApp.Core.Enums;
+using Microsoft.UI.Xaml;
 
 namespace BankApp.Client.Views
 {
-    public sealed partial class LoginView : Page, IStateObserver<LoginState>
+    /// <summary>
+    /// Display the login view.
+    /// </summary>
+    public sealed partial class LoginView : IStateObserver<LoginState>
     {
-        private readonly LoginViewModel _viewModel;
+        private readonly LoginViewModel viewModel;
 
+        /// <summary>
+        /// Initializes a new instance of the <see cref="LoginView"/> class.
+        /// </summary>
         public LoginView()
         {
             this.InitializeComponent();
 
-            _viewModel = new LoginViewModel(App.ApiClient);
-            _viewModel.State.AddObserver(this);
+            this.viewModel = new LoginViewModel(App.ApiClient);
+            this.viewModel.State.AddObserver(this);
         }
 
+        /// <inheritdoc/>
         public void Update(LoginState state)
         {
-            OnStateChanged(state);
+            this.OnStateChanged(state);
         }
 
-        public void OnStateChanged(LoginState state)
+        private void OnStateChanged(LoginState state)
         {
-            DispatcherQueue.TryEnqueue(() =>
+            this.DispatcherQueue.TryEnqueue(() =>
             {
-                HideLoading();
-                ErrorInfoBar.IsOpen = false;
+                this.HideLoading();
+                this.ErrorInfoBar.IsOpen = false;
 
                 switch (state)
                 {
@@ -36,7 +47,7 @@ namespace BankApp.Client.Views
                         break;
 
                     case LoginState.Loading:
-                        ShowLoading();
+                        this.ShowLoading();
                         break;
 
                     case LoginState.Success:
@@ -48,57 +59,59 @@ namespace BankApp.Client.Views
                         break;
 
                     case LoginState.InvalidCredentials:
-                        ShowError("Invalid email or password.");
+                        this.ShowError("Invalid email or password.");
                         break;
 
                     case LoginState.AccountLocked:
-                        ShowError("Account is locked. Try again later.");
+                        this.ShowError("Account is locked. Try again later.");
                         break;
 
                     case LoginState.Error:
-                        ShowError("Something went wrong. Please try again.");
+                        this.ShowError("Something went wrong. Please try again.");
                         break;
+                    default:
+                        throw new ArgumentOutOfRangeException(nameof(state), state, null);
                 }
             });
         }
 
-        public void ShowError(string msg)
+        private void ShowError(string msg)
         {
-            ErrorInfoBar.Message = msg;
-            ErrorInfoBar.IsOpen = true;
+            this.ErrorInfoBar.Message = msg;
+            this.ErrorInfoBar.IsOpen = true;
         }
 
-        public void ShowLoading()
+        private void ShowLoading()
         {
-            LoadingRing.IsActive = true;
-            LoadingRing.Visibility = Visibility.Visible;
-            SignInButton.IsEnabled = false;
+            this.LoadingRing.IsActive = true;
+            this.LoadingRing.Visibility = Visibility.Visible;
+            this.SignInButton.IsEnabled = false;
         }
 
-        public void HideLoading()
+        private void HideLoading()
         {
-            LoadingRing.IsActive = false;
-            LoadingRing.Visibility = Visibility.Collapsed;
-            SignInButton.IsEnabled = true;
+            this.LoadingRing.IsActive = false;
+            this.LoadingRing.Visibility = Visibility.Collapsed;
+            this.SignInButton.IsEnabled = true;
         }
 
-        private void SignInButton_Click(object sender, RoutedEventArgs e)
+        private async void SignInButton_Click(object sender, RoutedEventArgs e)
         {
-            var email = EmailBox.Text.Trim();
-            var password = PasswordBox.Password;
+            var email = this.EmailBox.Text.Trim();
+            var password = this.PasswordBox.Password;
 
             if (string.IsNullOrWhiteSpace(email) || string.IsNullOrWhiteSpace(password))
             {
-                ShowError("Please enter email and password.");
+                this.ShowError("Please enter email and password.");
                 return;
             }
 
-            _viewModel.Login(email, password);
+            await this.viewModel.Login(email, password);
         }
 
-        private void GoogleLoginButton_Click(object sender, RoutedEventArgs e)
+        private async void GoogleLoginButton_Click(object sender, RoutedEventArgs e)
         {
-            _viewModel.OAuthLogin(EmailBox.Text.Trim(), "Google");
+            await this.viewModel.OAuthLogin("Google");
         }
 
         private void ForgotPasswordButton_Click(object sender, RoutedEventArgs e)
@@ -112,4 +125,3 @@ namespace BankApp.Client.Views
         }
     }
 }
-

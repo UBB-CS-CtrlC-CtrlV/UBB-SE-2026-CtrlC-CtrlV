@@ -109,6 +109,11 @@ namespace BankApp.Infrastructure.Repositories.Implementations
             return _passwordResetTokenDao.FindByToken(tokenHash);
         }
 
+        public void MarkPasswordResetTokenAsUsed(int tokenId)
+        {
+            _passwordResetTokenDao.MarkAsUsed(tokenId);
+        }
+
         // ACCOUNT SECURITY
         public void IncrementFailedAttempts(int userId)
         {
@@ -136,6 +141,5 @@ namespace BankApp.Infrastructure.Repositories.Implementations
         }
     }
 }
-
 
 

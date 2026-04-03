@@ -1,41 +1,59 @@
 using System.Collections.Generic;
 
-namespace BankApp.Client.Utilities
+namespace BankApp.Client.Utilities;
+
+/// <summary>
+/// Simple observable state class that allows observers to
+/// subscribe and be notified when the state changes.
+/// </summary>
+/// <param name="value">Value to be observed.</param>
+/// <typeparam name="T"></typeparam>
+public class ObservableState<T>(T value)
 {
-    public class ObservableState<T>
+    private readonly List<IStateObserver<T>> observers =
+    [
+    ];
+
+    /// <summary>
+    /// Gets the current value of the state.
+    /// Observers will be notified whenever this value changes via the SetValue method.
+    /// </summary>
+    public T Value { get; private set; } = value;
+
+    /// <summary>
+    /// Sets a new value for the state and notifies all subscribed observers of the change.
+    /// </summary>
+    /// <param name="value"></param>
+    public void SetValue(T value)
     {
-        public T Value { get; private set; }
-        private readonly List<IStateObserver<T>> _observers;
+        this.Value = value;
+        this.NotifyObservers();
+    }
 
-        public ObservableState(T value)
-        {
-            _observers = new List<IStateObserver<T>>();
-            Value = value;
-        }
+    /// <summary>
+    /// Adds an observer to the list of observers that will be notified when the state changes.
+    /// </summary>
+    /// <param name="observer"></param>
+    public void AddObserver(IStateObserver<T> observer)
+    {
+        this.observers.Add(observer);
+    }
 
-        public void SetValue(T value)
-        {
-            Value = value;
-            NotifyObservers();
-        }
+    /// <summary>
+    /// Removes an observer from the list of observers.
+    /// The removed observer will no longer receive notifications when the state changes.
+    /// </summary>
+    /// <param name="observer"></param>
+    public void RemoveObserver(IStateObserver<T> observer)
+    {
+        this.observers.Remove(observer);
+    }
 
-        public void AddObserver(IStateObserver<T> observer)
+    private void NotifyObservers()
+    {
+        foreach (var observer in this.observers)
         {
-            _observers.Add(observer);
-        }
-
-        public void RemoveObserver(IStateObserver<T> observer)
-        {
-            _observers.Remove(observer);
-        }
-
-        private void NotifyObservers()
-        {
-            foreach (var observer in _observers)
-            {
-                observer.Update(Value);
-            }
+            observer.Update(this.Value);
         }
     }
 }
-

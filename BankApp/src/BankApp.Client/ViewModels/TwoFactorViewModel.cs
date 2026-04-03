@@ -1,3 +1,7 @@
+// <copyright file="TwoFactorViewModel.cs" company="CtrlC CtrlV">
+// Copyright (c) CtrlC CtrlV. All rights reserved.
+// </copyright>
+
 using System;
 using System.Threading.Tasks;
 using BankApp.Client.Utilities;
@@ -6,79 +10,95 @@ using BankApp.Core.Enums;
 
 namespace BankApp.Client.ViewModels
 {
-    public class TwoFactorViewModel 
+    /// <summary>
+    /// Coordinates OTP verification and resend operations for the two-factor authentication flow.
+    /// </summary>
+    public class TwoFactorViewModel
     {
-        private readonly ApiClient _apiClient;
-        public ObservableState<TwoFactorState> State { get; private set; }
+        private readonly ApiClient apiClient;
 
+        /// <summary>
+        /// Initializes a new instance of the <see cref="TwoFactorViewModel"/> class.
+        /// </summary>
+        /// <param name="apiClient">The API client used for authentication requests.</param>
         public TwoFactorViewModel(ApiClient apiClient)
         {
-            _apiClient = apiClient ?? throw new ArgumentNullException(nameof(apiClient));
-            State = new ObservableState<TwoFactorState>(TwoFactorState.Idle);
+            this.apiClient = apiClient ?? throw new ArgumentNullException(nameof(apiClient));
+            this.State = new ObservableState<TwoFactorState>(TwoFactorState.Idle);
         }
 
-        public async Task VerifyOTP(string otp)
+        /// <summary>
+        /// Gets the current state of the two-factor authentication flow.
+        /// </summary>
+        public ObservableState<TwoFactorState> State { get; }
+
+        /// <summary>
+        /// Verifies the OTP code entered by the user.
+        /// </summary>
+        /// <param name="otp">The one-time password to validate.</param>
+        /// <returns>A <see cref="Task"/> representing the asynchronous operation.</returns>
+        public async Task VerifyOtp(string otp)
         {
             if (string.IsNullOrWhiteSpace(otp))
             {
-                State.SetValue(TwoFactorState.InvalidOTP);
+                this.State.SetValue(TwoFactorState.InvalidOTP);
                 return;
             }
 
-            State.SetValue(TwoFactorState.Verifying);
+            this.State.SetValue(TwoFactorState.Verifying);
 
             try
             {
-                int? userId = _apiClient.GetCurrentUserId();
+                int? userId = this.apiClient.CurrentUserId;
                 if (userId == null)
                 {
-                    State.SetValue(TwoFactorState.InvalidOTP);
+                    this.State.SetValue(TwoFactorState.InvalidOTP);
                     return;
                 }
 
                 var request = new VerifyOTPRequest
                 {
                     UserId = userId.Value,
-                    OTPCode = otp
+                    OTPCode = otp,
                 };
 
-                var response = await _apiClient.PostAsync<VerifyOTPRequest, LoginResponse>("/api/auth/verify-otp", request);
-
+                LoginResponse? response = await this.apiClient.PostAsync<VerifyOTPRequest, LoginResponse>("/api/auth/verify-otp", request);
                 if (response != null && response.Success)
                 {
-                    _apiClient.SetToken(response.Token!);
-                    State.SetValue(TwoFactorState.Success);
+                    this.apiClient.SetToken(response.Token!);
+                    this.State.SetValue(TwoFactorState.Success);
+                    return;
                 }
-                else
-                {
-                    State.SetValue(TwoFactorState.InvalidOTP);
-                }
+
+                this.State.SetValue(TwoFactorState.InvalidOTP);
             }
             catch (Exception)
             {
-                State.SetValue(TwoFactorState.InvalidOTP);
+                this.State.SetValue(TwoFactorState.InvalidOTP);
             }
         }
 
-        public async Task ResendOTP()
+        /// <summary>
+        /// Requests a new OTP for the current user.
+        /// </summary>
+        /// <returns>A <see cref="Task"/> representing the asynchronous operation.</returns>
+        public async Task ResendOtp()
         {
-            State.SetValue(TwoFactorState.Idle);
+            this.State.SetValue(TwoFactorState.Idle);
+
             try
             {
-                int? userId = _apiClient.GetCurrentUserId();
-                if (userId == null) return;
-                await _apiClient.PostAsync<object, object>($"/api/auth/resend-otp?userId={userId.Value}", null);
+                int? userId = this.apiClient.CurrentUserId;
+                if (userId == null)
+                {
+                    return;
+                }
+
+                await this.apiClient.PostAsync<object?, object>($"/api/auth/resend-otp?userId={userId.Value}", null);
             }
             catch (Exception)
             {
-                ;
             }
-        }
-
-        public void Dispose()
-        {
         }
     }
 }
-
-

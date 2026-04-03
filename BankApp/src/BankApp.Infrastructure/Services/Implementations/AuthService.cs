@@ -1,5 +1,6 @@
 using BankApp.Core.DTOs.Auth;
 using BankApp.Core.Entities;
+using BankApp.Core.Enums;
 using BankApp.Infrastructure.Repositories.Interfaces;
 using BankApp.Infrastructure.Services.Infrastructure.Implementations;
 using BankApp.Infrastructure.Services.Infrastructure.Interfaces;
@@ -266,28 +267,32 @@ namespace BankApp.Infrastructure.Services.Implementations
             _emailService.sendPasswordResetLink(user.Email, rawToken);
         }
 
-        public bool ResetPassword(string token, string newPassword)
+        public ResetPasswordResult ResetPassword(string token, string newPassword)
         {
             PasswordResetToken? resetToken = _authRepository.FindPasswordResetToken(token);
-
-            if (resetToken == null || resetToken.UsedAt != null || resetToken.ExpiresAt < DateTime.UtcNow)
+            ResetTokenValidationResult validationResult = this.GetResetTokenValidationResult(resetToken);
+            if (validationResult != ResetTokenValidationResult.Valid)
             {
-                return false;
+                return validationResult switch
+                {
+                    ResetTokenValidationResult.Expired => ResetPasswordResult.ExpiredToken,
+                    ResetTokenValidationResult.AlreadyUsed => ResetPasswordResult.TokenAlreadyUsed,
+                    _ => ResetPasswordResult.InvalidToken,
+                };
             }
 
             string finalPasswordHash = _hashService.GetHash(newPassword);
-            bool updated = _authRepository.UpdatePassword(resetToken.UserId, finalPasswordHash);
+            bool updated = _authRepository.UpdatePassword(resetToken!.UserId, finalPasswordHash);
 
             if (!updated)
             {
-                return false;
+                return ResetPasswordResult.InvalidToken;
             }
 
-            resetToken.UsedAt = DateTime.UtcNow;
-            _authRepository.SavePasswordResetToken(resetToken);
+            _authRepository.MarkPasswordResetTokenAsUsed(resetToken.Id);
             _authRepository.InvalidateAllSessions(resetToken.UserId);
 
-            return true;
+            return ResetPasswordResult.Success;
         }
 
         // PRIVATE HELPERS
@@ -386,16 +391,30 @@ namespace BankApp.Infrastructure.Services.Implementations
             };
         }
 
-        public bool VerifyResetToken(string token)
+        public ResetTokenValidationResult VerifyResetToken(string token)
         {
             PasswordResetToken? resetToken = _authRepository.FindPasswordResetToken(token);
+            return this.GetResetTokenValidationResult(resetToken);
+        }
 
-            if (resetToken == null || resetToken.UsedAt != null || resetToken.ExpiresAt < DateTime.UtcNow)
+        private ResetTokenValidationResult GetResetTokenValidationResult(PasswordResetToken? resetToken)
+        {
+            if (resetToken == null)
             {
-                return false;
+                return ResetTokenValidationResult.Invalid;
             }
 
-            return true;
+            if (resetToken.UsedAt != null)
+            {
+                return ResetTokenValidationResult.AlreadyUsed;
+            }
+
+            if (resetToken.ExpiresAt < DateTime.UtcNow)
+            {
+                return ResetTokenValidationResult.Expired;
+            }
+
+            return ResetTokenValidationResult.Valid;
         }
 
         public bool Logout(string token)
@@ -410,6 +429,4 @@ namespace BankApp.Infrastructure.Services.Implementations
         }
     }
 }
-
-
 

@@ -1,125 +1,132 @@
+// <copyright file="ForgotPasswordViewModel.cs" company="CtrlC CtrlV">
+// Copyright (c) CtrlC CtrlV. All rights reserved.
+// </copyright>
+
 using System;
 using System.Threading.Tasks;
+using BankApp.Client;
 using BankApp.Client.Utilities;
 using BankApp.Core.DTOs.Auth;
 using BankApp.Core.Enums;
 
-namespace BankApp.Client.ViewModels
+namespace BankApp.Client.ViewModels;
+
+/// <summary>
+/// Loads and exposes the data needed by the forgot-password flow.
+/// </summary>
+public class ForgotPasswordViewModel
 {
-    public class ApiResponse
+    private readonly ApiClient apiClient;
+
+    /// <summary>
+    /// Initializes a new instance of the <see cref="ForgotPasswordViewModel"/> class.
+    /// </summary>
+    /// <param name="apiClient">The api client.</param>
+    /// <exception cref="ArgumentNullException">When the api client is null.</exception>
+    public ForgotPasswordViewModel(ApiClient apiClient)
     {
-        public string? message { get; set; }
-        public string? error { get; set; }
+        this.apiClient = apiClient ?? throw new ArgumentNullException(nameof(apiClient));
+        this.State = new ObservableState<ForgotPasswordState>(ForgotPasswordState.Idle);
     }
 
-    public class ForgotPasswordViewModel 
+    /// <summary>
+    /// Gets the state.
+    /// </summary>
+    public ObservableState<ForgotPasswordState> State { get; private set; }
+
+    /// <summary>
+    /// Requests a password reset code for the specified email address.
+    /// </summary>
+    /// <param name="email">The email address associated with the account.</param>
+    /// <returns>A <see cref="Task"/> representing the result of the asynchronous operation.</returns>
+    public async Task ForgotPassword(string email)
     {
-        private readonly ApiClient _apiClient;
-        public ObservableState<ForgotPasswordState> State { get; private set; }
-
-        public ForgotPasswordViewModel(ApiClient apiClient)
+        if (string.IsNullOrWhiteSpace(email))
         {
-            _apiClient = apiClient ?? throw new ArgumentNullException(nameof(apiClient));
-            State = new ObservableState<ForgotPasswordState>(ForgotPasswordState.Idle);
+            this.State.SetValue(ForgotPasswordState.Error);
+            return;
         }
 
-        public async Task ForgotPassword(string email)
+        try
         {
-            if (string.IsNullOrWhiteSpace(email))
-            {
-                State.SetValue(ForgotPasswordState.Error);
-                return;
-            }
+            var request = new ForgotPasswordRequest { Email = email };
+            var response = await this.apiClient.PostAsync<ForgotPasswordRequest, ApiResponse>("/api/auth/forgot-password", request);
+            this.State.SetValue(
+                response is { Error: null } ? ForgotPasswordState.EmailSent : ForgotPasswordState.Error);
+        }
+        catch (Exception)
+        {
+            this.State.SetValue(ForgotPasswordState.Error);
+        }
+    }
 
-            try
-            {
-                var request = new ForgotPasswordRequest { Email = email };
-                var response = await _apiClient.PostAsync<ForgotPasswordRequest, ApiResponse>("/api/auth/forgot-password", request);
-                if (response != null && response.error == null)
-                {
-                    State.SetValue(ForgotPasswordState.EmailSent);
-                }
-                else
-                {
-                    State.SetValue(ForgotPasswordState.Error);
-                }
-            }
-            catch (Exception)
-            {
-                State.SetValue(ForgotPasswordState.Error);
-            }
+    /// <summary>
+    /// Resets the password for a previously verified reset token.
+    /// </summary>
+    /// <param name="newPassword">The new password to apply to the account.</param>
+    /// <param name="code">The reset token provided to the user.</param>
+    /// <returns>A <see cref="Task"/> representing the result of the asynchronous operation.</returns>
+    public async Task ResetPassword(string newPassword, string code)
+    {
+        if (string.IsNullOrWhiteSpace(newPassword) || string.IsNullOrWhiteSpace(code))
+        {
+            this.State.SetValue(ForgotPasswordState.Error);
+            return;
         }
 
-        public async Task ResetPassword(string email, string newPassword, string code)
+        try
         {
-            if (string.IsNullOrWhiteSpace(newPassword) || string.IsNullOrWhiteSpace(code))
+            var request = new ResetPasswordRequest
             {
-                State.SetValue(ForgotPasswordState.Error);
-                return;
-            }
+                Token = code,
+                NewPassword = newPassword,
+            };
+            var response = await this.apiClient.PostAsync<ResetPasswordRequest, ApiResponse>("/api/auth/reset-password", request);
+            this.State.SetValue(this.MapResetTokenState(response, ForgotPasswordState.PasswordResetSuccess));
+        }
+        catch (Exception)
+        {
+            this.State.SetValue(ForgotPasswordState.Error);
+        }
+    }
 
-            try
-            {
-                var request = new ResetPasswordRequest
-                {
-                    Token = code,
-                    NewPassword = newPassword
-                };
-                var response = await _apiClient.PostAsync<ResetPasswordRequest, ApiResponse>("/api/auth/reset-password", request);
-                if (response != null && response.error == null)
-                {
-                    State.SetValue(ForgotPasswordState.PasswordResetSuccess);
-                }
-                else
-                {
-                    if (response?.error != null && response.error.Contains("expired", StringComparison.OrdinalIgnoreCase))
-                    {
-                        State.SetValue(ForgotPasswordState.TokenExpired);
-                    }
-                    else
-                    {
-                        State.SetValue(ForgotPasswordState.Error);
-                    }
-                }
-            }
-            catch (Exception)
-            {
-                State.SetValue(ForgotPasswordState.Error);
-            }
+    /// <summary>
+    /// Verifies whether the supplied reset token can still be used.
+    /// </summary>
+    /// <param name="code">The reset token to validate.</param>
+    /// <returns>A <see cref="Task"/> representing the asynchronous operation.</returns>
+    public async Task VerifyToken(string code)
+    {
+        if (string.IsNullOrWhiteSpace(code))
+        {
+            this.State.SetValue(ForgotPasswordState.Error);
+            return;
         }
 
-        public async Task VerifyToken(string code)
+        try
         {
-            if (string.IsNullOrWhiteSpace(code))
-            {
-                State.SetValue(ForgotPasswordState.Error);
-                return;
-            }
+            var response = await this.apiClient.PostAsync<object, ApiResponse>("/api/auth/verify-reset-token", new { Token = code });
 
-            try
-            {
-                var response = await _apiClient.PostAsync<object, ApiResponse>("/api/auth/verify-reset-token", new { Token = code });
+            this.State.SetValue(this.MapResetTokenState(response, ForgotPasswordState.TokenValid));
+        }
+        catch (Exception)
+        {
+            this.State.SetValue(ForgotPasswordState.Error);
+        }
+    }
 
-                if (response != null && response.error == null)
-                {
-                    State.SetValue(ForgotPasswordState.TokenValid);
-                }
-                else
-                {
-                    State.SetValue(ForgotPasswordState.TokenExpired);
-                }
-            }
-            catch (Exception)
-            {
-                State.SetValue(ForgotPasswordState.Error);
-            }
+    private ForgotPasswordState MapResetTokenState(ApiResponse? response, ForgotPasswordState successState)
+    {
+        if (response is { Error: null })
+        {
+            return successState;
         }
 
-
-        public void Dispose()
+        return response?.ErrorCode switch
         {
-        }
+            "token_expired" => ForgotPasswordState.TokenExpired,
+            "token_already_used" => ForgotPasswordState.TokenAlreadyUsed,
+            _ => ForgotPasswordState.Error,
+        };
     }
 }
-
-

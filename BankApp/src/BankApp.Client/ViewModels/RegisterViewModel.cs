@@ -1,156 +1,193 @@
-using BankApp.Client.Utilities;
-using BankApp.Core.Enums;
-using BankApp.Core.DTOs.Auth;
+// <copyright file="RegisterViewModel.cs" company="CtrlC CtrlV">
+// Copyright (c) CtrlC CtrlV. All rights reserved.
+// </copyright>
+
 using System;
-using System.Threading.Tasks;
 using System.Linq;
+using System.Threading.Tasks;
+using BankApp.Client.Utilities;
+using BankApp.Core.DTOs.Auth;
+using BankApp.Core.Enums;
 
 namespace BankApp.Client.ViewModels
 {
-    public class RegisterViewModel 
+    /// <summary>
+    /// Coordinates registration requests for the register view.
+    /// </summary>
+    public class RegisterViewModel
     {
-        public ObservableState<RegisterState> State { get; private set; }
+        private readonly ApiClient apiClient;
 
-        private readonly ApiClient _apiClient;
-
+        /// <summary>
+        /// Initializes a new instance of the <see cref="RegisterViewModel"/> class.
+        /// </summary>
+        /// <param name="apiClient">The API client used for registration requests.</param>
         public RegisterViewModel(ApiClient apiClient)
         {
-            State = new ObservableState<RegisterState>(RegisterState.Idle);
-            _apiClient = apiClient;
+            this.apiClient = apiClient ?? throw new ArgumentNullException(nameof(apiClient));
+            this.State = new ObservableState<RegisterState>(RegisterState.Idle);
         }
 
-        public async void Register(string email, string password, string confirmPassword, string fullName)
+        /// <summary>
+        /// Gets the current state of the registration flow.
+        /// </summary>
+        public ObservableState<RegisterState> State { get; }
+
+        /// <summary>
+        /// Registers a new account using email and password credentials.
+        /// </summary>
+        /// <param name="email">The email address entered by the user.</param>
+        /// <param name="password">The password entered by the user.</param>
+        /// <param name="confirmPassword">The confirmation password entered by the user.</param>
+        /// <param name="fullName">The full name entered by the user.</param>
+        /// <returns>A <see cref="Task"/> representing the asynchronous operation.</returns>
+        public async Task Register(string email, string password, string confirmPassword, string fullName)
         {
-            // Client-side validation
-            RegisterState? validationError = ValidateLocally(email, password, confirmPassword, fullName);
+            RegisterState? validationError = this.ValidateLocally(email, password, confirmPassword, fullName);
             if (validationError != null)
             {
-                State.SetValue(validationError.Value);
+                this.State.SetValue(validationError.Value);
                 return;
             }
 
-            State.SetValue(RegisterState.Loading);
+            this.State.SetValue(RegisterState.Loading);
 
             try
             {
-                RegisterRequest? request = new RegisterRequest
+                var request = new RegisterRequest
                 {
                     Email = email,
                     Password = password,
-                    FullName = fullName
+                    FullName = fullName,
                 };
 
-                RegisterResponse? response = await _apiClient.PostAsync<RegisterRequest, RegisterResponse>(
-                    "/api/auth/register", request);
-
+                RegisterResponse? response = await this.apiClient.PostAsync<RegisterRequest, RegisterResponse>("/api/auth/register", request);
                 if (response == null)
                 {
-                    State.SetValue(RegisterState.Error);
+                    this.State.SetValue(RegisterState.Error);
                     return;
                 }
 
                 if (!response.Success)
                 {
-                    HandleRegisterError(response);
+                    this.HandleRegisterError(response);
                     return;
                 }
 
-                State.SetValue(RegisterState.Success);
+                this.State.SetValue(RegisterState.Success);
             }
             catch (Exception)
             {
-                State.SetValue(RegisterState.Error);
+                this.State.SetValue(RegisterState.Error);
             }
         }
 
-        public async void OAuthRegister(string email, string provider)
+        /// <summary>
+        /// Registers or signs in a user through the specified OAuth provider.
+        /// </summary>
+        /// <param name="provider">The OAuth provider to use.</param>
+        /// <returns>A <see cref="Task"/> representing the asynchronous operation.</returns>
+        public async Task OAuthRegister(string provider)
         {
-            State.SetValue(RegisterState.Loading);
+            this.State.SetValue(RegisterState.Loading);
 
             try
             {
-                if (provider.ToLower() == "google")
+                if (!provider.Equals("google", StringComparison.OrdinalIgnoreCase))
                 {
-                    var options = new Duende.IdentityModel.OidcClient.OidcClientOptions
-                    {
-                        Authority = "https://accounts.google.com",
-                        ClientId = OAuthSecretsTemplate.ClientId,
-                        ClientSecret = OAuthSecretsTemplate.ClientSecret,
-                        Scope = "openid email profile",
-                        RedirectUri = "http://127.0.0.1:7890/",
-                        Browser = new BankApp.Client.Utilities.SystemBrowser(7890)
-                    };
-                    options.Policy.Discovery.ValidateEndpoints = false;
-
-                    var oidcClient = new Duende.IdentityModel.OidcClient.OidcClient(options);
-                    var loginResult = await oidcClient.LoginAsync(new Duende.IdentityModel.OidcClient.LoginRequest());
-
-                    if (loginResult.IsError)
-                    {
-                        State.SetValue(RegisterState.Error);
-                        return;
-                    }
-
-                    OAuthLoginRequest apiRequest = new OAuthLoginRequest
-                    {
-                        Provider = "Google",
-                        ProviderToken = loginResult.IdentityToken
-                    };
-
-                    LoginResponse? response = await _apiClient.PostAsync<OAuthLoginRequest, LoginResponse>(
-                        "/api/auth/oauth-login", apiRequest);
-
-                    if (response == null || !response.Success)
-                    {
-                        State.SetValue(RegisterState.Error);
-                        return;
-                    }
-
-                    _apiClient.SetToken(response.Token!);
-                    _apiClient.SetCurrentUserId(response.UserId!.Value);
-
-                    State.SetValue(RegisterState.AutoLoggedIn);
+                    this.State.SetValue(RegisterState.Error);
+                    return;
                 }
+
+                var options = new Duende.IdentityModel.OidcClient.OidcClientOptions
+                {
+                    Authority = "https://accounts.google.com",
+                    ClientId = OAuthSecretsTemplate.ClientId,
+                    ClientSecret = OAuthSecretsTemplate.ClientSecret,
+                    Scope = "openid email profile",
+                    RedirectUri = "http://127.0.0.1:7890/",
+                    Browser = new SystemBrowser(7890),
+                };
+                options.Policy.Discovery.ValidateEndpoints = false;
+
+                var oidcClient = new Duende.IdentityModel.OidcClient.OidcClient(options);
+                var loginResult = await oidcClient.LoginAsync(new Duende.IdentityModel.OidcClient.LoginRequest());
+                if (loginResult.IsError)
+                {
+                    this.State.SetValue(RegisterState.Error);
+                    return;
+                }
+
+                var apiRequest = new OAuthLoginRequest
+                {
+                    Provider = "Google",
+                    ProviderToken = loginResult.IdentityToken,
+                };
+
+                LoginResponse? response = await this.apiClient.PostAsync<OAuthLoginRequest, LoginResponse>("/api/auth/oauth-login", apiRequest);
+                if (response == null || !response.Success)
+                {
+                    this.State.SetValue(RegisterState.Error);
+                    return;
+                }
+
+                this.apiClient.SetToken(response.Token!);
+                this.apiClient.CurrentUserId = response.UserId!.Value;
+                this.State.SetValue(RegisterState.AutoLoggedIn);
             }
             catch (Exception)
             {
-                State.SetValue(RegisterState.Error);
+                this.State.SetValue(RegisterState.Error);
             }
         }
 
         private RegisterState? ValidateLocally(string email, string password, string confirmPassword, string fullName)
         {
-            if (string.IsNullOrWhiteSpace(fullName)) { return RegisterState.Error; }
+            if (string.IsNullOrWhiteSpace(fullName))
+            {
+                return RegisterState.Error;
+            }
 
-            if (string.IsNullOrWhiteSpace(email) || !email.Contains("@")) { return RegisterState.InvalidEmail; }
+            if (string.IsNullOrWhiteSpace(email) || !email.Contains("@", StringComparison.Ordinal))
+            {
+                return RegisterState.InvalidEmail;
+            }
 
-            if (string.IsNullOrWhiteSpace(password) || password.Length < 8
+            if (string.IsNullOrWhiteSpace(password)
+                || password.Length < 8
                 || !password.Any(char.IsUpper)
                 || !password.Any(char.IsLower)
                 || !password.Any(char.IsDigit))
-                { return RegisterState.WeakPassword; }
+            {
+                return RegisterState.WeakPassword;
+            }
 
-            if (password != confirmPassword) { return RegisterState.PasswordMismatch; }
+            if (password != confirmPassword)
+            {
+                return RegisterState.PasswordMismatch;
+            }
+
             return null;
         }
 
         private void HandleRegisterError(RegisterResponse response)
         {
-            if (response.Error != null && response.Error.Contains("already registered"))
-                State.SetValue(RegisterState.EmailAlreadyExists);
-            else if (response.Error != null && response.Error.Contains("email"))
-                State.SetValue(RegisterState.InvalidEmail);
-            else if (response.Error != null && response.Error.Contains("Password"))
-                State.SetValue(RegisterState.WeakPassword);
+            if (response.Error != null && response.Error.Contains("already registered", StringComparison.OrdinalIgnoreCase))
+            {
+                this.State.SetValue(RegisterState.EmailAlreadyExists);
+            }
+            else if (response.Error != null && response.Error.Contains("email", StringComparison.OrdinalIgnoreCase))
+            {
+                this.State.SetValue(RegisterState.InvalidEmail);
+            }
+            else if (response.Error != null && response.Error.Contains("password", StringComparison.OrdinalIgnoreCase))
+            {
+                this.State.SetValue(RegisterState.WeakPassword);
+            }
             else
-                State.SetValue(RegisterState.Error);
-        }
-
-        public void Dispose()
-        {
-            // Clean up observers if needed
+            {
+                this.State.SetValue(RegisterState.Error);
+            }
         }
     }
 }
-
-
