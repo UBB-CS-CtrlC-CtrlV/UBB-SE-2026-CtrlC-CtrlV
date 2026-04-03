@@ -3,13 +3,23 @@ using BankApp.Infrastructure.DataAccess.Interfaces;
 
 namespace BankApp.Infrastructure.DataAccess.Implementations
 {
+    /// <summary>
+    /// Provides SQL Server data access for payment card records.
+    /// </summary>
     public class CardDataAccess : ICardDataAccess
     {
         private readonly AppDbContext dbContext;
+
+        /// <summary>
+        /// Initializes a new instance of the <see cref="CardDataAccess"/> class.
+        /// </summary>
+        /// <param name="dbContext">The database context used for executing queries.</param>
         public CardDataAccess(AppDbContext dbContext)
         {
             this.dbContext = dbContext;
         }
+
+        /// <inheritdoc />
         public Card? FindById(int id)
         {
             var query = @"SELECT * FROM Card where Id = @p0";
@@ -21,6 +31,7 @@ namespace BankApp.Infrastructure.DataAccess.Implementations
             return null;
         }
 
+        /// <inheritdoc />
         public List<Card> FindByUserId(int userId)
         {
             var cards = new List<Card>();

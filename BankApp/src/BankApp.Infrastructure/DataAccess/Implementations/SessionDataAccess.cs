@@ -3,15 +3,23 @@ using BankApp.Infrastructure.DataAccess.Interfaces;
 
 namespace BankApp.Infrastructure.DataAccess
 {
+    /// <summary>
+    /// Provides SQL Server data access for user session records.
+    /// </summary>
     public class SessionDataAccess : ISessionDataAccess
     {
         private readonly AppDbContext db;
 
+        /// <summary>
+        /// Initializes a new instance of the <see cref="SessionDataAccess"/> class.
+        /// </summary>
+        /// <param name="db">The database context used for executing queries.</param>
         public SessionDataAccess(AppDbContext db)
         {
             this.db = db;
         }
 
+        /// <inheritdoc />
         public Session Create(int userId, string token, string? deviceInfo, string? browser, string? ip)
         {
             var sql = @"INSERT INTO [Session] (UserId, Token, DeviceInfo, Browser, IpAddress, LastActiveAt, ExpiresAt)
@@ -33,6 +41,7 @@ namespace BankApp.Infrastructure.DataAccess
             return MapSession(reader);
         }
 
+        /// <inheritdoc />
         public Session? FindByToken(string token)
         {
             var sql = @"SELECT Id, UserId, Token, DeviceInfo, Browser, IpAddress,
@@ -47,6 +56,7 @@ namespace BankApp.Infrastructure.DataAccess
             return null;
         }
 
+        /// <inheritdoc />
         public List<Session> FindByUserId(int userId)
         {
             var sql = @"SELECT Id, UserId, Token, DeviceInfo, Browser, IpAddress,
@@ -62,12 +72,14 @@ namespace BankApp.Infrastructure.DataAccess
             return sessions;
         }
 
+        /// <inheritdoc />
         public void Revoke(int sessionId)
         {
             var sql = "UPDATE [Session] SET IsRevoked = 1 WHERE Id = @p0";
             db.ExecuteNonQuery(sql, new object[] { sessionId });
         }
 
+        /// <inheritdoc />
         public void RevokeAll(int userId)
         {
             var sql = "UPDATE [Session] SET IsRevoked = 1 WHERE UserId = @p0 AND IsRevoked = 0";

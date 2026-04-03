@@ -4,14 +4,23 @@ using BankApp.Infrastructure.DataAccess.Interfaces;
 
 namespace BankApp.Infrastructure.DataAccess.Implementations
 {
+    /// <summary>
+    /// Provides SQL Server data access for password reset token records.
+    /// </summary>
     public class PasswordResetTokenDataAccess : IPasswordResetTokenDataAccess
     {
         private readonly AppDbContext context;
+
+        /// <summary>
+        /// Initializes a new instance of the <see cref="PasswordResetTokenDataAccess"/> class.
+        /// </summary>
+        /// <param name="context">The database context used for executing queries.</param>
         public PasswordResetTokenDataAccess(AppDbContext context)
         {
             this.context = context;
         }
 
+        /// <inheritdoc />
         public PasswordResetToken Create(int userId, string tokenHash, DateTime expiresAt)
         {
             string sql = @"
@@ -29,12 +38,14 @@ namespace BankApp.Infrastructure.DataAccess.Implementations
             throw new Exception("Failed to create password reset token.");
         }
 
+        /// <inheritdoc />
         public void DeleteExpired()
         {
             string sql = "DELETE FROM PasswordResetToken WHERE ExpiresAt < GETUTCDATE()";
             context.ExecuteNonQuery(sql, Array.Empty<object>());
         }
 
+        /// <inheritdoc />
         public PasswordResetToken? FindByToken(string tokenHash)
         {
             string sql = "SELECT Id, UserId, TokenHash, ExpiresAt, UsedAt, CreatedAt FROM PasswordResetToken WHERE TokenHash = @p0";
@@ -47,6 +58,7 @@ namespace BankApp.Infrastructure.DataAccess.Implementations
             return null;
         }
 
+        /// <inheritdoc />
         public void MarkAsUsed(int tokenId)
         {
             string sql = "UPDATE PasswordResetToken SET UsedAt = GETUTCDATE() WHERE Id = @p0";
