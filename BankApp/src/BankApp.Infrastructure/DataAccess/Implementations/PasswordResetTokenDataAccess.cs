@@ -32,7 +32,7 @@ namespace BankApp.Infrastructure.DataAccess.Implementations
 
             if (reader.Read())
             {
-                return MapToPRT(reader);
+                return MapToPasswordResetToken(reader);
             }
 
             throw new Exception("Failed to create password reset token.");
@@ -53,7 +53,7 @@ namespace BankApp.Infrastructure.DataAccess.Implementations
 
             if (reader.Read())
             {
-                return MapToPRT(reader);
+                return MapToPasswordResetToken(reader);
             }
             return null;
         }
@@ -65,16 +65,16 @@ namespace BankApp.Infrastructure.DataAccess.Implementations
             context.ExecuteNonQuery(sql, new object[] { tokenId });
         }
 
-        private PasswordResetToken MapToPRT(IDataReader reader)
+        private PasswordResetToken MapToPasswordResetToken(IDataReader reader)
         {
             return new PasswordResetToken
             {
-                Id = reader.GetInt32(0),
-                UserId = reader.GetInt32(1),
-                TokenHash = reader.GetString(2),
-                ExpiresAt = reader.GetDateTime(3),
-                UsedAt = reader.IsDBNull(4) ? null : reader.GetDateTime(4),
-                CreatedAt = reader.GetDateTime(5)
+                Id = reader.GetInt32(reader.GetOrdinal("Id")),
+                UserId = reader.GetInt32(reader.GetOrdinal("UserId")),
+                TokenHash = reader.GetString(reader.GetOrdinal("TokenHash")),
+                ExpiresAt = reader.GetDateTime(reader.GetOrdinal("ExpiresAt")),
+                UsedAt = reader.IsDBNull(reader.GetOrdinal("UsedAt")) ? null : reader.GetDateTime(reader.GetOrdinal("UsedAt")),
+                CreatedAt = reader.GetDateTime(reader.GetOrdinal("CreatedAt"))
             };
         }
     }

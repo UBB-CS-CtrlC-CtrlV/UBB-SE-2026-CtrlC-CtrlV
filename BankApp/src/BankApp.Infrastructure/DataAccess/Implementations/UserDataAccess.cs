@@ -8,15 +8,15 @@ namespace BankApp.Infrastructure.DataAccess.Implementations
     /// </summary>
     public class UserDataAccess : IUserDataAccess
     {
-        private readonly AppDbContext db;
+        private readonly AppDbContext dbContext;
 
         /// <summary>
         /// Initializes a new instance of the <see cref="UserDataAccess"/> class.
         /// </summary>
-        /// <param name="db">The database context used for executing queries.</param>
-        public UserDataAccess(AppDbContext db)
+        /// <param name="dbContext">The database context used for executing queries.</param>
+        public UserDataAccess(AppDbContext dbContext)
         {
-            this.db = db;
+            this.dbContext = dbContext;
         }
 
         /// <inheritdoc />
@@ -27,7 +27,7 @@ namespace BankApp.Infrastructure.DataAccess.Implementations
                         IsLocked, LockoutEnd, FailedLoginAttempts, CreatedAt, UpdatedAt
                         FROM [User] WHERE Email = @p0";
 
-            using var reader = db.ExecuteQuery(sql, new object[] { email });
+            using var reader = dbContext.ExecuteQuery(sql, new object[] { email });
             if (reader.Read())
             {
                 return MapUser(reader);
@@ -43,7 +43,7 @@ namespace BankApp.Infrastructure.DataAccess.Implementations
                         IsLocked, LockoutEnd, FailedLoginAttempts, CreatedAt, UpdatedAt
                         FROM [User] WHERE Id = @p0";
 
-            using var reader = db.ExecuteQuery(sql, new object[] { id });
+            using var reader = dbContext.ExecuteQuery(sql, new object[] { id });
             if (reader.Read())
             {
                 return MapUser(reader);
@@ -58,7 +58,7 @@ namespace BankApp.Infrastructure.DataAccess.Implementations
                         [Address], Nationality, PreferredLanguage, Is2FAEnabled, Preferred2FAMethod)
                         VALUES (@p0, @p1, @p2, @p3, @p4, @p5, @p6, @p7, @p8, @p9)";
 
-            var rows = db.ExecuteNonQuery(sql, new object[]
+            var rows = dbContext.ExecuteNonQuery(sql, new object[]
             {
                 user.Email,
                 user.PasswordHash,
@@ -83,7 +83,7 @@ namespace BankApp.Infrastructure.DataAccess.Implementations
                         UpdatedAt = GETUTCDATE()
                         WHERE Id = @p9";
 
-            var rows = db.ExecuteNonQuery(sql, new object[]
+            var rows = dbContext.ExecuteNonQuery(sql, new object[]
             {
                 user.Email,
                 user.FullName,
@@ -103,50 +103,50 @@ namespace BankApp.Infrastructure.DataAccess.Implementations
         public bool UpdatePassword(int userId, string newPasswordHash)
         {
             var sql = "UPDATE [User] SET PasswordHash = @p0, UpdatedAt = GETUTCDATE() WHERE Id = @p1";
-            return db.ExecuteNonQuery(sql, new object[] { newPasswordHash, userId }) > 0;
+            return dbContext.ExecuteNonQuery(sql, new object[] { newPasswordHash, userId }) > 0;
         }
 
         /// <inheritdoc />
         public void IncrementFailedAttempts(int userId)
         {
             var sql = "UPDATE [User] SET FailedLoginAttempts = FailedLoginAttempts + 1 WHERE Id = @p0";
-            db.ExecuteNonQuery(sql, new object[] { userId });
+            dbContext.ExecuteNonQuery(sql, new object[] { userId });
         }
 
         /// <inheritdoc />
         public void ResetFailedAttempts(int userId)
         {
             var sql = "UPDATE [User] SET FailedLoginAttempts = 0 WHERE Id = @p0";
-            db.ExecuteNonQuery(sql, new object[] { userId });
+            dbContext.ExecuteNonQuery(sql, new object[] { userId });
         }
 
         /// <inheritdoc />
         public void LockAccount(int userId, DateTime lockoutEnd)
         {
             var sql = "UPDATE [User] SET IsLocked = 1, LockoutEnd = @p0 WHERE Id = @p1";
-            db.ExecuteNonQuery(sql, new object[] { lockoutEnd, userId });
+            dbContext.ExecuteNonQuery(sql, new object[] { lockoutEnd, userId });
         }
 
-        private User MapUser(System.Data.IDataReader r)
+        private User MapUser(System.Data.IDataReader reader)
         {
             return new User
             {
-                Id = r.GetInt32(r.GetOrdinal("Id")),
-                Email = r.GetString(r.GetOrdinal("Email")),
-                PasswordHash = r.GetString(r.GetOrdinal("PasswordHash")),
-                FullName = r.GetString(r.GetOrdinal("FullName")),
-                PhoneNumber = r.IsDBNull(r.GetOrdinal("PhoneNumber")) ? null : r.GetString(r.GetOrdinal("PhoneNumber")),
-                DateOfBirth = r.IsDBNull(r.GetOrdinal("DateOfBirth")) ? null : r.GetDateTime(r.GetOrdinal("DateOfBirth")),
-                Address = r.IsDBNull(r.GetOrdinal("Address")) ? null : r.GetString(r.GetOrdinal("Address")),
-                Nationality = r.IsDBNull(r.GetOrdinal("Nationality")) ? null : r.GetString(r.GetOrdinal("Nationality")),
-                PreferredLanguage = r.GetString(r.GetOrdinal("PreferredLanguage")),
-                Is2FAEnabled = r.GetBoolean(r.GetOrdinal("Is2FAEnabled")),
-                Preferred2FAMethod = r.IsDBNull(r.GetOrdinal("Preferred2FAMethod")) ? null : r.GetString(r.GetOrdinal("Preferred2FAMethod")),
-                IsLocked = r.GetBoolean(r.GetOrdinal("IsLocked")),
-                LockoutEnd = r.IsDBNull(r.GetOrdinal("LockoutEnd")) ? null : r.GetDateTime(r.GetOrdinal("LockoutEnd")),
-                FailedLoginAttempts = r.GetInt32(r.GetOrdinal("FailedLoginAttempts")),
-                CreatedAt = r.GetDateTime(r.GetOrdinal("CreatedAt")),
-                UpdatedAt = r.GetDateTime(r.GetOrdinal("UpdatedAt"))
+                Id = reader.GetInt32(reader.GetOrdinal("Id")),
+                Email = reader.GetString(reader.GetOrdinal("Email")),
+                PasswordHash = reader.GetString(reader.GetOrdinal("PasswordHash")),
+                FullName = reader.GetString(reader.GetOrdinal("FullName")),
+                PhoneNumber = reader.IsDBNull(reader.GetOrdinal("PhoneNumber")) ? null : reader.GetString(reader.GetOrdinal("PhoneNumber")),
+                DateOfBirth = reader.IsDBNull(reader.GetOrdinal("DateOfBirth")) ? null : reader.GetDateTime(reader.GetOrdinal("DateOfBirth")),
+                Address = reader.IsDBNull(reader.GetOrdinal("Address")) ? null : reader.GetString(reader.GetOrdinal("Address")),
+                Nationality = reader.IsDBNull(reader.GetOrdinal("Nationality")) ? null : reader.GetString(reader.GetOrdinal("Nationality")),
+                PreferredLanguage = reader.GetString(reader.GetOrdinal("PreferredLanguage")),
+                Is2FAEnabled = reader.GetBoolean(reader.GetOrdinal("Is2FAEnabled")),
+                Preferred2FAMethod = reader.IsDBNull(reader.GetOrdinal("Preferred2FAMethod")) ? null : reader.GetString(reader.GetOrdinal("Preferred2FAMethod")),
+                IsLocked = reader.GetBoolean(reader.GetOrdinal("IsLocked")),
+                LockoutEnd = reader.IsDBNull(reader.GetOrdinal("LockoutEnd")) ? null : reader.GetDateTime(reader.GetOrdinal("LockoutEnd")),
+                FailedLoginAttempts = reader.GetInt32(reader.GetOrdinal("FailedLoginAttempts")),
+                CreatedAt = reader.GetDateTime(reader.GetOrdinal("CreatedAt")),
+                UpdatedAt = reader.GetDateTime(reader.GetOrdinal("UpdatedAt"))
             };
         }
     }
