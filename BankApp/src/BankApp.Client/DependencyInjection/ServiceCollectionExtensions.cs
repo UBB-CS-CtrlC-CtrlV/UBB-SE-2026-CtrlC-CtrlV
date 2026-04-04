@@ -5,6 +5,7 @@
 using BankApp.Client.Master;
 using BankApp.Client.Utilities;
 using BankApp.Client.ViewModels;
+using BankApp.Client.Views;
 using Microsoft.Extensions.DependencyInjection;
 
 namespace BankApp.Client.DependencyInjection;
@@ -39,6 +40,17 @@ public static class ServiceCollectionExtensions
         services.AddTransient<ForgotPasswordViewModel>();
         services.AddTransient<DashboardViewModel>();
         services.AddTransient<ProfileViewModel>();
+
+        // Views are registered as transient so the navigation service can resolve them
+        // through the container. Each navigation gets a fresh page instance with all
+        // constructor dependencies (ViewModels, NavigationService) injected automatically.
+        services.AddTransient<LoginView>();
+        services.AddTransient<RegisterView>();
+        services.AddTransient<TwoFactorView>();
+        services.AddTransient<ForgotPasswordView>();
+        services.AddTransient<NavView>();
+        services.AddTransient<DashboardView>();
+        services.AddTransient<ProfileView>();
 
         return services;
     }

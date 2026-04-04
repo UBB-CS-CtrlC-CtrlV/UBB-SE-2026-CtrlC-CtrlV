@@ -5,6 +5,7 @@
 using System;
 using System.Collections.Generic;
 using System.Linq;
+using BankApp.Client.Master;
 using BankApp.Client.Utilities;
 using BankApp.Client.ViewModels;
 using BankApp.Core.Entities;
@@ -15,572 +16,576 @@ using Microsoft.UI.Xaml.Controls;
 using Microsoft.UI.Xaml.Media;
 using Microsoft.UI.Xaml.Navigation;
 
-namespace BankApp.Client.Views
+namespace BankApp.Client.Views;
+
+/// <summary>
+/// Displays and manages the authenticated user's profile settings.
+/// </summary>
+public sealed partial class ProfileView : IStateObserver<ProfileState>
 {
+    private readonly ProfileViewModel viewModel;
+    private string verifiedPassword = string.Empty;
+    private string pending2FaType = string.Empty;
+    private bool isChangingPasswordFlow = false;
+    private bool is2FaFlow = false;
+    private bool isPopulating = false;
+    private bool isUpdatingToggle = false;
+    private readonly IAppNavigationService navigationService;
+
     /// <summary>
-    /// Displays and manages the authenticated user's profile settings.
+    /// Initializes a new instance of the <see cref="ProfileView"/> class.
     /// </summary>
-    public sealed partial class ProfileView : IStateObserver<ProfileState>
+    /// <param name="viewModel">The view model that loads profile data and drives all profile update operations.</param>
+    /// <param name="navigationService">Used to navigate to the dashboard or back to login.</param>
+    public ProfileView(ProfileViewModel viewModel, IAppNavigationService navigationService)
     {
-        private readonly ProfileViewModel viewModel;
-        private string verifiedPassword = string.Empty;
-        private string pending2FaType = string.Empty;
-        private bool isChangingPasswordFlow = false;
-        private bool is2FaFlow = false;
-        private bool isPopulating = false;
-        private bool isUpdatingToggle = false;
+        this.InitializeComponent();
 
-        /// <summary>
-        /// Initializes a new instance of the <see cref="ProfileView"/> class.
-        /// </summary>
-        public ProfileView()
+        this.viewModel = viewModel;
+        this.navigationService = navigationService;
+        this.viewModel.State.AddObserver(this);
+    }
+
+    /// <inheritdoc/>
+    protected override async void OnNavigatedTo(NavigationEventArgs e)
+    {
+        base.OnNavigatedTo(e);
+
+        this.ShowLoading(true);
+
+        await this.viewModel.LoadProfile();
+
+        this.ShowLoading(false);
+
+        this.PopulateUi();
+
+        this.SetEditingEnabled(false);
+    }
+
+    /// <inheritdoc/>
+    protected override void OnNavigatedFrom(NavigationEventArgs e)
+    {
+        base.OnNavigatedFrom(e);
+        this.viewModel.State.RemoveObserver(this);
+    }
+
+    private void PopulateUi()
+    {
+        var user = this.viewModel.ProfileInfo;
+
+        this.ProfileCardName.Text = user.FullName ?? string.Empty;
+        this.ProfileCardEmail.Text = user.Email ?? string.Empty;
+        this.ProfileCardPhone.Text = user.PhoneNumber ?? string.Empty;
+        this.ProfileCardAddress.Text = user.Address ?? string.Empty;
+
+        this.FullNameBox.Text = user.FullName ?? string.Empty;
+        this.EmailBox.Text = user.Email ?? string.Empty;
+
+        this.PhoneBox.Text = user.PhoneNumber ?? string.Empty;
+        this.AddressBox.Text = user.Address ?? string.Empty;
+
+        this.TwoFactorPhoneDisplay.Text = user.PhoneNumber ?? string.Empty;
+        this.TwoFactorEmailDisplay.Text = user.Email ?? string.Empty;
+
+        this.isPopulating = true;
+        this.TwoFactorToggle.IsOn = user.Is2FAEnabled;
+        this.isPopulating = false;
+
+        this.PopulateOAuthLinks(this.viewModel.OAuthLinks);
+        this.PopulateNotificationPreferences(this.viewModel.NotificationPreferences);
+        this.Update2FaVisuals();
+    }
+
+    private void SetEditingEnabled(bool enabled)
+    {
+        this.PhoneBox.IsEnabled = enabled;
+        this.AddressBox.IsEnabled = enabled;
+        this.SaveButton.IsEnabled = enabled;
+
+        this.PhoneBox.IsReadOnly = !enabled;
+        this.AddressBox.IsReadOnly = !enabled;
+
+        this.PhoneBox.Opacity = enabled ? 1.0 : 0.6;
+        this.AddressBox.Opacity = enabled ? 1.0 : 0.6;
+
+        if (!enabled)
         {
-            this.InitializeComponent();
-
-            this.viewModel = new ProfileViewModel(App.ApiClient);
-            this.viewModel.State.AddObserver(this);
+            return;
         }
 
-        /// <inheritdoc/>
-        protected override async void OnNavigatedTo(NavigationEventArgs e)
+        this.PhoneBox.Focus(FocusState.Programmatic);
+        this.AddressBox.Focus(FocusState.Programmatic);
+    }
+
+    private async void UpdateButton_Click(object sender, RoutedEventArgs e)
+    {
+        this.isChangingPasswordFlow = false; // Just editing info
+        this.is2FaFlow = false;
+        this.VerifyCurrentPasswordBox.Password = string.Empty;
+        this.VerifyErrorInfoBar.IsOpen = false;
+        await this.VerifyPasswordDialog.ShowAsync();
+    }
+
+    private async void VerifyPasswordDialog_PrimaryButtonClick(ContentDialog sender,
+        ContentDialogButtonClickEventArgs args)
+    {
+        var deferral = args.GetDeferral();
+
+        if (string.IsNullOrWhiteSpace(this.VerifyCurrentPasswordBox.Password))
         {
-            base.OnNavigatedTo(e);
-
-            this.ShowLoading(true);
-
-            await this.viewModel.LoadProfile();
-
-            this.ShowLoading(false);
-
-            this.PopulateUi();
-
-            this.SetEditingEnabled(false);
-        }
-
-        /// <inheritdoc/>
-        protected override void OnNavigatedFrom(NavigationEventArgs e)
-        {
-            base.OnNavigatedFrom(e);
-            this.viewModel.State.RemoveObserver(this);
-        }
-
-        private void PopulateUi()
-        {
-            var user = this.viewModel.ProfileInfo;
-
-            this.ProfileCardName.Text = user.FullName ?? string.Empty;
-            this.ProfileCardEmail.Text = user.Email ?? string.Empty;
-            this.ProfileCardPhone.Text = user.PhoneNumber ?? string.Empty;
-            this.ProfileCardAddress.Text = user.Address ?? string.Empty;
-
-            this.FullNameBox.Text = user.FullName ?? string.Empty;
-            this.EmailBox.Text = user.Email ?? string.Empty;
-
-            this.PhoneBox.Text = user.PhoneNumber ?? string.Empty;
-            this.AddressBox.Text = user.Address ?? string.Empty;
-
-            this.TwoFactorPhoneDisplay.Text = user.PhoneNumber ?? string.Empty;
-            this.TwoFactorEmailDisplay.Text = user.Email ?? string.Empty;
-
-            this.isPopulating = true;
-            this.TwoFactorToggle.IsOn = user.Is2FAEnabled;
-            this.isPopulating = false;
-
-            this.PopulateOAuthLinks(this.viewModel.OAuthLinks);
-            this.PopulateNotificationPreferences(this.viewModel.NotificationPreferences);
-            this.Update2FaVisuals();
-        }
-
-        private void SetEditingEnabled(bool enabled)
-        {
-            this.PhoneBox.IsEnabled = enabled;
-            this.AddressBox.IsEnabled = enabled;
-            this.SaveButton.IsEnabled = enabled;
-
-            this.PhoneBox.IsReadOnly = !enabled;
-            this.AddressBox.IsReadOnly = !enabled;
-
-            this.PhoneBox.Opacity = enabled ? 1.0 : 0.6;
-            this.AddressBox.Opacity = enabled ? 1.0 : 0.6;
-
-            if (!enabled)
-            {
-                return;
-            }
-
-            this.PhoneBox.Focus(FocusState.Programmatic);
-            this.AddressBox.Focus(FocusState.Programmatic);
-        }
-
-        private async void UpdateButton_Click(object sender, RoutedEventArgs e)
-        {
-            this.isChangingPasswordFlow = false; // Just editing info
-            this.is2FaFlow = false;
-            this.VerifyCurrentPasswordBox.Password = string.Empty;
-            this.VerifyErrorInfoBar.IsOpen = false;
-            await this.VerifyPasswordDialog.ShowAsync();
-        }
-
-        private async void VerifyPasswordDialog_PrimaryButtonClick(
-     ContentDialog sender,
-     ContentDialogButtonClickEventArgs args)
-        {
-            var deferral = args.GetDeferral();
-
-            if (string.IsNullOrWhiteSpace(this.VerifyCurrentPasswordBox.Password))
-            {
-                this.VerifyErrorInfoBar.Message = "Enter your password.";
-                this.VerifyErrorInfoBar.IsOpen = true;
-                args.Cancel = true;
-                deferral.Complete();
-                return;
-            }
-
-            var verified = await this.viewModel.VerifyPassword(this.VerifyCurrentPasswordBox.Password);
-
-            if (!verified)
-            {
-                this.VerifyErrorInfoBar.Message = "Incorrect password.";
-                this.VerifyErrorInfoBar.IsOpen = true;
-                args.Cancel = true;
-                deferral.Complete();
-                return;
-            }
-
-            // Success logic
-            this.verifiedPassword = this.VerifyCurrentPasswordBox.Password;
-            this.VerifyErrorInfoBar.IsOpen = false;
-
-            // Complete the deferral so the FIRST dialog closes
+            this.VerifyErrorInfoBar.Message = "Enter your password.";
+            this.VerifyErrorInfoBar.IsOpen = true;
+            args.Cancel = true;
             deferral.Complete();
-
-            // Now, trigger the NEXT step based on the flow
-            if (this.isChangingPasswordFlow)
-            {
-                // We MUST use the Dispatcher to wait until the first dialog is gone
-                this.DispatcherQueue.TryEnqueue(async void () =>
-                {
-                    this.NewPasswordBox.Password = string.Empty;
-                    this.ConfirmPasswordBox.Password = string.Empty;
-                    this.NewPasswordErrorInfoBar.IsOpen = false;
-                    await this.NewPasswordDialog.ShowAsync();
-                });
-            }
-            else if (!this.is2FaFlow)
-            {
-                // Normal profile edit flow
-                this.SetEditingEnabled(true);
-                this.ShowSuccess("You can now edit your profile.");
-            }
+            return;
         }
 
-        private async void SaveButton_Click(object sender, RoutedEventArgs e)
+        var verified = await this.viewModel.VerifyPassword(this.VerifyCurrentPasswordBox.Password);
+
+        if (!verified)
         {
-            this.ShowLoading(true);
-
-            var success = await this.viewModel.UpdatePersonalInfo(
-                this.PhoneBox.Text,
-                this.AddressBox.Text,
-                this.verifiedPassword);
-
-            this.ShowLoading(false);
-
-            if (success)
-            {
-                this.ProfileCardPhone.Text = this.PhoneBox.Text.Trim();
-                this.ProfileCardAddress.Text = this.AddressBox.Text.Trim();
-
-                this.verifiedPassword = string.Empty;
-                this.SetEditingEnabled(false);
-
-                this.ShowSuccess("Profile updated successfully.");
-            }
-            else
-            {
-                this.ShowError("Failed to update profile.");
-            }
+            this.VerifyErrorInfoBar.Message = "Incorrect password.";
+            this.VerifyErrorInfoBar.IsOpen = true;
+            args.Cancel = true;
+            deferral.Complete();
+            return;
         }
 
-        private async void ChangePasswordButton_Click(object sender, RoutedEventArgs e)
+        // Success logic
+        this.verifiedPassword = this.VerifyCurrentPasswordBox.Password;
+        this.VerifyErrorInfoBar.IsOpen = false;
+
+        // Complete the deferral so the FIRST dialog closes
+        deferral.Complete();
+
+        // Now, trigger the NEXT step based on the flow
+        if (this.isChangingPasswordFlow)
         {
-            this.isChangingPasswordFlow = true; // Password change flow
-            this.is2FaFlow = false;
+            // We MUST use the Dispatcher to wait until the first dialog is gone
+            this.DispatcherQueue.TryEnqueue(async void () =>
+            {
+                this.NewPasswordBox.Password = string.Empty;
+                this.ConfirmPasswordBox.Password = string.Empty;
+                this.NewPasswordErrorInfoBar.IsOpen = false;
+                await this.NewPasswordDialog.ShowAsync();
+            });
+        }
+        else if (!this.is2FaFlow)
+        {
+            // Normal profile edit flow
+            this.SetEditingEnabled(true);
+            this.ShowSuccess("You can now edit your profile.");
+        }
+    }
+
+    private async void SaveButton_Click(object sender, RoutedEventArgs e)
+    {
+        this.ShowLoading(true);
+
+        var success = await this.viewModel.UpdatePersonalInfo(this.PhoneBox.Text,
+            this.AddressBox.Text,
+            this.verifiedPassword);
+
+        this.ShowLoading(false);
+
+        if (success)
+        {
+            this.ProfileCardPhone.Text = this.PhoneBox.Text.Trim();
+            this.ProfileCardAddress.Text = this.AddressBox.Text.Trim();
+
+            this.verifiedPassword = string.Empty;
+            this.SetEditingEnabled(false);
+
+            this.ShowSuccess("Profile updated successfully.");
+        }
+        else
+        {
+            this.ShowError("Failed to update profile.");
+        }
+    }
+
+    private async void ChangePasswordButton_Click(object sender, RoutedEventArgs e)
+    {
+        this.isChangingPasswordFlow = true; // Password change flow
+        this.is2FaFlow = false;
+        this.VerifyCurrentPasswordBox.Password = string.Empty;
+        this.VerifyErrorInfoBar.IsOpen = false;
+        await this.VerifyPasswordDialog.ShowAsync();
+    }
+
+    private async void NewPasswordDialog_PrimaryButtonClick(ContentDialog sender,
+        ContentDialogButtonClickEventArgs args)
+    {
+        var deferral = args.GetDeferral();
+
+        var newPwd = this.NewPasswordBox.Password;
+        var confirmPwd = this.ConfirmPasswordBox.Password;
+
+        // 1. Basic Validation
+        if (newPwd.Length < 8)
+        {
+            this.NewPasswordErrorInfoBar.Message = "Minimum 8 characters required.";
+            this.NewPasswordErrorInfoBar.IsOpen = true;
+            args.Cancel = true;
+            deferral.Complete();
+            return;
+        }
+
+        if (newPwd != confirmPwd)
+        {
+            this.NewPasswordErrorInfoBar.Message = "Passwords do not match.";
+            this.NewPasswordErrorInfoBar.IsOpen = true;
+            args.Cancel = true;
+            deferral.Complete();
+            return;
+        }
+
+        // 2. Call ViewModel
+        // Note: We use the _verifiedPassword we saved from Dialog 1 as the 'old' password
+        var success = await this.viewModel.ChangePassword(this.verifiedPassword, newPwd);
+
+        if (success)
+        {
+            this.verifiedPassword = string.Empty; // Clear security sensitive data
+            this.NewPasswordErrorInfoBar.IsOpen = false;
+
+            deferral.Complete();
+            this.ShowSuccess("Your password has been changed successfully.");
+        }
+        else
+        {
+            this.NewPasswordErrorInfoBar.Message = "The server rejected the change. Please check your connection.";
+            this.NewPasswordErrorInfoBar.IsOpen = true;
+            args.Cancel = true;
+            deferral.Complete();
+        }
+    }
+
+    private async void Handle2FAAction_Click(object sender, RoutedEventArgs e)
+    {
+        var btn = sender as Button;
+        this.pending2FaType = btn?.Tag.ToString() ?? string.Empty; // "Phone" or "Email"
+
+        if (btn?.Content.ToString() == "Remove")
+        {
+            // Logic for removal
+        }
+        else
+        {
+            // Logic for Add/Verify
+            this.is2FaFlow = true;
             this.VerifyCurrentPasswordBox.Password = string.Empty;
-            this.VerifyErrorInfoBar.IsOpen = false;
             await this.VerifyPasswordDialog.ShowAsync();
         }
+    }
 
-        private async void NewPasswordDialog_PrimaryButtonClick(
-     ContentDialog sender,
-     ContentDialogButtonClickEventArgs args)
+    private async void SaveTwoFactorSettings_Click(object sender, RoutedEventArgs e)
+    {
+        // bool success = await _viewModel.UpdateTwoFactorContacts(
+        //    TwoFactorPhoneBox.Text.Trim(),
+        //    TwoFactorEmailBox.Text.Trim());
+
+        // if (success)
+        //    ShowSuccess("2FA settings saved.");
+        // else
+        //    ShowError("Failed to save 2FA settings.");
+    }
+
+    private async void TwoFactorToggle_Toggled(object sender, RoutedEventArgs e)
+    {
+        if (this.isPopulating)
         {
-            var deferral = args.GetDeferral();
+            return;
+        }
 
-            var newPwd = this.NewPasswordBox.Password;
-            var confirmPwd = this.ConfirmPasswordBox.Password;
+        bool success;
 
-            // 1. Basic Validation
-            if (newPwd.Length < 8)
-            {
-                this.NewPasswordErrorInfoBar.Message = "Minimum 8 characters required.";
-                this.NewPasswordErrorInfoBar.IsOpen = true;
-                args.Cancel = true;
-                deferral.Complete();
-                return;
-            }
+        if (this.TwoFactorToggle.IsOn)
+        {
+            success = await this.viewModel.EnableTwoFactor(TwoFactorMethod.Email);
+        }
+        else
+        {
+            success = await this.viewModel.DisableTwoFactor();
+        }
 
-            if (newPwd != confirmPwd)
-            {
-                this.NewPasswordErrorInfoBar.Message = "Passwords do not match.";
-                this.NewPasswordErrorInfoBar.IsOpen = true;
-                args.Cancel = true;
-                deferral.Complete();
-                return;
-            }
+        if (!success)
+        {
+            this.isPopulating = true;
+            this.TwoFactorToggle.IsOn = !this.TwoFactorToggle.IsOn;
+            this.isPopulating = false;
+            this.ShowError("Failed to update 2FA settings");
+        }
+    }
 
-            // 2. Call ViewModel
-            // Note: We use the _verifiedPassword we saved from Dialog 1 as the 'old' password
-            var success = await this.viewModel.ChangePassword(this.verifiedPassword, newPwd);
+    private async void TwoFactorEmailToggle_Toggled(object sender, RoutedEventArgs e)
+    {
+        // bool success = TwoFactorEmailToggle.IsOn
+        //    ? await _viewModel.EnableTwoFactor(TwoFactorMethod.Email)
+        //    : await _viewModel.DisableTwoFactor(TwoFactorMethod.Email);
+
+        // if (!success)
+        //    ShowError("2FA email update failed.");
+    }
+
+    private async void RemoveConnectedAccount_Click(object sender, RoutedEventArgs e)
+    {
+        if (sender is Button { Tag: OAuthLink link })
+        {
+            var success = await this.viewModel.UnlinkOAuth(link.Provider);
 
             if (success)
             {
-                this.verifiedPassword = string.Empty; // Clear security sensitive data
-                this.NewPasswordErrorInfoBar.IsOpen = false;
-
-                deferral.Complete();
-                this.ShowSuccess("Your password has been changed successfully.");
+                this.PopulateOAuthLinks(this.viewModel.OAuthLinks);
             }
             else
             {
-                this.NewPasswordErrorInfoBar.Message = "The server rejected the change. Please check your connection.";
-                this.NewPasswordErrorInfoBar.IsOpen = true;
-                args.Cancel = true;
-                deferral.Complete();
+                this.ShowError("Failed to remove account.");
             }
         }
+    }
 
-        private async void Handle2FAAction_Click(object sender, RoutedEventArgs e)
+    private void ManageDevicesButton_Click(object sender, RoutedEventArgs e)
+    {
+    }
+
+    private async void NotificationToggle_Toggled(object sender, RoutedEventArgs e)
+    {
+        // 1. Ignore the event if we are just drawing the UI
+        if (this.isPopulating)
         {
-            var btn = sender as Button;
-            this.pending2FaType = btn?.Tag.ToString() ?? string.Empty; // "Phone" or "Email"
-
-            if (btn?.Content.ToString() == "Remove")
-            {
-                // Logic for removal
-            }
-            else
-            {
-                // Logic for Add/Verify
-                this.is2FaFlow = true;
-                this.VerifyCurrentPasswordBox.Password = string.Empty;
-                await this.VerifyPasswordDialog.ShowAsync();
-            }
+            return;
         }
 
-        private async void SaveTwoFactorSettings_Click(object sender, RoutedEventArgs e)
+        if (sender is ToggleSwitch { Tag: NotificationPreference pref } toggle)
         {
-            // bool success = await _viewModel.UpdateTwoFactorContacts(
-            //    TwoFactorPhoneBox.Text.Trim(),
-            //    TwoFactorEmailBox.Text.Trim());
+            pref.EmailEnabled = toggle.IsOn;
 
-            // if (success)
-            //    ShowSuccess("2FA settings saved.");
-            // else
-            //    ShowError("Failed to save 2FA settings.");
-        }
+            // 2. Set the flag to block the UI from fully refreshing
+            this.isUpdatingToggle = true;
 
-        private async void TwoFactorToggle_Toggled(object sender, RoutedEventArgs e)
-        {
-            if (this.isPopulating)
-            {
-                return;
-            }
+            var success = await this.viewModel.UpdateNotificationPreferences(this.viewModel.NotificationPreferences);
 
-            bool success;
-
-            if (this.TwoFactorToggle.IsOn)
-            {
-                success = await this.viewModel.EnableTwoFactor(TwoFactorMethod.Email);
-            }
-            else
-            {
-                success = await this.viewModel.DisableTwoFactor();
-            }
+            // 3. Clear the flag when the API call finishes
+            this.isUpdatingToggle = false;
 
             if (!success)
             {
+                // Optional: If the API fails, visually flip the switch back to its old state
                 this.isPopulating = true;
-                this.TwoFactorToggle.IsOn = !this.TwoFactorToggle.IsOn;
-                this.isPopulating = false;
-                this.ShowError("Failed to update 2FA settings");
-            }
-        }
-
-        private async void TwoFactorEmailToggle_Toggled(object sender, RoutedEventArgs e)
-        {
-            // bool success = TwoFactorEmailToggle.IsOn
-            //    ? await _viewModel.EnableTwoFactor(TwoFactorMethod.Email)
-            //    : await _viewModel.DisableTwoFactor(TwoFactorMethod.Email);
-
-            // if (!success)
-            //    ShowError("2FA email update failed.");
-        }
-
-        private async void RemoveConnectedAccount_Click(object sender, RoutedEventArgs e)
-        {
-            if (sender is Button { Tag: OAuthLink link })
-            {
-                var success = await this.viewModel.UnlinkOAuth(link.Provider);
-
-                if (success)
-                {
-                    this.PopulateOAuthLinks(this.viewModel.OAuthLinks);
-                }
-                else
-                {
-                    this.ShowError("Failed to remove account.");
-                }
-            }
-        }
-
-        private void ManageDevicesButton_Click(object sender, RoutedEventArgs e)
-        {
-        }
-
-        private async void NotificationToggle_Toggled(object sender, RoutedEventArgs e)
-        {
-            // 1. Ignore the event if we are just drawing the UI
-            if (this.isPopulating)
-            {
-                return;
-            }
-
-            if (sender is ToggleSwitch { Tag: NotificationPreference pref } toggle)
-            {
+                toggle.IsOn = !toggle.IsOn;
                 pref.EmailEnabled = toggle.IsOn;
-
-                // 2. Set the flag to block the UI from fully refreshing
-                this.isUpdatingToggle = true;
-
-                var success = await this.viewModel.UpdateNotificationPreferences(this.viewModel.NotificationPreferences);
-
-                // 3. Clear the flag when the API call finishes
-                this.isUpdatingToggle = false;
-
-                if (!success)
-                {
-                    // Optional: If the API fails, visually flip the switch back to its old state
-                    this.isPopulating = true;
-                    toggle.IsOn = !toggle.IsOn;
-                    pref.EmailEnabled = toggle.IsOn;
-                    this.isPopulating = false;
-                }
-                else
-                {
-                    toggle.IsOn = pref.EmailEnabled; // force sync (important)
-                }
-            }
-        }
-
-        private void DashboardNavButton_Click(object sender, RoutedEventArgs e)
-        {
-            App.NavigationService.NavigateTo<DashboardView>();
-        }
-
-        private void LogoutButton_Click(object sender, RoutedEventArgs e)
-        {
-            App.NavigationService.NavigateTo<LoginView>();
-        }
-
-        private void Update2FaVisuals()
-        {
-            var user = this.viewModel.ProfileInfo;
-
-            // Check Phone Status
-            if (string.IsNullOrEmpty(user.PhoneNumber))
-            {
-                this.TwoFactorPhoneDisplay.Text = "No phone number set";
-                this.ConfigureActionButton(this.ActionPhoneBtn, PhoneStatusBadge, PhoneStatusText, "Add", "#F1F5F9", "#64748B", "Disabled");
-            }
-            else if (true/*!user.IsPhoneVerified*/)
-            { // You need this property in your Model
-                this.TwoFactorPhoneDisplay.Text = user.PhoneNumber;
-                this.ConfigureActionButton(this.ActionPhoneBtn, PhoneStatusBadge, PhoneStatusText, "Verify", "#FFF7ED", "#C2410C", "Unverified");
-            }
-        }
-
-        private void ConfigureActionButton(Button btn, Border badge, TextBlock statusTxt, string action, string badgeBg, string textCol, string status)
-        {
-            btn.Content = action;
-            statusTxt.Text = status;
-        }
-
-        private void ShowLoading(bool visible)
-        {
-            this.LoadingPanel.Visibility = visible ? Visibility.Visible : Visibility.Collapsed;
-            this.LoadingRing.IsActive = visible;
-            this.ErrorInfoBar.IsOpen = false;
-            this.SuccessInfoBar.IsOpen = false;
-        }
-
-        private void ShowError(string message)
-        {
-            this.ErrorInfoBar.Message = message;
-            this.ErrorInfoBar.IsOpen = true;
-            this.SuccessInfoBar.IsOpen = false;
-        }
-
-        private void ShowSuccess(string message)
-        {
-            this.SuccessInfoBar.Message = message;
-            this.SuccessInfoBar.IsOpen = true;
-            this.ErrorInfoBar.IsOpen = false;
-        }
-
-        /// <inheritdoc/>
-        public void Update(ProfileState state)
-        {
-            this.DispatcherQueue.TryEnqueue(() =>
-            {
-                // --- INTERCEPTOR: Block full-page reloads if we are just toggling a switch ---
-                if (this.isUpdatingToggle)
-                {
-                    if (state == ProfileState.Error)
-                    {
-                        this.ShowError("Failed to save notification preferences.");
-                    }
-
-                    // Ignore Loading and UpdateSuccess so the screen doesn't wipe and redraw!
-                    return;
-                }
-
-                switch (state)
-                {
-                    case ProfileState.Loading:
-                        ShowLoading(true);
-                        break;
-
-                    case ProfileState.UpdateSuccess:
-                        ShowLoading(false);
-                        this.PopulateUi();
-                        break;
-
-                    case ProfileState.Error:
-                        ShowLoading(false);
-                        ShowError("Operation failed.");
-                        break;
-                    case ProfileState.Idle:
-                    case ProfileState.Success:
-                    case ProfileState.PasswordChanged:
-                        break;
-                    default:
-                        throw new ArgumentOutOfRangeException(nameof(state), state, null);
-                }
-            });
-        }
-
-        private void TabPersonalBtn_Click(object sender, RoutedEventArgs e)
-        {
-            this.PanelPersonal.Visibility = Visibility.Visible;
-            this.PanelSecurity.Visibility = Visibility.Collapsed;
-            this.PanelNotifications.Visibility = Visibility.Collapsed;
-
-            this.TabPersonalBtn.Style = (Style)this.Resources["TabButtonActiveStyle"];
-            this.TabSecurityBtn.Style = (Style)this.Resources["TabButtonStyle"];
-            this.TabNotificationsBtn.Style = (Style)this.Resources["TabButtonStyle"];
-        }
-
-        private void TabSecurityBtn_Click(object sender, RoutedEventArgs e)
-        {
-            this.PanelPersonal.Visibility = Visibility.Collapsed;
-            this.PanelSecurity.Visibility = Visibility.Visible;
-            this.PanelNotifications.Visibility = Visibility.Collapsed;
-
-            this.TabPersonalBtn.Style = (Style)this.Resources["TabButtonStyle"];
-            this.TabSecurityBtn.Style = (Style)this.Resources["TabButtonActiveStyle"];
-            this.TabNotificationsBtn.Style = (Style)this.Resources["TabButtonStyle"];
-        }
-
-        private void TabNotificationsBtn_Click(object sender, RoutedEventArgs e)
-        {
-            this.PanelPersonal.Visibility = Visibility.Collapsed;
-            this.PanelSecurity.Visibility = Visibility.Collapsed;
-            this.PanelNotifications.Visibility = Visibility.Visible;
-
-            this.TabPersonalBtn.Style = (Style)this.Resources["TabButtonStyle"];
-            this.TabSecurityBtn.Style = (Style)this.Resources["TabButtonStyle"];
-            this.TabNotificationsBtn.Style = (Style)this.Resources["TabButtonActiveStyle"];
-        }
-
-        private void PopulateOAuthLinks(List<OAuthLink>? links)
-        {
-            this.OAuthLinksPanel.Children.Clear();
-
-            if (links == null)
-            {
-                return;
-            }
-
-            foreach (var btn in links.Select(link => new Button
-                     {
-                         Content = link.ProviderEmail ?? link.Provider,
-                         Tag = link,
-                     }))
-            {
-                btn.Click += RemoveConnectedAccount_Click;
-                this.OAuthLinksPanel.Children.Add(btn);
-            }
-        }
-
-        private void PopulateNotificationPreferences(List<NotificationPreference>? prefs)
-        {
-            this.isPopulating = true;
-
-            this.NotificationPreferencesPanel.Children.Clear();
-
-            if (prefs == null)
-            {
                 this.isPopulating = false;
+            }
+            else
+            {
+                toggle.IsOn = pref.EmailEnabled; // force sync (important)
+            }
+        }
+    }
+
+    private void DashboardNavButton_Click(object sender, RoutedEventArgs e)
+    {
+        this.navigationService.NavigateTo<DashboardView>();
+    }
+
+    private void LogoutButton_Click(object sender, RoutedEventArgs e)
+    {
+        this.navigationService.NavigateTo<LoginView>();
+    }
+
+    private void Update2FaVisuals()
+    {
+        var user = this.viewModel.ProfileInfo;
+
+        // Check Phone Status
+        if (string.IsNullOrEmpty(user.PhoneNumber))
+        {
+            this.TwoFactorPhoneDisplay.Text = "No phone number set";
+            this.ConfigureActionButton(this.ActionPhoneBtn, PhoneStatusBadge, PhoneStatusText, "Add", "#F1F5F9",
+                "#64748B", "Disabled");
+        }
+        else if (true /*!user.IsPhoneVerified*/)
+        {
+            // You need this property in your Model
+            this.TwoFactorPhoneDisplay.Text = user.PhoneNumber;
+            this.ConfigureActionButton(this.ActionPhoneBtn, PhoneStatusBadge, PhoneStatusText, "Verify", "#FFF7ED",
+                "#C2410C", "Unverified");
+        }
+    }
+
+    private void ConfigureActionButton(Button btn, Border badge, TextBlock statusTxt, string action, string badgeBg,
+        string textCol, string status)
+    {
+        btn.Content = action;
+        statusTxt.Text = status;
+    }
+
+    private void ShowLoading(bool visible)
+    {
+        this.LoadingPanel.Visibility = visible ? Visibility.Visible : Visibility.Collapsed;
+        this.LoadingRing.IsActive = visible;
+        this.ErrorInfoBar.IsOpen = false;
+        this.SuccessInfoBar.IsOpen = false;
+    }
+
+    private void ShowError(string message)
+    {
+        this.ErrorInfoBar.Message = message;
+        this.ErrorInfoBar.IsOpen = true;
+        this.SuccessInfoBar.IsOpen = false;
+    }
+
+    private void ShowSuccess(string message)
+    {
+        this.SuccessInfoBar.Message = message;
+        this.SuccessInfoBar.IsOpen = true;
+        this.ErrorInfoBar.IsOpen = false;
+    }
+
+    /// <inheritdoc/>
+    public void Update(ProfileState state)
+    {
+        this.DispatcherQueue.TryEnqueue(() =>
+        {
+            // --- INTERCEPTOR: Block full-page reloads if we are just toggling a switch ---
+            if (this.isUpdatingToggle)
+            {
+                if (state == ProfileState.Error)
+                {
+                    this.ShowError("Failed to save notification preferences.");
+                }
+
+                // Ignore Loading and UpdateSuccess so the screen doesn't wipe and redraw!
                 return;
             }
 
-            foreach (var pref in prefs)
+            switch (state)
             {
-                var row = new Grid
-                {
-                    Margin = new Thickness(0, 6, 0, 6),
-                };
+                case ProfileState.Loading:
+                    ShowLoading(true);
+                    break;
 
-                row.ColumnDefinitions.Add(new ColumnDefinition { Width = new GridLength(1, GridUnitType.Star) });
-                row.ColumnDefinitions.Add(new ColumnDefinition { Width = GridLength.Auto });
+                case ProfileState.UpdateSuccess:
+                    ShowLoading(false);
+                    this.PopulateUi();
+                    break;
 
-                var text = new TextBlock
-                {
-                    Text = NotificationTypeExtensions.ToDisplayName(pref.Category),
-                    VerticalAlignment = VerticalAlignment.Center,
-                    FontSize = 13,
-                    Foreground = (Brush)this.Resources["TextPrimary"],
-                };
-
-                var toggle = new ToggleSwitch
-                {
-                    IsOn = pref.EmailEnabled,
-                    Tag = pref,
-                    VerticalAlignment = VerticalAlignment.Center,
-                };
-
-                toggle.Toggled += this.NotificationToggle_Toggled;
-
-                Grid.SetColumn(text, 0);
-                Grid.SetColumn(toggle, 1);
-
-                row.Children.Add(text);
-                row.Children.Add(toggle);
-
-                this.NotificationPreferencesPanel.Children.Add(row);
+                case ProfileState.Error:
+                    ShowLoading(false);
+                    ShowError("Operation failed.");
+                    break;
+                case ProfileState.Idle:
+                case ProfileState.Success:
+                case ProfileState.PasswordChanged:
+                    break;
+                default:
+                    throw new ArgumentOutOfRangeException(nameof(state), state, null);
             }
+        });
+    }
 
-            this.isPopulating = false;
+    private void TabPersonalBtn_Click(object sender, RoutedEventArgs e)
+    {
+        this.PanelPersonal.Visibility = Visibility.Visible;
+        this.PanelSecurity.Visibility = Visibility.Collapsed;
+        this.PanelNotifications.Visibility = Visibility.Collapsed;
+
+        this.TabPersonalBtn.Style = (Style)this.Resources["TabButtonActiveStyle"];
+        this.TabSecurityBtn.Style = (Style)this.Resources["TabButtonStyle"];
+        this.TabNotificationsBtn.Style = (Style)this.Resources["TabButtonStyle"];
+    }
+
+    private void TabSecurityBtn_Click(object sender, RoutedEventArgs e)
+    {
+        this.PanelPersonal.Visibility = Visibility.Collapsed;
+        this.PanelSecurity.Visibility = Visibility.Visible;
+        this.PanelNotifications.Visibility = Visibility.Collapsed;
+
+        this.TabPersonalBtn.Style = (Style)this.Resources["TabButtonStyle"];
+        this.TabSecurityBtn.Style = (Style)this.Resources["TabButtonActiveStyle"];
+        this.TabNotificationsBtn.Style = (Style)this.Resources["TabButtonStyle"];
+    }
+
+    private void TabNotificationsBtn_Click(object sender, RoutedEventArgs e)
+    {
+        this.PanelPersonal.Visibility = Visibility.Collapsed;
+        this.PanelSecurity.Visibility = Visibility.Collapsed;
+        this.PanelNotifications.Visibility = Visibility.Visible;
+
+        this.TabPersonalBtn.Style = (Style)this.Resources["TabButtonStyle"];
+        this.TabSecurityBtn.Style = (Style)this.Resources["TabButtonStyle"];
+        this.TabNotificationsBtn.Style = (Style)this.Resources["TabButtonActiveStyle"];
+    }
+
+    private void PopulateOAuthLinks(List<OAuthLink>? links)
+    {
+        this.OAuthLinksPanel.Children.Clear();
+
+        if (links == null)
+        {
+            return;
         }
+
+        foreach (var btn in links.Select(link => new Button
+                 {
+                     Content = link.ProviderEmail ?? link.Provider,
+                     Tag = link,
+                 }))
+        {
+            btn.Click += RemoveConnectedAccount_Click;
+            this.OAuthLinksPanel.Children.Add(btn);
+        }
+    }
+
+    private void PopulateNotificationPreferences(List<NotificationPreference>? prefs)
+    {
+        this.isPopulating = true;
+
+        this.NotificationPreferencesPanel.Children.Clear();
+
+        if (prefs == null)
+        {
+            this.isPopulating = false;
+            return;
+        }
+
+        foreach (var pref in prefs)
+        {
+            var row = new Grid
+            {
+                Margin = new Thickness(0, 6, 0, 6),
+            };
+
+            row.ColumnDefinitions.Add(new ColumnDefinition { Width = new GridLength(1, GridUnitType.Star) });
+            row.ColumnDefinitions.Add(new ColumnDefinition { Width = GridLength.Auto });
+
+            var text = new TextBlock
+            {
+                Text = NotificationTypeExtensions.ToDisplayName(pref.Category),
+                VerticalAlignment = VerticalAlignment.Center,
+                FontSize = 13,
+                Foreground = (Brush)this.Resources["TextPrimary"],
+            };
+
+            var toggle = new ToggleSwitch
+            {
+                IsOn = pref.EmailEnabled,
+                Tag = pref,
+                VerticalAlignment = VerticalAlignment.Center,
+            };
+
+            toggle.Toggled += this.NotificationToggle_Toggled;
+
+            Grid.SetColumn(text, 0);
+            Grid.SetColumn(toggle, 1);
+
+            row.Children.Add(text);
+            row.Children.Add(toggle);
+
+            this.NotificationPreferencesPanel.Children.Add(row);
+        }
+
+        this.isPopulating = false;
     }
 }

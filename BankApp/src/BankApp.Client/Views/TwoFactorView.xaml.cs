@@ -3,151 +3,158 @@
 // </copyright>
 
 using System;
+using BankApp.Client.Master;
 using BankApp.Client.Utilities;
 using BankApp.Client.ViewModels;
 using BankApp.Core.Enums;
 using Microsoft.UI.Xaml;
 using Microsoft.UI.Xaml.Controls;
 
-namespace BankApp.Client.Views
+namespace BankApp.Client.Views;
+
+/// <summary>
+/// Displays the OTP verification step of the login flow.
+/// </summary>
+public sealed partial class TwoFactorView : Page, IStateObserver<TwoFactorState>
 {
+    private readonly DispatcherTimer countdownTimer;
+    private readonly TwoFactorViewModel viewModel;
+    private readonly IAppNavigationService navigationService;
+    private readonly ApiClient apiClient;
+    private int secondsRemaining = 30;
+
     /// <summary>
-    /// Displays the OTP verification step of the login flow.
+    /// Initializes a new instance of the <see cref="TwoFactorView"/> class.
     /// </summary>
-    public sealed partial class TwoFactorView : Page, IStateObserver<TwoFactorState>
+    /// <param name="viewModel">The view model that drives OTP verification logic and exposes two-factor state.</param>
+    /// <param name="navigationService">Used to navigate to other pages in response to state changes.</param>
+    /// <param name="apiClient">Used to clear authentication state when the user cancels and returns to login.</param>
+    public TwoFactorView(TwoFactorViewModel viewModel, IAppNavigationService navigationService, ApiClient apiClient)
     {
-        private readonly DispatcherTimer countdownTimer;
-        private readonly TwoFactorViewModel viewModel;
-        private int secondsRemaining = 30;
+        this.InitializeComponent();
 
-        /// <summary>
-        /// Initializes a new instance of the <see cref="TwoFactorView"/> class.
-        /// </summary>
-        public TwoFactorView()
+        this.viewModel = viewModel;
+        this.navigationService = navigationService;
+        this.apiClient = apiClient;
+        this.viewModel.State.AddObserver(this);
+
+        this.countdownTimer = new DispatcherTimer
         {
-            this.InitializeComponent();
+            Interval = TimeSpan.FromSeconds(1),
+        };
+        this.countdownTimer.Tick += this.CountdownTimerTick;
+    }
 
-            this.viewModel = new TwoFactorViewModel(App.ApiClient);
-            this.viewModel.State.AddObserver(this);
+    /// <inheritdoc/>
+    public void Update(TwoFactorState state)
+    {
+        this.OnStateChanged(state);
+    }
 
-            this.countdownTimer = new DispatcherTimer
+    private void OnStateChanged(TwoFactorState state)
+    {
+        this.DispatcherQueue.TryEnqueue(() =>
+        {
+            this.HideLoading();
+            this.ErrorInfoBar.IsOpen = false;
+
+            switch (state)
             {
-                Interval = TimeSpan.FromSeconds(1),
-            };
-            this.countdownTimer.Tick += this.CountdownTimerTick;
-        }
+                case TwoFactorState.Idle:
+                    break;
 
-        /// <inheritdoc/>
-        public void Update(TwoFactorState state)
-        {
-            this.OnStateChanged(state);
-        }
+                case TwoFactorState.Verifying:
+                    this.ShowLoading();
+                    break;
 
-        private void OnStateChanged(TwoFactorState state)
-        {
-            this.DispatcherQueue.TryEnqueue(() =>
-            {
-                this.HideLoading();
-                this.ErrorInfoBar.IsOpen = false;
+                case TwoFactorState.Success:
+                    this.navigationService.NavigateTo<NavView>();
+                    break;
 
-                switch (state)
-                {
-                    case TwoFactorState.Idle:
-                        break;
+                case TwoFactorState.InvalidOTP:
+                    this.ShowError("The code you entered is incorrect.");
+                    break;
 
-                    case TwoFactorState.Verifying:
-                        this.ShowLoading();
-                        break;
+                case TwoFactorState.Expired:
+                    this.ShowError("This code has expired. Please request a new one.");
+                    break;
 
-                    case TwoFactorState.Success:
-                        App.NavigationService.NavigateTo<NavView>();
-                        break;
+                case TwoFactorState.MaxAttemptsReached:
+                    this.ShowError("Maximum attempts reached. Your account has been locked.");
+                    this.VerifyButton.IsEnabled = false;
+                    this.OtpBox.IsEnabled = false;
+                    break;
 
-                    case TwoFactorState.InvalidOTP:
-                        this.ShowError("The code you entered is incorrect.");
-                        break;
-
-                    case TwoFactorState.Expired:
-                        this.ShowError("This code has expired. Please request a new one.");
-                        break;
-
-                    case TwoFactorState.MaxAttemptsReached:
-                        this.ShowError("Maximum attempts reached. Your account has been locked.");
-                        this.VerifyButton.IsEnabled = false;
-                        this.OtpBox.IsEnabled = false;
-                        break;
-
-                    default:
-                        throw new ArgumentOutOfRangeException(nameof(state), state, null);
-                }
-            });
-        }
-
-        private void ShowError(string msg)
-        {
-            this.ErrorInfoBar.Message = msg;
-            this.ErrorInfoBar.IsOpen = true;
-        }
-
-        private void ShowLoading()
-        {
-            this.LoadingRing.IsActive = true;
-            this.LoadingRing.Visibility = Visibility.Visible;
-            this.VerifyButton.IsEnabled = false;
-            this.OtpBox.IsEnabled = false;
-        }
-
-        private void HideLoading()
-        {
-            this.LoadingRing.IsActive = false;
-            this.LoadingRing.Visibility = Visibility.Collapsed;
-            this.VerifyButton.IsEnabled = true;
-            this.OtpBox.IsEnabled = true;
-        }
-
-        private async void VerifyButton_Click(object sender, RoutedEventArgs e)
-        {
-            string otp = this.OtpBox.Text.Trim();
-
-            if (string.IsNullOrWhiteSpace(otp) || otp.Length != 6)
-            {
-                this.ShowError("Please enter a valid 6-digit code.");
-                return;
+                default:
+                    throw new ArgumentOutOfRangeException(nameof(state), state, null);
             }
+        });
+    }
 
-            await this.viewModel.VerifyOtp(otp);
-        }
+    private void ShowError(string msg)
+    {
+        this.ErrorInfoBar.Message = msg;
+        this.ErrorInfoBar.IsOpen = true;
+    }
 
-        private async void ResendButton_Click(object sender, RoutedEventArgs e)
+    private void ShowLoading()
+    {
+        this.LoadingRing.IsActive = true;
+        this.LoadingRing.Visibility = Visibility.Visible;
+        this.VerifyButton.IsEnabled = false;
+        this.OtpBox.IsEnabled = false;
+    }
+
+    private void HideLoading()
+    {
+        this.LoadingRing.IsActive = false;
+        this.LoadingRing.Visibility = Visibility.Collapsed;
+        this.VerifyButton.IsEnabled = true;
+        this.OtpBox.IsEnabled = true;
+    }
+
+    private async void VerifyButton_Click(object sender, RoutedEventArgs e)
+    {
+        string otp = this.OtpBox.Text.Trim();
+
+        if (string.IsNullOrWhiteSpace(otp) || otp.Length != 6)
         {
-            this.ResendButton.IsEnabled = false;
-            this.secondsRemaining = 30;
-            this.CountdownText.Text = $"Available in {this.secondsRemaining}s";
-            this.CountdownText.Visibility = Visibility.Visible;
-
-            this.countdownTimer.Start();
-            await this.viewModel.ResendOtp();
+            this.ShowError("Please enter a valid 6-digit code.");
+            return;
         }
 
-        private void CountdownTimerTick(object? sender, object e)
+        await this.viewModel.VerifyOtp(otp);
+    }
+
+    private async void ResendButton_Click(object sender, RoutedEventArgs e)
+    {
+        this.ResendButton.IsEnabled = false;
+        this.secondsRemaining = 30;
+        this.CountdownText.Text = $"Available in {this.secondsRemaining}s";
+        this.CountdownText.Visibility = Visibility.Visible;
+
+        this.countdownTimer.Start();
+        await this.viewModel.ResendOtp();
+    }
+
+    private void CountdownTimerTick(object? sender, object e)
+    {
+        this.secondsRemaining--;
+
+        if (this.secondsRemaining <= 0)
         {
-            this.secondsRemaining--;
-
-            if (this.secondsRemaining <= 0)
-            {
-                this.countdownTimer.Stop();
-                this.ResendButton.IsEnabled = true;
-                this.CountdownText.Visibility = Visibility.Collapsed;
-                return;
-            }
-
-            this.CountdownText.Text = $"Available in {this.secondsRemaining}s";
+            this.countdownTimer.Stop();
+            this.ResendButton.IsEnabled = true;
+            this.CountdownText.Visibility = Visibility.Collapsed;
+            return;
         }
 
-        private void BackToLoginButton_Click(object sender, RoutedEventArgs e)
-        {
-            App.ApiClient.ClearToken();
-            App.NavigationService.NavigateTo<LoginView>();
-        }
+        this.CountdownText.Text = $"Available in {this.secondsRemaining}s";
+    }
+
+    private void BackToLoginButton_Click(object sender, RoutedEventArgs e)
+    {
+        this.apiClient.ClearToken();
+        this.navigationService.NavigateTo<LoginView>();
     }
 }

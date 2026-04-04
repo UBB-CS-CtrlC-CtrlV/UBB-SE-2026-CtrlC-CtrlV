@@ -5,6 +5,8 @@
 using System;
 using System.Collections.Generic;
 using System.Threading.Tasks;
+using BankApp.Client.Master;
+using BankApp.Client.Utilities;
 using Microsoft.UI.Xaml;
 using Microsoft.UI.Xaml.Controls;
 using Microsoft.UI.Xaml.Input;
@@ -12,7 +14,8 @@ using Microsoft.UI.Xaml.Input;
 namespace BankApp.Client.Views;
 
 /// <summary>
-/// Display the navigation view.
+/// Hosts the application shell after login: renders the sidebar and manages the inner content frame
+/// where feature pages (Dashboard, Profile, etc.) are displayed.
 /// </summary>
 public sealed partial class NavView
 {
@@ -20,10 +23,15 @@ public sealed partial class NavView
 
     private Button? activeNavButton;
 
+    private readonly IAppNavigationService navigationService;
+    private readonly ApiClient apiClient;
+
     /// <summary>
     /// Initializes a new instance of the <see cref="NavView"/> class.
     /// </summary>
-    public NavView()
+    /// <param name="apiClient">Used to clear authentication state when the user logs out.</param>
+    /// <param name="navigationService">Bound to the inner content frame to drive feature-page navigation.</param>
+    public NavView(ApiClient apiClient, IAppNavigationService navigationService)
     {
         this.InitializeComponent();
         Current = this;
@@ -33,19 +41,23 @@ public sealed partial class NavView
             this.NavTransferHistory, this.NavCurrencyExchange, this.NavSavings,
             this.NavInvestments, this.NavStatistics, this.NavSupport, this.NavProfile
         ];
-        App.NavigationService.SetContentFrame(this.ContentFrame);
-        App.NavigationService.NavigateToContent<DashboardView>();
+        this.apiClient = apiClient;
+        this.navigationService = navigationService;
+        this.navigationService.SetContentFrame(this.ContentFrame);
+        this.navigationService.NavigateToContent<DashboardView>();
     }
 
     /// <summary>
-    /// Gets tODO: add docs.
+    /// Gets the most recently created <see cref="NavView"/> instance.
+    /// Used by content pages to call shell-level operations such as updating the notification badge.
     /// </summary>
     public static NavView? Current { get; private set; }
 
     /// <summary>
-    /// TODO: add docs.
+    /// Updates the notification badge on the bell icon to reflect the number of unread notifications.
+    /// Hides the badge entirely when <paramref name="count"/> is zero or negative.
     /// </summary>
-    /// <param name="count">The count.</param>
+    /// <param name="count">The number of unread notifications to display.</param>
     public void UpdateNotificationBadge(int count)
     {
         if (count <= 0)
@@ -59,10 +71,11 @@ public sealed partial class NavView
     }
 
     /// <summary>
-    /// TODO: add docs.
+    /// Shows a modal dialog informing the user that the given feature is not yet available.
+    /// Called by both sidebar buttons and content pages for unimplemented navigation targets.
     /// </summary>
-    /// <param name="feature">The feature.</param>
-    /// <returns>A <see cref="Task"/> representing the asynchronous operation.</returns>
+    /// <param name="feature">The display name of the feature, shown as the dialog title and in the message body.</param>
+    /// <returns>A <see cref="Task"/> representing the asynchronous dialog operation.</returns>
     public async Task ShowComingSoonAsync(string feature)
     {
         var dialog = new ContentDialog
@@ -89,13 +102,13 @@ public sealed partial class NavView
     private void NavDashboard_Click(object sender, RoutedEventArgs e)
     {
         this.SetActiveNav(this.NavDashboard);
-        App.NavigationService.NavigateToContent<DashboardView>();
+        this.navigationService.NavigateToContent<DashboardView>();
     }
 
     private void NavProfile_Click(object sender, RoutedEventArgs e)
     {
         this.SetActiveNav(this.NavProfile);
-        App.NavigationService.NavigateToContent<ProfileView>();
+        this.navigationService.NavigateToContent<ProfileView>();
     }
 
     // All other nav items show a coming soon alert
@@ -138,8 +151,8 @@ public sealed partial class NavView
     private void LogoutButton_Click(object sender, RoutedEventArgs e)
     {
         // await App.ApiClient.PostAsync("/api/auth/logout", null);
-        App.ApiClient.ClearToken();
-        App.NavigationService.NavigateTo<LoginView>();
+        this.apiClient.ClearToken();
+        this.navigationService.NavigateTo<LoginView>();
     }
 
     private async Task ShowAlertAsync(string title, string message)

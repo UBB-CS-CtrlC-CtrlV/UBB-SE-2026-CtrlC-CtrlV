@@ -1,56 +1,66 @@
+// <copyright file="AppNavigationService.cs" company="CtrlC CtrlV">
+// Copyright (c) CtrlC CtrlV. All rights reserved.
+// </copyright>
+
+using System;
+using Microsoft.Extensions.DependencyInjection;
 using Microsoft.UI.Xaml.Controls;
 
-namespace BankApp.Client.Master
+namespace BankApp.Client.Master;
+
+/// <summary>
+/// Provides navigation services for the application, enabling switching between pages and managing navigation
+/// history.
+/// </summary>
+/// <remarks>
+/// Pages are resolved through the DI container so that their constructor dependencies
+/// (e.g. view models) are injected automatically. Navigation is performed by setting
+/// <see cref="Frame.Content"/> directly rather than calling <see cref="Frame.Navigate(Type)"/>,
+/// because the latter instantiates pages via reflection and bypasses the container.
+/// </remarks>
+public class AppNavigationService : IAppNavigationService
 {
+    private readonly IServiceProvider serviceProvider;
+
+    private Frame? frame;
+    private Frame? contentFrame;
+
     /// <summary>
-    /// Provides navigation services for the application, enabling switching between pages and managing navigation
-    /// history.
+    /// Initializes a new instance of the <see cref="AppNavigationService"/> class.
     /// </summary>
-    /// <remarks>This service abstracts navigation logic for the application's main and content frames. It
-    /// allows for type-safe navigation to pages and supports checking and performing backward navigation.
-    /// </remarks>
-    public class AppNavigationService : IAppNavigationService
+    /// <param name="serviceProvider">
+    /// The DI container used to resolve page instances with their injected dependencies.
+    /// </param>
+    public AppNavigationService(IServiceProvider serviceProvider)
     {
-        private Frame? frame;
-        private Frame? contentFrame;
+        this.serviceProvider = serviceProvider ?? throw new ArgumentNullException(nameof(serviceProvider));
+    }
 
-        /// <inheritdoc />
-        public void SetFrame(Frame frame)
-        {
-            this.frame = frame;
-        }
+    /// <inheritdoc />
+    public void SetFrame(Frame newFrame)
+    {
+        this.frame = newFrame;
+    }
 
-        /// <inheritdoc />
-        public void SetContentFrame(Frame frame)
-        {
-            this.contentFrame = frame;
-        }
+    /// <inheritdoc />
+    public void SetContentFrame(Frame newFrame)
+    {
+        this.contentFrame = newFrame;
+    }
 
-        /// <inheritdoc />
-        public void NavigateTo<TPage>()
-        {
-            this.frame?.Navigate(typeof(TPage));
-        }
+    /// <inheritdoc />
+    public void NavigateTo<TPage>()
+        where TPage : class
+    {
+        var page = this.serviceProvider.GetRequiredService<TPage>();
+        this.frame!.Content = page;
+    }
 
-        /// <inheritdoc />
-        public void NavigateToContent<TPage>()
-        {
-            this.contentFrame?.Navigate(typeof(TPage));
-        }
-
-        /// <inheritdoc />
-        public void GoBack()
-        {
-            if (this.CanGoBack())
-            {
-                this.frame?.GoBack();
-            }
-        }
-
-        /// <inheritdoc />
-        public bool CanGoBack()
-        {
-            return this.frame?.CanGoBack ?? false;
-        }
+    /// <inheritdoc />
+    public void NavigateToContent<TPage>()
+        where TPage : class
+    {
+        var page = this.serviceProvider.GetRequiredService<TPage>();
+        this.contentFrame!.Content = page;
     }
 }

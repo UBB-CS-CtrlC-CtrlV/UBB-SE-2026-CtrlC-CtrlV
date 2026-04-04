@@ -19,7 +19,7 @@ using Windows.UI;
 namespace BankApp.Client.Views
 {
     /// <summary>
-    /// Create the Dashboard View.
+    /// Displays the authenticated user's account summary, card carousel, and recent transactions.
     /// </summary>
     public sealed partial class DashboardView : IStateObserver<DashboardState>
     {
@@ -31,11 +31,12 @@ namespace BankApp.Client.Views
         /// <summary>
         /// Initializes a new instance of the <see cref="DashboardView"/> class.
         /// </summary>
-        public DashboardView()
+        /// <param name="viewModel">The view model that loads account data and exposes dashboard state.</param>
+        public DashboardView(DashboardViewModel viewModel)
         {
             this.InitializeComponent();
 
-            this.viewModel = new DashboardViewModel(App.ApiClient);
+            this.viewModel = viewModel;
         }
 
         /// <inheritdoc/>
@@ -84,6 +85,10 @@ namespace BankApp.Client.Views
                         this.HideLoading();
                         this.ShowError(this.viewModel.ErrorMessage);
                         break;
+                    case DashboardState.Idle:
+                        break;
+                    default:
+                        throw new ArgumentOutOfRangeException(nameof(state), state, null);
                 }
             });
         }

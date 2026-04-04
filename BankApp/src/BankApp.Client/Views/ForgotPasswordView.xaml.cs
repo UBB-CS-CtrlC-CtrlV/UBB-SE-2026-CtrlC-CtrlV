@@ -2,6 +2,8 @@
 // Copyright (c) CtrlC CtrlV. All rights reserved.
 // </copyright>
 
+using System;
+using BankApp.Client.Master;
 using BankApp.Client.Utilities;
 using BankApp.Client.ViewModels;
 using BankApp.Core.Enums;
@@ -18,15 +20,19 @@ namespace BankApp.Client.Views
     public sealed partial class ForgotPasswordView : IStateObserver<ForgotPasswordState>
     {
         private readonly ForgotPasswordViewModel viewModel;
+        private readonly IAppNavigationService navigationService;
 
         /// <summary>
         /// Initializes a new instance of the <see cref="ForgotPasswordView"/> class.
         /// </summary>
-        public ForgotPasswordView()
+        /// <param name="viewModel">The view model that drives password recovery logic and exposes recovery state.</param>
+        /// <param name="navigationService">Used to navigate back to the login page after recovery completes.</param>
+        public ForgotPasswordView(ForgotPasswordViewModel viewModel, IAppNavigationService navigationService)
         {
             this.InitializeComponent();
 
-            this.viewModel = new ForgotPasswordViewModel(App.ApiClient);
+            this.viewModel = viewModel;
+            this.navigationService = navigationService;
             this.viewModel.State.AddObserver(this);
         }
 
@@ -130,7 +136,7 @@ namespace BankApp.Client.Views
 
         private void BackToLoginButton_Click(object sender, RoutedEventArgs e)
         {
-            App.NavigationService.NavigateTo<LoginView>();
+            this.navigationService.NavigateTo<LoginView>();
         }
 
         /// <summary>
