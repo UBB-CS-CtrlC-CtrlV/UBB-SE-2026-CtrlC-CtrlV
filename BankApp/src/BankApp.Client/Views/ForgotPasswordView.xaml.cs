@@ -2,7 +2,6 @@
 // Copyright (c) CtrlC CtrlV. All rights reserved.
 // </copyright>
 
-using System;
 using BankApp.Client.Utilities;
 using BankApp.Client.ViewModels;
 using BankApp.Core.Enums;
@@ -13,6 +12,8 @@ namespace BankApp.Client.Views
 {
     /// <summary>
     /// Displays the account recovery flow for requesting a reset code and setting a new password.
+    /// This code-behind contains only UI-specific logic (loading state, message display, navigation).
+    /// All business validation and state transitions are handled by <see cref="ForgotPasswordViewModel"/>.
     /// </summary>
     public sealed partial class ForgotPasswordView : IStateObserver<ForgotPasswordState>
     {
@@ -40,6 +41,12 @@ namespace BankApp.Client.Views
             this.DispatcherQueue.TryEnqueue(() =>
             {
                 this.HideLoading();
+
+                if (state == ForgotPasswordState.Error && !string.IsNullOrWhiteSpace(this.viewModel.ValidationError))
+                {
+                    this.ShowMessage(this.viewModel.ValidationError, InfoBarSeverity.Warning);
+                    return;
+                }
 
                 switch (state)
                 {
@@ -86,8 +93,9 @@ namespace BankApp.Client.Views
                     case ForgotPasswordState.Error:
                         this.ShowMessage("An error occurred. Please try again.", InfoBarSeverity.Error);
                         break;
+
                     default:
-                        throw new ArgumentOutOfRangeException(nameof(state), state, null);
+                        throw new System.ArgumentOutOfRangeException(nameof(state), state, null);
                 }
             });
         }
@@ -95,80 +103,29 @@ namespace BankApp.Client.Views
         private async void SendCodeButton_Click(object sender, RoutedEventArgs e)
         {
             this.StatusInfoBar.IsOpen = false;
-            var email = this.EmailBox.Text.Trim();
-
-            if (string.IsNullOrWhiteSpace(email))
-            {
-                this.ShowMessage("Please enter your email address.", InfoBarSeverity.Warning);
-                return;
-            }
-
             this.ShowLoading();
-            await this.viewModel.ForgotPassword(email);
+            await this.viewModel.ForgotPassword(this.EmailBox.Text.Trim());
         }
 
         private async void ResetPasswordButton_Click(object sender, RoutedEventArgs e)
         {
             this.StatusInfoBar.IsOpen = false;
-            var code = this.TokenBox.Text.Trim();
-            var newPassword = this.NewPasswordBox.Password;
-            var confirmPassword = this.ConfirmPasswordBox.Password;
-
-            if (string.IsNullOrWhiteSpace(code) || string.IsNullOrWhiteSpace(newPassword))
-            {
-                this.ShowMessage("Please fill in all fields.", InfoBarSeverity.Warning);
-                return;
-            }
-
-            if (newPassword != confirmPassword)
-            {
-                this.ShowMessage("Passwords do not match.", InfoBarSeverity.Warning);
-                return;
-            }
-
-            if (newPassword.Length < 8 ||
-                !System.Linq.Enumerable.Any(newPassword, char.IsUpper) ||
-                !System.Linq.Enumerable.Any(newPassword, char.IsLower) ||
-                !System.Linq.Enumerable.Any(newPassword, char.IsDigit) ||
-                !System.Linq.Enumerable.Any(newPassword, ch => !char.IsLetterOrDigit(ch)))
-            {
-                this.ShowMessage("Password must be at least 8 characters with uppercase, lowercase, a digit, and a special character.", InfoBarSeverity.Warning);
-                return;
-            }
-
             this.ShowLoading();
-            await this.viewModel.ResetPassword(newPassword, code);
+            await this.viewModel.ResetPassword(this.NewPasswordBox.Password, this.TokenBox.Text.Trim());
         }
 
         private async void VerifyTokenButton_Click(object sender, RoutedEventArgs e)
         {
             this.StatusInfoBar.IsOpen = false;
-            var code = this.TokenBox.Text.Trim();
-
-            if (string.IsNullOrWhiteSpace(code))
-            {
-                this.ShowMessage("Please paste the recovery code first.", InfoBarSeverity.Warning);
-                return;
-            }
-
             this.ShowLoading();
-            await this.viewModel.VerifyToken(code);
+            await this.viewModel.VerifyToken(this.TokenBox.Text.Trim());
         }
 
         private async void ResendCodeButton_Click(object sender, RoutedEventArgs e)
         {
             this.StatusInfoBar.IsOpen = false;
-            var email = this.EmailBox.Text.Trim();
-
-            if (string.IsNullOrWhiteSpace(email))
-            {
-                this.ShowMessage("Email is missing. Please go back to login and try again.", InfoBarSeverity.Error);
-                return;
-            }
-
             this.ShowLoading();
-
-            await this.viewModel.ForgotPassword(email);
+            await this.viewModel.ForgotPassword(this.EmailBox.Text.Trim());
         }
 
         private void BackToLoginButton_Click(object sender, RoutedEventArgs e)
@@ -179,8 +136,8 @@ namespace BankApp.Client.Views
         /// <summary>
         /// Shows a status message in the view's info bar.
         /// </summary>
-        /// <param name="msg">The message.</param>
-        /// <param name="severity">The severity.</param>
+        /// <param name="msg">The message to display.</param>
+        /// <param name="severity">The severity level.</param>
         private void ShowMessage(string msg, InfoBarSeverity severity)
         {
             this.StatusInfoBar.Message = msg;
