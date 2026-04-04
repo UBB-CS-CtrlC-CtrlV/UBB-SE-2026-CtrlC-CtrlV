@@ -26,7 +26,7 @@ public static class ServiceCollectionExtensions
         // application lifetime to avoid socket exhaustion.
         services.AddSingleton<ApiClient>();
 
-        // Navigation state (the active Frame) must be the same
+        // Navigation state must be the same
         // object throughout the app.
         // Multiple instances would lose the frame reference.
         services.AddSingleton<IAppNavigationService, AppNavigationService>();
