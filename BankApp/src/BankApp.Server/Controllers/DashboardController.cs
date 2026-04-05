@@ -1,37 +1,59 @@
+// <copyright file="DashboardController.cs" company="CtrlC CtrlV">
+// Copyright (c) CtrlC CtrlV. All rights reserved.
+// </copyright>
 using BankApp.Core.DTOs.Dashboard;
-using Microsoft.AspNetCore.Mvc;
 using BankApp.Infrastructure.Services.Interfaces;
+using Microsoft.AspNetCore.Mvc;
 
 namespace BankApp.Server.Controllers
 {
+    /// <summary>
+    /// Controller responsible for handling dashboard-related operations.
+    /// All endpoints are accessible under the /api/dashboard route.
+    /// </summary>
     [ApiController]
     [Route("api/[controller]")]
     public class DashboardController : ControllerBase
     {
-        private readonly IDashboardService _dashService;
-        public DashboardController(IDashboardService dashService) { _dashService = dashService; }
+        private readonly IDashboardService dashService;
 
+        /// <summary>
+        /// Initializes a new instance of the <see cref="DashboardController"/> class.
+        /// </summary>
+        /// <param name="dashService">The dashboard service used to handle business logic.</param>
+        public DashboardController(IDashboardService dashService)
+        {
+            this.dashService = dashService;
+        }
+
+        /// <summary>
+        /// Retrieves the dashboard data for the currently authenticated user.
+        /// The user ID is extracted from the HTTP context, set by the authentication middleware.
+        /// </summary>
+        /// <returns>
+        /// 200 OK with a <see cref="DashboardResponse"/> on success,
+        /// 404 Not Found if no dashboard data exists for the user,
+        /// or 500 Internal Server Error if an unexpected error occurs.
+        /// </returns>
         [HttpGet]
         public IActionResult GetDashboard()
         {
             try
             {
-                int userId = (int)HttpContext.Items["UserId"]!;
-
-                DashboardResponse dashboardData = _dashService.GetDashboardData(userId);
-                if (dashboardData == null)
+                if (!int.TryParse(this.HttpContext.Items["UserId"]?.ToString(), out int userId))
                 {
-                    return NotFound(new { message = "Dashboard data not found." });
+                    return this.Unauthorized(new { error = "User is not authenticated." });
                 }
 
-                return Ok(dashboardData);
+                DashboardResponse dashboardData = this.dashService.GetDashboardData(userId) ?? throw new InvalidOperationException();
+
+                return this.Ok(dashboardData);
             }
-            catch (Exception ex)
+            catch (Exception)
             {
-                return StatusCode(500,
-                    new { error = "An error occured while fetching the dashboard data." });
+                return this.StatusCode(
+                    500, new { error = "An error occured while fetching the dashboard data." });
             }
         }
     }
 }
-
