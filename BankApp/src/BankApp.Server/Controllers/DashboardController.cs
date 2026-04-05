@@ -1,3 +1,6 @@
+// <copyright file="DashboardController.cs" company="CtrlC CtrlV">
+// Copyright (c) CtrlC CtrlV. All rights reserved.
+// </copyright>
 using BankApp.Core.DTOs.Dashboard;
 using BankApp.Infrastructure.Services.Interfaces;
 using Microsoft.AspNetCore.Mvc;

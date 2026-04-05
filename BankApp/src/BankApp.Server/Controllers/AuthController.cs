@@ -1,3 +1,6 @@
+// <copyright file="AuthController.cs" company="CtrlC CtrlV">
+// Copyright (c) CtrlC CtrlV. All rights reserved.
+// </copyright>
 using BankApp.Core.DTOs.Auth;
 using BankApp.Core.Enums;
 using BankApp.Infrastructure.Services.Interfaces;

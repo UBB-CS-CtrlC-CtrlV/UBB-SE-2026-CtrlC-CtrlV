@@ -1,3 +1,6 @@
+// <copyright file="ProfileController.cs" company="CtrlC CtrlV">
+// Copyright (c) CtrlC CtrlV. All rights reserved.
+// </copyright>
 using System.Collections.Generic;
 using BankApp.Core.DTOs.Profile;
 using BankApp.Core.Entities;

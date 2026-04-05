@@ -1,3 +1,6 @@
+// <copyright file="DiagnosticsController.cs" company="CtrlC CtrlV">
+// Copyright (c) CtrlC CtrlV. All rights reserved.
+// </copyright>
 using BankApp.Infrastructure.DataAccess;
 using BankApp.Infrastructure.DataAccess.Interfaces;
 using BankApp.Infrastructure.Services.Infrastructure.Interfaces;

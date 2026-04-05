@@ -1,4 +1,7 @@
-﻿namespace BankApp.Server.Controllers
+﻿// <copyright file="VerifyTokenDto.cs" company="CtrlC CtrlV">
+// Copyright (c) CtrlC CtrlV. All rights reserved.
+// </copyright>
+namespace BankApp.Server.Controllers
 {
     /// <summary>
     /// Data transfer object used for reset token verification requests.
