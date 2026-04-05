@@ -9,6 +9,7 @@ using System.Threading;
 using System.Threading.Tasks;
 using ErrorOr;
 using Microsoft.Extensions.Configuration;
+using Microsoft.Extensions.Logging;
 
 namespace BankApp.Client.Utilities;
 
@@ -18,6 +19,7 @@ namespace BankApp.Client.Utilities;
 public class ApiClient
 {
     private readonly HttpClient httpClient;
+    private readonly ILogger<ApiClient> logger;
     private readonly Error? configurationError;
     private string? token;
 
@@ -29,14 +31,19 @@ public class ApiClient
     /// If the key is absent the client starts in a degraded state — callers must check
     /// <see cref="EnsureConfigured"/> before issuing requests.
     /// </param>
-    public ApiClient(IConfiguration configuration)
+    /// <param name="logger">Logger for HTTP errors and configuration warnings.</param>
+    public ApiClient(IConfiguration configuration, ILogger<ApiClient> logger)
     {
+        this.logger = logger;
+
         var baseUrl = configuration["ApiBaseUrl"];
         if (baseUrl is null)
         {
             this.configurationError = Error.Failure(
                 code: "ApiClient.MissingBaseUrl",
                 description: "ApiBaseUrl is missing from configuration.");
+
+            this.logger.LogCritical("ApiBaseUrl is missing from configuration. The client cannot connect to the server.");
 
             // Dummy client — requests must not be issued when configurationError is set.
             this.httpClient = new HttpClient();
@@ -121,8 +128,7 @@ public class ApiClient
         }
         catch (Exception ex)
         {
-            Console.WriteLine($"HTTP ERROR: {ex.Message}");
-            Console.WriteLine($"Inner: {ex.InnerException?.Message}");
+            this.logger.LogError(ex, "POST {Endpoint} failed", endpoint);
             throw;
         }
     }

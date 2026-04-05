@@ -9,6 +9,7 @@ using BankApp.Core.DTOs.Auth;
 using BankApp.Core.Enums;
 using Duende.IdentityModel.OidcClient;
 using Microsoft.Extensions.Configuration;
+using Microsoft.Extensions.Logging;
 
 namespace BankApp.Client.ViewModels;
 
@@ -19,6 +20,7 @@ public class LoginViewModel
 {
     private readonly ApiClient apiClient;
     private readonly IConfiguration configuration;
+    private readonly ILogger<LoginViewModel> logger;
 
     /// <summary>
     /// Initializes a new instance of the <see cref="LoginViewModel"/> class.
@@ -29,10 +31,12 @@ public class LoginViewModel
     /// <c>OAuth:Google:ClientId</c>, <c>OAuth:Google:ClientSecret</c>, and
     /// <c>OAuth:Google:RedirectUri</c> when performing an OAuth login.
     /// </param>
-    public LoginViewModel(ApiClient apiClient, IConfiguration configuration)
+    /// <param name="logger">Logger for login flow diagnostics and errors.</param>
+    public LoginViewModel(ApiClient apiClient, IConfiguration configuration, ILogger<LoginViewModel> logger)
     {
         this.apiClient = apiClient ?? throw new ArgumentNullException(nameof(apiClient));
         this.configuration = configuration ?? throw new ArgumentNullException(nameof(configuration));
+        this.logger = logger ?? throw new ArgumentNullException(nameof(logger));
 
         // Determine initial state from configuration. If ApiClient is misconfigured the
         // view starts in ServerNotConfigured so the login form is disabled immediately.
@@ -41,7 +45,7 @@ public class LoginViewModel
             _ => LoginState.Idle,
             errors =>
             {
-                // TODO: log errors here using the logging infrastructure.
+                this.logger.LogCritical("ApiClient is not configured — login is unavailable. Errors: {Errors}", errors);
                 return LoginState.ServerNotConfigured;
             });
 

@@ -1,79 +1,107 @@
-using System;
 using BankApp.Infrastructure.DependencyInjection;
 using BankApp.Infrastructure.Middleware;
-using Microsoft.AspNetCore.Builder;
-using Microsoft.AspNetCore.Http;
-using Microsoft.Extensions.DependencyInjection;
-using Microsoft.Extensions.Hosting;
+using Serilog;
+using Serilog.Events;
 
-var builder = WebApplication.CreateBuilder(args);
-builder.Services.AddControllers();
-builder.Services.AddEndpointsApiExplorer();
-builder.Services.AddSwaggerGen(options =>
+// Configure Serilog before building the host so that startup errors are also captured.
+Log.Logger = new LoggerConfiguration()
+    .MinimumLevel.Override("Microsoft", LogEventLevel.Warning)
+    .MinimumLevel.Override("Microsoft.Hosting.Lifetime", LogEventLevel.Information)
+    .Enrich.FromLogContext()
+    .WriteTo.Console()
+    .WriteTo.File(
+        path: "logs/bankapp-server-.log",
+        rollingInterval: RollingInterval.Day,
+        retainedFileCountLimit: 14)
+    .CreateBootstrapLogger();
+
+try
 {
-    options.AddSecurityDefinition("Bearer", new Microsoft.OpenApi.Models.OpenApiSecurityScheme
+    Log.Information("Starting BankApp.Server");
+
+    var builder = WebApplication.CreateBuilder(args);
+
+    // Replace the default MEL providers with Serilog. Configuration (log levels, sinks)
+    // can be further overridden via appsettings.json under the "Serilog" key.
+    builder.Host.UseSerilog((context, services, config) =>
+        config
+            .ReadFrom.Configuration(context.Configuration)
+            .ReadFrom.Services(services)
+            .Enrich.FromLogContext()
+            .WriteTo.Console()
+            .WriteTo.File(
+                path: "logs/bankapp-server-.log",
+                rollingInterval: RollingInterval.Day,
+                retainedFileCountLimit: 14));
+
+    builder.Services.AddControllers();
+    builder.Services.AddEndpointsApiExplorer();
+    builder.Services.AddSwaggerGen(options =>
     {
-        Name = "Authorization",
-        Type = Microsoft.OpenApi.Models.SecuritySchemeType.Http,
-        Scheme = "Bearer",
-        BearerFormat = "JWT",
-        In = Microsoft.OpenApi.Models.ParameterLocation.Header,
-        Description = "Paste your JWT token here"
-    });
-    options.AddSecurityRequirement(new Microsoft.OpenApi.Models.OpenApiSecurityRequirement
-    {
+        options.AddSecurityDefinition("Bearer", new Microsoft.OpenApi.Models.OpenApiSecurityScheme
         {
-            new Microsoft.OpenApi.Models.OpenApiSecurityScheme
+            Name = "Authorization",
+            Type = Microsoft.OpenApi.Models.SecuritySchemeType.Http,
+            Scheme = "Bearer",
+            BearerFormat = "JWT",
+            In = Microsoft.OpenApi.Models.ParameterLocation.Header,
+            Description = "Paste your JWT token here"
+        });
+        options.AddSecurityRequirement(new Microsoft.OpenApi.Models.OpenApiSecurityRequirement
+        {
             {
-                Reference = new Microsoft.OpenApi.Models.OpenApiReference
+                new Microsoft.OpenApi.Models.OpenApiSecurityScheme
                 {
-                    Type = Microsoft.OpenApi.Models.ReferenceType.SecurityScheme,
-                    Id = "Bearer"
-                }
+                    Reference = new Microsoft.OpenApi.Models.OpenApiReference
+                    {
+                        Type = Microsoft.OpenApi.Models.ReferenceType.SecurityScheme,
+                        Id = "Bearer",
+                    },
+                },
+                Array.Empty<string>()
             },
-            Array.Empty<string>()
-        }
+        });
     });
-});
 
-// Allow the WinUI client to connect
-builder.Services.AddCors(o => o.AddDefaultPolicy(p =>
-    p.AllowAnyOrigin().AllowAnyMethod().AllowAnyHeader()));
+    // Allow the client to connect
+    builder.Services.AddCors(o => o.AddDefaultPolicy(p =>
+        p.AllowAnyOrigin().AllowAnyMethod().AllowAnyHeader()));
 
-builder.Services.AddInfrastructure(builder.Configuration);
+    builder.Services.AddInfrastructure(builder.Configuration);
 
-var app = builder.Build();
+    var app = builder.Build();
 
+    app.UseExceptionHandler(a => a.Run(async context =>
+    {
+        context.Response.StatusCode = 500;
+        context.Response.ContentType = "application/json";
+        await context.Response.WriteAsJsonAsync(new { error = "Something went wrong." });
+    }));
 
-app.UseExceptionHandler(a => a.Run(async context =>
-{
-    context.Response.StatusCode = 500;
-context.Response.ContentType = "application/json";
-await context.Response.WriteAsJsonAsync(new { error = "Something went wrong." });
-}));
+    if (app.Environment.IsDevelopment())
+    {
+        app.UseSwagger();
+        app.UseSwaggerUI();
+    }
 
-if (app.Environment.IsDevelopment())
-{
-    app.UseSwagger();
-    app.UseSwaggerUI();
+    app.UseCors();
+
+    // Logs each HTTP request: method, path, status code, and duration.
+    // Placed before middleware that may short-circuit the pipeline so all
+    // requests are captured, including those rejected by session validation.
+    app.UseSerilogRequestLogging();
+
+    app.UseMiddleware<SessionValidationMiddleware>();
+
+    app.MapControllers();
+    app.Run();
 }
-
-app.UseCors();
-app.UseMiddleware<SessionValidationMiddleware>();
-
-app.Use(async (context, next) =>
+catch (Exception ex)
 {
-    try
-    {
-        await next();
-    }
-    catch (Exception ex)
-    {
-        Console.WriteLine($"UNHANDLED: {ex.Message}");
-        Console.WriteLine($"Stack: {ex.StackTrace}");
-        throw;
-    }
-});
-
-app.MapControllers();
-app.Run();
+    Log.Fatal(ex, "BankApp.Server terminated unexpectedly");
+}
+finally
+{
+    // Flush and close all Serilog sinks before the process exits.
+    Log.CloseAndFlush();
+}
