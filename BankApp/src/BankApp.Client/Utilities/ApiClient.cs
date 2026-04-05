@@ -3,6 +3,7 @@
 // </copyright>
 
 using System;
+using System.Net;
 using System.Net.Http;
 using System.Net.Http.Json;
 using System.Threading;
@@ -39,11 +40,11 @@ public class ApiClient
         var baseUrl = configuration["ApiBaseUrl"];
         if (baseUrl is null)
         {
-            this.configurationError = Error.Failure(
-                code: "ApiClient.MissingBaseUrl",
+            this.configurationError = Error.Failure(code: "ApiClient.MissingBaseUrl",
                 description: "ApiBaseUrl is missing from configuration.");
 
-            this.logger.LogCritical("ApiBaseUrl is missing from configuration. The client cannot connect to the server.");
+            this.logger.LogCritical(
+                "ApiBaseUrl is missing from configuration. The client cannot connect to the server.");
 
             // Dummy client — requests must not be issued when configurationError is set.
             this.httpClient = new HttpClient();
@@ -118,18 +119,33 @@ public class ApiClient
     /// <typeparam name="TResponse">The response model type.</typeparam>
     /// <param name="endpoint">The relative endpoint to call.</param>
     /// <param name="data">The request body to serialize.</param>
-    /// <returns>The deserialized response body, if available.</returns>
-    public async Task<TResponse?> PostAsync<TRequest, TResponse>(string endpoint, TRequest data)
+    /// <returns>The deserialized response body, or an <see cref="Error"/> if the request fails.</returns>
+    public async Task<ErrorOr<TResponse>> PostAsync<TRequest, TResponse>(string endpoint, TRequest data)
     {
         try
         {
             var response = await this.httpClient.PostAsJsonAsync(endpoint, data);
-            return await response.Content.ReadFromJsonAsync<TResponse>();
+
+            if (!response.IsSuccessStatusCode)
+            {
+                return await MapErrorAsync(response, endpoint, CancellationToken.None);
+            }
+
+            var result = await response.Content.ReadFromJsonAsync<TResponse>();
+            if (result is null)
+            {
+                return Error.Failure(description: $"POST {endpoint} returned an empty response.");
+            }
+
+            return result;
         }
-        catch (Exception ex)
+        catch (HttpRequestException ex)
         {
-            this.logger.LogError(ex, "POST {Endpoint} failed", endpoint);
-            throw;
+            return Error.Failure(description: $"POST {endpoint} failed: {ex.Message}");
+        }
+        catch (OperationCanceledException)
+        {
+            return Error.Unexpected(description: $"POST {endpoint} was cancelled.");
         }
     }
 
@@ -138,22 +154,61 @@ public class ApiClient
     /// </summary>
     /// <typeparam name="TResponse">The response model type.</typeparam>
     /// <param name="endpoint">The relative endpoint to call.</param>
-    /// <param name="cancellationToken">A token that can cancel the request.</param>
-    /// <returns>The deserialized response body, if available.</returns>
-    public virtual async Task<TResponse?> GetAsync<TResponse>(string endpoint, CancellationToken cancellationToken = default)
+    /// <param name="cancellationToken">
+    /// Used to cancel the in-flight HTTP request. Defaults to <see cref="CancellationToken.None"/>.
+    /// </param>
+    /// <returns>The deserialized response body, or an <see cref="Error"/> if the request fails.</returns>
+    public virtual async Task<ErrorOr<TResponse>> GetAsync<TResponse>(
+        string endpoint,
+        CancellationToken cancellationToken = default)
     {
-        var response = await this.httpClient.GetAsync(endpoint, cancellationToken);
-        if (response.IsSuccessStatusCode)
+        try
         {
-            return await response.Content.ReadFromJsonAsync<TResponse>(cancellationToken: cancellationToken);
+            var response = await this.httpClient.GetAsync(endpoint, cancellationToken);
+
+            if (!response.IsSuccessStatusCode)
+            {
+                return await MapErrorAsync(response, endpoint, cancellationToken);
+            }
+
+            var result = await response.Content.ReadFromJsonAsync<TResponse>(cancellationToken: cancellationToken);
+            if (result is null)
+            {
+                return Error.Failure(description: $"GET {endpoint} returned an empty response.");
+            }
+
+            return result;
         }
+        catch (HttpRequestException ex)
+        {
+            return Error.Failure(description: $"GET {endpoint} failed: {ex.Message}");
+        }
+        catch (OperationCanceledException)
+        {
+            return Error.Failure(description: $"GET {endpoint} was cancelled.");
+        }
+    }
 
-        var errorBody = await response.Content.ReadAsStringAsync(cancellationToken);
-        var errorMessage = string.IsNullOrWhiteSpace(errorBody)
+    private static async Task<Error> MapErrorAsync(HttpResponseMessage response,
+        string endpoint,
+        CancellationToken cancellationToken)
+    {
+        var body = await response.Content.ReadAsStringAsync(cancellationToken);
+        var message = string.IsNullOrWhiteSpace(body)
             ? $"Request to '{endpoint}' failed with status {(int)response.StatusCode}."
-            : errorBody;
+            : body;
 
-        throw new ApiException(response.StatusCode, errorMessage);
+        return response.StatusCode switch
+        {
+            HttpStatusCode.NotFound => Error.NotFound(description: message),
+            HttpStatusCode.Unauthorized => Error.Unauthorized(description: message),
+            HttpStatusCode.Forbidden => Error.Forbidden(description: message),
+            HttpStatusCode.Conflict => Error.Conflict(description: message),
+            HttpStatusCode.UnprocessableEntity => Error.Validation(description: message),
+            HttpStatusCode.TooManyRequests => Error.Failure(description: message),
+            >= HttpStatusCode.InternalServerError => Error.Unexpected(description: message),
+            _ => Error.Failure(description: message),
+        };
     }
 
     /// <summary>
@@ -163,10 +218,33 @@ public class ApiClient
     /// <typeparam name="TResponse">The response model type.</typeparam>
     /// <param name="endpoint">The relative endpoint to call.</param>
     /// <param name="data">The request body to serialize.</param>
-    /// <returns>The deserialized response body, if available.</returns>
-    public async Task<TResponse?> PutAsync<TRequest, TResponse>(string endpoint, TRequest data)
+    /// <returns>The deserialized response body, or an <see cref="Error"/> if the request fails.</returns>
+    public async Task<ErrorOr<TResponse>> PutAsync<TRequest, TResponse>(string endpoint, TRequest data)
     {
-        var response = await this.httpClient.PutAsJsonAsync(endpoint, data);
-        return await response.Content.ReadFromJsonAsync<TResponse>();
+        try
+        {
+            var response = await this.httpClient.PutAsJsonAsync(endpoint, data);
+
+            if (!response.IsSuccessStatusCode)
+            {
+                return await MapErrorAsync(response, endpoint, CancellationToken.None);
+            }
+
+            var result = await response.Content.ReadFromJsonAsync<TResponse>();
+            if (result is null)
+            {
+                return Error.Failure(description: $"PUT {endpoint} returned an empty response.");
+            }
+
+            return result;
+        }
+        catch (HttpRequestException ex)
+        {
+            return Error.Failure(description: $"PUT {endpoint} failed: {ex.Message}");
+        }
+        catch (OperationCanceledException)
+        {
+            return Error.Unexpected(description: $"PUT {endpoint} was cancelled.");
+        }
     }
 }

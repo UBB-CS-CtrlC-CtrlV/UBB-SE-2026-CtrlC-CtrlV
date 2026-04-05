@@ -5,13 +5,15 @@
 using System;
 using System.Collections.Generic;
 using System.Globalization;
-using System.Net;
+using System.Linq;
 using System.Threading;
 using System.Threading.Tasks;
 using BankApp.Client.Utilities;
 using BankApp.Core.DTOs.Dashboard;
 using BankApp.Core.Entities;
 using BankApp.Core.Enums;
+using ErrorOr;
+using Microsoft.Extensions.Logging;
 
 namespace BankApp.Client.ViewModels;
 
@@ -21,15 +23,18 @@ namespace BankApp.Client.ViewModels;
 public class DashboardViewModel
 {
     private readonly ApiClient apiClient;
+    private readonly ILogger<DashboardViewModel> logger;
     private int currentCardIndex;
 
     /// <summary>
     /// Initializes a new instance of the <see cref="DashboardViewModel"/> class.
     /// </summary>
-    /// <param name="apiClient">The api client.</param>
-    public DashboardViewModel(ApiClient apiClient)
+    /// <param name="apiClient">The API client used for dashboard data requests.</param>
+    /// <param name="logger">Logger for dashboard load errors.</param>
+    public DashboardViewModel(ApiClient apiClient, ILogger<DashboardViewModel> logger)
     {
         this.apiClient = apiClient;
+        this.logger = logger ?? throw new ArgumentNullException(nameof(logger));
         this.CurrentUser = null;
         this.State = new ObservableState<DashboardState>(DashboardState.Idle);
         this.Cards = new List<Card>();
@@ -70,8 +75,6 @@ public class DashboardViewModel
     /// </summary>
     public string ErrorMessage { get; private set; }
 
-    // ─── Card Navigation ───────────────────────────────────────────────────────
-
     /// <summary>
     /// Gets the index of the currently displayed card.
     /// </summary>
@@ -106,8 +109,6 @@ public class DashboardViewModel
     /// </summary>
     public bool HasTransactions => this.RecentTransactionItems.Count > 0;
 
-    // ─── Derived Display Properties ────────────────────────────────────────────
-
     /// <summary>
     /// Gets the display name of the selected card's brand (falls back to card type when brand is absent).
     /// </summary>
@@ -138,8 +139,6 @@ public class DashboardViewModel
     public string SelectedCardNumberMasked =>
         this.SelectedCard is { } card ? MaskCardNumber(card.CardNumber) : "**** **** **** ****";
 
-    // ─── Navigation Methods ────────────────────────────────────────────────────
-
     /// <summary>
     /// Navigates to the previous card if possible.
     /// </summary>
@@ -169,8 +168,6 @@ public class DashboardViewModel
         this.CurrentCardIndex++;
         return true;
     }
-
-    // ─── Formatting Helpers ────────────────────────────────────────────────────
 
     /// <summary>
     /// Returns a masked representation of a card number, showing only the last four digits.
@@ -212,69 +209,50 @@ public class DashboardViewModel
             $"Online Payments: {(card.IsOnlineEnabled ? "Enabled" : "Disabled")}";
     }
 
-    // ─── Data Loading ──────────────────────────────────────────────────────────
-
     /// <summary>
     /// Fetches dashboard data for the currently authenticated user.
     /// </summary>
     /// <param name="cancellationToken">A token that can cancel the load operation.</param>
     /// <returns>
-    /// <see langword="true"/> if the dashboard data was loaded successfully; otherwise,
-    /// <see langword="false"/>.
+    /// <see cref="Result.Success"/> if all dashboard data loaded successfully;
+    /// otherwise an <see cref="Error"/> describing what went wrong.
     /// </returns>
-    public async Task<bool> LoadDashboard(CancellationToken cancellationToken = default)
+    public async Task<ErrorOr<Success>> LoadDashboard(CancellationToken cancellationToken = default)
     {
         this.State.SetValue(DashboardState.Loading);
         this.ErrorMessage = string.Empty;
 
-        try
-        {
-            var response = await this.apiClient.GetAsync<DashboardResponse>(
-                "/api/dashboard/",
-                cancellationToken);
+        var result = await this.apiClient.GetAsync<DashboardResponse>(
+            "/api/dashboard/",
+            cancellationToken);
 
-            if (response?.CurrentUser == null)
+        return result.Match<ErrorOr<Success>>(
+            dashboard =>
             {
-                this.ErrorMessage = "The dashboard response was incomplete.";
+                this.CurrentUser = dashboard.CurrentUser;
+                this.Cards = dashboard.Cards;
+                this.RecentTransactions = dashboard.RecentTransactions;
+                this.RecentTransactionItems = this.BuildTransactionItems(this.RecentTransactions);
+                this.UnreadNotificationCount = dashboard.UnreadNotificationCount;
+
+                // Reset card navigation to first card after a fresh load.
+                this.currentCardIndex = 0;
+
+                this.State.SetValue(DashboardState.Success);
+                return Result.Success;
+            },
+            errors =>
+            {
+                this.ErrorMessage = errors.First().Type switch
+                {
+                    ErrorType.Unauthorized => "Your session expired. Please sign in again.",
+                    ErrorType.NotFound => "Dashboard data was not found for this account.",
+                    _ => "We couldn't load your dashboard. Please try again.",
+                };
+                this.logger.LogError("LoadDashboard failed: {Errors}", errors);
                 this.State.SetValue(DashboardState.Error);
-                return false;
-            }
-
-            this.CurrentUser = response.CurrentUser;
-            this.Cards = response.Cards;
-            this.RecentTransactions = response.RecentTransactions;
-            this.RecentTransactionItems = this.BuildTransactionItems(this.RecentTransactions);
-            this.UnreadNotificationCount = response.UnreadNotificationCount;
-
-            // Reset card navigation to first card after a fresh load.
-            this.currentCardIndex = 0;
-
-            this.State.SetValue(DashboardState.Success);
-            return true;
-        }
-        catch (OperationCanceledException)
-        {
-            return false;
-        }
-        catch (ApiException ex)
-        {
-            this.ErrorMessage = ex.StatusCode switch
-            {
-                HttpStatusCode.Unauthorized => "Your session expired. Please sign in again.",
-                HttpStatusCode.NotFound => "Dashboard data was not found for this account.",
-                _ => "We couldn't load your dashboard. Please try again.",
-            };
-            this.State.SetValue(DashboardState.Error);
-            this.LogError(nameof(this.LoadDashboard), ex);
-            return false;
-        }
-        catch (Exception ex)
-        {
-            this.ErrorMessage = "We couldn't load your dashboard. Please try again.";
-            this.State.SetValue(DashboardState.Error);
-            this.LogError(nameof(this.LoadDashboard), ex);
-            return false;
-        }
+                return errors.First();
+            });
     }
 
     private List<DashboardTransactionItem> BuildTransactionItems(IEnumerable<Transaction> transactions)
@@ -305,9 +283,6 @@ public class DashboardViewModel
 
         return items;
     }
-
-    private void LogError(string method, Exception ex) =>
-        Console.Error.WriteLine($"[DashboardViewModel] {method}: {ex.Message}");
 
     /// <summary>
     /// Gets or sets the recent transactions.

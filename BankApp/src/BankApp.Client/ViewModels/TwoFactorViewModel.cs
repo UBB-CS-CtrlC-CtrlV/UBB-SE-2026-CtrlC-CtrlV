@@ -10,6 +10,8 @@ using System.Threading.Tasks;
 using BankApp.Client.Utilities;
 using BankApp.Core.DTOs.Auth;
 using BankApp.Core.Enums;
+using ErrorOr;
+using Microsoft.Extensions.Logging;
 
 namespace BankApp.Client.ViewModels;
 
@@ -26,6 +28,7 @@ public class TwoFactorViewModel : INotifyPropertyChanged
 
     private readonly ApiClient apiClient;
     private readonly ICountdownTimer countdownTimer;
+    private readonly ILogger<TwoFactorViewModel> logger;
 
     private string otpCode = string.Empty;
     private int secondsRemaining;
@@ -42,10 +45,12 @@ public class TwoFactorViewModel : INotifyPropertyChanged
     /// An injectable timer abstraction. Pass a <see cref="DispatcherCountdownTimer"/>
     /// in production or a test double in unit tests.
     /// </param>
-    public TwoFactorViewModel(ApiClient apiClient, ICountdownTimer countdownTimer)
+    /// <param name="logger">Logger for OTP verification and resend errors.</param>
+    public TwoFactorViewModel(ApiClient apiClient, ICountdownTimer countdownTimer, ILogger<TwoFactorViewModel> logger)
     {
         this.apiClient = apiClient ?? throw new ArgumentNullException(nameof(apiClient));
         this.countdownTimer = countdownTimer ?? throw new ArgumentNullException(nameof(countdownTimer));
+        this.logger = logger ?? throw new ArgumentNullException(nameof(logger));
         this.State = new ObservableState<TwoFactorState>(TwoFactorState.Idle);
         this.countdownTimer.Tick += this.OnCountdownTick;
     }
@@ -173,6 +178,9 @@ public class TwoFactorViewModel : INotifyPropertyChanged
     /// <summary>
     /// Validates and submits the current <see cref="OtpCode"/> to the API.
     /// Length validation (6 digits) is enforced here — not in the view.
+    /// Sets <see cref="TwoFactorState.Success"/> on a valid code, or
+    /// <see cref="TwoFactorState.InvalidOTP"/> when the code is rejected or the
+    /// session has expired.
     /// </summary>
     /// <returns>A <see cref="Task"/> representing the asynchronous operation.</returns>
     public async Task VerifyOtp()
@@ -188,38 +196,44 @@ public class TwoFactorViewModel : INotifyPropertyChanged
         this.IsLoading = true;
         this.State.SetValue(TwoFactorState.Verifying);
 
-        try
+        int? userId = this.apiClient.CurrentUserId;
+        if (userId == null)
         {
-            int? userId = this.apiClient.CurrentUserId;
-            if (userId == null)
+            this.ApplyInvalidOtp();
+            return;
+        }
+
+        var request = new VerifyOTPRequest
+        {
+            UserId = userId.Value,
+            OTPCode = this.OtpCode,
+        };
+
+        var result = await this.apiClient.PostAsync<VerifyOTPRequest, LoginResponse>(
+            "/api/auth/verify-otp", request);
+
+        result.Switch(
+            response =>
             {
+                if (response.Success)
+                {
+                    this.apiClient.SetToken(response.Token!);
+                    this.IsLoading = false;
+                    this.State.SetValue(TwoFactorState.Success);
+                    return;
+                }
+
                 this.ApplyInvalidOtp();
-                return;
-            }
-
-            var request = new VerifyOTPRequest
+            },
+            errors =>
             {
-                UserId = userId.Value,
-                OTPCode = this.OtpCode,
-            };
+                if (errors[0].Type != ErrorType.Unauthorized)
+                {
+                    this.logger.LogError("VerifyOtp failed: {Errors}", errors);
+                }
 
-            LoginResponse? response = await this.apiClient.PostAsync<VerifyOTPRequest, LoginResponse>(
-                "/api/auth/verify-otp", request);
-
-            if (response != null && response.Success)
-            {
-                this.apiClient.SetToken(response.Token!);
-                this.IsLoading = false;
-                this.State.SetValue(TwoFactorState.Success);
-                return;
-            }
-
-            this.ApplyInvalidOtp();
-        }
-        catch (Exception)
-        {
-            this.ApplyInvalidOtp();
-        }
+                this.ApplyInvalidOtp();
+            });
     }
 
     /// <summary>
@@ -227,6 +241,7 @@ public class TwoFactorViewModel : INotifyPropertyChanged
     /// Does nothing if <see cref="CanResend"/> is <see langword="false"/> —
     /// the view may call this unconditionally and the guard here prevents
     /// duplicate or premature API calls.
+    /// Failures are logged but do not change the view state; resend is best-effort.
     /// </summary>
     /// <returns>A <see cref="Task"/> representing the asynchronous operation.</returns>
     public async Task ResendOtp()
@@ -241,20 +256,18 @@ public class TwoFactorViewModel : INotifyPropertyChanged
         this.countdownTimer.Start();
         this.State.SetValue(TwoFactorState.Idle);
 
-        try
+        int? userId = this.apiClient.CurrentUserId;
+        if (userId == null)
         {
-            int? userId = this.apiClient.CurrentUserId;
-            if (userId == null)
-            {
-                return;
-            }
+            return;
+        }
 
-            await this.apiClient.PostAsync<object?, object>(
-                $"/api/auth/resend-otp?userId={userId.Value}", null);
-        }
-        catch (Exception)
-        {
-        }
+        var result = await this.apiClient.PostAsync<object?, object>(
+            $"/api/auth/resend-otp?userId={userId.Value}", null);
+
+        result.Switch(
+            _ => { },
+            errors => this.logger.LogError("ResendOtp failed: {Errors}", errors));
     }
 
     // ─── Internal ─────────────────────────────────────────────────────────────

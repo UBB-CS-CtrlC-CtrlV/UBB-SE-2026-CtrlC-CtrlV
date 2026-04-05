@@ -8,6 +8,7 @@ using BankApp.Client.Utilities;
 using BankApp.Core.DTOs.Auth;
 using BankApp.Core.Enums;
 using Duende.IdentityModel.OidcClient;
+using ErrorOr;
 using Microsoft.Extensions.Configuration;
 using Microsoft.Extensions.Logging;
 
@@ -67,48 +68,48 @@ public class LoginViewModel
     {
         this.State.SetValue(LoginState.Loading);
 
-        try
+        var request = new Core.DTOs.Auth.LoginRequest
         {
-            var request = new Core.DTOs.Auth.LoginRequest
-            {
-                Email = email,
-                Password = password,
-            };
+            Email = email,
+            Password = password,
+        };
 
-            var response = await this.apiClient.PostAsync<Core.DTOs.Auth.LoginRequest, LoginResponse>(
-                "/api/auth/login",
-                request);
+        var result = await this.apiClient.PostAsync<Core.DTOs.Auth.LoginRequest, LoginResponse>(
+            "/api/auth/login",
+            request);
 
-            if (response == null)
+        result.Switch(
+            response =>
             {
-                this.State.SetValue(LoginState.Error);
-                return;
-            }
+                if (!response.Success)
+                {
+                    this.HandleLoginError(response);
+                    return;
+                }
 
-            if (!response.Success)
-            {
-                this.HandleLoginError(response);
-                return;
-            }
+                if (response.Requires2FA)
+                {
+                    this.apiClient.CurrentUserId = response.UserId!.Value;
+                    this.State.SetValue(LoginState.Require2Fa);
+                    return;
+                }
 
-            if (response.Requires2FA)
-            {
+                this.apiClient.SetToken(response.Token!);
                 this.apiClient.CurrentUserId = response.UserId!.Value;
-
-                this.State.SetValue(LoginState.Require2Fa);
-                return;
-            }
-
-            // Login successful
-            // Store the token and userId for future requests
-            this.apiClient.SetToken(response.Token!);
-            this.apiClient.CurrentUserId = response.UserId!.Value;
-            this.State.SetValue(LoginState.Success);
-        }
-        catch (Exception)
-        {
-            this.State.SetValue(LoginState.Error);
-        }
+                this.State.SetValue(LoginState.Success);
+            },
+            errors =>
+            {
+                if (errors[0].Type == ErrorType.Unauthorized)
+                {
+                    this.State.SetValue(LoginState.InvalidCredentials);
+                }
+                else
+                {
+                    this.logger.LogError("Login failed: {Errors}", errors);
+                    this.State.SetValue(LoginState.Error);
+                }
+            });
     }
 
     /// <summary>
@@ -165,29 +166,39 @@ public class LoginViewModel
                 ProviderToken = loginResult.IdentityToken,
             };
 
-            var response = await this.apiClient.PostAsync<OAuthLoginRequest, LoginResponse>(
+            var result = await this.apiClient.PostAsync<OAuthLoginRequest, LoginResponse>(
                 "/api/auth/oauth-login",
                 apiRequest);
 
-            if (response is not { Success: true })
-            {
-                this.State.SetValue(LoginState.Error);
-                return;
-            }
+            result.Switch(
+                response =>
+                {
+                    if (!response.Success)
+                    {
+                        this.State.SetValue(LoginState.Error);
+                        return;
+                    }
 
-            if (response.Requires2FA)
-            {
-                this.apiClient.CurrentUserId = response.UserId!.Value;
-                this.State.SetValue(LoginState.Require2Fa);
-                return;
-            }
+                    if (response.Requires2FA)
+                    {
+                        this.apiClient.CurrentUserId = response.UserId!.Value;
+                        this.State.SetValue(LoginState.Require2Fa);
+                        return;
+                    }
 
-            this.apiClient.SetToken(response.Token!);
-            this.apiClient.CurrentUserId = response.UserId!.Value;
-            this.State.SetValue(LoginState.Success);
+                    this.apiClient.SetToken(response.Token!);
+                    this.apiClient.CurrentUserId = response.UserId!.Value;
+                    this.State.SetValue(LoginState.Success);
+                },
+                errors =>
+                {
+                    this.logger.LogError("OAuthLogin failed: {Errors}", errors);
+                    this.State.SetValue(LoginState.Error);
+                });
         }
-        catch (Exception)
+        catch (Exception ex)
         {
+            this.logger.LogError(ex, "OAuthLogin OIDC flow failed.");
             this.State.SetValue(LoginState.Error);
         }
     }
