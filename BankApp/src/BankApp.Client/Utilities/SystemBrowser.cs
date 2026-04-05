@@ -1,4 +1,4 @@
-﻿// <copyright file="SystemBrowser.cs" company="CtrlC CtrlV">
+// <copyright file="SystemBrowser.cs" company="CtrlC CtrlV">
 // Copyright (c) CtrlC CtrlV. All rights reserved.
 // </copyright>
 
@@ -10,72 +10,71 @@ using System.Threading;
 using System.Threading.Tasks;
 using Duende.IdentityModel.OidcClient.Browser;
 
-namespace BankApp.Client.Utilities
+namespace BankApp.Client.Utilities;
+
+/// <summary>
+/// Implementation used to invoke the system default browser.
+/// </summary>
+public class SystemBrowser : IBrowser
 {
+    private readonly string? path;
+    private readonly int port;
+
     /// <summary>
-    /// Implementation used to invoke the system default browser.
+    /// Initializes a new instance of the <see cref="SystemBrowser"/> class.
     /// </summary>
-    public class SystemBrowser : IBrowser
+    /// <param name="port">The port number.</param>
+    /// <param name="path">The path.</param>
+    public SystemBrowser(int? port = null, string? path = null)
     {
-        private readonly string? path;
-        private readonly int port;
+        this.path = path;
+        this.port = port ?? this.GetRandomUnusedPort();
+    }
 
-        /// <summary>
-        /// Initializes a new instance of the <see cref="SystemBrowser"/> class.
-        /// </summary>
-        /// <param name="port">The port number.</param>
-        /// <param name="path">The path.</param>
-        public SystemBrowser(int? port = null, string? path = null)
+    /// <inheritdoc/>
+    public async Task<BrowserResult> InvokeAsync(BrowserOptions options, CancellationToken cancellationToken = default)
+    {
+        using var listener = new LoopbackHttpListener(this.port, this.path);
+
+        OpenBrowser(options.StartUrl);
+
+        try
         {
-            this.path = path;
-            this.port = port ?? this.GetRandomUnusedPort();
-        }
+            var result = await listener.WaitForCallbackAsync();
 
-        /// <inheritdoc/>
-        public async Task<BrowserResult> InvokeAsync(BrowserOptions options, CancellationToken cancellationToken = default)
-        {
-            using var listener = new LoopbackHttpListener(this.port, this.path);
-
-            OpenBrowser(options.StartUrl);
-
-            try
+            if (string.IsNullOrWhiteSpace(result))
             {
-                var result = await listener.WaitForCallbackAsync();
+                return new BrowserResult { ResultType = BrowserResultType.UnknownError, Error = "Empty response." };
+            }
 
-                if (string.IsNullOrWhiteSpace(result))
-                {
-                    return new BrowserResult { ResultType = BrowserResultType.UnknownError, Error = "Empty response." };
-                }
-
-                return new BrowserResult { Response = result, ResultType = BrowserResultType.Success };
-            }
-            catch (TaskCanceledException ex)
-            {
-                return new BrowserResult { ResultType = BrowserResultType.Timeout, Error = ex.Message };
-            }
-            catch (Exception ex)
-            {
-                return new BrowserResult { ResultType = BrowserResultType.UnknownError, Error = ex.Message };
-            }
+            return new BrowserResult { Response = result, ResultType = BrowserResultType.Success };
         }
-
-        private static void OpenBrowser(string url)
+        catch (TaskCanceledException ex)
         {
-            Process.Start(
-                new ProcessStartInfo
-                {
-                    FileName = url,
-                    UseShellExecute = true,
-                });
+            return new BrowserResult { ResultType = BrowserResultType.Timeout, Error = ex.Message };
         }
-
-        private int GetRandomUnusedPort()
+        catch (Exception ex)
         {
-            var listener = new TcpListener(IPAddress.Loopback, 0);
-            listener.Start();
-            var port = ((IPEndPoint)listener.LocalEndpoint).Port;
-            listener.Stop();
-            return port;
+            return new BrowserResult { ResultType = BrowserResultType.UnknownError, Error = ex.Message };
         }
+    }
+
+    private static void OpenBrowser(string url)
+    {
+        Process.Start(
+            new ProcessStartInfo
+            {
+                FileName = url,
+                UseShellExecute = true,
+            });
+    }
+
+    private int GetRandomUnusedPort()
+    {
+        var listener = new TcpListener(IPAddress.Loopback, 0);
+        listener.Start();
+        var port = ((IPEndPoint)listener.LocalEndpoint).Port;
+        listener.Stop();
+        return port;
     }
 }
