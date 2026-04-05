@@ -3,6 +3,7 @@
 // </copyright>
 
 using System;
+using System.Threading.Tasks;
 using BankApp.Client.Master;
 using BankApp.Client.Utilities;
 using BankApp.Client.ViewModels;
@@ -14,14 +15,16 @@ namespace BankApp.Client.Views;
 
 /// <summary>
 /// Displays the OTP verification step of the login flow.
+/// This file contains only UI-layer concerns: navigation, dialog management, and
+/// the Visibility conversion helper used by compiled <c>{x:Bind}</c> expressions.
+/// All business logic (timer countdown, OTP validation, state transitions) lives in
+/// <see cref="TwoFactorViewModel"/>.
 /// </summary>
 public sealed partial class TwoFactorView : Page, IStateObserver<TwoFactorState>
 {
-    private readonly DispatcherTimer countdownTimer;
     private readonly TwoFactorViewModel viewModel;
     private readonly IAppNavigationService navigationService;
     private readonly ApiClient apiClient;
-    private int secondsRemaining = 30;
 
     /// <summary>
     /// Initializes a new instance of the <see cref="TwoFactorView"/> class.
@@ -37,119 +40,74 @@ public sealed partial class TwoFactorView : Page, IStateObserver<TwoFactorState>
         this.navigationService = navigationService;
         this.apiClient = apiClient;
         this.viewModel.State.AddObserver(this);
-
-        this.countdownTimer = new DispatcherTimer
-        {
-            Interval = TimeSpan.FromSeconds(1),
-        };
-        this.countdownTimer.Tick += this.CountdownTimerTick;
     }
+
+    /// <summary>
+    /// Gets the view model. Exposed as a public property so that compiled
+    /// <c>{x:Bind ViewModel.Property}</c> expressions in the XAML can resolve it.
+    /// </summary>
+    public TwoFactorViewModel ViewModel => this.viewModel;
 
     /// <inheritdoc/>
     public void Update(TwoFactorState state)
     {
-        this.OnStateChanged(state);
+        this.DispatcherQueue.TryEnqueue(() => this.OnStateChanged(state));
     }
 
+    // ─── Visibility helper for {x:Bind} function expressions ──────────────────
+    // Used in XAML as: Visibility="{x:Bind BoolToVisibility(ViewModel.SomeBool), Mode=OneWay}"
+    // Keeps WinUI-specific Visibility type out of the ViewModel.
+    private Visibility BoolToVisibility(bool value) =>
+        value ? Visibility.Visible : Visibility.Collapsed;
+
+    // ─── State handling ────────────────────────────────────────────────────────
+
+    /// <summary>
+    /// Reacts to state transitions from the ViewModel.
+    /// Most visual state is handled automatically through {x:Bind} — this method
+    /// only handles cases that require imperative navigation calls.
+    /// </summary>
     private void OnStateChanged(TwoFactorState state)
     {
-        this.DispatcherQueue.TryEnqueue(() =>
+        switch (state)
         {
-            this.HideLoading();
-            this.ErrorInfoBar.IsOpen = false;
+            case TwoFactorState.Success:
+                this.navigationService.NavigateTo<NavView>();
+                break;
 
-            switch (state)
-            {
-                case TwoFactorState.Idle:
-                    break;
+            case TwoFactorState.Idle:
+            case TwoFactorState.Verifying:
+            case TwoFactorState.InvalidOTP:
+            case TwoFactorState.Expired:
+            case TwoFactorState.MaxAttemptsReached:
+                // Handled through bindings: HasError, ErrorMessage, IsInputEnabled.
+                break;
 
-                case TwoFactorState.Verifying:
-                    this.ShowLoading();
-                    break;
-
-                case TwoFactorState.Success:
-                    this.navigationService.NavigateTo<NavView>();
-                    break;
-
-                case TwoFactorState.InvalidOTP:
-                    this.ShowError("The code you entered is incorrect.");
-                    break;
-
-                case TwoFactorState.Expired:
-                    this.ShowError("This code has expired. Please request a new one.");
-                    break;
-
-                case TwoFactorState.MaxAttemptsReached:
-                    this.ShowError("Maximum attempts reached. Your account has been locked.");
-                    this.VerifyButton.IsEnabled = false;
-                    this.OtpBox.IsEnabled = false;
-                    break;
-
-                default:
-                    throw new ArgumentOutOfRangeException(nameof(state), state, null);
-            }
-        });
+            default:
+                throw new ArgumentOutOfRangeException(nameof(state), state, null);
+        }
     }
 
-    private void ShowError(string msg)
-    {
-        this.ErrorInfoBar.Message = msg;
-        this.ErrorInfoBar.IsOpen = true;
-    }
-
-    private void ShowLoading()
-    {
-        this.LoadingRing.IsActive = true;
-        this.LoadingRing.Visibility = Visibility.Visible;
-        this.VerifyButton.IsEnabled = false;
-        this.OtpBox.IsEnabled = false;
-    }
-
-    private void HideLoading()
-    {
-        this.LoadingRing.IsActive = false;
-        this.LoadingRing.Visibility = Visibility.Collapsed;
-        this.VerifyButton.IsEnabled = true;
-        this.OtpBox.IsEnabled = true;
-    }
-
+    // ─── Event handlers ────────────────────────────────────────────────────────
     private async void VerifyButton_Click(object sender, RoutedEventArgs e)
     {
-        string otp = this.OtpBox.Text.Trim();
-
-        if (string.IsNullOrWhiteSpace(otp) || otp.Length != 6)
-        {
-            this.ShowError("Please enter a valid 6-digit code.");
-            return;
-        }
-
-        await this.viewModel.VerifyOtp(otp);
+        // Validation (6-digit length check) is enforced inside the ViewModel.
+        await this.viewModel.VerifyOtp();
     }
 
     private async void ResendButton_Click(object sender, RoutedEventArgs e)
     {
-        this.ResendButton.IsEnabled = false;
-        this.secondsRemaining = 30;
-        this.CountdownText.Text = $"Available in {this.secondsRemaining}s";
-        this.CountdownText.Visibility = Visibility.Visible;
-
-        this.countdownTimer.Start();
+        // Guard against premature resend is enforced inside the ViewModel.
         await this.viewModel.ResendOtp();
     }
 
-    private void CountdownTimerTick(object? sender, object e)
+    /// <summary>
+    /// Propagates the typed text to the ViewModel so that <see cref="TwoFactorViewModel.OtpCode"/>
+    /// is always in sync without requiring a Two-Way binding.
+    /// </summary>
+    private void OtpBox_TextChanged(object sender, TextChangedEventArgs e)
     {
-        this.secondsRemaining--;
-
-        if (this.secondsRemaining <= 0)
-        {
-            this.countdownTimer.Stop();
-            this.ResendButton.IsEnabled = true;
-            this.CountdownText.Visibility = Visibility.Collapsed;
-            return;
-        }
-
-        this.CountdownText.Text = $"Available in {this.secondsRemaining}s";
+        this.viewModel.OtpCode = this.OtpBox.Text;
     }
 
     private void BackToLoginButton_Click(object sender, RoutedEventArgs e)
