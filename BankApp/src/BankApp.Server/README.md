@@ -14,8 +14,10 @@ python scripts/server/setup-dev-secrets.py
 ```
 
 Requires Python 3.6+ and the .NET SDK. No third-party packages needed.
-The script generates a cryptographically random JWT secret automatically and
-prompts you for the SMTP credentials (which must be real Gmail values).
+The script prompts for the database connection string (defaults to localhost with
+Windows authentication), generates a cryptographically random JWT secret
+automatically, and prompts you for the SMTP credentials (which must be real Gmail
+values).
 
 To verify your secrets are set afterwards:
 
@@ -29,8 +31,17 @@ on your machine and are never committed to the repository.
 > **Gmail App Password:** use a Gmail App Password, not your account password.
 > Generate one at Google Account > Security > 2-Step Verification > App passwords.
 
-The database connection string defaults to localhost in `appsettings.Development.json`
-and requires no additional setup for local development (uses Windows authentication).
+### Configuration files
+
+| File | Committed | Purpose |
+|---|---|---|
+| `appsettings.json` | Yes | Non-secret defaults (log levels, SMTP host/port) |
+| `appsettings.Development.json` | Yes | Development log-level overrides |
+| `appsettings.Production.json` | Yes | Production log-level overrides |
+
+Secrets and connection strings are **never** in source-controlled files. In
+development they come from User Secrets; in CI/production they come from
+environment variables.
 
 ## CI / Production configuration
 
@@ -39,11 +50,11 @@ underscore) as the separator instead of `:`.
 
 | Environment variable                  | Description                        |
 |---------------------------------------|------------------------------------|
+| `ConnectionStrings__DefaultConnection`| Full ADO.NET connection string     |
 | `Jwt__Secret`                         | JWT signing key (min 32 chars)     |
 | `Email__SmtpUser`                     | SMTP username                      |
 | `Email__SmtpPass`                     | SMTP password / app password       |
 | `Email__FromAddress`                  | Sender address for outgoing emails |
-| `ConnectionStrings__DefaultConnection`| Full ADO.NET connection string     |
 
 `Email__SmtpHost` and `Email__SmtpPort` default to `smtp.gmail.com:587` and only
 need to be overridden if using a different mail provider.

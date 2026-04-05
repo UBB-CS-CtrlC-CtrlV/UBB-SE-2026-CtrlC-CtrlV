@@ -33,6 +33,18 @@ def main() -> None:
     print("BankApp.Server — dev secrets setup")
     print("------------------------------------")
 
+    # --- Connection string ---
+    default_conn = (
+        "Server=localhost;Database=BankAppDb;"
+        "Trusted_Connection=True;TrustServerCertificate=True;"
+    )
+    print()
+    print(f"Default connection string: {default_conn}")
+    conn = input("    ConnectionStrings:DefaultConnection (press Enter to accept default): ").strip()
+    if not conn:
+        conn = default_conn
+    set_secret("ConnectionStrings:DefaultConnection", conn)
+
     # --- JWT Secret (auto-generated) ---
     # 48 random bytes → 64-character base64 string.
     jwt_secret = base64.b64encode(secrets.token_bytes(48)).decode()

@@ -9,15 +9,16 @@ before you launch the client. See `src/BankApp.Server/README.md` for server setu
 
 ## Local development setup
 
-Sensitive configuration (OAuth credentials) is not stored in source control. Run the
-setup script once from the repo root after cloning:
+Sensitive and environment-specific configuration is not stored in source control.
+Run the setup script once from the repo root after cloning:
 
 ```bash
 python scripts/client/setup-dev-config.py
 ```
 
-The script creates `src/BankApp.Client/appsettings.Local.json` with your OAuth
-credentials. This file is gitignored and will never be committed.
+The script creates `src/BankApp.Client/appsettings.Local.json` with the API base
+URL, OAuth redirect URI, and your OAuth credentials. This file is gitignored and
+will never be committed.
 
 OAuth credentials must be obtained from the Google Cloud Console:
 > console.cloud.google.com > APIs & Services > Credentials > OAuth 2.0 Client IDs
@@ -28,8 +29,8 @@ Re-running the script is safe — the file is fully overwritten each time.
 
 | File | Committed | Purpose |
 |---|---|---|
-| `appsettings.json` | Yes | Safe defaults and placeholders |
-| `appsettings.Local.json` | No | Local overrides — secrets go here |
+| `appsettings.json` | Yes | Non-secret defaults only (OAuth authority) |
+| `appsettings.Local.json` | No | Local overrides — secrets and URLs go here |
 
 Config is loaded in this order, each layer overriding the previous:
 `appsettings.json` → `appsettings.Local.json` → Environment variables
@@ -39,13 +40,13 @@ as the key separator (e.g. `OAuth__Google__ClientId`).
 
 ### Configuration reference
 
-| Key | Default | Secret |
-|---|---|---|
-| `ApiBaseUrl` | `http://localhost:5024` | No |
-| `OAuth:Google:Authority` | `https://accounts.google.com` | No |
-| `OAuth:Google:RedirectUri` | `http://127.0.0.1:7890/` | No |
-| `OAuth:Google:ClientId` | — | Yes — set via script |
-| `OAuth:Google:ClientSecret` | — | Yes — set via script |
+| Key | Default | Secret | Source |
+|---|---|---|---|
+| `ApiBaseUrl` | — | No | `appsettings.Local.json` or env var |
+| `OAuth:Google:Authority` | `https://accounts.google.com` | No | `appsettings.json` |
+| `OAuth:Google:RedirectUri` | — | No | `appsettings.Local.json` or env var |
+| `OAuth:Google:ClientId` | — | Yes | `appsettings.Local.json` or env var |
+| `OAuth:Google:ClientSecret` | — | Yes | `appsettings.Local.json` or env var |
 
 ## Architecture
 
