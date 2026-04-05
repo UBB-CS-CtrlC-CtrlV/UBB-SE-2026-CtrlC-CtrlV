@@ -51,9 +51,11 @@ public sealed partial class LoginView : IStateObserver<LoginState>
             this.HideLoading();
             this.ErrorInfoBar.IsOpen = false;
 
+
             switch (state)
             {
                 case LoginState.Idle:
+                    this.EnableForm();
                     break;
 
                 case LoginState.Loading:
@@ -61,31 +63,32 @@ public sealed partial class LoginView : IStateObserver<LoginState>
                     break;
 
                 case LoginState.Success:
+                    this.EnableForm();
                     this.navigationService.NavigateTo<NavView>();
                     break;
 
                 case LoginState.Require2Fa:
+                    this.EnableForm();
                     this.navigationService.NavigateTo<TwoFactorView>();
                     break;
 
                 case LoginState.InvalidCredentials:
+                    this.EnableForm();
                     this.ShowError("Invalid email or password.");
                     break;
 
                 case LoginState.AccountLocked:
+                    this.EnableForm();
                     this.ShowError("Account is locked. Try again later.");
                     break;
 
                 case LoginState.Error:
+                    this.EnableForm();
                     this.ShowError("Something went wrong. Please try again.");
                     break;
 
                 case LoginState.ServerNotConfigured:
-                    // TODO: consider making HideLoading either responsive to the ServerStatus or create a helper function that is so that this kind of state tricks are not needed
-                    // HideLoading() re-enables buttons at the top of this method,
-                    // so explicitly disable them again here to lock the form permanently.
-                    this.SignInButton.IsEnabled = false;
-                    this.GoogleLoginButton.IsEnabled = false;
+                    // Form stays disabled — misconfiguration cannot be resolved at runtime.
                     this.ShowError("The app is not properly set up. Please contact your administrator.");
                     break;
 
@@ -101,18 +104,24 @@ public sealed partial class LoginView : IStateObserver<LoginState>
         this.ErrorInfoBar.IsOpen = true;
     }
 
+    private void EnableForm()
+    {
+        this.SignInButton.IsEnabled = true;
+        this.GoogleLoginButton.IsEnabled = true;
+    }
+
     private void ShowLoading()
     {
         this.LoadingRing.IsActive = true;
         this.LoadingRing.Visibility = Visibility.Visible;
         this.SignInButton.IsEnabled = false;
+        this.GoogleLoginButton.IsEnabled = false;
     }
 
     private void HideLoading()
     {
         this.LoadingRing.IsActive = false;
         this.LoadingRing.Visibility = Visibility.Collapsed;
-        this.SignInButton.IsEnabled = true;
     }
 
     private async void SignInButton_Click(object sender, RoutedEventArgs e)
