@@ -5,6 +5,7 @@
 using System;
 using BankApp.Client.DependencyInjection;
 using BankApp.Client.Master;
+using Microsoft.Extensions.Configuration;
 using Microsoft.Extensions.DependencyInjection;
 using Microsoft.UI.Xaml;
 
@@ -30,8 +31,19 @@ public partial class App
     /// </summary>
     public App()
     {
+        var configuration = new ConfigurationBuilder()
+            .SetBasePath(AppContext.BaseDirectory)
+            .AddJsonFile("appsettings.json", optional: false)
+            // appsettings.Local.json is `.gitignored`
+            // and only exists in dev environments.
+            // It overrides appsettings.json locally.
+            .AddJsonFile("appsettings.Local.json", optional: true)
+            // Environment variables are the final override layer for CI/Prod builds.
+            .AddEnvironmentVariables()
+            .Build();
+
         var serviceCollection = new ServiceCollection();
-        serviceCollection.AddClientServices();
+        serviceCollection.AddClientServices(configuration);
         this.Services = serviceCollection.BuildServiceProvider();
         this.InitializeComponent();
     }

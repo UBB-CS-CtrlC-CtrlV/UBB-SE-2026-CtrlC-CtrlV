@@ -7,6 +7,7 @@ using System.Net.Http;
 using System.Net.Http.Json;
 using System.Threading;
 using System.Threading.Tasks;
+using Microsoft.Extensions.Configuration;
 
 namespace BankApp.Client.Utilities;
 
@@ -21,9 +22,14 @@ public class ApiClient
     /// <summary>
     /// Initializes a new instance of the <see cref="ApiClient"/> class.
     /// </summary>
-    /// <param name="baseUrl">The API base URL.</param>
-    public ApiClient(string baseUrl = "http://localhost:5024")
+    /// <param name="configuration">
+    /// The application configuration. Reads <c>ApiBaseUrl</c> to set the HTTP base address.
+    /// Falls back to <c>http://localhost:5024</c> if the key is absent so that the default
+    /// in <c>appsettings.json</c> is always the single source of truth for that default.
+    /// </param>
+    public ApiClient(IConfiguration configuration)
     {
+        var baseUrl = configuration["ApiBaseUrl"] ?? "http://localhost:5024";
         this.httpClient = new HttpClient
         {
             BaseAddress = new Uri(baseUrl),

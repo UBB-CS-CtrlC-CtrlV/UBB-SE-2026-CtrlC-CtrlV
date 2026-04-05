@@ -8,6 +8,7 @@ using BankApp.Client.Utilities;
 using BankApp.Core.DTOs.Auth;
 using BankApp.Core.Enums;
 using Duende.IdentityModel.OidcClient;
+using Microsoft.Extensions.Configuration;
 
 namespace BankApp.Client.ViewModels;
 
@@ -17,15 +18,22 @@ namespace BankApp.Client.ViewModels;
 public class LoginViewModel
 {
     private readonly ApiClient apiClient;
+    private readonly IConfiguration configuration;
 
     /// <summary>
     /// Initializes a new instance of the <see cref="LoginViewModel"/> class.
     /// </summary>
     /// <param name="apiClient">The API client used for authentication requests.</param>
-    public LoginViewModel(ApiClient apiClient)
+    /// <param name="configuration">
+    /// The application configuration. Reads <c>OAuth:Google:Authority</c>,
+    /// <c>OAuth:Google:ClientId</c>, <c>OAuth:Google:ClientSecret</c>, and
+    /// <c>OAuth:Google:RedirectUri</c> when performing an OAuth login.
+    /// </param>
+    public LoginViewModel(ApiClient apiClient, IConfiguration configuration)
     {
         this.State = new ObservableState<LoginState>(LoginState.Idle);
         this.apiClient = apiClient ?? throw new ArgumentNullException(nameof(apiClient));
+        this.configuration = configuration ?? throw new ArgumentNullException(nameof(configuration));
     }
 
     /// <summary>
@@ -104,14 +112,23 @@ public class LoginViewModel
                 return;
             }
 
+            var authority = this.configuration["OAuth:Google:Authority"]
+                ?? throw new InvalidOperationException("OAuth:Google:Authority is missing from configuration.");
+            var clientId = this.configuration["OAuth:Google:ClientId"]
+                ?? throw new InvalidOperationException("OAuth:Google:ClientId is missing from configuration.");
+            var clientSecret = this.configuration["OAuth:Google:ClientSecret"]
+                ?? throw new InvalidOperationException("OAuth:Google:ClientSecret is missing from configuration.");
+            var redirectUri = this.configuration["OAuth:Google:RedirectUri"]
+                ?? throw new InvalidOperationException("OAuth:Google:RedirectUri is missing from configuration.");
+
             var options = new OidcClientOptions
             {
-                Authority = "https://accounts.google.com",
-                ClientId = OAuthSecretsTemplate.ClientId,
-                ClientSecret = OAuthSecretsTemplate.ClientSecret,
+                Authority = authority,
+                ClientId = clientId,
+                ClientSecret = clientSecret,
                 Scope = "openid email profile",
-                RedirectUri = "http://127.0.0.1:7890/",
-                Browser = new SystemBrowser(7890),
+                RedirectUri = redirectUri,
+                Browser = new SystemBrowser(new Uri(redirectUri).Port),
             };
 
             options.Policy.Discovery.ValidateEndpoints = false;
