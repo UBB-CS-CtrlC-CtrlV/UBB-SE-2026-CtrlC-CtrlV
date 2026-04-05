@@ -189,7 +189,7 @@ public class TwoFactorViewModel : INotifyPropertyChanged
 
         if (string.IsNullOrWhiteSpace(this.OtpCode) || this.OtpCode.Length != OtpRequiredLength)
         {
-            this.SetError("Please enter a valid 6-digit code.");
+            this.SetError(UserMessages.TwoFactor.InvalidCodeFormat);
             return;
         }
 
@@ -287,7 +287,7 @@ public class TwoFactorViewModel : INotifyPropertyChanged
     private void ApplyInvalidOtp()
     {
         this.IsLoading = false;
-        this.SetError("The code you entered is incorrect.");
+        this.SetError(UserMessages.TwoFactor.IncorrectCode);
         this.State.SetValue(TwoFactorState.InvalidOTP);
     }
 

@@ -7,169 +7,157 @@ using System.Linq;
 using System.Threading.Tasks;
 using BankApp.Core.DTOs.Auth;
 using BankApp.Core.Enums;
+using ErrorOr;
 
-namespace BankApp.Client.Utilities
+namespace BankApp.Client.Utilities;
+
+/// <summary>
+/// Implements <see cref="IPasswordRecoveryManager"/> by delegating network calls
+/// to <see cref="ApiClient"/> and managing resend-throttling via <see cref="ISystemClock"/>.
+/// </summary>
+public class PasswordRecoveryManager : IPasswordRecoveryManager
 {
+    private const int ResendCooldownSeconds = 60;
+
+    private readonly ApiClient apiClient;
+    private readonly ISystemClock clock;
+
+    private DateTime? lastCodeRequestedAt;
+
     /// <summary>
-    /// Implements <see cref="IPasswordRecoveryManager"/> by delegating network calls
-    /// to <see cref="ApiClient"/> and managing resend-throttling via <see cref="ISystemClock"/>.
+    /// Initializes a new instance of the <see cref="PasswordRecoveryManager"/> class.
     /// </summary>
-    public class PasswordRecoveryManager : IPasswordRecoveryManager
+    /// <param name="apiClient">The HTTP client used to reach the auth API.</param>
+    /// <param name="clock">The system clock abstraction used for throttle calculations.</param>
+    /// <exception cref="ArgumentNullException">Thrown when any parameter is null.</exception>
+    public PasswordRecoveryManager(ApiClient apiClient, ISystemClock clock)
     {
-        private const int ResendCooldownSeconds = 60;
+        this.apiClient = apiClient ?? throw new ArgumentNullException(nameof(apiClient));
+        this.clock = clock ?? throw new ArgumentNullException(nameof(clock));
+    }
 
-        private readonly ApiClient apiClient;
-        private readonly ISystemClock clock;
-
-        private DateTime? lastCodeRequestedAt;
-
-        /// <summary>
-        /// Initializes a new instance of the <see cref="PasswordRecoveryManager"/> class.
-        /// </summary>
-        /// <param name="apiClient">The HTTP client used to reach the auth API.</param>
-        /// <param name="clock">The system clock abstraction used for throttle calculations.</param>
-        /// <exception cref="ArgumentNullException">Thrown when any parameter is null.</exception>
-        public PasswordRecoveryManager(ApiClient apiClient, ISystemClock clock)
+    /// <inheritdoc/>
+    public bool CanResendCode
+    {
+        get
         {
-            this.apiClient = apiClient ?? throw new ArgumentNullException(nameof(apiClient));
-            this.clock = clock ?? throw new ArgumentNullException(nameof(clock));
+            if (this.lastCodeRequestedAt is null)
+            {
+                return true;
+            }
+
+            return (this.clock.UtcNow - this.lastCodeRequestedAt.Value).TotalSeconds >= ResendCooldownSeconds;
+        }
+    }
+
+    /// <inheritdoc/>
+    public int SecondsUntilResendAllowed
+    {
+        get
+        {
+            if (this.lastCodeRequestedAt is null)
+            {
+                return 0;
+            }
+
+            var elapsed = (this.clock.UtcNow - this.lastCodeRequestedAt.Value).TotalSeconds;
+            var remaining = ResendCooldownSeconds - elapsed;
+            return remaining > 0 ? (int)Math.Ceiling(remaining) : 0;
+        }
+    }
+
+    /// <inheritdoc/>
+    public async Task<ForgotPasswordState> RequestCodeAsync(string email)
+    {
+        if (string.IsNullOrWhiteSpace(email))
+        {
+            return ForgotPasswordState.Error;
         }
 
-        /// <inheritdoc/>
-        public bool CanResendCode
+        if (!this.CanResendCode)
         {
-            get
-            {
-                if (this.lastCodeRequestedAt is null)
-                {
-                    return true;
-                }
-
-                return (this.clock.UtcNow - this.lastCodeRequestedAt.Value).TotalSeconds >= ResendCooldownSeconds;
-            }
+            return ForgotPasswordState.EmailSent;
         }
 
-        /// <inheritdoc/>
-        public int SecondsUntilResendAllowed
-        {
-            get
+        var request = new ForgotPasswordRequest { Email = email };
+        var result = await this.apiClient.PostAsync<ForgotPasswordRequest, ApiResponse>(
+            "/api/auth/forgot-password", request);
+
+        return result.Match(
+            response =>
             {
-                if (this.lastCodeRequestedAt is null)
-                {
-                    return 0;
-                }
-
-                var elapsed = (this.clock.UtcNow - this.lastCodeRequestedAt.Value).TotalSeconds;
-                var remaining = ResendCooldownSeconds - elapsed;
-                return remaining > 0 ? (int)Math.Ceiling(remaining) : 0;
-            }
-        }
-
-        /// <inheritdoc/>
-        public async Task<ForgotPasswordState> RequestCodeAsync(string email)
-        {
-            if (string.IsNullOrWhiteSpace(email))
-            {
-                return ForgotPasswordState.Error;
-            }
-
-            if (!this.CanResendCode)
-            {
-                return ForgotPasswordState.EmailSent;
-            }
-
-            try
-            {
-                var request = new ForgotPasswordRequest { Email = email };
-                var response = await this.apiClient.PostAsync<ForgotPasswordRequest, ApiResponse>(
-                    "/api/auth/forgot-password", request);
-
-                if (response is { Error: null })
+                if (response.Error == null)
                 {
                     this.lastCodeRequestedAt = this.clock.UtcNow;
                     return ForgotPasswordState.EmailSent;
                 }
 
                 return ForgotPasswordState.Error;
-            }
-            catch (Exception)
-            {
-                return ForgotPasswordState.Error;
-            }
-        }
+            },
+            _ => ForgotPasswordState.Error);
+    }
 
-        /// <inheritdoc/>
-        public async Task<ForgotPasswordState> VerifyTokenAsync(string token)
+    /// <inheritdoc/>
+    public async Task<ForgotPasswordState> VerifyTokenAsync(string token)
+    {
+        if (string.IsNullOrWhiteSpace(token))
         {
-            if (string.IsNullOrWhiteSpace(token))
-            {
-                return ForgotPasswordState.Error;
-            }
-
-            try
-            {
-                var response = await this.apiClient.PostAsync<object, ApiResponse>(
-                    "/api/auth/verify-reset-token", new { Token = token });
-
-                return this.MapTokenResponse(response, ForgotPasswordState.TokenValid);
-            }
-            catch (Exception)
-            {
-                return ForgotPasswordState.Error;
-            }
+            return ForgotPasswordState.Error;
         }
 
-        /// <inheritdoc/>
-        public async Task<ForgotPasswordState> ResetPasswordAsync(string token, string newPassword)
+        var result = await this.apiClient.PostAsync<object, ApiResponse>(
+            "/api/auth/verify-reset-token", new { Token = token });
+
+        return result.Match(
+            response => this.MapTokenResponse(response, ForgotPasswordState.TokenValid),
+            _ => ForgotPasswordState.Error);
+    }
+
+    /// <inheritdoc/>
+    public async Task<ForgotPasswordState> ResetPasswordAsync(string token, string newPassword)
+    {
+        if (string.IsNullOrWhiteSpace(token) || string.IsNullOrWhiteSpace(newPassword))
         {
-            if (string.IsNullOrWhiteSpace(token) || string.IsNullOrWhiteSpace(newPassword))
-            {
-                return ForgotPasswordState.Error;
-            }
-
-            try
-            {
-                var request = new ResetPasswordRequest
-                {
-                    Token = token,
-                    NewPassword = newPassword,
-                };
-
-                var response = await this.apiClient.PostAsync<ResetPasswordRequest, ApiResponse>(
-                    "/api/auth/reset-password", request);
-
-                return this.MapTokenResponse(response, ForgotPasswordState.PasswordResetSuccess);
-            }
-            catch (Exception)
-            {
-                return ForgotPasswordState.Error;
-            }
+            return ForgotPasswordState.Error;
         }
 
-        /// <inheritdoc/>
-        public bool IsPasswordValid(string password)
+        var request = new ResetPasswordRequest
         {
-            return !string.IsNullOrWhiteSpace(password)
-                && password.Length >= 8
-                && password.Any(char.IsUpper)
-                && password.Any(char.IsLower)
-                && password.Any(char.IsDigit)
-                && password.Any(ch => !char.IsLetterOrDigit(ch));
-        }
+            Token = token,
+            NewPassword = newPassword,
+        };
 
-        private ForgotPasswordState MapTokenResponse(ApiResponse? response, ForgotPasswordState successState)
+        var result = await this.apiClient.PostAsync<ResetPasswordRequest, ApiResponse>(
+            "/api/auth/reset-password", request);
+
+        return result.Match(
+            response => this.MapTokenResponse(response, ForgotPasswordState.PasswordResetSuccess),
+            _ => ForgotPasswordState.Error);
+    }
+
+    /// <inheritdoc/>
+    public bool IsPasswordValid(string password)
+    {
+        return !string.IsNullOrWhiteSpace(password)
+            && password.Length >= 8
+            && password.Any(char.IsUpper)
+            && password.Any(char.IsLower)
+            && password.Any(char.IsDigit)
+            && password.Any(ch => !char.IsLetterOrDigit(ch));
+    }
+
+    private ForgotPasswordState MapTokenResponse(ApiResponse response, ForgotPasswordState successState)
+    {
+        if (response.Error == null)
         {
-            if (response is { Error: null })
-            {
-                return successState;
-            }
-
-            return response?.ErrorCode switch
-            {
-                "token_expired" => ForgotPasswordState.TokenExpired,
-                "token_already_used" => ForgotPasswordState.TokenAlreadyUsed,
-                _ => ForgotPasswordState.Error,
-            };
+            return successState;
         }
+
+        return response.ErrorCode switch
+        {
+            "token_expired" => ForgotPasswordState.TokenExpired,
+            "token_already_used" => ForgotPasswordState.TokenAlreadyUsed,
+            _ => ForgotPasswordState.Error,
+        };
     }
 }

@@ -245,9 +245,9 @@ public class DashboardViewModel
             {
                 this.ErrorMessage = errors.First().Type switch
                 {
-                    ErrorType.Unauthorized => "Your session expired. Please sign in again.",
-                    ErrorType.NotFound => "Dashboard data was not found for this account.",
-                    _ => "We couldn't load your dashboard. Please try again.",
+                    ErrorType.Unauthorized => UserMessages.Dashboard.SessionExpired,
+                    ErrorType.NotFound => UserMessages.Dashboard.NotFound,
+                    _ => UserMessages.Dashboard.LoadFailed,
                 };
                 this.logger.LogError("LoadDashboard failed: {Errors}", errors);
                 this.State.SetValue(DashboardState.Error);
