@@ -21,6 +21,7 @@ namespace BankApp.Client.ViewModels;
 public class DashboardViewModel
 {
     private readonly ApiClient apiClient;
+    private int currentCardIndex;
 
     /// <summary>
     /// Initializes a new instance of the <see cref="DashboardViewModel"/> class.
@@ -36,6 +37,7 @@ public class DashboardViewModel
         this.RecentTransactionItems = new List<DashboardTransactionItem>();
         this.UnreadNotificationCount = 0;
         this.ErrorMessage = string.Empty;
+        this.currentCardIndex = 0;
     }
 
     /// <summary>
@@ -68,10 +70,149 @@ public class DashboardViewModel
     /// </summary>
     public string ErrorMessage { get; private set; }
 
+    // ─── Card Navigation ───────────────────────────────────────────────────────
+
     /// <summary>
-    /// Gets or sets the recent transactions.
+    /// Gets the index of the currently displayed card.
     /// </summary>
-    private List<Transaction> RecentTransactions { get; set; }
+    public int CurrentCardIndex
+    {
+        get => this.currentCardIndex;
+        private set => this.currentCardIndex = Math.Clamp(value, 0, Math.Max(0, this.Cards.Count - 1));
+    }
+
+    /// <summary>
+    /// Gets the currently selected card, or <see langword="null"/> if no cards are available.
+    /// </summary>
+    public Card? SelectedCard => this.Cards.Count > 0 ? this.Cards[this.CurrentCardIndex] : null;
+
+    /// <summary>
+    /// Gets a value indicating whether the user can navigate to the previous card.
+    /// </summary>
+    public bool CanNavigatePrevious => this.Cards.Count > 0 && this.CurrentCardIndex > 0;
+
+    /// <summary>
+    /// Gets a value indicating whether the user can navigate to the next card.
+    /// </summary>
+    public bool CanNavigateNext => this.Cards.Count > 0 && this.CurrentCardIndex < this.Cards.Count - 1;
+
+    /// <summary>
+    /// Gets a value indicating whether the user has any linked cards.
+    /// </summary>
+    public bool HasCards => this.Cards.Count > 0;
+
+    /// <summary>
+    /// Gets a value indicating whether the user has any recent transactions.
+    /// </summary>
+    public bool HasTransactions => this.RecentTransactionItems.Count > 0;
+
+    // ─── Derived Display Properties ────────────────────────────────────────────
+
+    /// <summary>
+    /// Gets the display name of the selected card's brand (falls back to card type when brand is absent).
+    /// </summary>
+    public string SelectedCardBrandDisplay =>
+        this.SelectedCard is { } card
+            ? string.IsNullOrWhiteSpace(card.CardBrand) ? card.CardType : card.CardBrand
+            : string.Empty;
+
+    /// <summary>
+    /// Gets the upper-cased cardholder name, or a placeholder when absent.
+    /// </summary>
+    public string SelectedCardHolderDisplay =>
+        this.SelectedCard is { } card
+            ? string.IsNullOrWhiteSpace(card.CardholderName)
+                ? "CARD HOLDER"
+                : card.CardholderName.ToUpperInvariant()
+            : string.Empty;
+
+    /// <summary>
+    /// Gets the formatted expiry date (MM/yy) of the selected card.
+    /// </summary>
+    public string SelectedCardExpiryDisplay =>
+        this.SelectedCard?.ExpiryDate.ToString("MM/yy") ?? string.Empty;
+
+    /// <summary>
+    /// Gets the masked card number of the selected card.
+    /// </summary>
+    public string SelectedCardNumberMasked =>
+        this.SelectedCard is { } card ? MaskCardNumber(card.CardNumber) : "**** **** **** ****";
+
+    // ─── Navigation Methods ────────────────────────────────────────────────────
+
+    /// <summary>
+    /// Navigates to the previous card if possible.
+    /// </summary>
+    /// <returns><see langword="true"/> if navigation occurred; otherwise, <see langword="false"/>.</returns>
+    public bool NavigatePrevious()
+    {
+        if (!this.CanNavigatePrevious)
+        {
+            return false;
+        }
+
+        this.CurrentCardIndex--;
+        return true;
+    }
+
+    /// <summary>
+    /// Navigates to the next card if possible.
+    /// </summary>
+    /// <returns><see langword="true"/> if navigation occurred; otherwise, <see langword="false"/>.</returns>
+    public bool NavigateNext()
+    {
+        if (!this.CanNavigateNext)
+        {
+            return false;
+        }
+
+        this.CurrentCardIndex++;
+        return true;
+    }
+
+    // ─── Formatting Helpers ────────────────────────────────────────────────────
+
+    /// <summary>
+    /// Returns a masked representation of a card number, showing only the last four digits.
+    /// </summary>
+    /// <param name="cardNumber">The raw card number.</param>
+    /// <returns>A masked string such as "**** **** **** 1234".</returns>
+    public static string MaskCardNumber(string? cardNumber)
+    {
+        if (string.IsNullOrWhiteSpace(cardNumber))
+        {
+            return "**** **** **** ****";
+        }
+
+        return cardNumber.Length >= 4
+            ? $"**** **** **** {cardNumber[^4..]}"
+            : "**** **** **** ****";
+    }
+
+    /// <summary>
+    /// Builds a human-readable details string for the currently selected card.
+    /// The result is suitable for display in a dialog; it contains no UI types.
+    /// </summary>
+    /// <returns>A multi-line string with card details, or an empty string when no card is selected.</returns>
+    public string GetSelectedCardDetails()
+    {
+        if (this.SelectedCard is not { } card)
+        {
+            return string.Empty;
+        }
+
+        return
+            $"Card Type:       {card.CardType}\n" +
+            $"Card Brand:      {card.CardBrand ?? "Mastercard"}\n" +
+            $"Card Number:     {MaskCardNumber(card.CardNumber)}\n" +
+            $"Cardholder:      {card.CardholderName}\n" +
+            $"Expiry Date:     {card.ExpiryDate:MM/yy}\n" +
+            $"Status:          {card.Status}\n" +
+            $"Contactless:     {(card.IsContactlessEnabled ? "Enabled" : "Disabled")}\n" +
+            $"Online Payments: {(card.IsOnlineEnabled ? "Enabled" : "Disabled")}";
+    }
+
+    // ─── Data Loading ──────────────────────────────────────────────────────────
 
     /// <summary>
     /// Fetches dashboard data for the currently authenticated user.
@@ -104,6 +245,10 @@ public class DashboardViewModel
             this.RecentTransactions = response.RecentTransactions;
             this.RecentTransactionItems = this.BuildTransactionItems(this.RecentTransactions);
             this.UnreadNotificationCount = response.UnreadNotificationCount;
+
+            // Reset card navigation to first card after a fresh load.
+            this.currentCardIndex = 0;
+
             this.State.SetValue(DashboardState.Success);
             return true;
         }
@@ -163,4 +308,9 @@ public class DashboardViewModel
 
     private void LogError(string method, Exception ex) =>
         Console.Error.WriteLine($"[DashboardViewModel] {method}: {ex.Message}");
+
+    /// <summary>
+    /// Gets or sets the recent transactions.
+    /// </summary>
+    private List<Transaction> RecentTransactions { get; set; }
 }
