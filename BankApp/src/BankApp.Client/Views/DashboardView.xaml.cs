@@ -24,7 +24,6 @@ namespace BankApp.Client.Views;
 public sealed partial class DashboardView : IStateObserver<DashboardState>
 {
     private readonly DashboardViewModel viewModel;
-    private int currentCardIndex;
     private bool isObserverAttached;
     private CancellationTokenSource? loadCancellationTokenSource;
 
@@ -35,7 +34,6 @@ public sealed partial class DashboardView : IStateObserver<DashboardState>
     public DashboardView(DashboardViewModel viewModel)
     {
         this.InitializeComponent();
-
         this.viewModel = viewModel;
     }
 
@@ -61,6 +59,8 @@ public sealed partial class DashboardView : IStateObserver<DashboardState>
         this.DetachObserver();
     }
 
+    // ─── State Handling ────────────────────────────────────────────────────────
+
     /// <summary>
     /// Reacts to dashboard state updates from the view model.
     /// </summary>
@@ -85,13 +85,17 @@ public sealed partial class DashboardView : IStateObserver<DashboardState>
                     this.HideLoading();
                     this.ShowError(this.viewModel.ErrorMessage);
                     break;
+
                 case DashboardState.Idle:
                     break;
+
                 default:
                     throw new ArgumentOutOfRangeException(nameof(state), state, null);
             }
         });
     }
+
+    // ─── Data Loading ──────────────────────────────────────────────────────────
 
     private async Task LoadDashboardAsync()
     {
@@ -107,24 +111,32 @@ public sealed partial class DashboardView : IStateObserver<DashboardState>
         }
     }
 
+    // ─── UI Refresh ────────────────────────────────────────────────────────────
+
     private void RefreshUi()
     {
         this.UserNameText.Text = this.viewModel.CurrentUser?.FullName ?? string.Empty;
         this.TransactionsList.ItemsSource = this.viewModel.RecentTransactionItems;
+
+        // Visibility decided by ViewModel state; View only does the mapping to Visibility enum.
         this.EmptyTransactionsState.Visibility =
-            this.viewModel.RecentTransactionItems.Count == 0 ? Visibility.Visible : Visibility.Collapsed;
+            this.viewModel.HasTransactions ? Visibility.Collapsed : Visibility.Visible;
 
         this.BuildCardDots();
-        this.ShowCard(this.currentCardIndex);
+        this.ShowCard();
         NavView.Current?.UpdateNotificationBadge(this.viewModel.UnreadNotificationCount);
     }
 
-    private void ShowCard(int index)
+    // ─── Card Display ──────────────────────────────────────────────────────────
+
+    /// <summary>
+    /// Renders the card at the current index stored in the ViewModel.
+    /// All data and formatting decisions come from the ViewModel.
+    /// </summary>
+    private void ShowCard()
     {
-        var cards = this.viewModel.Cards;
-        if (cards.Count == 0)
+        if (!this.viewModel.HasCards)
         {
-            this.currentCardIndex = 0;
             this.CardVisual.Visibility = Visibility.Collapsed;
             this.EmptyCardsState.Visibility = Visibility.Visible;
             this.ClearCardDisplay();
@@ -132,22 +144,15 @@ public sealed partial class DashboardView : IStateObserver<DashboardState>
             return;
         }
 
-        index = Math.Clamp(index, 0, cards.Count - 1);
-        this.currentCardIndex = index;
         this.CardVisual.Visibility = Visibility.Visible;
         this.EmptyCardsState.Visibility = Visibility.Collapsed;
 
-        var card = cards[index];
-
+        // All formatting decisions are delegated to the ViewModel.
         this.CardBankName.Text = "BankApp";
-        this.CardBrandName.Text = string.IsNullOrWhiteSpace(card.CardBrand)
-            ? card.CardType
-            : card.CardBrand;
-        this.CardHolderText.Text = string.IsNullOrWhiteSpace(card.CardholderName)
-            ? "CARD HOLDER"
-            : card.CardholderName.ToUpperInvariant();
-        this.CardExpiryText.Text = card.ExpiryDate.ToString("MM/yy");
-        this.CardNumberText.Text = this.MaskCardNumber(card.CardNumber);
+        this.CardBrandName.Text = this.viewModel.SelectedCardBrandDisplay;
+        this.CardHolderText.Text = this.viewModel.SelectedCardHolderDisplay;
+        this.CardExpiryText.Text = this.viewModel.SelectedCardExpiryDisplay;
+        this.CardNumberText.Text = this.viewModel.SelectedCardNumberMasked;
 
         this.UpdateCardDots();
         this.UpdateCardNavigationState();
@@ -162,10 +167,10 @@ public sealed partial class DashboardView : IStateObserver<DashboardState>
         {
             var dot = new Ellipse
             {
-                Width = i == this.currentCardIndex ? 18 : 8,
+                Width = i == this.viewModel.CurrentCardIndex ? 18 : 8,
                 Height = 8,
                 Fill = new SolidColorBrush(
-                    i == this.currentCardIndex
+                    i == this.viewModel.CurrentCardIndex
                     ? Color.FromArgb(255, 78, 205, 196)
                     : Color.FromArgb(100, 78, 205, 196)),
             };
@@ -182,28 +187,47 @@ public sealed partial class DashboardView : IStateObserver<DashboardState>
                 continue;
             }
 
-            dot.Width = i == this.currentCardIndex ? 18 : 8;
+            dot.Width = i == this.viewModel.CurrentCardIndex ? 18 : 8;
             dot.Fill = new SolidColorBrush(
-                i == this.currentCardIndex
+                i == this.viewModel.CurrentCardIndex
                 ? Color.FromArgb(255, 78, 205, 196)
                 : Color.FromArgb(100, 78, 205, 196));
         }
     }
 
+    private void UpdateCardNavigationState()
+    {
+        // ViewModel decides whether navigation is possible; View maps booleans to UI properties.
+        this.PrevCardButton.IsEnabled = this.viewModel.CanNavigatePrevious;
+        this.NextCardButton.IsEnabled = this.viewModel.CanNavigateNext;
+        this.PrevCardButton.Visibility = this.viewModel.HasCards ? Visibility.Visible : Visibility.Collapsed;
+        this.NextCardButton.Visibility = this.viewModel.HasCards ? Visibility.Visible : Visibility.Collapsed;
+    }
+
+    private void ClearCardDisplay()
+    {
+        this.CardBankName.Text = string.Empty;
+        this.CardBrandName.Text = string.Empty;
+        this.CardHolderText.Text = string.Empty;
+        this.CardExpiryText.Text = string.Empty;
+        this.CardNumberText.Text = "**** **** **** ****";
+    }
+
+    // ─── Event Handlers ────────────────────────────────────────────────────────
+
     private void PrevCardButton_Click(object sender, RoutedEventArgs e)
     {
-        if (this.currentCardIndex > 0)
+        if (this.viewModel.NavigatePrevious())
         {
-            this.ShowCard(this.currentCardIndex - 1);
+            this.ShowCard();
         }
     }
 
     private void NextCardButton_Click(object sender, RoutedEventArgs e)
     {
-        var count = this.viewModel.Cards.Count;
-        if (this.currentCardIndex < count - 1)
+        if (this.viewModel.NavigateNext())
         {
-            this.ShowCard(this.currentCardIndex + 1);
+            this.ShowCard();
         }
     }
 
@@ -227,12 +251,31 @@ public sealed partial class DashboardView : IStateObserver<DashboardState>
         _ = this.RunUiTaskAsync(() => this.ShowComingSoonAsync("Transaction History"));
     }
 
-    private void ShowError(string msg)
+    private void RetryButton_Click(object sender, RoutedEventArgs e)
     {
-        this.ErrorInfoBar.Message = string.IsNullOrWhiteSpace(msg)
-            ? "We couldn't load your dashboard right now."
-            : msg;
-        this.ErrorInfoBar.IsOpen = true;
+        _ = this.RunUiTaskAsync(this.LoadDashboardAsync);
+    }
+
+    private void CardVisual_PointerPressed(object sender, PointerRoutedEventArgs e)
+    {
+        _ = this.RunUiTaskAsync(this.ShowCurrentCardDetailsAsync);
+    }
+
+    // ─── Dialog Helpers ────────────────────────────────────────────────────────
+
+    /// <summary>
+    /// Shows a ContentDialog with the details of the currently selected card.
+    /// The detail string is produced by the ViewModel; this method only handles the dialog UI.
+    /// </summary>
+    private async Task ShowCurrentCardDetailsAsync()
+    {
+        var details = this.viewModel.GetSelectedCardDetails();
+        if (string.IsNullOrEmpty(details))
+        {
+            return;
+        }
+
+        await this.ShowAlertAsync("Card Details", details);
     }
 
     private async Task ShowAlertAsync(string title, string message)
@@ -247,33 +290,18 @@ public sealed partial class DashboardView : IStateObserver<DashboardState>
         await dialog.ShowAsync();
     }
 
-    private void CardVisual_PointerPressed(object sender, PointerRoutedEventArgs e)
+    private async Task ShowComingSoonAsync(string feature)
     {
-        _ = this.RunUiTaskAsync(this.ShowCurrentCardDetailsAsync);
-    }
-
-    private async Task ShowCurrentCardDetailsAsync()
-    {
-        var cards = this.viewModel.Cards;
-        if (cards.Count == 0)
+        if (NavView.Current != null)
         {
+            await NavView.Current.ShowComingSoonAsync(feature);
             return;
         }
 
-        var card = cards[this.currentCardIndex];
-
-        var details =
-            $"Card Type:     {card.CardType}\n" +
-            $"Card Brand:    {card.CardBrand ?? "Mastercard"}\n" +
-            $"Card Number:   {this.MaskCardNumber(card.CardNumber)}\n" +
-            $"Cardholder:    {card.CardholderName}\n" +
-            $"Expiry Date:   {card.ExpiryDate:MM/yy}\n" +
-            $"Status:        {card.Status}\n" +
-            $"Contactless:   {(card.IsContactlessEnabled ? "Enabled" : "Disabled")}\n" +
-            $"Online Payments: {(card.IsOnlineEnabled ? "Enabled" : "Disabled")}";
-
-        await this.ShowAlertAsync("Card Details", details);
+        await this.ShowAlertAsync(feature, $"{feature} is coming soon.");
     }
+
+    // ─── Loading / Error UI ────────────────────────────────────────────────────
 
     private void ShowLoading()
     {
@@ -285,10 +313,15 @@ public sealed partial class DashboardView : IStateObserver<DashboardState>
         this.LoadingOverlay.Visibility = Visibility.Collapsed;
     }
 
-    private void RetryButton_Click(object sender, RoutedEventArgs e)
+    private void ShowError(string msg)
     {
-        _ = this.RunUiTaskAsync(this.LoadDashboardAsync);
+        this.ErrorInfoBar.Message = string.IsNullOrWhiteSpace(msg)
+            ? "We couldn't load your dashboard right now."
+            : msg;
+        this.ErrorInfoBar.IsOpen = true;
     }
+
+    // ─── Observer Lifecycle ────────────────────────────────────────────────────
 
     private void AttachObserver()
     {
@@ -324,48 +357,7 @@ public sealed partial class DashboardView : IStateObserver<DashboardState>
         this.loadCancellationTokenSource = null;
     }
 
-    private void ClearCardDisplay()
-    {
-        this.CardBankName.Text = string.Empty;
-        this.CardBrandName.Text = string.Empty;
-        this.CardHolderText.Text = string.Empty;
-        this.CardExpiryText.Text = string.Empty;
-        this.CardNumberText.Text = "**** **** **** ****";
-    }
-
-    private void UpdateCardNavigationState()
-    {
-        var count = this.viewModel.Cards.Count;
-        var hasCards = count > 0;
-
-        this.PrevCardButton.IsEnabled = hasCards && this.currentCardIndex > 0;
-        this.NextCardButton.IsEnabled = hasCards && this.currentCardIndex < count - 1;
-        this.PrevCardButton.Visibility = hasCards ? Visibility.Visible : Visibility.Collapsed;
-        this.NextCardButton.Visibility = hasCards ? Visibility.Visible : Visibility.Collapsed;
-    }
-
-    private string MaskCardNumber(string? cardNumber)
-    {
-        if (string.IsNullOrWhiteSpace(cardNumber))
-        {
-            return "**** **** **** ****";
-        }
-
-        return cardNumber.Length >= 4
-            ? $"**** **** **** {cardNumber[^4..]}"
-            : "**** **** **** ****";
-    }
-
-    private async Task ShowComingSoonAsync(string feature)
-    {
-        if (NavView.Current != null)
-        {
-            await NavView.Current.ShowComingSoonAsync(feature);
-            return;
-        }
-
-        await this.ShowAlertAsync(feature, $"{feature} is coming soon.");
-    }
+    // ─── UI Task Runner ────────────────────────────────────────────────────────
 
     private async Task RunUiTaskAsync(Func<Task> action)
     {
