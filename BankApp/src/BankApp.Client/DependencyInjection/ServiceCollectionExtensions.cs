@@ -32,6 +32,10 @@ public static class ServiceCollectionExtensions
         // Multiple instances would lose the frame reference.
         services.AddSingleton<IAppNavigationService, AppNavigationService>();
 
+        // A fresh timer instance per TwoFactorView so each page visit
+        // has its own independent countdown.
+        services.AddTransient<ICountdownTimer, DispatcherCountdownTimer>();
+
         // Each navigation creates a fresh ViewModel.
         // No stale state leaks between page visits.
         services.AddTransient<LoginViewModel>();
