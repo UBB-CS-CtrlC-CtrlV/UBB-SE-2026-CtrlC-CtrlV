@@ -9,6 +9,8 @@ using BankApp.Client.Utilities;
 using BankApp.Core.DTOs.Profile;
 using BankApp.Core.Entities;
 using BankApp.Core.Enums;
+using ErrorOr;
+using Microsoft.Extensions.Logging;
 
 namespace BankApp.Client.ViewModels;
 
@@ -18,15 +20,18 @@ namespace BankApp.Client.ViewModels;
 public class ProfileViewModel
 {
     private readonly ApiClient apiClient;
+    private readonly ILogger<ProfileViewModel> logger;
     private bool disposed;
 
     /// <summary>
     /// Initializes a new instance of the <see cref="ProfileViewModel"/> class.
     /// </summary>
     /// <param name="apiClient">The API client used for profile operations.</param>
-    public ProfileViewModel(ApiClient apiClient)
+    /// <param name="logger">Logger for profile operation errors.</param>
+    public ProfileViewModel(ApiClient apiClient, ILogger<ProfileViewModel> logger)
     {
         this.apiClient = apiClient ?? throw new ArgumentNullException(nameof(apiClient));
+        this.logger = logger ?? throw new ArgumentNullException(nameof(logger));
         this.State = new ObservableState<ProfileState>(ProfileState.Idle);
         this.ProfileInfo = new ProfileInfo();
         this.OAuthLinks = new List<OAuthLink>();
@@ -61,48 +66,48 @@ public class ProfileViewModel
 
     /// <summary>
     /// Loads the current user's profile, OAuth links, and notification preferences.
+    /// Each request is issued sequentially; the load stops at the first failure.
     /// </summary>
-    /// <returns><see langword="true"/> if the data loaded successfully; otherwise, <see langword="false"/>.</returns>
+    /// <returns><see langword="true"/> if all data loaded successfully; otherwise, <see langword="false"/>.</returns>
     public async Task<bool> LoadProfile()
     {
-        try
+        this.State.SetValue(ProfileState.Loading);
+
+        var profileResult = await this.apiClient.GetAsync<GetProfileResponse>("api/profile/");
+        if (profileResult.IsError)
         {
-            this.State.SetValue(ProfileState.Loading);
-
-            GetProfileResponse? profileResponse = await this.apiClient.GetAsync<GetProfileResponse>("api/profile/");
-            if (profileResponse == null || !profileResponse.Success || profileResponse.ProfileInfo == null)
-            {
-                this.State.SetValue(ProfileState.Error);
-                return false;
-            }
-
-            List<OAuthLink>? oauthResponse = await this.apiClient.GetAsync<List<OAuthLink>>("api/profile/oauthlinks");
-            if (oauthResponse == null)
-            {
-                this.State.SetValue(ProfileState.Error);
-                return false;
-            }
-
-            List<NotificationPreference>? preferencesResponse =
-                await this.apiClient.GetAsync<List<NotificationPreference>>("api/profile/notifications/preferences");
-            if (preferencesResponse == null)
-            {
-                this.State.SetValue(ProfileState.Error);
-                return false;
-            }
-
-            this.ProfileInfo = profileResponse.ProfileInfo;
-            this.OAuthLinks = oauthResponse;
-            this.NotificationPreferences = preferencesResponse;
-            this.State.SetValue(ProfileState.UpdateSuccess);
-            return true;
-        }
-        catch (Exception ex)
-        {
+            this.logger.LogError("LoadProfile: profile request failed: {Errors}", profileResult.Errors);
             this.State.SetValue(ProfileState.Error);
-            this.LogError(nameof(this.LoadProfile), ex);
             return false;
         }
+
+        if (!profileResult.Value.Success || profileResult.Value.ProfileInfo == null)
+        {
+            this.State.SetValue(ProfileState.Error);
+            return false;
+        }
+
+        var oauthResult = await this.apiClient.GetAsync<List<OAuthLink>>("api/profile/oauthlinks");
+        if (oauthResult.IsError)
+        {
+            this.logger.LogError("LoadProfile: OAuth links request failed: {Errors}", oauthResult.Errors);
+            this.State.SetValue(ProfileState.Error);
+            return false;
+        }
+
+        var prefsResult = await this.apiClient.GetAsync<List<NotificationPreference>>("api/profile/notifications/preferences");
+        if (prefsResult.IsError)
+        {
+            this.logger.LogError("LoadProfile: notification preferences request failed: {Errors}", prefsResult.Errors);
+            this.State.SetValue(ProfileState.Error);
+            return false;
+        }
+
+        this.ProfileInfo = profileResult.Value.ProfileInfo;
+        this.OAuthLinks = oauthResult.Value;
+        this.NotificationPreferences = prefsResult.Value;
+        this.State.SetValue(ProfileState.UpdateSuccess);
+        return true;
     }
 
     /// <summary>
@@ -114,44 +119,40 @@ public class ProfileViewModel
     /// <returns><see langword="true"/> if the update succeeded; otherwise, <see langword="false"/>.</returns>
     public async Task<bool> UpdatePersonalInfo(string? phone, string? address, string password)
     {
-        try
-        {
-            this.State.SetValue(ProfileState.Loading);
+        this.State.SetValue(ProfileState.Loading);
 
-            if (this.ProfileInfo.UserId == null)
-            {
-                this.State.SetValue(ProfileState.Error);
-                return false;
-            }
-
-            string? trimmedPhone = string.IsNullOrWhiteSpace(phone) ? null : phone.Trim();
-            string? trimmedAddress = string.IsNullOrWhiteSpace(address) ? null : address.Trim();
-
-            var request = new UpdateProfileRequest(this.ProfileInfo.UserId, trimmedPhone, trimmedAddress);
-            UpdateProfileResponse? response = await this.apiClient.PutAsync<UpdateProfileRequest, UpdateProfileResponse>("api/profile/", request);
-            if (response == null)
-            {
-                this.State.SetValue(ProfileState.Error);
-                return false;
-            }
-
-            if (!response.Success)
-            {
-                this.State.SetValue(ProfileState.Error);
-                return false;
-            }
-
-            this.ProfileInfo.PhoneNumber = trimmedPhone;
-            this.ProfileInfo.Address = trimmedAddress;
-            this.State.SetValue(ProfileState.UpdateSuccess);
-            return true;
-        }
-        catch (Exception ex)
+        if (this.ProfileInfo.UserId == null)
         {
             this.State.SetValue(ProfileState.Error);
-            this.LogError(nameof(this.UpdatePersonalInfo), ex);
             return false;
         }
+
+        string? trimmedPhone = string.IsNullOrWhiteSpace(phone) ? null : phone.Trim();
+        string? trimmedAddress = string.IsNullOrWhiteSpace(address) ? null : address.Trim();
+
+        var request = new UpdateProfileRequest(this.ProfileInfo.UserId, trimmedPhone, trimmedAddress);
+        var result = await this.apiClient.PutAsync<UpdateProfileRequest, UpdateProfileResponse>("api/profile/", request);
+
+        return result.Match(
+            response =>
+            {
+                if (!response.Success)
+                {
+                    this.State.SetValue(ProfileState.Error);
+                    return false;
+                }
+
+                this.ProfileInfo.PhoneNumber = trimmedPhone;
+                this.ProfileInfo.Address = trimmedAddress;
+                this.State.SetValue(ProfileState.UpdateSuccess);
+                return true;
+            },
+            errors =>
+            {
+                this.logger.LogError("UpdatePersonalInfo failed: {Errors}", errors);
+                this.State.SetValue(ProfileState.Error);
+                return false;
+            });
     }
 
     /// <summary>
@@ -162,34 +163,35 @@ public class ProfileViewModel
     /// <returns><see langword="true"/> if the password changed successfully; otherwise, <see langword="false"/>.</returns>
     public async Task<bool> ChangePassword(string currentPassword, string newPassword)
     {
-        try
-        {
-            this.State.SetValue(ProfileState.Loading);
+        this.State.SetValue(ProfileState.Loading);
 
-            if (this.ProfileInfo.UserId == null)
-            {
-                this.State.SetValue(ProfileState.Error);
-                return false;
-            }
-
-            var request = new ChangePasswordRequest(this.ProfileInfo.UserId.Value, currentPassword, newPassword);
-            ChangePasswordResponse? result =
-                await this.apiClient.PutAsync<ChangePasswordRequest, ChangePasswordResponse>("api/profile/password", request);
-            if (result == null || !result.Success)
-            {
-                this.State.SetValue(ProfileState.Error);
-                return false;
-            }
-
-            this.State.SetValue(ProfileState.UpdateSuccess);
-            return true;
-        }
-        catch (Exception ex)
+        if (this.ProfileInfo.UserId == null)
         {
             this.State.SetValue(ProfileState.Error);
-            this.LogError(nameof(this.ChangePassword), ex);
             return false;
         }
+
+        var request = new ChangePasswordRequest(this.ProfileInfo.UserId.Value, currentPassword, newPassword);
+        var result = await this.apiClient.PutAsync<ChangePasswordRequest, ChangePasswordResponse>("api/profile/password", request);
+
+        return result.Match(
+            response =>
+            {
+                if (!response.Success)
+                {
+                    this.State.SetValue(ProfileState.Error);
+                    return false;
+                }
+
+                this.State.SetValue(ProfileState.UpdateSuccess);
+                return true;
+            },
+            errors =>
+            {
+                this.logger.LogError("ChangePassword failed: {Errors}", errors);
+                this.State.SetValue(ProfileState.Error);
+                return false;
+            });
     }
 
     /// <summary>
@@ -199,28 +201,30 @@ public class ProfileViewModel
     /// <returns><see langword="true"/> if the setting was updated; otherwise, <see langword="false"/>.</returns>
     public async Task<bool> EnableTwoFactor(TwoFactorMethod method)
     {
-        try
-        {
-            this.State.SetValue(ProfileState.Loading);
+        this.State.SetValue(ProfileState.Loading);
 
-            var request = new { Method = method };
-            Toggle2FAResponse? result = await this.apiClient.PutAsync<object, Toggle2FAResponse>("api/profile/2fa/enable", request);
-            if (result?.Success != true)
+        var request = new { Method = method };
+        var result = await this.apiClient.PutAsync<object, Toggle2FAResponse>("api/profile/2fa/enable", request);
+
+        return result.Match(
+            response =>
             {
+                if (!response.Success)
+                {
+                    this.State.SetValue(ProfileState.Error);
+                    return false;
+                }
+
+                this.ProfileInfo.Is2FAEnabled = true;
+                this.State.SetValue(ProfileState.UpdateSuccess);
+                return true;
+            },
+            errors =>
+            {
+                this.logger.LogError("EnableTwoFactor failed: {Errors}", errors);
                 this.State.SetValue(ProfileState.Error);
                 return false;
-            }
-
-            this.ProfileInfo.Is2FAEnabled = true;
-            this.State.SetValue(ProfileState.UpdateSuccess);
-            return true;
-        }
-        catch (Exception ex)
-        {
-            this.State.SetValue(ProfileState.Error);
-            this.LogError(nameof(this.EnableTwoFactor), ex);
-            return false;
-        }
+            });
     }
 
     /// <summary>
@@ -229,28 +233,29 @@ public class ProfileViewModel
     /// <returns><see langword="true"/> if the setting was updated; otherwise, <see langword="false"/>.</returns>
     public async Task<bool> DisableTwoFactor()
     {
-        try
-        {
-            this.State.SetValue(ProfileState.Loading);
+        this.State.SetValue(ProfileState.Loading);
 
-            Toggle2FAResponse? result =
-                await this.apiClient.PutAsync<object, Toggle2FAResponse>("api/profile/2fa/disable", new { });
-            if (result?.Success != true)
+        var result = await this.apiClient.PutAsync<object, Toggle2FAResponse>("api/profile/2fa/disable", new { });
+
+        return result.Match(
+            response =>
             {
+                if (!response.Success)
+                {
+                    this.State.SetValue(ProfileState.Error);
+                    return false;
+                }
+
+                this.ProfileInfo.Is2FAEnabled = false;
+                this.State.SetValue(ProfileState.UpdateSuccess);
+                return true;
+            },
+            errors =>
+            {
+                this.logger.LogError("DisableTwoFactor failed: {Errors}", errors);
                 this.State.SetValue(ProfileState.Error);
                 return false;
-            }
-
-            this.ProfileInfo.Is2FAEnabled = false;
-            this.State.SetValue(ProfileState.UpdateSuccess);
-            return true;
-        }
-        catch (Exception ex)
-        {
-            this.State.SetValue(ProfileState.Error);
-            this.LogError(nameof(this.DisableTwoFactor), ex);
-            return false;
-        }
+            });
     }
 
     /// <summary>
@@ -260,39 +265,41 @@ public class ProfileViewModel
     /// <returns><see langword="true"/> if the provider was linked; otherwise, <see langword="false"/>.</returns>
     public async Task<bool> LinkOAuth(string provider)
     {
-        try
+        if (string.IsNullOrWhiteSpace(provider))
         {
-            if (string.IsNullOrWhiteSpace(provider))
-            {
-                return false;
-            }
-
-            bool alreadyLinked = this.OAuthLinks.Exists(o =>
-                string.Equals(o.Provider, provider, StringComparison.OrdinalIgnoreCase));
-            if (alreadyLinked)
-            {
-                return false;
-            }
-
-            this.State.SetValue(ProfileState.Loading);
-
-            var request = new { Provider = provider.Trim() };
-            bool result = await this.apiClient.PostAsync<object, bool>("api/profile/oauth/link", request);
-            if (!result)
-            {
-                this.State.SetValue(ProfileState.Error);
-                return false;
-            }
-
-            this.State.SetValue(ProfileState.UpdateSuccess);
-            return true;
-        }
-        catch (Exception ex)
-        {
-            this.State.SetValue(ProfileState.Error);
-            this.LogError(nameof(this.LinkOAuth), ex);
             return false;
         }
+
+        bool alreadyLinked = this.OAuthLinks.Exists(o =>
+            string.Equals(o.Provider, provider, StringComparison.OrdinalIgnoreCase));
+        if (alreadyLinked)
+        {
+            return false;
+        }
+
+        this.State.SetValue(ProfileState.Loading);
+
+        var request = new { Provider = provider.Trim() };
+        var result = await this.apiClient.PostAsync<object, bool>("api/profile/oauth/link", request);
+
+        return result.Match(
+            linked =>
+            {
+                if (!linked)
+                {
+                    this.State.SetValue(ProfileState.Error);
+                    return false;
+                }
+
+                this.State.SetValue(ProfileState.UpdateSuccess);
+                return true;
+            },
+            errors =>
+            {
+                this.logger.LogError("LinkOAuth failed: {Errors}", errors);
+                this.State.SetValue(ProfileState.Error);
+                return false;
+            });
     }
 
     /// <summary>
@@ -326,32 +333,34 @@ public class ProfileViewModel
     /// <returns><see langword="true"/> if the preferences were updated; otherwise, <see langword="false"/>.</returns>
     public async Task<bool> UpdateNotificationPreferences(List<NotificationPreference> preferences)
     {
-        try
+        if (preferences.Count == 0)
         {
-            if (preferences.Count == 0)
-            {
-                return false;
-            }
-
-            this.State.SetValue(ProfileState.Loading);
-
-            bool result = await this.apiClient.PutAsync<List<NotificationPreference>, bool>("api/profile/notifications/preferences", preferences);
-            if (!result)
-            {
-                this.State.SetValue(ProfileState.Error);
-                return false;
-            }
-
-            this.NotificationPreferences = preferences;
-            this.State.SetValue(ProfileState.UpdateSuccess);
-            return true;
-        }
-        catch (Exception ex)
-        {
-            this.State.SetValue(ProfileState.Error);
-            this.LogError(nameof(this.UpdateNotificationPreferences), ex);
             return false;
         }
+
+        this.State.SetValue(ProfileState.Loading);
+
+        var result = await this.apiClient.PutAsync<List<NotificationPreference>, bool>("api/profile/notifications/preferences", preferences);
+
+        return result.Match(
+            updated =>
+            {
+                if (!updated)
+                {
+                    this.State.SetValue(ProfileState.Error);
+                    return false;
+                }
+
+                this.NotificationPreferences = preferences;
+                this.State.SetValue(ProfileState.UpdateSuccess);
+                return true;
+            },
+            errors =>
+            {
+                this.logger.LogError("UpdateNotificationPreferences failed: {Errors}", errors);
+                this.State.SetValue(ProfileState.Error);
+                return false;
+            });
     }
 
     /// <summary>
@@ -361,33 +370,34 @@ public class ProfileViewModel
     /// <returns><see langword="true"/> if the password is valid; otherwise, <see langword="false"/>.</returns>
     public async Task<bool> VerifyPassword(string password)
     {
-        try
-        {
-            this.State.SetValue(ProfileState.Loading);
+        this.State.SetValue(ProfileState.Loading);
 
-            if (this.ProfileInfo.UserId == null)
-            {
-                this.State.SetValue(ProfileState.Error);
-                return false;
-            }
-
-            bool? response = await this.apiClient.PostAsync<string, bool>("api/profile/verify-password", password);
-            bool result = response ?? false;
-            if (!result)
-            {
-                this.State.SetValue(ProfileState.Error);
-                return false;
-            }
-
-            this.State.SetValue(ProfileState.UpdateSuccess);
-            return true;
-        }
-        catch (Exception ex)
+        if (this.ProfileInfo.UserId == null)
         {
             this.State.SetValue(ProfileState.Error);
-            this.LogError(nameof(this.VerifyPassword), ex);
             return false;
         }
+
+        var result = await this.apiClient.PostAsync<string, bool>("api/profile/verify-password", password);
+
+        return result.Match(
+            valid =>
+            {
+                if (!valid)
+                {
+                    this.State.SetValue(ProfileState.Error);
+                    return false;
+                }
+
+                this.State.SetValue(ProfileState.UpdateSuccess);
+                return true;
+            },
+            errors =>
+            {
+                this.logger.LogError("VerifyPassword failed: {Errors}", errors);
+                this.State.SetValue(ProfileState.Error);
+                return false;
+            });
     }
 
     /// <summary>
@@ -402,10 +412,5 @@ public class ProfileViewModel
 
         this.disposed = true;
         GC.SuppressFinalize(this);
-    }
-
-    private void LogError(string method, Exception ex)
-    {
-        Console.Error.WriteLine($"[ProfileViewModel] {method}: {ex.Message}");
     }
 }

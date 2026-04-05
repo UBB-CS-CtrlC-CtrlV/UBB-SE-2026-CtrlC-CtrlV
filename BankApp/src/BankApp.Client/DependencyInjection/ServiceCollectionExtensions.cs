@@ -6,6 +6,7 @@ using BankApp.Client.Master;
 using BankApp.Client.Utilities;
 using BankApp.Client.ViewModels;
 using BankApp.Client.Views;
+using Microsoft.Extensions.Configuration;
 using Microsoft.Extensions.DependencyInjection;
 
 namespace BankApp.Client.DependencyInjection;
@@ -20,9 +21,18 @@ public static class ServiceCollectionExtensions
     /// Registers all client-side services and view models with the service collection.
     /// </summary>
     /// <param name="services">The service collection to configure.</param>
+    /// <param name="configuration">
+    /// The application configuration built from <c>appsettings.json</c>,
+    /// <c>appsettings.Local.json</c>, and environment variables. Registered as a
+    /// singleton so all services and view models can receive it via constructor injection.
+    /// </param>
     /// <returns>The same <see cref="IServiceCollection"/> instance for chaining.</returns>
-    public static IServiceCollection AddClientServices(this IServiceCollection services)
+    public static IServiceCollection AddClientServices(this IServiceCollection services, IConfiguration configuration)
     {
+        // IConfiguration is registered as a singleton so ApiClient and ViewModels can
+        // receive it via constructor injection without reaching back into the composition root.
+        services.AddSingleton<IConfiguration>(configuration);
+
         // One HttpClient instance must be shared for the entire
         // application lifetime to avoid socket exhaustion.
         services.AddSingleton<ApiClient>();

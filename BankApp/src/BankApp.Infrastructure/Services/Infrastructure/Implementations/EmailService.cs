@@ -11,7 +11,6 @@ namespace BankApp.Infrastructure.Services.Infrastructure.Implementations
     public class EmailService : IEmailService
     {
         private readonly IConfiguration configuration;
-        private const int DefaultSmtpPort = 587;
 
         /// <summary>
         /// Initializes a new instance of the <see cref="EmailService"/> class.

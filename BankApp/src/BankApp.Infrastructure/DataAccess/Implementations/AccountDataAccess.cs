@@ -39,10 +39,10 @@ namespace BankApp.Infrastructure.DataAccess.Implementations
             var accounts = new List<Account>();
             var query =
                 @"SELECT Id, UserId, AccountName, IBAN, Currency, Balance, AccountType, Status, CreatedAt from Account where UserId = @p0";
-            using var reader = dbContext.ExecuteQuery(query, new object[] { userId });
+            using var reader = this.dbContext.ExecuteQuery(query, new object[] { userId });
             while (reader.Read())
             {
-                accounts.Add(MapToAccount(reader));
+                accounts.Add(this.MapToAccount(reader));
             }
 
             return accounts;

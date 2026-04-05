@@ -3,10 +3,13 @@
 // </copyright>
 
 using System;
+using System.IO;
 using BankApp.Client.DependencyInjection;
 using BankApp.Client.Master;
+using Microsoft.Extensions.Configuration;
 using Microsoft.Extensions.DependencyInjection;
 using Microsoft.UI.Xaml;
+using Serilog;
 
 namespace BankApp.Client;
 
@@ -30,8 +33,27 @@ public partial class App
     /// </summary>
     public App()
     {
+        ConfigureLogging();
+
+        var configuration = new ConfigurationBuilder()
+            .SetBasePath(AppContext.BaseDirectory)
+            .AddJsonFile("appsettings.json", optional: false)
+            // appsettings.Local.json is `.gitignored`
+            // and only exists in dev environments.
+            // It overrides appsettings.json locally.
+            .AddJsonFile("appsettings.Local.json", optional: true)
+            // Environment variables are the final override layer for CI/Prod builds.
+            .AddEnvironmentVariables()
+            .Build();
+
         var serviceCollection = new ServiceCollection();
-        serviceCollection.AddClientServices();
+
+        // AddLogging registers ILoggerFactory and ILogger<T> in the container.
+        // AddSerilog bridges the MEL abstraction to the Serilog backend configured above.
+        // dispose: true ensures Serilog flushes when the container is disposed.
+        serviceCollection.AddLogging(logging => logging.AddSerilog(dispose: true));
+
+        serviceCollection.AddClientServices(configuration);
         this.Services = serviceCollection.BuildServiceProvider();
         this.InitializeComponent();
     }
@@ -49,5 +71,26 @@ public partial class App
         var navigationService = this.Services.GetRequiredService<IAppNavigationService>();
         this.window = new MainWindow(navigationService);
         this.window.Activate();
+    }
+
+    private static void ConfigureLogging()
+    {
+        var logDirectory = Path.Combine(
+            Environment.GetFolderPath(Environment.SpecialFolder.LocalApplicationData),
+            "BankApp",
+            "Logs");
+
+        Log.Logger = new LoggerConfiguration()
+            .MinimumLevel.Debug()
+            .Enrich.FromLogContext()
+            // Writes to the Visual Studio Output window during development.
+            .WriteTo.Debug()
+            // Writes to a daily rolling file outside the repo.
+            // Log path: %LocalAppData%\BankApp\Logs\bankapp-client-YYYYMMDD.log
+            .WriteTo.File(
+                path: Path.Combine(logDirectory, "bankapp-client-.log"),
+                rollingInterval: RollingInterval.Day,
+                retainedFileCountLimit: 14)
+            .CreateLogger();
     }
 }

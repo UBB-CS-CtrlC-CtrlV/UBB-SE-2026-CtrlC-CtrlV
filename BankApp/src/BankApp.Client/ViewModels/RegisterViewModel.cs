@@ -8,6 +8,9 @@ using System.Threading.Tasks;
 using BankApp.Client.Utilities;
 using BankApp.Core.DTOs.Auth;
 using BankApp.Core.Enums;
+using ErrorOr;
+using Microsoft.Extensions.Configuration;
+using Microsoft.Extensions.Logging;
 
 namespace BankApp.Client.ViewModels;
 
@@ -17,14 +20,24 @@ namespace BankApp.Client.ViewModels;
 public class RegisterViewModel
 {
     private readonly ApiClient apiClient;
+    private readonly IConfiguration configuration;
+    private readonly ILogger<RegisterViewModel> logger;
 
     /// <summary>
     /// Initializes a new instance of the <see cref="RegisterViewModel"/> class.
     /// </summary>
     /// <param name="apiClient">The API client used for registration requests.</param>
-    public RegisterViewModel(ApiClient apiClient)
+    /// <param name="configuration">
+    /// The application configuration. Reads <c>OAuth:Google:Authority</c>,
+    /// <c>OAuth:Google:ClientId</c>, <c>OAuth:Google:ClientSecret</c>, and
+    /// <c>OAuth:Google:RedirectUri</c> when performing an OAuth registration.
+    /// </param>
+    /// <param name="logger">Logger for registration flow errors.</param>
+    public RegisterViewModel(ApiClient apiClient, IConfiguration configuration, ILogger<RegisterViewModel> logger)
     {
         this.apiClient = apiClient ?? throw new ArgumentNullException(nameof(apiClient));
+        this.configuration = configuration ?? throw new ArgumentNullException(nameof(configuration));
+        this.logger = logger ?? throw new ArgumentNullException(nameof(logger));
         this.State = new ObservableState<RegisterState>(RegisterState.Idle);
     }
 
@@ -52,34 +65,45 @@ public class RegisterViewModel
 
         this.State.SetValue(RegisterState.Loading);
 
-        try
+        var request = new RegisterRequest
         {
-            var request = new RegisterRequest
-            {
-                Email = email,
-                Password = password,
-                FullName = fullName,
-            };
+            Email = email,
+            Password = password,
+            FullName = fullName,
+        };
 
-            RegisterResponse? response = await this.apiClient.PostAsync<RegisterRequest, RegisterResponse>("/api/auth/register", request);
-            if (response == null)
-            {
-                this.State.SetValue(RegisterState.Error);
-                return;
-            }
+        var result = await this.apiClient.PostAsync<RegisterRequest, RegisterResponse>("/api/auth/register", request);
 
-            if (!response.Success)
+        result.Switch(
+            response =>
             {
-                this.HandleRegisterError(response);
-                return;
-            }
+                if (!response.Success)
+                {
+                    this.HandleRegisterError(response);
+                    return;
+                }
 
-            this.State.SetValue(RegisterState.Success);
-        }
-        catch (Exception)
-        {
-            this.State.SetValue(RegisterState.Error);
-        }
+                this.State.SetValue(RegisterState.Success);
+            },
+            errors =>
+            {
+                if (errors[0].Type == ErrorType.Validation)
+                {
+                    if (errors[0].Description.Contains("email", StringComparison.OrdinalIgnoreCase))
+                    {
+                        this.State.SetValue(RegisterState.InvalidEmail);
+                    }
+                    else
+                    {
+                        this.State.SetValue(RegisterState.WeakPassword);
+                    }
+                }
+                else
+                {
+                    this.logger.LogError("Register failed: {Errors}", errors);
+                    this.State.SetValue(RegisterState.Error);
+                }
+            });
     }
 
     /// <summary>
@@ -99,14 +123,23 @@ public class RegisterViewModel
                 return;
             }
 
+            var authority = this.configuration["OAuth:Google:Authority"]
+                ?? throw new InvalidOperationException("OAuth:Google:Authority is missing from configuration.");
+            var clientId = this.configuration["OAuth:Google:ClientId"]
+                ?? throw new InvalidOperationException("OAuth:Google:ClientId is missing from configuration.");
+            var clientSecret = this.configuration["OAuth:Google:ClientSecret"]
+                ?? throw new InvalidOperationException("OAuth:Google:ClientSecret is missing from configuration.");
+            var redirectUri = this.configuration["OAuth:Google:RedirectUri"]
+                ?? throw new InvalidOperationException("OAuth:Google:RedirectUri is missing from configuration.");
+
             var options = new Duende.IdentityModel.OidcClient.OidcClientOptions
             {
-                Authority = "https://accounts.google.com",
-                ClientId = OAuthSecretsTemplate.ClientId,
-                ClientSecret = OAuthSecretsTemplate.ClientSecret,
+                Authority = authority,
+                ClientId = clientId,
+                ClientSecret = clientSecret,
                 Scope = "openid email profile",
-                RedirectUri = "http://127.0.0.1:7890/",
-                Browser = new SystemBrowser(7890),
+                RedirectUri = redirectUri,
+                Browser = new SystemBrowser(new Uri(redirectUri).Port),
             };
             options.Policy.Discovery.ValidateEndpoints = false;
 
@@ -124,19 +157,30 @@ public class RegisterViewModel
                 ProviderToken = loginResult.IdentityToken,
             };
 
-            LoginResponse? response = await this.apiClient.PostAsync<OAuthLoginRequest, LoginResponse>("/api/auth/oauth-login", apiRequest);
-            if (response == null || !response.Success)
-            {
-                this.State.SetValue(RegisterState.Error);
-                return;
-            }
+            var result = await this.apiClient.PostAsync<OAuthLoginRequest, LoginResponse>("/api/auth/oauth-login", apiRequest);
 
-            this.apiClient.SetToken(response.Token!);
-            this.apiClient.CurrentUserId = response.UserId!.Value;
-            this.State.SetValue(RegisterState.AutoLoggedIn);
+            result.Switch(
+                response =>
+                {
+                    if (!response.Success)
+                    {
+                        this.State.SetValue(RegisterState.Error);
+                        return;
+                    }
+
+                    this.apiClient.SetToken(response.Token!);
+                    this.apiClient.CurrentUserId = response.UserId!.Value;
+                    this.State.SetValue(RegisterState.AutoLoggedIn);
+                },
+                errors =>
+                {
+                    this.logger.LogError("OAuthRegister failed: {Errors}", errors);
+                    this.State.SetValue(RegisterState.Error);
+                });
         }
-        catch (Exception)
+        catch (Exception ex)
         {
+            this.logger.LogError(ex, "OAuthRegister OIDC flow failed.");
             this.State.SetValue(RegisterState.Error);
         }
     }

@@ -4,3 +4,8 @@ obj/
 *.user
 *.suo
 .idea/
+
+# Secrets
+secrets.json
+*.user-secrets.json
+appsettings.Local.json

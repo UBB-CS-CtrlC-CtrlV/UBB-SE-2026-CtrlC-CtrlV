@@ -72,7 +72,7 @@ public class ForgotPasswordViewModel
     {
         if (string.IsNullOrWhiteSpace(email))
         {
-            this.ValidationError = "Please enter your email address.";
+            this.ValidationError = UserMessages.ForgotPassword.EmailRequired;
             this.State.SetValue(ForgotPasswordState.Error);
             return;
         }
@@ -92,14 +92,14 @@ public class ForgotPasswordViewModel
     {
         if (string.IsNullOrWhiteSpace(newPassword) || string.IsNullOrWhiteSpace(code))
         {
-            this.ValidationError = "Please fill in all fields.";
+            this.ValidationError = UserMessages.ForgotPassword.AllFieldsRequired;
             this.State.SetValue(ForgotPasswordState.Error);
             return;
         }
 
         if (!this.recoveryManager.IsPasswordValid(newPassword))
         {
-            this.ValidationError = "Password must be at least 8 characters with uppercase, lowercase, a digit, and a special character.";
+            this.ValidationError = UserMessages.ForgotPassword.PasswordTooWeak;
             this.State.SetValue(ForgotPasswordState.Error);
             return;
         }
@@ -118,7 +118,7 @@ public class ForgotPasswordViewModel
     {
         if (string.IsNullOrWhiteSpace(code))
         {
-            this.ValidationError = "Please paste the recovery code first.";
+            this.ValidationError = UserMessages.ForgotPassword.CodeRequired;
             this.State.SetValue(ForgotPasswordState.Error);
             return;
         }

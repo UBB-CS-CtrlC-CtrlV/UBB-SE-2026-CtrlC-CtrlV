@@ -8,6 +8,9 @@ using BankApp.Client.Utilities;
 using BankApp.Core.DTOs.Auth;
 using BankApp.Core.Enums;
 using Duende.IdentityModel.OidcClient;
+using ErrorOr;
+using Microsoft.Extensions.Configuration;
+using Microsoft.Extensions.Logging;
 
 namespace BankApp.Client.ViewModels;
 
@@ -17,15 +20,37 @@ namespace BankApp.Client.ViewModels;
 public class LoginViewModel
 {
     private readonly ApiClient apiClient;
+    private readonly IConfiguration configuration;
+    private readonly ILogger<LoginViewModel> logger;
 
     /// <summary>
     /// Initializes a new instance of the <see cref="LoginViewModel"/> class.
     /// </summary>
     /// <param name="apiClient">The API client used for authentication requests.</param>
-    public LoginViewModel(ApiClient apiClient)
+    /// <param name="configuration">
+    /// The application configuration. Reads <c>OAuth:Google:Authority</c>,
+    /// <c>OAuth:Google:ClientId</c>, <c>OAuth:Google:ClientSecret</c>, and
+    /// <c>OAuth:Google:RedirectUri</c> when performing an OAuth login.
+    /// </param>
+    /// <param name="logger">Logger for login flow diagnostics and errors.</param>
+    public LoginViewModel(ApiClient apiClient, IConfiguration configuration, ILogger<LoginViewModel> logger)
     {
-        this.State = new ObservableState<LoginState>(LoginState.Idle);
         this.apiClient = apiClient ?? throw new ArgumentNullException(nameof(apiClient));
+        this.configuration = configuration ?? throw new ArgumentNullException(nameof(configuration));
+        this.logger = logger ?? throw new ArgumentNullException(nameof(logger));
+
+        // Determine initial state from configuration. If ApiClient is misconfigured the
+        // view starts in ServerNotConfigured so the login form is disabled immediately.
+        // The view reads State.Value after subscribing to apply this initial state.
+        var initialState = apiClient.EnsureConfigured().Match(
+            _ => LoginState.Idle,
+            errors =>
+            {
+                this.logger.LogCritical("ApiClient is not configured — login is unavailable. Errors: {Errors}", errors);
+                return LoginState.ServerNotConfigured;
+            });
+
+        this.State = new ObservableState<LoginState>(initialState);
     }
 
     /// <summary>
@@ -43,48 +68,48 @@ public class LoginViewModel
     {
         this.State.SetValue(LoginState.Loading);
 
-        try
+        var request = new Core.DTOs.Auth.LoginRequest
         {
-            var request = new Core.DTOs.Auth.LoginRequest
-            {
-                Email = email,
-                Password = password,
-            };
+            Email = email,
+            Password = password,
+        };
 
-            var response = await this.apiClient.PostAsync<Core.DTOs.Auth.LoginRequest, LoginResponse>(
-                "/api/auth/login",
-                request);
+        var result = await this.apiClient.PostAsync<Core.DTOs.Auth.LoginRequest, LoginResponse>(
+            "/api/auth/login",
+            request);
 
-            if (response == null)
+        result.Switch(
+            response =>
             {
-                this.State.SetValue(LoginState.Error);
-                return;
-            }
+                if (!response.Success)
+                {
+                    this.HandleLoginError(response);
+                    return;
+                }
 
-            if (!response.Success)
-            {
-                this.HandleLoginError(response);
-                return;
-            }
+                if (response.Requires2FA)
+                {
+                    this.apiClient.CurrentUserId = response.UserId!.Value;
+                    this.State.SetValue(LoginState.Require2Fa);
+                    return;
+                }
 
-            if (response.Requires2FA)
-            {
+                this.apiClient.SetToken(response.Token!);
                 this.apiClient.CurrentUserId = response.UserId!.Value;
-
-                this.State.SetValue(LoginState.Require2FA);
-                return;
-            }
-
-            // Login successful
-            // Store the token and userId for future requests
-            this.apiClient.SetToken(response.Token!);
-            this.apiClient.CurrentUserId = response.UserId!.Value;
-            this.State.SetValue(LoginState.Success);
-        }
-        catch (Exception)
-        {
-            this.State.SetValue(LoginState.Error);
-        }
+                this.State.SetValue(LoginState.Success);
+            },
+            errors =>
+            {
+                if (errors[0].Type == ErrorType.Unauthorized)
+                {
+                    this.State.SetValue(LoginState.InvalidCredentials);
+                }
+                else
+                {
+                    this.logger.LogError("Login failed: {Errors}", errors);
+                    this.State.SetValue(LoginState.Error);
+                }
+            });
     }
 
     /// <summary>
@@ -104,14 +129,23 @@ public class LoginViewModel
                 return;
             }
 
+            var authority = this.configuration["OAuth:Google:Authority"]
+                ?? throw new InvalidOperationException("OAuth:Google:Authority is missing from configuration.");
+            var clientId = this.configuration["OAuth:Google:ClientId"]
+                ?? throw new InvalidOperationException("OAuth:Google:ClientId is missing from configuration.");
+            var clientSecret = this.configuration["OAuth:Google:ClientSecret"]
+                ?? throw new InvalidOperationException("OAuth:Google:ClientSecret is missing from configuration.");
+            var redirectUri = this.configuration["OAuth:Google:RedirectUri"]
+                ?? throw new InvalidOperationException("OAuth:Google:RedirectUri is missing from configuration.");
+
             var options = new OidcClientOptions
             {
-                Authority = "https://accounts.google.com",
-                ClientId = OAuthSecretsTemplate.ClientId,
-                ClientSecret = OAuthSecretsTemplate.ClientSecret,
+                Authority = authority,
+                ClientId = clientId,
+                ClientSecret = clientSecret,
                 Scope = "openid email profile",
-                RedirectUri = "http://127.0.0.1:7890/",
-                Browser = new SystemBrowser(7890),
+                RedirectUri = redirectUri,
+                Browser = new SystemBrowser(new Uri(redirectUri).Port),
             };
 
             options.Policy.Discovery.ValidateEndpoints = false;
@@ -132,29 +166,39 @@ public class LoginViewModel
                 ProviderToken = loginResult.IdentityToken,
             };
 
-            var response = await this.apiClient.PostAsync<OAuthLoginRequest, LoginResponse>(
+            var result = await this.apiClient.PostAsync<OAuthLoginRequest, LoginResponse>(
                 "/api/auth/oauth-login",
                 apiRequest);
 
-            if (response is not { Success: true })
-            {
-                this.State.SetValue(LoginState.Error);
-                return;
-            }
+            result.Switch(
+                response =>
+                {
+                    if (!response.Success)
+                    {
+                        this.State.SetValue(LoginState.Error);
+                        return;
+                    }
 
-            if (response.Requires2FA)
-            {
-                this.apiClient.CurrentUserId = response.UserId!.Value;
-                this.State.SetValue(LoginState.Require2FA);
-                return;
-            }
+                    if (response.Requires2FA)
+                    {
+                        this.apiClient.CurrentUserId = response.UserId!.Value;
+                        this.State.SetValue(LoginState.Require2Fa);
+                        return;
+                    }
 
-            this.apiClient.SetToken(response.Token!);
-            this.apiClient.CurrentUserId = response.UserId!.Value;
-            this.State.SetValue(LoginState.Success);
+                    this.apiClient.SetToken(response.Token!);
+                    this.apiClient.CurrentUserId = response.UserId!.Value;
+                    this.State.SetValue(LoginState.Success);
+                },
+                errors =>
+                {
+                    this.logger.LogError("OAuthLogin failed: {Errors}", errors);
+                    this.State.SetValue(LoginState.Error);
+                });
         }
-        catch (Exception)
+        catch (Exception ex)
         {
+            this.logger.LogError(ex, "OAuthLogin OIDC flow failed.");
             this.State.SetValue(LoginState.Error);
         }
     }
