@@ -7,6 +7,7 @@ using System.Net.Http;
 using System.Net.Http.Json;
 using System.Threading;
 using System.Threading.Tasks;
+using ErrorOr;
 using Microsoft.Extensions.Configuration;
 
 namespace BankApp.Client.Utilities;
@@ -17,6 +18,7 @@ namespace BankApp.Client.Utilities;
 public class ApiClient
 {
     private readonly HttpClient httpClient;
+    private readonly Error? configurationError;
     private string? token;
 
     /// <summary>
@@ -24,17 +26,34 @@ public class ApiClient
     /// </summary>
     /// <param name="configuration">
     /// The application configuration. Reads <c>ApiBaseUrl</c> to set the HTTP base address.
-    /// Falls back to <c>http://localhost:5024</c> if the key is absent so that the default
-    /// in <c>appsettings.json</c> is always the single source of truth for that default.
+    /// If the key is absent the client starts in a degraded state — callers must check
+    /// <see cref="EnsureConfigured"/> before issuing requests.
     /// </param>
     public ApiClient(IConfiguration configuration)
     {
-        var baseUrl = configuration["ApiBaseUrl"] ?? "http://localhost:5024";
-        this.httpClient = new HttpClient
+        var baseUrl = configuration["ApiBaseUrl"];
+        if (baseUrl is null)
         {
-            BaseAddress = new Uri(baseUrl),
-        };
+            this.configurationError = Error.Failure(
+                code: "ApiClient.MissingBaseUrl",
+                description: "ApiBaseUrl is missing from configuration.");
+
+            // Dummy client — requests must not be issued when configurationError is set.
+            this.httpClient = new HttpClient();
+        }
+        else
+        {
+            this.httpClient = new HttpClient { BaseAddress = new Uri(baseUrl) };
+        }
     }
+
+    /// <summary>
+    /// Returns <see cref="Success"/> when the client is correctly configured,
+    /// or a <see cref="Error.Failure"/> describing the missing configuration otherwise.
+    /// Callers should check this before issuing any requests.
+    /// </summary>
+    public ErrorOr<Success> EnsureConfigured() =>
+        this.configurationError is null ? Result.Success : this.configurationError.Value;
 
     /// <summary>
     /// Gets or sets the identifier of the currently authenticated user.

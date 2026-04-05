@@ -31,6 +31,11 @@ public sealed partial class LoginView : IStateObserver<LoginState>
 
         this.viewModel = viewModel;
         this.viewModel.State.AddObserver(this);
+
+        // Apply the ViewModel's current state immediately. The ViewModel is constructed
+        // before the view subscribes, so any state set in the constructor (e.g.
+        // ServerNotConfigured when ApiBaseUrl is missing) would otherwise be missed.
+        this.OnStateChanged(this.viewModel.State.Value);
     }
 
     /// <inheritdoc/>
@@ -59,7 +64,7 @@ public sealed partial class LoginView : IStateObserver<LoginState>
                     this.navigationService.NavigateTo<NavView>();
                     break;
 
-                case LoginState.Require2FA:
+                case LoginState.Require2Fa:
                     this.navigationService.NavigateTo<TwoFactorView>();
                     break;
 
@@ -74,6 +79,16 @@ public sealed partial class LoginView : IStateObserver<LoginState>
                 case LoginState.Error:
                     this.ShowError("Something went wrong. Please try again.");
                     break;
+
+                case LoginState.ServerNotConfigured:
+                    // TODO: consider making HideLoading either responsive to the ServerStatus or create a helper function that is so that this kind of state tricks are not needed
+                    // HideLoading() re-enables buttons at the top of this method,
+                    // so explicitly disable them again here to lock the form permanently.
+                    this.SignInButton.IsEnabled = false;
+                    this.GoogleLoginButton.IsEnabled = false;
+                    this.ShowError("The app is not properly set up. Please contact your administrator.");
+                    break;
+
                 default:
                     throw new ArgumentOutOfRangeException(nameof(state), state, null);
             }

@@ -31,9 +31,21 @@ public class LoginViewModel
     /// </param>
     public LoginViewModel(ApiClient apiClient, IConfiguration configuration)
     {
-        this.State = new ObservableState<LoginState>(LoginState.Idle);
         this.apiClient = apiClient ?? throw new ArgumentNullException(nameof(apiClient));
         this.configuration = configuration ?? throw new ArgumentNullException(nameof(configuration));
+
+        // Determine initial state from configuration. If ApiClient is misconfigured the
+        // view starts in ServerNotConfigured so the login form is disabled immediately.
+        // The view reads State.Value after subscribing to apply this initial state.
+        var initialState = apiClient.EnsureConfigured().Match(
+            _ => LoginState.Idle,
+            errors =>
+            {
+                // TODO: log errors here using the logging infrastructure.
+                return LoginState.ServerNotConfigured;
+            });
+
+        this.State = new ObservableState<LoginState>(initialState);
     }
 
     /// <summary>
@@ -79,7 +91,7 @@ public class LoginViewModel
             {
                 this.apiClient.CurrentUserId = response.UserId!.Value;
 
-                this.State.SetValue(LoginState.Require2FA);
+                this.State.SetValue(LoginState.Require2Fa);
                 return;
             }
 
@@ -162,7 +174,7 @@ public class LoginViewModel
             if (response.Requires2FA)
             {
                 this.apiClient.CurrentUserId = response.UserId!.Value;
-                this.State.SetValue(LoginState.Require2FA);
+                this.State.SetValue(LoginState.Require2Fa);
                 return;
             }
 
