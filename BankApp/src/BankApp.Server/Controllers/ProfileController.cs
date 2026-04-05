@@ -1,159 +1,242 @@
 using System.Collections.Generic;
-using Microsoft.AspNetCore.Mvc;
-using BankApp.Infrastructure.Services.Interfaces;
 using BankApp.Core.DTOs.Profile;
 using BankApp.Core.Entities;
+using BankApp.Infrastructure.Services.Interfaces;
+using Microsoft.AspNetCore.Mvc;
 
 namespace BankApp.Server.Controllers
 {
+    /// <summary>
+    /// Controller responsible for handling user profile-related operations.
+    /// All endpoints are accessible under the /api/profile route.
+    /// </summary>
     [ApiController]
     [Route("api/[controller]")]
     public class ProfileController : ControllerBase
     {
-        private readonly IProfileService _profileService;
-        public ProfileController(IProfileService profileService) { _profileService = profileService; }
-        private int GetAuthenticatedUserId() => (int)HttpContext.Items["UserId"]!;
+        private readonly IProfileService profileService;
 
-        // GET: api/profile
+        /// <summary>
+        /// Initializes a new instance of the <see cref="ProfileController"/> class.
+        /// </summary>
+        /// <param name="profileService">The profile service used to handle business logic.</param>
+        public ProfileController(IProfileService profileService)
+        {
+            this.profileService = profileService;
+        }
+
+        /// <summary>
+        /// Retrieves the profile information of the currently authenticated user.
+        /// </summary>
+        /// <returns>
+        /// 200 OK with a <see cref="GetProfileResponse"/> containing user details on success,
+        /// or 404 Not Found if the user does not exist.
+        /// </returns>
         [HttpGet]
         public IActionResult GetProfile()
         {
-            int userId = GetAuthenticatedUserId();
+            int userId = this.GetAuthenticatedUserId();
 
-            User? user = _profileService.GetUserById(userId);
+            User? user = this.profileService.GetUserById(userId);
             if (user == null)
             {
-                return NotFound(new GetProfileResponse(false, "User not found."));
+                return this.NotFound(new GetProfileResponse(false, "User not found."));
             }
 
-            return Ok(new GetProfileResponse(true, "Successfully retrieved profile information.", user));
+            return this.Ok(new GetProfileResponse(true, "Successfully retrieved profile information.", user));
         }
 
-        // PUT: api/profile
+        /// <summary>
+        /// Updates the personal information of the currently authenticated user.
+        /// The user ID is always taken from the authentication context, not from the request body.
+        /// </summary>
+        /// <param name="request">The update profile request containing the new personal information.</param>
+        /// <returns>
+        /// 200 OK with an <see cref="UpdateProfileResponse"/> on success,
+        /// or 400 Bad Request if the update fails.
+        /// </returns>
         [HttpPut]
         public IActionResult UpdateProfile([FromBody] UpdateProfileRequest request)
         {
-            int userId = GetAuthenticatedUserId();
+            int userId = this.GetAuthenticatedUserId();
             request.UserId = userId; // override whatever the client sent
 
-            UpdateProfileResponse response = _profileService.UpdatePersonalInfo(request);
+            UpdateProfileResponse response = this.profileService.UpdatePersonalInfo(request);
 
             if (!response.Success)
             {
-                return BadRequest(response);
+                return this.BadRequest(response);
             }
 
-            return Ok(response);
+            return this.Ok(response);
         }
 
-        // PUT: api/profile/password
+        /// <summary>
+        /// Changes the password of the currently authenticated user.
+        /// The user ID is always taken from the authentication context, not from the request body.
+        /// </summary>
+        /// <param name="request">The change password request containing the old and new passwords.</param>
+        /// <returns>
+        /// 200 OK with a <see cref="ChangePasswordResponse"/> on success,
+        /// or 400 Bad Request if the password change fails.
+        /// </returns>
         [HttpPut("password")]
         public IActionResult ChangePassword([FromBody] ChangePasswordRequest request)
         {
-            int userId = GetAuthenticatedUserId();
+            int userId = this.GetAuthenticatedUserId();
             request.UserId = userId; // override whatever the client sent
 
-            ChangePasswordResponse response = _profileService.ChangePassword(request);
+            ChangePasswordResponse response = this.profileService.ChangePassword(request);
 
             if (!response.Success)
             {
-                return BadRequest(response);
+                return this.BadRequest(response);
             }
 
-            return Ok(response);
+            return this.Ok(response);
         }
 
-        // GET: api/profile/oauthlinks
+        /// <summary>
+        /// Retrieves all OAuth provider links associated with the currently authenticated user.
+        /// </summary>
+        /// <returns>
+        /// 200 OK with a list of <see cref="OAuthLink"/> on success,
+        /// or 404 Not Found if no OAuth links exist for the user.
+        /// </returns>
         [HttpGet("oauthlinks")]
         public IActionResult GetOAuthLinks()
         {
-            int userId = GetAuthenticatedUserId();
+            int userId = this.GetAuthenticatedUserId();
 
-            List<OAuthLink> links = _profileService.GetOAuthLinks(userId);
+            List<OAuthLink> links = this.profileService.GetOAuthLinks(userId);
 
             if (links.Count == 0)
             {
-                return NotFound(links);
+                return this.NotFound(links);
             }
 
-            return Ok(links);
+            return this.Ok(links);
         }
 
-        // GET: api/profile/notifications/preferences
+        /// <summary>
+        /// Retrieves the notification preferences of the currently authenticated user.
+        /// </summary>
+        /// <returns>
+        /// 200 OK with a list of <see cref="NotificationPreference"/> on success,
+        /// or 404 Not Found if no preferences exist for the user.
+        /// </returns>
         [HttpGet("notifications/preferences")]
         public IActionResult GetNotificationPreferences()
         {
-            int userId = GetAuthenticatedUserId();
+            int userId = this.GetAuthenticatedUserId();
 
-            List<NotificationPreference> prefs = _profileService.GetNotificationPreferences(userId);
+            List<NotificationPreference> prefs = this.profileService.GetNotificationPreferences(userId);
 
             if (prefs.Count == 0)
             {
-                return NotFound(prefs);
+                return this.NotFound(prefs);
             }
 
-            return Ok(prefs);
+            return this.Ok(prefs);
         }
 
-        // PUT: api/profile/notifications/preferences
+        /// <summary>
+        /// Updates the notification preferences of the currently authenticated user.
+        /// </summary>
+        /// <param name="prefs">The list of updated notification preferences.</param>
+        /// <returns>
+        /// 200 OK on success,
+        /// or 400 Bad Request if the update fails.
+        /// </returns>
         [HttpPut("notifications/preferences")]
         public IActionResult UpdateNotificationPreferences([FromBody] List<NotificationPreference> prefs)
         {
-            int userId = GetAuthenticatedUserId();
+            int userId = this.GetAuthenticatedUserId();
 
-            bool success = _profileService.UpdateNotificationPreferences(userId, prefs);
+            bool success = this.profileService.UpdateNotificationPreferences(userId, prefs);
 
             if (!success)
             {
-                return BadRequest(false);
+                return this.BadRequest(false);
             }
 
-            return Ok(true);
+            return this.Ok(true);
         }
 
-        // POST: api/profile/verify-password
+        /// <summary>
+        /// Verifies whether the provided password matches the currently authenticated user's password.
+        /// </summary>
+        /// <param name="password">The plain text password to verify.</param>
+        /// <returns>
+        /// 200 OK if the password is correct,
+        /// or 400 Bad Request if the password does not match.
+        /// </returns>
         [HttpPost("verify-password")]
         public IActionResult VerifyPassword([FromBody] string password)
         {
-            int userId = GetAuthenticatedUserId();
+            int userId = this.GetAuthenticatedUserId();
 
-            bool success = _profileService.VerifyPassword(userId, password);
+            bool success = this.profileService.VerifyPassword(userId, password);
 
             if (!success)
             {
-                return BadRequest(false);
+                return this.BadRequest(false);
             }
 
-            return Ok(true);
+            return this.Ok(true);
         }
 
-        // PUT: api/profile/2fa/enable
+        /// <summary>
+        /// Enables two-factor authentication (2FA) for the currently authenticated user
+        /// using the specified delivery method.
+        /// </summary>
+        /// <param name="request">The request containing the desired 2FA method (e.g. email, SMS).</param>
+        /// <returns>
+        /// 200 OK with a <see cref="Toggle2FAResponse"/> on success,
+        /// or 400 Bad Request if enabling 2FA fails.
+        /// </returns>
         [HttpPut("2fa/enable")]
         public IActionResult Enable2FA([FromBody] Enable2FARequest request)
         {
-            int userId = GetAuthenticatedUserId();
+            int userId = this.GetAuthenticatedUserId();
 
-            bool success = _profileService.Enable2FA(userId, request.Method);
+            bool success = this.profileService.Enable2FA(userId, request.Method);
 
             if (!success)
-                return BadRequest(new Toggle2FAResponse { Success = false });
+            {
+                return this.BadRequest(new Toggle2FAResponse { Success = false });
+            }
 
-            return Ok(new Toggle2FAResponse { Success = true });
+            return this.Ok(new Toggle2FAResponse { Success = true });
         }
 
-        // PUT: api/profile/2fa/disable
+        /// <summary>
+        /// Disables two-factor authentication (2FA) for the currently authenticated user.
+        /// </summary>
+        /// <returns>
+        /// 200 OK with a <see cref="Toggle2FAResponse"/> on success,
+        /// or 400 Bad Request if disabling 2FA fails.
+        /// </returns>
         [HttpPut("2fa/disable")]
         public IActionResult Disable2FA()
         {
-            int userId = GetAuthenticatedUserId();
+            int userId = this.GetAuthenticatedUserId();
 
-            bool success = _profileService.Disable2FA(userId);
+            bool success = this.profileService.Disable2FA(userId);
 
             if (!success)
-                return BadRequest(new Toggle2FAResponse { Success = false });
+            {
+                return this.BadRequest(new Toggle2FAResponse { Success = false });
+            }
 
-            return Ok(new Toggle2FAResponse { Success = true });
+            return this.Ok(new Toggle2FAResponse { Success = true });
         }
+
+        /// <summary>
+        /// Extracts the authenticated user's ID from the HTTP context,
+        /// set by the authentication middleware.
+        /// </summary>
+        /// <returns>The ID of the currently authenticated user.</returns>
+        private int GetAuthenticatedUserId() => (int)this.HttpContext.Items["UserId"] !;
     }
 }
-
