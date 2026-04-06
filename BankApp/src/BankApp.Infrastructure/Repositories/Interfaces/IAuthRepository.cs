@@ -73,6 +73,11 @@ namespace BankApp.Infrastructure.Repositories.Interfaces
         void MarkPasswordResetTokenAsUsed(int tokenId);
 
         /// <summary>
+        /// Deletes all expired password reset tokens from the system.
+        /// </summary>
+        void DeleteExpiredPasswordResetTokens();
+
+        /// <summary>
         /// Revokes all active sessions for the specified user.
         /// </summary>
         /// <param name="userId">The identifier of the user.</param>

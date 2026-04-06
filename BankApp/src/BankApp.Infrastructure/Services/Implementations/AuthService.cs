@@ -290,11 +290,16 @@ namespace BankApp.Infrastructure.Services.Implementations
                 return;
             }
 
-            string rawToken = System.Security.Cryptography.RandomNumberGenerator.GetInt32(OtpRangeMinimum, OtpRangeMaximum).ToString();
+            authRepository.DeleteExpiredPasswordResetTokens();
+
+            byte[] randomBytes = System.Security.Cryptography.RandomNumberGenerator.GetBytes(32);
+            string rawToken = Convert.ToBase64String(randomBytes);
+            string tokenHashForDb = ComputeSha256Hash(rawToken);
+
             PasswordResetToken resetToken = new PasswordResetToken
             {
                 UserId = user.Id,
-                TokenHash = rawToken,
+                TokenHash = tokenHashForDb,
                 ExpiresAt = DateTime.UtcNow.AddMinutes(PasswordResetTokenExpiryMinutes),
                 CreatedAt = DateTime.UtcNow
             };
@@ -306,7 +311,13 @@ namespace BankApp.Infrastructure.Services.Implementations
         /// <inheritdoc />
         public ResetPasswordResult ResetPassword(string token, string newPassword)
         {
-            PasswordResetToken? resetToken = authRepository.FindPasswordResetToken(token);
+            if (string.IsNullOrWhiteSpace(token))
+            {
+                return ResetPasswordResult.InvalidToken;
+            }
+
+            string tokenHash = ComputeSha256Hash(token);
+            PasswordResetToken? resetToken = authRepository.FindPasswordResetToken(tokenHash);
             ResetTokenValidationResult validationResult = this.GetResetTokenValidationResult(resetToken);
             if (validationResult != ResetTokenValidationResult.Valid)
             {
@@ -436,7 +447,13 @@ namespace BankApp.Infrastructure.Services.Implementations
         /// <inheritdoc />
         public ResetTokenValidationResult VerifyResetToken(string token)
         {
-            PasswordResetToken? resetToken = authRepository.FindPasswordResetToken(token);
+            if (string.IsNullOrWhiteSpace(token))
+            {
+                return ResetTokenValidationResult.Invalid;
+            }
+
+            string tokenHash = ComputeSha256Hash(token);
+            PasswordResetToken? resetToken = authRepository.FindPasswordResetToken(tokenHash);
             return this.GetResetTokenValidationResult(resetToken);
         }
 
@@ -470,6 +487,12 @@ namespace BankApp.Infrastructure.Services.Implementations
             }
             authRepository.UpdateSessionToken(session.Id);
             return true;
+        }
+
+        private string ComputeSha256Hash(string rawData)
+        {
+            byte[] bytes = System.Security.Cryptography.SHA256.HashData(System.Text.Encoding.UTF8.GetBytes(rawData));
+            return Convert.ToHexString(bytes).ToLowerInvariant();
         }
     }
 }
