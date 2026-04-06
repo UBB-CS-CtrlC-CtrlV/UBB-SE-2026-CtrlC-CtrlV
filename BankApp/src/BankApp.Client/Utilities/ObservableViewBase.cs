@@ -1,9 +1,13 @@
+// <copyright file="ObservableViewBase.cs" company="CtrlC CtrlV">
+// Copyright (c) CtrlC CtrlV. All rights reserved.
+// </copyright>
+
 namespace BankApp.Client.Utilities;
 
 /// <summary>
 /// Observable view base class that implements the IStateObserver interface.
 /// </summary>
-/// <typeparam name="T"></typeparam>
+/// <typeparam name="T">The type of state that triggers view updates.</typeparam>
 public abstract class ObservableViewBase<T> : IStateObserver<T>
 {
     /// <inheritdoc />
@@ -16,13 +20,13 @@ public abstract class ObservableViewBase<T> : IStateObserver<T>
     /// Called when the state changes.
     /// Implement this method to update the view based on the new state.
     /// </summary>
-    /// <param name="state"></param>
+    /// <param name="state">The new state value.</param>
     public abstract void OnStateChanged(T state);
 
     /// <summary>
     /// Shows an error message to the user.
     /// </summary>
-    /// <param name="msg"></param>
+    /// <param name="msg">The error message to display.</param>
     public abstract void ShowError(string msg);
 
     /// <summary>

@@ -1,3 +1,7 @@
+// <copyright file="IAppNavigationService.cs" company="CtrlC CtrlV">
+// Copyright (c) CtrlC CtrlV. All rights reserved.
+// </copyright>
+
 using Microsoft.UI.Xaml.Controls;
 
 namespace BankApp.Client.Master;
@@ -12,15 +16,15 @@ public interface IAppNavigationService
     /// Sets the main navigation frame for the application,
     /// which will be used for primary page navigation.
     /// </summary>
-    /// <param name="frame"></param>
+    /// <param name="frame">The frame to use for primary navigation.</param>
     void SetFrame(Frame frame);
 
     /// <summary>
     /// Sets the content frame used to display navigation content,
     /// allowing for separation of main navigation and content display.
     /// </summary>
-    /// <param name="frame"></param>
-     void SetContentFrame(Frame frame);
+    /// <param name="frame">The frame to use for content navigation.</param>
+    void SetContentFrame(Frame frame);
 
     /// <summary>
     /// Navigates to a specified page type within the main navigation frame.

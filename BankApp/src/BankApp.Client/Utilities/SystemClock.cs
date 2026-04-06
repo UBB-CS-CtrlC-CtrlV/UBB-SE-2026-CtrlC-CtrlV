@@ -4,14 +4,13 @@
 
 using System;
 
-namespace BankApp.Client.Utilities
+namespace BankApp.Client.Utilities;
+
+/// <summary>
+/// Production implementation of <see cref="ISystemClock"/> backed by <see cref="DateTime.UtcNow"/>.
+/// </summary>
+public class SystemClock : ISystemClock
 {
-    /// <summary>
-    /// Production implementation of <see cref="ISystemClock"/> backed by <see cref="DateTime.UtcNow"/>.
-    /// </summary>
-    public class SystemClock : ISystemClock
-    {
-        /// <inheritdoc/>
-        public DateTime UtcNow => DateTime.UtcNow;
-    }
+    /// <inheritdoc/>
+    public DateTime UtcNow => DateTime.UtcNow;
 }

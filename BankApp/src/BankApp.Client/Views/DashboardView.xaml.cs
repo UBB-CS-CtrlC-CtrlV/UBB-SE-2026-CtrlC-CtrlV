@@ -95,7 +95,6 @@ public sealed partial class DashboardView : IStateObserver<DashboardState>
         });
     }
 
-    // ─── Data Loading ──────────────────────────────────────────────────────────
     private async Task LoadDashboardAsync()
     {
         this.CancelPendingLoad();
@@ -110,7 +109,6 @@ public sealed partial class DashboardView : IStateObserver<DashboardState>
         }
     }
 
-    // ─── UI Refresh ────────────────────────────────────────────────────────────
     private void RefreshUi()
     {
         this.UserNameText.Text = this.viewModel.CurrentUser?.FullName ?? string.Empty;
@@ -211,7 +209,6 @@ public sealed partial class DashboardView : IStateObserver<DashboardState>
         this.CardNumberText.Text = "**** **** **** ****";
     }
 
-    // ─── Event Handlers ────────────────────────────────────────────────────────
     private void PrevCardButton_Click(object sender, RoutedEventArgs e)
     {
         if (this.viewModel.NavigatePrevious())
@@ -298,7 +295,6 @@ public sealed partial class DashboardView : IStateObserver<DashboardState>
         await this.ShowAlertAsync(feature, $"{feature} is coming soon.");
     }
 
-    // ─── Loading / Error UI ────────────────────────────────────────────────────
     private void ShowLoading()
     {
         this.LoadingOverlay.Visibility = Visibility.Visible;
@@ -317,7 +313,6 @@ public sealed partial class DashboardView : IStateObserver<DashboardState>
         this.ErrorInfoBar.IsOpen = true;
     }
 
-    // ─── Observer Lifecycle ────────────────────────────────────────────────────
     private void AttachObserver()
     {
         if (this.isObserverAttached)
@@ -352,7 +347,6 @@ public sealed partial class DashboardView : IStateObserver<DashboardState>
         this.loadCancellationTokenSource = null;
     }
 
-    // ─── UI Task Runner ────────────────────────────────────────────────────────
     private async Task RunUiTaskAsync(Func<Task> action)
     {
         try
