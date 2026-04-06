@@ -21,6 +21,18 @@ public class NotificationsViewModel
     private readonly ILogger<NotificationsViewModel> logger;
 
     /// <summary>
+    ///
+    /// </summary>
+    /// <param name="preference"></param>
+    /// <param name="enabled"></param>
+    /// <returns>A <see cref="Task{TResult}"/> representing the result of the asynchronous operation.</returns>
+    public async Task<bool> ToggleNotificationPreference(NotificationPreference preference, bool enabled)
+    {
+        preference.EmailEnabled = enabled;
+        return await this.UpdateNotificationPreferences(this.NotificationPreferences);
+    }
+
+    /// <summary>
     /// Initializes a new instance of the <see cref="NotificationsViewModel"/> class.
     /// </summary>
     /// <param name="apiClient">The API client used for notification operations.</param>

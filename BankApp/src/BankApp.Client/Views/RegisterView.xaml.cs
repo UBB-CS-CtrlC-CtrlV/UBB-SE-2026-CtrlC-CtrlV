@@ -81,7 +81,7 @@ public sealed partial class RegisterView : IStateObserver<RegisterState>
                     break;
 
                 case RegisterState.Error:
-                    this.ShowError("Something went wrong. Please try again.");
+                    this.ShowError("Please fill in all fields.");
                     break;
 
                 default:
@@ -120,21 +120,11 @@ public sealed partial class RegisterView : IStateObserver<RegisterState>
 
     private async void RegisterButton_Click(object sender, RoutedEventArgs e)
     {
-        string fullName = this.FullNameBox.Text.Trim();
-        string email = this.EmailBox.Text.Trim();
-        string password = this.PasswordBox.Password;
-        string confirmPassword = this.ConfirmPasswordBox.Password;
-
-        if (string.IsNullOrWhiteSpace(fullName)
-            || string.IsNullOrWhiteSpace(email)
-            || string.IsNullOrWhiteSpace(password)
-            || string.IsNullOrWhiteSpace(confirmPassword))
-        {
-            this.ShowError("Please fill in all fields.");
-            return;
-        }
-
-        await this.viewModel.Register(email, password, confirmPassword, fullName);
+        await this.viewModel.Register(
+            this.EmailBox.Text.Trim(),
+            this.PasswordBox.Password,
+            this.ConfirmPasswordBox.Password,
+            this.FullNameBox.Text.Trim());
     }
 
     private async void GoogleRegisterButton_Click(object sender, RoutedEventArgs e)
