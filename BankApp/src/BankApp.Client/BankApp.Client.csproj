@@ -75,7 +75,7 @@
     </Content>
   </ItemGroup>
   <ItemGroup>
-    <ProjectReference Include="..\BankApp.Core\BankApp.Core.csproj" />
+    <ProjectReference Include="..\BankApp.Contracts\BankApp.Contracts.csproj" />
   </ItemGroup>
   <ItemGroup>
     <Page Update="views\NavView.xaml">

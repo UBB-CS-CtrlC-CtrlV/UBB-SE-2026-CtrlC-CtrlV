@@ -10,16 +10,14 @@ COPY stylecop.json .
 
 # Copy project manifests in isolation to maximise layer caching: the restore
 # layer is only invalidated when a .csproj changes, not when source changes.
-COPY src/BankApp.Core/BankApp.Core.csproj                 src/BankApp.Core/
-COPY src/BankApp.Infrastructure/BankApp.Infrastructure.csproj src/BankApp.Infrastructure/
-COPY src/BankApp.Server/BankApp.Server.csproj              src/BankApp.Server/
+COPY src/BankApp.Contracts/BankApp.Contracts.csproj src/BankApp.Contracts/
+COPY src/BankApp.Server/BankApp.Server.csproj      src/BankApp.Server/
 
 RUN dotnet restore src/BankApp.Server/BankApp.Server.csproj
 
 # Copy full source and publish.
-COPY src/BankApp.Core/         src/BankApp.Core/
-COPY src/BankApp.Infrastructure/ src/BankApp.Infrastructure/
-COPY src/BankApp.Server/       src/BankApp.Server/
+COPY src/BankApp.Contracts/ src/BankApp.Contracts/
+COPY src/BankApp.Server/    src/BankApp.Server/
 
 RUN dotnet publish src/BankApp.Server/BankApp.Server.csproj \
     --configuration Release \

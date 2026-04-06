@@ -7,7 +7,7 @@ using System.Threading;
 using System.Threading.Tasks;
 using BankApp.Client.Utilities;
 using BankApp.Client.ViewModels;
-using BankApp.Core.Enums;
+using BankApp.Client.Enums;
 using Microsoft.UI.Xaml;
 using Microsoft.UI.Xaml.Controls;
 using Microsoft.UI.Xaml.Input;

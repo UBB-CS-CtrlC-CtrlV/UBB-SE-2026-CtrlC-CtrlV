@@ -3,7 +3,7 @@
 // </copyright>
 
 using System.Threading.Tasks;
-using BankApp.Core.Enums;
+using BankApp.Client.Enums;
 
 namespace BankApp.Client.Utilities;
 

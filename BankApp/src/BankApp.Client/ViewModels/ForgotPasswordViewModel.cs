@@ -5,7 +5,7 @@
 using System;
 using System.Threading.Tasks;
 using BankApp.Client.Utilities;
-using BankApp.Core.Enums;
+using BankApp.Client.Enums;
 
 namespace BankApp.Client.ViewModels;
 

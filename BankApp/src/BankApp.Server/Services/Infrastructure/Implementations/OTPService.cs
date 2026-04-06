@@ -9,7 +9,8 @@ namespace BankApp.Infrastructure.Services.Infrastructure.Implementations
     /// </summary>
     public class OtpService : IOtpService
     {
-        private static readonly Dictionary<int, (string Code, DateTime ExpiryTime)> TemporarySmsStorage = new ();
+        private static readonly Dictionary<int, (string Code, DateTime ExpiryTime)> TemporarySmsStorage = new
+            ();
         private const int SmsOtpExpiryMinutes = 5;
         private const int TotpWindowSeconds = 300;
         private const int OtpRangeMinimum = 100000;

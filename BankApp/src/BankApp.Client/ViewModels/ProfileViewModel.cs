@@ -6,7 +6,7 @@ using System;
 using System.Threading.Tasks;
 using BankApp.Client.Utilities;
 using BankApp.Core.DTOs.Profile;
-using BankApp.Core.Enums;
+using BankApp.Client.Enums;
 using Microsoft.Extensions.Logging;
 
 namespace BankApp.Client.ViewModels;

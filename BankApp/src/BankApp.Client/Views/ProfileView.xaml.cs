@@ -9,6 +9,7 @@ using BankApp.Client.Master;
 using BankApp.Client.Utilities;
 using BankApp.Client.ViewModels;
 using BankApp.Core.Entities;
+using BankApp.Client.Enums;
 using BankApp.Core.Enums;
 using BankApp.Core.Extensions;
 using Microsoft.UI.Xaml;
