@@ -288,16 +288,7 @@ public sealed partial class ProfileView : IStateObserver<ProfileState>
             return;
         }
 
-        bool success;
-
-        if (this.TwoFactorToggle.IsOn)
-        {
-            success = await this.viewModel.Security.EnableTwoFactor(TwoFactorMethod.Email);
-        }
-        else
-        {
-            success = await this.viewModel.Security.DisableTwoFactor();
-        }
+        var success = await this.viewModel.Security.SetTwoFactorEnabled(this.TwoFactorToggle.IsOn);
 
         if (!success)
         {
@@ -345,7 +336,6 @@ public sealed partial class ProfileView : IStateObserver<ProfileState>
 
     private async void NotificationToggle_Toggled(object sender, RoutedEventArgs e)
     {
-        // 1. Ignore the event if we are just drawing the UI
         if (this.isPopulating)
         {
             return;
@@ -353,27 +343,21 @@ public sealed partial class ProfileView : IStateObserver<ProfileState>
 
         if (sender is ToggleSwitch { Tag: NotificationPreference pref } toggle)
         {
-            pref.EmailEnabled = toggle.IsOn;
-
-            // 2. Set the flag to block the UI from fully refreshing
             this.isUpdatingToggle = true;
 
-            var success = await this.viewModel.Notifications.UpdateNotificationPreferences(this.viewModel.Notifications.NotificationPreferences);
+            var success = await this.viewModel.Notifications.ToggleNotificationPreference(pref, toggle.IsOn);
 
-            // 3. Clear the flag when the API call finishes
             this.isUpdatingToggle = false;
 
             if (!success)
             {
-                // Optional: If the API fails, visually flip the switch back to its old state
                 this.isPopulating = true;
                 toggle.IsOn = !toggle.IsOn;
-                pref.EmailEnabled = toggle.IsOn;
                 this.isPopulating = false;
             }
             else
             {
-                toggle.IsOn = pref.EmailEnabled; // force sync (important)
+                toggle.IsOn = pref.EmailEnabled;
             }
         }
     }

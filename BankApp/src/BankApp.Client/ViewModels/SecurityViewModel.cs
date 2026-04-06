@@ -22,6 +22,18 @@ public class SecurityViewModel
     private readonly ILogger<SecurityViewModel> logger;
 
     /// <summary>
+    ///
+    /// </summary>
+    /// <param name="enabled"></param>
+    /// <returns>A <see cref="Task{TResult}"/> representing the result of the asynchronous operation.</returns>
+    public async Task<bool> SetTwoFactorEnabled(bool enabled)
+    {
+        return enabled
+            ? await this.EnableTwoFactor(TwoFactorMethod.Email)
+            : await this.DisableTwoFactor();
+    }
+
+    /// <summary>
     /// Initializes a new instance of the <see cref="SecurityViewModel"/> class.
     /// </summary>
     /// <param name="apiClient">The API client used for security operations.</param>
