@@ -9,3 +9,4 @@ obj/
 secrets.json
 *.user-secrets.json
 appsettings.Local.json
+.env
