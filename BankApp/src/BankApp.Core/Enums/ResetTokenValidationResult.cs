@@ -9,9 +9,24 @@ namespace BankApp.Core.Enums
     /// </summary>
     public enum ResetTokenValidationResult
     {
+        /// <summary>
+        /// The token is valid and can be used.
+        /// </summary>
         Valid,
+
+        /// <summary>
+        /// The token is invalid or does not exist.
+        /// </summary>
         Invalid,
+
+        /// <summary>
+        /// The token has expired.
+        /// </summary>
         Expired,
+
+        /// <summary>
+        /// The token has already been used.
+        /// </summary>
         AlreadyUsed,
     }
 }

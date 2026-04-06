@@ -1,23 +1,27 @@
 using System;
-using System.Collections.Generic;
-using System.Linq;
-using System.Text;
-using System.Threading.Tasks;
 
 namespace BankApp.Core.DTOs.Profile
 {
-    // DEPRECATED:
-    // Currently deprecated as the GetProfile endpoint incorporates its only property, the userId, in the URL
-    // Not deleted yet as the endpoint request might be changed in the future to encapsulate more information
-    [Obsolete]
+    /// <summary>
+    /// Represents a request to retrieve user profile data.
+    /// This class is currently deprecated as the GetProfile endpoint
+    /// incorporates its only property, the userId, in the URL.
+    /// </summary>
+    [Obsolete("UserId is now passed via the URL. Kept for potential future use.")]
     public class GetProfileRequest
     {
+        /// <summary>
+        /// Gets or sets the identifier of the user whose profile is requested.
+        /// </summary>
         public int UserId { get; set; }
 
+        /// <summary>
+        /// Initializes a new instance of the <see cref="GetProfileRequest"/> class.
+        /// </summary>
+        /// <param name="userId">The user identifier.</param>
         public GetProfileRequest(int userId)
         {
             UserId = userId;
         }
     }
 }
-
