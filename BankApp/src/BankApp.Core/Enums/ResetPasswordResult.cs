@@ -9,9 +9,24 @@ namespace BankApp.Core.Enums
     /// </summary>
     public enum ResetPasswordResult
     {
+        /// <summary>
+        /// The password was reset successfully.
+        /// </summary>
         Success,
+
+        /// <summary>
+        /// The provided token is invalid.
+        /// </summary>
         InvalidToken,
+
+        /// <summary>
+        /// The provided token has expired.
+        /// </summary>
         ExpiredToken,
+
+        /// <summary>
+        /// The provided token has already been used.
+        /// </summary>
         TokenAlreadyUsed,
     }
 }
