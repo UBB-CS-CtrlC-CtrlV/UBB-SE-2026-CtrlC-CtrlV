@@ -2,6 +2,7 @@ using System.Net;
 using System.Net.Mail;
 using BankApp.Infrastructure.Services.Infrastructure.Interfaces;
 using Microsoft.Extensions.Configuration;
+using Microsoft.Extensions.Logging;
 
 namespace BankApp.Infrastructure.Services.Infrastructure.Implementations
 {
@@ -12,14 +13,17 @@ namespace BankApp.Infrastructure.Services.Infrastructure.Implementations
     {
         private const int DefaultSmtpPort = 587;
         private readonly IConfiguration configuration;
+        private readonly ILogger<EmailService> logger;
 
         /// <summary>
         /// Initializes a new instance of the <see cref="EmailService"/> class.
         /// </summary>
         /// <param name="configuration">The application configuration containing SMTP settings.</param>
-        public EmailService(IConfiguration configuration)
+        /// <param name="logger">Logger for email send failures.</param>
+        public EmailService(IConfiguration configuration, ILogger<EmailService> logger)
         {
             this.configuration = configuration;
+            this.logger = logger;
         }
 
         /// <inheritdoc />
@@ -58,24 +62,25 @@ namespace BankApp.Infrastructure.Services.Infrastructure.Implementations
         {
             try
             {
-                string host = configuration["Email:SmtpHost"] ?? throw new Exception("SMTP Host is missing.");
-                int port = int.Parse(configuration["Email:SmtpPort"] ?? DefaultSmtpPort.ToString());
-                string smtpUsername = configuration["Email:SmtpUser"] ?? throw new Exception("SMTP User is missing.");
-                string smtpPassword = configuration["Email:SmtpPass"] ?? throw new Exception("SMTP Password is missing.");
+                string host = configuration["Email:SmtpHost"] ?? throw new InvalidOperationException("Email:SmtpHost is missing from configuration.");
+                int port = int.Parse(configuration["Email:SmtpPort"] ?? throw new InvalidOperationException("Email:SmtpPort is missing from configuration."));
+                string smtpUsername = configuration["Email:SmtpUser"] ?? throw new InvalidOperationException("Email:SmtpUser is missing from configuration.");
+                string smtpPassword = configuration["Email:SmtpPass"] ?? throw new InvalidOperationException("Email:SmtpPass is missing from configuration.");
                 string fromAddress = configuration["Email:FromAddress"] ?? smtpUsername;
+
                 using var client = new SmtpClient(host, port)
                 {
                     Credentials = new NetworkCredential(smtpUsername, smtpPassword),
                     EnableSsl = true,
-                    UseDefaultCredentials = false
+                    UseDefaultCredentials = false,
                 };
                 using var mailMessage = new MailMessage(fromAddress, toEmail, subject, body);
                 client.Send(mailMessage);
             }
-            catch (Exception)
+            catch (Exception ex)
             {
+                this.logger.LogError(ex, "Failed to send email to {ToEmail} with subject '{Subject}'.", toEmail, subject);
             }
         }
     }
 }
-
