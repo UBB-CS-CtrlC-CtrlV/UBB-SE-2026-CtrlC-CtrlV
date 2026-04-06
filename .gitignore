@@ -4,6 +4,7 @@ obj/
 *.user
 *.suo
 .idea/
+**/logs/
 
 # Secrets
 secrets.json
