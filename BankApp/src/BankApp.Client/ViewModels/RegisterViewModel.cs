@@ -187,7 +187,10 @@ public class RegisterViewModel
 
     private RegisterState? ValidateLocally(string email, string password, string confirmPassword, string fullName)
     {
-        if (string.IsNullOrWhiteSpace(fullName))
+        if (string.IsNullOrWhiteSpace(fullName)
+            || string.IsNullOrWhiteSpace(email)
+            || string.IsNullOrWhiteSpace(password)
+            || string.IsNullOrWhiteSpace(confirmPassword))
         {
             return RegisterState.Error;
         }
