@@ -50,7 +50,7 @@ public class PersonalInfoViewModel
     {
         this.State.SetValue(ProfileState.Loading);
 
-        var profileResult = await this.apiClient.GetAsync<GetProfileResponse>("api/profile/");
+        var profileResult = await this.apiClient.GetAsync<GetProfileResponse>("/api/profile/");
         if (profileResult.IsError)
         {
             this.logger.LogError("LoadProfile: profile request failed: {Errors}", profileResult.Errors);

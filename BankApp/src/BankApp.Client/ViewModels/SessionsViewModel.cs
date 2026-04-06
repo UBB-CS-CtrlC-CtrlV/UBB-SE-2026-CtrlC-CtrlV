@@ -54,7 +54,7 @@ public class SessionsViewModel
         this.State.SetValue(ProfileState.Loading);
         try
         {
-            ErrorOr<List<Session>> result = await this.apiClient.GetAsync<List<Session>>("profile/sessions");
+            ErrorOr<List<Session>> result = await this.apiClient.GetAsync<List<Session>>("/api/profile/sessions");
             this.ActiveSessions = result.IsError ? new List<Session>() : result.Value;
             this.State.SetValue(result.IsError ? ProfileState.Error : ProfileState.Idle);
         }
@@ -76,7 +76,7 @@ public class SessionsViewModel
         this.State.SetValue(ProfileState.Loading);
         try
         {
-            ErrorOr<bool> result = await this.apiClient.DeleteAsync<bool>($"profile/sessions/{sessionId}");
+            ErrorOr<bool> result = await this.apiClient.DeleteAsync<bool>($"/api/profile/sessions/{sessionId}");
             this.State.SetValue(result.IsError ? ProfileState.Error : ProfileState.Idle);
             return !result.IsError && result.Value;
         }

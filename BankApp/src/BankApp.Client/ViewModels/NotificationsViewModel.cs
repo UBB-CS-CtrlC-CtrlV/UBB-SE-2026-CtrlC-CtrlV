@@ -49,7 +49,7 @@ public class NotificationsViewModel
     /// <returns><see langword="true"/> if loaded successfully; otherwise, <see langword="false"/>.</returns>
     public async Task<bool> LoadNotificationPreferences()
     {
-        var prefsResult = await this.apiClient.GetAsync<List<NotificationPreference>>("api/profile/notifications/preferences");
+        var prefsResult = await this.apiClient.GetAsync<List<NotificationPreference>>("/api/profile/notifications/preferences");
         if (prefsResult.IsError)
         {
             this.logger.LogError("LoadNotificationPreferences: request failed: {Errors}", prefsResult.Errors);

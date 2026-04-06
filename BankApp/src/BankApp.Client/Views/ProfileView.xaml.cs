@@ -15,6 +15,7 @@ using Microsoft.UI.Xaml;
 using Microsoft.UI.Xaml.Controls;
 using Microsoft.UI.Xaml.Media;
 using Microsoft.UI.Xaml.Navigation;
+
 namespace BankApp.Client.Views;
 
 /// <summary>
@@ -30,37 +31,34 @@ public sealed partial class ProfileView : IStateObserver<ProfileState>
     private bool isPopulating = false;
     private bool isUpdatingToggle = false;
     private readonly IAppNavigationService navigationService;
-    private readonly SessionsViewModel sessionsViewModel;
 
     /// <summary>
     /// Initializes a new instance of the <see cref="ProfileView"/> class.
     /// </summary>
     /// <param name="viewModel">The view model that loads profile data and drives all profile update operations.</param>
     /// <param name="navigationService">Used to navigate to the dashboard or back to login.</param>
-    /// <param name="sessionsViewModel">The view model that handles session loading and revocation.</param>
-    public ProfileView(ProfileViewModel viewModel, IAppNavigationService navigationService, SessionsViewModel sessionsViewModel)
+    public ProfileView(ProfileViewModel viewModel, IAppNavigationService navigationService)
     {
         this.InitializeComponent();
         this.viewModel = viewModel;
         this.navigationService = navigationService;
-        this.sessionsViewModel = sessionsViewModel;
         this.viewModel.State.AddObserver(this);
+        this.Loaded += this.OnPageLoaded;
+    }
+
+    private async void OnPageLoaded(object sender, RoutedEventArgs e)
+    {
+        this.ShowLoading(true);
+        await this.viewModel.LoadProfile();
+        this.ShowLoading(false);
+        this.PopulateUi();
+        this.SetEditingEnabled(false);
     }
 
     /// <inheritdoc/>
-    protected override async void OnNavigatedTo(NavigationEventArgs e)
+    protected override void OnNavigatedTo(NavigationEventArgs e)
     {
         base.OnNavigatedTo(e);
-
-        this.ShowLoading(true);
-
-        await this.viewModel.LoadProfile();
-
-        this.ShowLoading(false);
-
-        this.PopulateUi();
-
-        this.SetEditingEnabled(false);
     }
 
     /// <inheritdoc/>
@@ -120,7 +118,7 @@ public sealed partial class ProfileView : IStateObserver<ProfileState>
 
     private async void UpdateButton_Click(object sender, RoutedEventArgs e)
     {
-        this.isChangingPasswordFlow = false; // Just editing info
+        this.isChangingPasswordFlow = false;
         this.is2FaFlow = false;
         this.VerifyCurrentPasswordBox.Password = string.Empty;
         this.VerifyErrorInfoBar.IsOpen = false;
@@ -152,17 +150,12 @@ public sealed partial class ProfileView : IStateObserver<ProfileState>
             return;
         }
 
-        // Success logic
         this.verifiedPassword = this.VerifyCurrentPasswordBox.Password;
         this.VerifyErrorInfoBar.IsOpen = false;
-
-        // Complete the deferral so the FIRST dialog closes
         deferral.Complete();
 
-        // Now, trigger the NEXT step based on the flow
         if (this.isChangingPasswordFlow)
         {
-            // We MUST use the Dispatcher to wait until the first dialog is gone
             this.DispatcherQueue.TryEnqueue(async void () =>
             {
                 this.NewPasswordBox.Password = string.Empty;
@@ -173,7 +166,6 @@ public sealed partial class ProfileView : IStateObserver<ProfileState>
         }
         else if (!this.is2FaFlow)
         {
-            // Normal profile edit flow
             this.SetEditingEnabled(true);
             this.ShowSuccess("You can now edit your profile.");
         }
@@ -183,7 +175,8 @@ public sealed partial class ProfileView : IStateObserver<ProfileState>
     {
         this.ShowLoading(true);
 
-        var success = await this.viewModel.PersonalInfo.UpdatePersonalInfo(this.PhoneBox.Text,
+        var success = await this.viewModel.PersonalInfo.UpdatePersonalInfo(
+            this.PhoneBox.Text,
             this.AddressBox.Text,
             this.verifiedPassword);
 
@@ -193,10 +186,8 @@ public sealed partial class ProfileView : IStateObserver<ProfileState>
         {
             this.ProfileCardPhone.Text = this.PhoneBox.Text.Trim();
             this.ProfileCardAddress.Text = this.AddressBox.Text.Trim();
-
             this.verifiedPassword = string.Empty;
             this.SetEditingEnabled(false);
-
             this.ShowSuccess("Profile updated successfully.");
         }
         else
@@ -207,7 +198,7 @@ public sealed partial class ProfileView : IStateObserver<ProfileState>
 
     private async void ChangePasswordButton_Click(object sender, RoutedEventArgs e)
     {
-        this.isChangingPasswordFlow = true; // Password change flow
+        this.isChangingPasswordFlow = true;
         this.is2FaFlow = false;
         this.VerifyCurrentPasswordBox.Password = string.Empty;
         this.VerifyErrorInfoBar.IsOpen = false;
@@ -232,13 +223,16 @@ public sealed partial class ProfileView : IStateObserver<ProfileState>
             return;
         }
 
-        var (success, errorMessage) = await this.viewModel.Security.ChangePassword(userId.Value, this.verifiedPassword, newPwd, confirmPwd);
+        var (success, errorMessage) = await this.viewModel.Security.ChangePassword(
+            userId.Value,
+            this.verifiedPassword,
+            newPwd,
+            confirmPwd);
 
         if (success)
         {
-            this.verifiedPassword = string.Empty; // Clear security sensitive data
+            this.verifiedPassword = string.Empty;
             this.NewPasswordErrorInfoBar.IsOpen = false;
-
             deferral.Complete();
             this.ShowSuccess("Your password has been changed successfully.");
         }
@@ -254,7 +248,7 @@ public sealed partial class ProfileView : IStateObserver<ProfileState>
     private async void Handle2FAAction_Click(object sender, RoutedEventArgs e)
     {
         var btn = sender as Button;
-        this.pending2FaType = btn?.Tag.ToString() ?? string.Empty; // "Phone" or "Email"
+        this.pending2FaType = btn?.Tag.ToString() ?? string.Empty;
 
         if (btn?.Content.ToString() == "Remove")
         {
@@ -262,7 +256,6 @@ public sealed partial class ProfileView : IStateObserver<ProfileState>
         }
         else
         {
-            // Logic for Add/Verify
             this.is2FaFlow = true;
             this.VerifyCurrentPasswordBox.Password = string.Empty;
             await this.VerifyPasswordDialog.ShowAsync();
@@ -271,14 +264,6 @@ public sealed partial class ProfileView : IStateObserver<ProfileState>
 
     private async void SaveTwoFactorSettings_Click(object sender, RoutedEventArgs e)
     {
-        // bool success = await _viewModel.UpdateTwoFactorContacts(
-        //    TwoFactorPhoneBox.Text.Trim(),
-        //    TwoFactorEmailBox.Text.Trim());
-
-        // if (success)
-        //    ShowSuccess("2FA settings saved.");
-        // else
-        //    ShowError("Failed to save 2FA settings.");
     }
 
     private async void TwoFactorToggle_Toggled(object sender, RoutedEventArgs e)
@@ -314,12 +299,6 @@ public sealed partial class ProfileView : IStateObserver<ProfileState>
 
     private async void TwoFactorEmailToggle_Toggled(object sender, RoutedEventArgs e)
     {
-        // bool success = TwoFactorEmailToggle.IsOn
-        //    ? await _viewModel.EnableTwoFactor(TwoFactorMethod.Email)
-        //    : await _viewModel.DisableTwoFactor(TwoFactorMethod.Email);
-
-        // if (!success)
-        //    ShowError("2FA email update failed.");
     }
 
     private async void RemoveConnectedAccount_Click(object sender, RoutedEventArgs e)
@@ -345,7 +324,6 @@ public sealed partial class ProfileView : IStateObserver<ProfileState>
 
     private async void NotificationToggle_Toggled(object sender, RoutedEventArgs e)
     {
-        // 1. Ignore the event if we are just drawing the UI
         if (this.isPopulating)
         {
             return;
@@ -354,18 +332,15 @@ public sealed partial class ProfileView : IStateObserver<ProfileState>
         if (sender is ToggleSwitch { Tag: NotificationPreference pref } toggle)
         {
             pref.EmailEnabled = toggle.IsOn;
-
-            // 2. Set the flag to block the UI from fully refreshing
             this.isUpdatingToggle = true;
 
-            var success = await this.viewModel.Notifications.UpdateNotificationPreferences(this.viewModel.Notifications.NotificationPreferences);
+            var success = await this.viewModel.Notifications.UpdateNotificationPreferences(
+                this.viewModel.Notifications.NotificationPreferences);
 
-            // 3. Clear the flag when the API call finishes
             this.isUpdatingToggle = false;
 
             if (!success)
             {
-                // Optional: If the API fails, visually flip the switch back to its old state
                 this.isPopulating = true;
                 toggle.IsOn = !toggle.IsOn;
                 pref.EmailEnabled = toggle.IsOn;
@@ -373,7 +348,7 @@ public sealed partial class ProfileView : IStateObserver<ProfileState>
             }
             else
             {
-                toggle.IsOn = pref.EmailEnabled; // force sync (important)
+                toggle.IsOn = pref.EmailEnabled;
             }
         }
     }
@@ -392,16 +367,14 @@ public sealed partial class ProfileView : IStateObserver<ProfileState>
     {
         var user = this.viewModel.ProfileInfo;
 
-        // Check Phone Status
         if (string.IsNullOrEmpty(user.PhoneNumber))
         {
             this.TwoFactorPhoneDisplay.Text = "No phone number set";
             this.ConfigureActionButton(this.ActionPhoneBtn, PhoneStatusBadge, PhoneStatusText, "Add", "#F1F5F9",
                 "#64748B", "Disabled");
         }
-        else if (true /*!user.IsPhoneVerified*/)
+        else if (true)
         {
-            // You need this property in your Model
             this.TwoFactorPhoneDisplay.Text = user.PhoneNumber;
             this.ConfigureActionButton(this.ActionPhoneBtn, PhoneStatusBadge, PhoneStatusText, "Verify", "#FFF7ED",
                 "#C2410C", "Unverified");
@@ -442,7 +415,6 @@ public sealed partial class ProfileView : IStateObserver<ProfileState>
     {
         this.DispatcherQueue.TryEnqueue(() =>
         {
-            // --- INTERCEPTOR: Block full-page reloads if we are just toggling a switch ---
             if (this.isUpdatingToggle)
             {
                 if (state == ProfileState.Error)
@@ -450,7 +422,6 @@ public sealed partial class ProfileView : IStateObserver<ProfileState>
                     this.ShowError("Failed to save notification preferences.");
                 }
 
-                // Ignore Loading and UpdateSuccess so the screen doesn't wipe and redraw!
                 return;
             }
 
@@ -484,10 +455,12 @@ public sealed partial class ProfileView : IStateObserver<ProfileState>
         this.PanelPersonal.Visibility = Visibility.Visible;
         this.PanelSecurity.Visibility = Visibility.Collapsed;
         this.PanelNotifications.Visibility = Visibility.Collapsed;
+        this.PanelSessions.Visibility = Visibility.Collapsed;
 
         this.TabPersonalBtn.Style = (Style)this.Resources["TabButtonActiveStyle"];
         this.TabSecurityBtn.Style = (Style)this.Resources["TabButtonStyle"];
         this.TabNotificationsBtn.Style = (Style)this.Resources["TabButtonStyle"];
+        this.TabSessionsBtn.Style = (Style)this.Resources["TabButtonStyle"];
     }
 
     private void TabSecurityBtn_Click(object sender, RoutedEventArgs e)
@@ -495,10 +468,12 @@ public sealed partial class ProfileView : IStateObserver<ProfileState>
         this.PanelPersonal.Visibility = Visibility.Collapsed;
         this.PanelSecurity.Visibility = Visibility.Visible;
         this.PanelNotifications.Visibility = Visibility.Collapsed;
+        this.PanelSessions.Visibility = Visibility.Collapsed;
 
         this.TabPersonalBtn.Style = (Style)this.Resources["TabButtonStyle"];
         this.TabSecurityBtn.Style = (Style)this.Resources["TabButtonActiveStyle"];
         this.TabNotificationsBtn.Style = (Style)this.Resources["TabButtonStyle"];
+        this.TabSessionsBtn.Style = (Style)this.Resources["TabButtonStyle"];
     }
 
     private void TabNotificationsBtn_Click(object sender, RoutedEventArgs e)
@@ -506,10 +481,12 @@ public sealed partial class ProfileView : IStateObserver<ProfileState>
         this.PanelPersonal.Visibility = Visibility.Collapsed;
         this.PanelSecurity.Visibility = Visibility.Collapsed;
         this.PanelNotifications.Visibility = Visibility.Visible;
+        this.PanelSessions.Visibility = Visibility.Collapsed;
 
         this.TabPersonalBtn.Style = (Style)this.Resources["TabButtonStyle"];
         this.TabSecurityBtn.Style = (Style)this.Resources["TabButtonStyle"];
         this.TabNotificationsBtn.Style = (Style)this.Resources["TabButtonActiveStyle"];
+        this.TabSessionsBtn.Style = (Style)this.Resources["TabButtonStyle"];
     }
 
     private void PopulateOAuthLinks(List<OAuthLink>? links)
@@ -522,10 +499,10 @@ public sealed partial class ProfileView : IStateObserver<ProfileState>
         }
 
         foreach (var btn in links.Select(link => new Button
-                 {
-                     Content = link.ProviderEmail ?? link.Provider,
-                     Tag = link,
-                 }))
+        {
+            Content = link.ProviderEmail ?? link.Provider,
+            Tag = link,
+        }))
         {
             btn.Click += RemoveConnectedAccount_Click;
             this.OAuthLinksPanel.Children.Add(btn);
@@ -535,7 +512,6 @@ public sealed partial class ProfileView : IStateObserver<ProfileState>
     private void PopulateNotificationPreferences(List<NotificationPreference>? prefs)
     {
         this.isPopulating = true;
-
         this.NotificationPreferencesPanel.Children.Clear();
 
         if (prefs == null)
@@ -613,15 +589,15 @@ public sealed partial class ProfileView : IStateObserver<ProfileState>
             return;
         }
 
-        await this.sessionsViewModel.LoadSessionsAsync(userId.Value);
+        await this.viewModel.Sessions.LoadSessionsAsync(userId.Value);
 
-        if (this.sessionsViewModel.ActiveSessions.Count == 0)
+        if (this.viewModel.Sessions.ActiveSessions.Count == 0)
         {
             this.NoSessionsText.Visibility = Visibility.Visible;
             return;
         }
 
-        foreach (Session session in this.sessionsViewModel.ActiveSessions)
+        foreach (Session session in this.viewModel.Sessions.ActiveSessions)
         {
             this.SessionsListPanel.Children.Add(this.BuildSessionCard(session));
         }
@@ -705,7 +681,7 @@ public sealed partial class ProfileView : IStateObserver<ProfileState>
             return;
         }
 
-        bool success = await this.sessionsViewModel.RevokeSessionAsync(sessionId);
+        bool success = await this.viewModel.Sessions.RevokeSessionAsync(sessionId);
 
         if (success)
         {

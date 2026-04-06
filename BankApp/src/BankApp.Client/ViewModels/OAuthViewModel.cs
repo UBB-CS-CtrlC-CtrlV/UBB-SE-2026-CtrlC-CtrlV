@@ -49,11 +49,12 @@ public class OAuthViewModel
     /// <returns><see langword="true"/> if loaded successfully; otherwise, <see langword="false"/>.</returns>
     public async Task<bool> LoadOAuthLinks()
     {
-        var oauthResult = await this.apiClient.GetAsync<List<OAuthLink>>("api/profile/oauthlinks");
+        var oauthResult = await this.apiClient.GetAsync<List<OAuthLink>>("/api/profile/oauthlinks");
         if (oauthResult.IsError)
         {
-            this.logger.LogError("LoadOAuthLinks: request failed: {Errors}", oauthResult.Errors);
-            return false;
+            // 404 means no OAuth links exist — treat as success with empty list
+            this.OAuthLinks = new List<OAuthLink>();
+            return true;
         }
 
         this.OAuthLinks = oauthResult.Value;
