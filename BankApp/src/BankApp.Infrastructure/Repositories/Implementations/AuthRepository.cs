@@ -132,6 +132,12 @@ namespace BankApp.Infrastructure.Repositories.Implementations
         }
 
         /// <inheritdoc />
+        public void DeleteExpiredPasswordResetTokens()
+        {
+            passwordResetTokenDataAccess.DeleteExpired();
+        }
+
+        /// <inheritdoc />
         public void IncrementFailedAttempts(int userId)
         {
             userDataAccess.IncrementFailedAttempts(userId);
