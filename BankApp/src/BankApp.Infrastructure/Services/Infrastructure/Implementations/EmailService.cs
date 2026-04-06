@@ -58,7 +58,7 @@ namespace BankApp.Infrastructure.Services.Infrastructure.Implementations
             try
             {
                 string host = configuration["Email:SmtpHost"] ?? throw new Exception("SMTP Host is missing.");
-                int port = int.Parse(configuration["Email:SmtpPort"] ?? DefaultSmtpPort.ToString());
+                int port = int.Parse(configuration["Email:SmtpPort"] ?? "587");
                 string smtpUsername = configuration["Email:SmtpUser"] ?? throw new Exception("SMTP User is missing.");
                 string smtpPassword = configuration["Email:SmtpPass"] ?? throw new Exception("SMTP Password is missing.");
                 string fromAddress = configuration["Email:FromAddress"] ?? smtpUsername;

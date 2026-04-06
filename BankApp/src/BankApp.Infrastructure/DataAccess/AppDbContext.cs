@@ -43,7 +43,7 @@ namespace BankApp.Infrastructure.DataAccess
         }
 
         /// <inheritdoc />
-        public SqlTransaction BeginTransaction()
+        public virtual IDbTransaction BeginTransaction()
         {
             SqlConnection activeConnection = GetConnection();
             try
@@ -58,7 +58,7 @@ namespace BankApp.Infrastructure.DataAccess
         }
 
         /// <inheritdoc />
-        public void CommitTransaction()
+        public virtual void CommitTransaction()
         {
             if (currentTransaction != null)
             {
@@ -68,7 +68,7 @@ namespace BankApp.Infrastructure.DataAccess
         }
 
         /// <inheritdoc />
-        public void RollbackTransaction()
+        public virtual void RollbackTransaction()
         {
             if (currentTransaction != null)
             {
@@ -99,7 +99,7 @@ namespace BankApp.Infrastructure.DataAccess
         }
 
         /// <inheritdoc />
-        public IDataReader ExecuteQuery(string sqlStatement, object[] parameters)
+        public virtual IDataReader ExecuteQuery(string sqlStatement, object[] parameters)
         {
             var activeConnection = GetConnection();
             var command = new SqlCommand(sqlStatement, activeConnection, currentTransaction);
@@ -108,7 +108,7 @@ namespace BankApp.Infrastructure.DataAccess
         }
 
         /// <inheritdoc />
-        public int ExecuteNonQuery(string sqlStatement, object[] parameters)
+        public virtual int ExecuteNonQuery(string sqlStatement, object[] parameters)
         {
             var activeConnection = GetConnection();
             using var command = new SqlCommand(sqlStatement, activeConnection, currentTransaction);
@@ -117,7 +117,7 @@ namespace BankApp.Infrastructure.DataAccess
         }
 
         /// <inheritdoc />
-        public void Dispose()
+        public virtual void Dispose()
         {
             if (currentTransaction != null)
             {

@@ -1,5 +1,4 @@
 using System.Data;
-using Microsoft.Data.SqlClient;
 
 namespace BankApp.Infrastructure.DataAccess
 {
@@ -11,8 +10,8 @@ namespace BankApp.Infrastructure.DataAccess
         /// <summary>
         /// Begins a new database transaction.
         /// </summary>
-        /// <returns>The <see cref="SqlTransaction"/> that was started.</returns>
-        SqlTransaction BeginTransaction();
+        /// <returns>The <see cref="IDbTransaction"/> that was started.</returns>
+        IDbTransaction BeginTransaction();
 
         /// <summary>
         /// Commits the current database transaction.

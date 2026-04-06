@@ -1,0 +1,8 @@
+<Project>
+  <!-- Suppress StyleCop and warning-as-error for test projects -->
+  <PropertyGroup>
+    <TreatWarningsAsErrors>false</TreatWarningsAsErrors>
+    <NoWarn>SA0001;SA1000;SA1009;SA1101;SA1200;SA1201;SA1202;SA1204;SA1210;SA1300;SA1400;SA1402;SA1404;SA1512;SA1515;SA1600;SA1601;SA1602;SA1633;SA1649;CS1591</NoWarn>
+    <EnforceCodeStyleInBuild>false</EnforceCodeStyleInBuild>
+  </PropertyGroup>
+</Project>
