@@ -1,0 +1,25 @@
+# Build artefacts
+**/bin/
+**/obj/
+
+# IDE and tooling
+**/.vs/
+**/.idea/
+**/*.user
+
+# Git
+.git/
+.gitignore
+
+# Claude
+.claude/
+
+# Client project — not needed for server builds
+src/BankApp.Client/
+
+# Tests
+tests/
+
+# Dev-only config overrides
+**/.env
+**/appsettings.Local.json

@@ -2,48 +2,53 @@
 
 ASP.NET Core Web API backend for BankApp.
 
-## Local development setup
+## Running with Docker (recommended)
 
-Sensitive configuration values are not stored in source control. They must be set
-via .NET User Secrets before running the server locally.
+### Prerequisites
 
-Run the setup script from the solution root:
+- [Docker Desktop](https://www.docker.com/products/docker-desktop/)
 
-```bash
-python scripts/server/setup-dev-secrets.py
-```
-
-Requires Python 3.6+ and the .NET SDK. No third-party packages needed.
-The script generates a cryptographically random JWT secret automatically and
-prompts you for the SMTP credentials (which must be real Gmail values).
-
-To verify your secrets are set afterwards:
+### First-time setup
 
 ```bash
-dotnet user-secrets list --project src/BankApp.Server
+python scripts/server/setup-dev-env.py   # generates .env with auto-created secrets
+docker compose up --build
 ```
 
-Values are stored at `%APPDATA%\Microsoft\UserSecrets\6321c0d0-8c18-47df-b537-61e283ac2339\secrets.json`
-on your machine and are never committed to the repository.
+The API is available at **http://localhost:5024** once the server prints `Application started`.
 
-> **Gmail App Password:** use a Gmail App Password, not your account password.
-> Generate one at Google Account > Security > 2-Step Verification > App passwords.
+`--build` is only needed on first run or after code changes.
 
-The database connection string defaults to localhost in `appsettings.Development.json`
-and requires no additional setup for local development (uses Windows authentication).
+### Useful commands
 
-## CI / Production configuration
+```bash
+docker compose up -d          # start in background
+docker compose logs -f server # tail server logs
+docker compose down           # stop (data volume preserved)
+docker compose down -v        # stop and delete database volume
+```
 
-Set the following environment variables in your pipeline or host. Use `__` (double
-underscore) as the separator instead of `:`.
+## Running without Docker
 
-| Environment variable                  | Description                        |
-|---------------------------------------|------------------------------------|
-| `Jwt__Secret`                         | JWT signing key (min 32 chars)     |
-| `Email__SmtpUser`                     | SMTP username                      |
-| `Email__SmtpPass`                     | SMTP password / app password       |
-| `Email__FromAddress`                  | Sender address for outgoing emails |
-| `ConnectionStrings__DefaultConnection`| Full ADO.NET connection string     |
+```bash
+python scripts/server/setup-dev-secrets.py   # sets dotnet user-secrets
+dotnet run --project src/BankApp.Server
+```
 
-`Email__SmtpHost` and `Email__SmtpPort` default to `smtp.gmail.com:587` and only
-need to be overridden if using a different mail provider.
+Requires a local SQL Server instance. Connection string is in `appsettings.Development.json`.
+
+## Configuration reference
+
+| Key                                   | Docker / .env var             | Description                        |
+|---------------------------------------|-------------------------------|------------------------------------|
+| `ConnectionStrings:DefaultConnection` | `DB_SA_PASSWORD` (composed)   | ADO.NET connection string          |
+| `Jwt:Secret`                          | `JWT_SECRET`                  | JWT signing key (min 32 chars)     |
+| `Email:SmtpHost`                      | `EMAIL_SMTP_HOST`             | SMTP server hostname               |
+| `Email:SmtpPort`                      | `EMAIL_SMTP_PORT`             | SMTP port (587 for STARTTLS)       |
+| `Email:SmtpUser`                      | `EMAIL_SMTP_USER`             | SMTP username                      |
+| `Email:SmtpPass`                      | `EMAIL_SMTP_PASS`             | SMTP password / app password       |
+| `Email:FromAddress`                   | `EMAIL_FROM_ADDRESS`          | Sender address for outgoing emails |
+
+## Production
+
+Set the same environment variables on your host. Use `__` instead of `:` for nested keys (e.g. `Jwt__Secret`). Set `ASPNETCORE_ENVIRONMENT=Production` to disable Swagger and developer error pages.

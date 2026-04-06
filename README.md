@@ -4,13 +4,6 @@ Banking app. ASP.NET Core server + WinUI 3 client.
 Our team: authentication, dashboard, profile.
 Other teams add their features to the same server.
 
-## Prerequisites
-
-- Visual Studio 2022, workloads: ASP.NET and web development, .NET desktop development, Windows application development
-- SQL Server 2022 Developer (free): https://www.microsoft.com/en-us/sql-server/sql-server-downloads - pick Developer, Basic install
-- SSMS: https://learn.microsoft.com/en-us/ssms/download-sql-server-management-studio-ssms
-- Git: https://git-scm.com/download/win
-
 ## Architecture
 
 Two programs running at the same time:

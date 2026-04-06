@@ -6,7 +6,7 @@ using System;
 using System.Threading.Tasks;
 using BankApp.Client.Utilities;
 using BankApp.Core.DTOs.Auth;
-using BankApp.Core.Enums;
+using BankApp.Client.Enums;
 using Duende.IdentityModel.OidcClient;
 using ErrorOr;
 using Microsoft.Extensions.Configuration;

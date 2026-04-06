@@ -1,73 +1,53 @@
 # BankApp.Client
 
-WinUI 3 desktop client for BankApp.
+WinUI 3 desktop client for BankApp. Runs unpackaged (`WindowsPackageType=None`) — no MSIX required.
 
-## Prerequisites
+The server must be running before launching the client. See [`src/BankApp.Server`](../BankApp.Server/README.md).
 
-The client talks to `BankApp.Server` over HTTP. The server must be running locally
-before you launch the client. See `src/BankApp.Server/README.md` for server setup.
-
-## Local development setup
-
-Sensitive configuration (OAuth credentials) is not stored in source control. Run the
-setup script once from the repo root after cloning:
+## Setup
 
 ```bash
 python scripts/client/setup-dev-config.py
 ```
 
-The script creates `src/BankApp.Client/appsettings.Local.json` with your OAuth
-credentials. This file is gitignored and will never be committed.
+Creates `src/BankApp.Client/appsettings.Local.json` with your Google OAuth credentials. Gitignored, never committed. Re-running overwrites it safely.
 
-OAuth credentials must be obtained from the Google Cloud Console:
-> console.cloud.google.com > APIs & Services > Credentials > OAuth 2.0 Client IDs
+OAuth credentials: Google Cloud Console → APIs & Services → Credentials → OAuth 2.0 Client IDs.
 
-Re-running the script is safe — the file is fully overwritten each time.
-
-### Configuration files
+## Configuration
 
 | File | Committed | Purpose |
 |---|---|---|
 | `appsettings.json` | Yes | Safe defaults and placeholders |
-| `appsettings.Local.json` | No | Local overrides — secrets go here |
+| `appsettings.Local.json` | No | Local secret overrides |
 
-Config is loaded in this order, each layer overriding the previous:
-`appsettings.json` → `appsettings.Local.json` → Environment variables
-
-For CI or non-Windows environments, set values via environment variables using `__`
-as the key separator (e.g. `OAuth__Google__ClientId`).
-
-### Configuration reference
+Load order: `appsettings.json` → `appsettings.Local.json` → environment variables (`__` as key separator, e.g. `OAuth__Google__ClientId`).
 
 | Key | Default | Secret |
 |---|---|---|
 | `ApiBaseUrl` | `http://localhost:5024` | No |
 | `OAuth:Google:Authority` | `https://accounts.google.com` | No |
 | `OAuth:Google:RedirectUri` | `http://127.0.0.1:7890/` | No |
-| `OAuth:Google:ClientId` | — | Yes — set via script |
-| `OAuth:Google:ClientSecret` | — | Yes — set via script |
+| `OAuth:Google:ClientId` | — | Yes |
+| `OAuth:Google:ClientSecret` | — | Yes |
+
+## Running
+
+1. Set `BankApp.Client` as the startup project.
+2. Select the `x64` platform.
+3. Press F5.
+
+**Visual Studio:** Configure Startup Projects → Multiple startup projects → set both Server and Client to Start (Server first).
+
+**Rider:** Create a Compound run configuration with `BankApp.Server` and `BankApp.Client`.
 
 ## Architecture
 
-The client follows the **MVVM** (Model-View-ViewModel) pattern:
+MVVM pattern throughout.
 
-- **Views** are XAML pages with no business logic. They bind to their ViewModel and
-  forward user actions to it.
-- **ViewModels** coordinate API calls and hold UI state as `ObservableState<TState>`
-  (a thin wrapper over state enums). Views observe state changes and update the UI.
-- **ApiClient** is the single HTTP boundary. All network calls go through it.
-  It is registered as a singleton to avoid socket exhaustion.
-- **AppNavigationService** wraps the WinUI `Frame` and is the only place allowed to
-  trigger page navigation.
+- **Views** — XAML pages, no business logic. Bind to their ViewModel and forward user actions.
+- **ViewModels** — coordinate API calls and hold UI state as `ObservableState<TState>` (wraps state enums).
+- **ApiClient** — single HTTP boundary, registered as a singleton to avoid socket exhaustion.
+- **AppNavigationService** — wraps the WinUI `Frame`, the only place that triggers page navigation.
 
-Dependency injection is set up manually in `App.xaml.cs` using
-`Microsoft.Extensions.DependencyInjection` — there is no generic host. The container
-is available via `App.Services` but should only be accessed at the composition root
-boundary (`OnLaunched`). All other classes receive dependencies via constructor injection.
-
-## Running the app
-
-1. Start `BankApp.Server` first (see its README).
-2. Open the solution in Visual Studio 2022.
-3. Set `BankApp.Client` as the startup project.
-4. Select the `x64` platform and press F5.
+DI is set up manually in `App.xaml.cs` using `Microsoft.Extensions.DependencyInjection` (no generic host). The container is available via `App.Services` but accessed only at the composition root in `OnLaunched`. All other classes use constructor injection.

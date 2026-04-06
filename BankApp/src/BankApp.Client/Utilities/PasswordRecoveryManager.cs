@@ -6,7 +6,7 @@ using System;
 using System.Linq;
 using System.Threading.Tasks;
 using BankApp.Core.DTOs.Auth;
-using BankApp.Core.Enums;
+using BankApp.Client.Enums;
 using ErrorOr;
 
 namespace BankApp.Client.Utilities;

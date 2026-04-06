@@ -4,16 +4,15 @@
 
 using System;
 
-namespace BankApp.Client.Utilities
+namespace BankApp.Client.Utilities;
+
+/// <summary>
+/// Abstracts the system clock to allow deterministic time-based testing.
+/// </summary>
+public interface ISystemClock
 {
     /// <summary>
-    /// Abstracts the system clock to allow deterministic time-based testing.
+    /// Gets the current UTC time.
     /// </summary>
-    public interface ISystemClock
-    {
-        /// <summary>
-        /// Gets the current UTC time.
-        /// </summary>
-        DateTime UtcNow { get; }
-    }
+    DateTime UtcNow { get; }
 }
