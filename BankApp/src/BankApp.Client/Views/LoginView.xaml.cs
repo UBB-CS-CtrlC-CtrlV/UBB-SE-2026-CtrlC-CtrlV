@@ -51,7 +51,6 @@ public sealed partial class LoginView : IStateObserver<LoginState>
             this.HideLoading();
             this.ErrorInfoBar.IsOpen = false;
 
-
             switch (state)
             {
                 case LoginState.Idle:

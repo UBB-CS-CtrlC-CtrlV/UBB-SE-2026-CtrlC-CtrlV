@@ -96,7 +96,6 @@ public sealed partial class DashboardView : IStateObserver<DashboardState>
     }
 
     // ─── Data Loading ──────────────────────────────────────────────────────────
-
     private async Task LoadDashboardAsync()
     {
         this.CancelPendingLoad();
@@ -112,7 +111,6 @@ public sealed partial class DashboardView : IStateObserver<DashboardState>
     }
 
     // ─── UI Refresh ────────────────────────────────────────────────────────────
-
     private void RefreshUi()
     {
         this.UserNameText.Text = this.viewModel.CurrentUser?.FullName ?? string.Empty;
@@ -214,7 +212,6 @@ public sealed partial class DashboardView : IStateObserver<DashboardState>
     }
 
     // ─── Event Handlers ────────────────────────────────────────────────────────
-
     private void PrevCardButton_Click(object sender, RoutedEventArgs e)
     {
         if (this.viewModel.NavigatePrevious())
@@ -302,7 +299,6 @@ public sealed partial class DashboardView : IStateObserver<DashboardState>
     }
 
     // ─── Loading / Error UI ────────────────────────────────────────────────────
-
     private void ShowLoading()
     {
         this.LoadingOverlay.Visibility = Visibility.Visible;
@@ -322,7 +318,6 @@ public sealed partial class DashboardView : IStateObserver<DashboardState>
     }
 
     // ─── Observer Lifecycle ────────────────────────────────────────────────────
-
     private void AttachObserver()
     {
         if (this.isObserverAttached)
@@ -358,7 +353,6 @@ public sealed partial class DashboardView : IStateObserver<DashboardState>
     }
 
     // ─── UI Task Runner ────────────────────────────────────────────────────────
-
     private async Task RunUiTaskAsync(Func<Task> action)
     {
         try

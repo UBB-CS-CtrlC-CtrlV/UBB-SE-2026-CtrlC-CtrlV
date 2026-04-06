@@ -91,8 +91,8 @@ public sealed partial class ProfileView : IStateObserver<ProfileState>
         this.TwoFactorToggle.IsOn = user.Is2FAEnabled;
         this.isPopulating = false;
 
-        this.PopulateOAuthLinks(this.viewModel.OAuthLinks);
-        this.PopulateNotificationPreferences(this.viewModel.NotificationPreferences);
+        this.PopulateOAuthLinks(this.viewModel.OAuth.OAuthLinks);
+        this.PopulateNotificationPreferences(this.viewModel.Notifications.NotificationPreferences);
         this.Update2FaVisuals();
     }
 
@@ -140,7 +140,7 @@ public sealed partial class ProfileView : IStateObserver<ProfileState>
             return;
         }
 
-        var verified = await this.viewModel.VerifyPassword(this.VerifyCurrentPasswordBox.Password);
+        var verified = await this.viewModel.PersonalInfo.VerifyPassword(this.VerifyCurrentPasswordBox.Password);
 
         if (!verified)
         {
@@ -182,7 +182,7 @@ public sealed partial class ProfileView : IStateObserver<ProfileState>
     {
         this.ShowLoading(true);
 
-        var success = await this.viewModel.UpdatePersonalInfo(this.PhoneBox.Text,
+        var success = await this.viewModel.PersonalInfo.UpdatePersonalInfo(this.PhoneBox.Text,
             this.AddressBox.Text,
             this.verifiedPassword);
 
@@ -221,28 +221,17 @@ public sealed partial class ProfileView : IStateObserver<ProfileState>
         var newPwd = this.NewPasswordBox.Password;
         var confirmPwd = this.ConfirmPasswordBox.Password;
 
-        // 1. Basic Validation
-        if (newPwd.Length < 8)
+        var userId = this.viewModel.ProfileInfo.UserId;
+        if (userId == null)
         {
-            this.NewPasswordErrorInfoBar.Message = "Minimum 8 characters required.";
+            this.NewPasswordErrorInfoBar.Message = "User not loaded.";
             this.NewPasswordErrorInfoBar.IsOpen = true;
             args.Cancel = true;
             deferral.Complete();
             return;
         }
 
-        if (newPwd != confirmPwd)
-        {
-            this.NewPasswordErrorInfoBar.Message = "Passwords do not match.";
-            this.NewPasswordErrorInfoBar.IsOpen = true;
-            args.Cancel = true;
-            deferral.Complete();
-            return;
-        }
-
-        // 2. Call ViewModel
-        // Note: We use the _verifiedPassword we saved from Dialog 1 as the 'old' password
-        var success = await this.viewModel.ChangePassword(this.verifiedPassword, newPwd);
+        var (success, errorMessage) = await this.viewModel.Security.ChangePassword(userId.Value, this.verifiedPassword, newPwd, confirmPwd);
 
         if (success)
         {
@@ -254,7 +243,7 @@ public sealed partial class ProfileView : IStateObserver<ProfileState>
         }
         else
         {
-            this.NewPasswordErrorInfoBar.Message = "The server rejected the change. Please check your connection.";
+            this.NewPasswordErrorInfoBar.Message = errorMessage;
             this.NewPasswordErrorInfoBar.IsOpen = true;
             args.Cancel = true;
             deferral.Complete();
@@ -302,11 +291,11 @@ public sealed partial class ProfileView : IStateObserver<ProfileState>
 
         if (this.TwoFactorToggle.IsOn)
         {
-            success = await this.viewModel.EnableTwoFactor(TwoFactorMethod.Email);
+            success = await this.viewModel.Security.EnableTwoFactor(TwoFactorMethod.Email);
         }
         else
         {
-            success = await this.viewModel.DisableTwoFactor();
+            success = await this.viewModel.Security.DisableTwoFactor();
         }
 
         if (!success)
@@ -315,6 +304,10 @@ public sealed partial class ProfileView : IStateObserver<ProfileState>
             this.TwoFactorToggle.IsOn = !this.TwoFactorToggle.IsOn;
             this.isPopulating = false;
             this.ShowError("Failed to update 2FA settings");
+        }
+        else
+        {
+            this.viewModel.ProfileInfo.Is2FAEnabled = this.TwoFactorToggle.IsOn;
         }
     }
 
@@ -332,11 +325,11 @@ public sealed partial class ProfileView : IStateObserver<ProfileState>
     {
         if (sender is Button { Tag: OAuthLink link })
         {
-            var success = await this.viewModel.UnlinkOAuth(link.Provider);
+            var success = await this.viewModel.OAuth.UnlinkOAuth(link.Provider);
 
             if (success)
             {
-                this.PopulateOAuthLinks(this.viewModel.OAuthLinks);
+                this.PopulateOAuthLinks(this.viewModel.OAuth.OAuthLinks);
             }
             else
             {
@@ -364,7 +357,7 @@ public sealed partial class ProfileView : IStateObserver<ProfileState>
             // 2. Set the flag to block the UI from fully refreshing
             this.isUpdatingToggle = true;
 
-            var success = await this.viewModel.UpdateNotificationPreferences(this.viewModel.NotificationPreferences);
+            var success = await this.viewModel.Notifications.UpdateNotificationPreferences(this.viewModel.Notifications.NotificationPreferences);
 
             // 3. Clear the flag when the API call finishes
             this.isUpdatingToggle = false;
