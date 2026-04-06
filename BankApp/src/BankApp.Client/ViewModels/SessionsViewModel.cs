@@ -4,9 +4,11 @@
 
 using System;
 using System.Collections.Generic;
+using System.Threading.Tasks;
 using BankApp.Client.Utilities;
 using BankApp.Core.Entities;
 using BankApp.Core.Enums;
+using ErrorOr;
 using Microsoft.Extensions.Logging;
 
 namespace BankApp.Client.ViewModels;
@@ -41,4 +43,48 @@ public class SessionsViewModel
     /// Gets the active sessions for the current user.
     /// </summary>
     public List<Session> ActiveSessions { get; private set; }
+
+    /// <summary>
+    /// Loads all active sessions for the specified user from the server.
+    /// </summary>
+    /// <param name="userId">The identifier of the current user.</param>
+    /// <returns>A <see cref="Task"/> representing the asynchronous operation.</returns>
+    public async Task LoadSessionsAsync(int userId)
+    {
+        this.State.SetValue(ProfileState.Loading);
+        try
+        {
+            ErrorOr<List<Session>> result = await this.apiClient.GetAsync<List<Session>>("profile/sessions");
+            this.ActiveSessions = result.IsError ? new List<Session>() : result.Value;
+            this.State.SetValue(result.IsError ? ProfileState.Error : ProfileState.Idle);
+        }
+        catch (Exception exception)
+        {
+            this.logger.LogError(exception, "Failed to load sessions for user {UserId}", userId);
+            this.ActiveSessions = new List<Session>();
+            this.State.SetValue(ProfileState.Error);
+        }
+    }
+
+    /// <summary>
+    /// Revokes a specific session by its identifier.
+    /// </summary>
+    /// <param name="sessionId">The identifier of the session to revoke.</param>
+    /// <returns><see langword="true"/> if the session was revoked successfully; otherwise <see langword="false"/>.</returns>
+    public async Task<bool> RevokeSessionAsync(int sessionId)
+    {
+        this.State.SetValue(ProfileState.Loading);
+        try
+        {
+            ErrorOr<bool> result = await this.apiClient.DeleteAsync<bool>($"profile/sessions/{sessionId}");
+            this.State.SetValue(result.IsError ? ProfileState.Error : ProfileState.Idle);
+            return !result.IsError && result.Value;
+        }
+        catch (Exception exception)
+        {
+            this.logger.LogError(exception, "Failed to revoke session {SessionId}", sessionId);
+            this.State.SetValue(ProfileState.Error);
+            return false;
+        }
+    }
 }
