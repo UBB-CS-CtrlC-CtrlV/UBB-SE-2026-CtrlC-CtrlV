@@ -241,5 +241,50 @@ namespace BankApp.Server.Controllers
         /// </summary>
         /// <returns>The ID of the currently authenticated user.</returns>
         private int GetAuthenticatedUserId() => (int)this.HttpContext.Items["UserId"] !;
+
+        /// <summary>
+        /// Retrieves all active sessions for the currently authenticated user.
+        /// </summary>
+        /// <returns>
+        /// 200 OK with a list of active sessions,
+        /// or 404 Not Found if no sessions exist.
+        /// </returns>
+        [HttpGet("sessions")]
+        public IActionResult GetSessions()
+        {
+            int userId = this.GetAuthenticatedUserId();
+
+            List<Session> sessions = this.profileService.GetActiveSessions(userId);
+
+            if (sessions.Count == 0)
+            {
+                return this.NotFound(sessions);
+            }
+
+            return this.Ok(sessions);
+        }
+
+        /// <summary>
+        /// Revokes a specific session for the currently authenticated user.
+        /// </summary>
+        /// <param name="sessionId">The identifier of the session to revoke.</param>
+        /// <returns>
+        /// 200 OK on success,
+        /// or 400 Bad Request if the revocation fails.
+        /// </returns>
+        [HttpDelete("sessions/{sessionId}")]
+        public IActionResult RevokeSession(int sessionId)
+        {
+            int userId = this.GetAuthenticatedUserId();
+
+            bool success = this.profileService.RevokeSession(userId, sessionId);
+
+            if (!success)
+            {
+                return this.BadRequest(false);
+            }
+
+            return this.Ok(true);
+        }
     }
 }

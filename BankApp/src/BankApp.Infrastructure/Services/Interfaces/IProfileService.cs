@@ -89,6 +89,21 @@ namespace BankApp.Infrastructure.Services.Interfaces
         /// <param name="password">The plain-text password to verify.</param>
         /// <returns><see langword="true"/> if the password matches; otherwise, <see langword="false"/>.</returns>
         bool VerifyPassword(int userId, string password);
+
+        /// <summary>
+        /// Gets all active sessions for the specified user.
+        /// </summary>
+        /// <param name="userId">The identifier of the user.</param>
+        /// <returns>A list of active <see cref="Session"/> instances.</returns>
+        List<Session> GetActiveSessions(int userId);
+
+        /// <summary>
+        /// Revokes a specific session for the specified user.
+        /// </summary>
+        /// <param name="userId">The identifier of the user.</param>
+        /// <param name="sessionId">The identifier of the session to revoke.</param>
+        /// <returns><see langword="true"/> if revoked successfully; otherwise <see langword="false"/>.</returns>
+        bool RevokeSession(int userId, int sessionId);
     }
 }
 

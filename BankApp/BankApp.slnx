@@ -9,6 +9,7 @@
       <Platform Solution="*|Any CPU" Project="x64" />
       <Platform Solution="*|x64" Project="x64" />
       <Platform Solution="*|x86" Project="x86" />
+      <Deploy Solution="Debug|Any CPU" />
     </Project>
     <Project Path="src/BankApp.Core/BankApp.Core.csproj" />
     <Project Path="src/BankApp.Infrastructure/BankApp.Infrastructure.csproj" />

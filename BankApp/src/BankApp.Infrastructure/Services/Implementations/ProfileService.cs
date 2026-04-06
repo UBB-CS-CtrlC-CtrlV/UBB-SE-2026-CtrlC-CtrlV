@@ -188,6 +188,31 @@ namespace BankApp.Infrastructure.Services.Implementations
 
             return hashService.Verify(password, user.PasswordHash);
         }
+
+        /// <inheritdoc />
+        public List<Session> GetActiveSessions(int userId)
+        {
+            User? user = userRepository.FindById(userId);
+            if (user == null)
+            {
+                return new List<Session>();
+            }
+
+            return userRepository.GetActiveSessions(userId);
+        }
+
+        /// <inheritdoc />
+        public bool RevokeSession(int userId, int sessionId)
+        {
+            User? user = userRepository.FindById(userId);
+            if (user == null)
+            {
+                return false;
+            }
+
+            userRepository.RevokeSession(sessionId);
+            return true;
+        }
     }
 }
 

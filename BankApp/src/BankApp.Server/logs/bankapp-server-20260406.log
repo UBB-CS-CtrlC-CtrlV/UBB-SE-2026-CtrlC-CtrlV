@@ -1,0 +1,40 @@
+2026-04-06 21:40:40.452 +03:00 [INF] Starting BankApp.Server
+2026-04-06 21:40:43.695 +03:00 [INF] Now listening on: http://localhost:5024
+2026-04-06 21:40:43.907 +03:00 [INF] Application started. Press Ctrl+C to shut down.
+2026-04-06 21:40:43.916 +03:00 [INF] Hosting environment: Development
+2026-04-06 21:40:43.924 +03:00 [INF] Content root path: D:\UBB - IE2\ISS\BankApp\BankApp\src\BankApp.Server
+2026-04-06 21:40:44.419 +03:00 [INF] Request starting HTTP/1.1 GET http://localhost:5024/swagger - null null
+2026-04-06 21:40:44.784 +03:00 [INF] Request starting HTTP/1.1 GET http://localhost:5024/swagger/index.html - null null
+2026-04-06 21:40:44.786 +03:00 [INF] Request finished HTTP/1.1 GET http://localhost:5024/swagger - 301 null null 379.4694ms
+2026-04-06 21:40:45.033 +03:00 [INF] Request finished HTTP/1.1 GET http://localhost:5024/swagger/index.html - 200 null text/html;charset=utf-8 249.8357ms
+2026-04-06 21:40:45.055 +03:00 [INF] Request starting HTTP/1.1 GET http://localhost:5024/swagger/swagger-ui-bundle.js - null null
+2026-04-06 21:40:45.056 +03:00 [INF] Request starting HTTP/1.1 GET http://localhost:5024/swagger/swagger-ui-standalone-preset.js - null null
+2026-04-06 21:40:45.063 +03:00 [INF] Request starting HTTP/1.1 GET http://localhost:5024/swagger/swagger-ui.css - null null
+2026-04-06 21:40:45.138 +03:00 [INF] Sending file. Request path: '/swagger-ui.css'. Physical path: 'N/A'
+2026-04-06 21:40:45.138 +03:00 [INF] Sending file. Request path: '/swagger-ui-bundle.js'. Physical path: 'N/A'
+2026-04-06 21:40:45.145 +03:00 [INF] Request finished HTTP/1.1 GET http://localhost:5024/swagger/swagger-ui.css - 200 152034 text/css 82.0623ms
+2026-04-06 21:40:45.138 +03:00 [INF] Sending file. Request path: '/swagger-ui-standalone-preset.js'. Physical path: 'N/A'
+2026-04-06 21:40:45.145 +03:00 [INF] Request finished HTTP/1.1 GET http://localhost:5024/swagger/swagger-ui-bundle.js - 200 1456926 text/javascript 90.0637ms
+2026-04-06 21:40:45.155 +03:00 [INF] Request starting HTTP/1.1 GET http://localhost:5024/_vs/browserLink - null null
+2026-04-06 21:40:45.158 +03:00 [INF] Request finished HTTP/1.1 GET http://localhost:5024/swagger/swagger-ui-standalone-preset.js - 200 230280 text/javascript 102.4414ms
+2026-04-06 21:40:45.186 +03:00 [INF] Request starting HTTP/1.1 GET http://localhost:5024/_framework/aspnetcore-browser-refresh.js - null null
+2026-04-06 21:40:45.202 +03:00 [INF] Request finished HTTP/1.1 GET http://localhost:5024/_framework/aspnetcore-browser-refresh.js - 200 14895 application/javascript; charset=utf-8 16.2566ms
+2026-04-06 21:40:45.319 +03:00 [INF] Request finished HTTP/1.1 GET http://localhost:5024/_vs/browserLink - 200 null text/javascript; charset=UTF-8 163.8661ms
+2026-04-06 21:40:45.663 +03:00 [INF] Request starting HTTP/1.1 GET http://localhost:5024/swagger/v1/swagger.json - null null
+2026-04-06 21:40:45.706 +03:00 [INF] Request finished HTTP/1.1 GET http://localhost:5024/swagger/v1/swagger.json - 200 null application/json;charset=utf-8 43.0634ms
+2026-04-06 21:40:45.710 +03:00 [INF] Request starting HTTP/1.1 GET http://localhost:5024/swagger/favicon-32x32.png - null null
+2026-04-06 21:40:45.725 +03:00 [INF] Sending file. Request path: '/favicon-32x32.png'. Physical path: 'N/A'
+2026-04-06 21:40:45.730 +03:00 [INF] Request finished HTTP/1.1 GET http://localhost:5024/swagger/favicon-32x32.png - 200 628 image/png 19.5327ms
+2026-04-06 21:42:26.890 +03:00 [INF] Starting BankApp.Server
+2026-04-06 21:42:27.746 +03:00 [INF] Now listening on: http://localhost:5024
+2026-04-06 21:42:27.800 +03:00 [INF] Application started. Press Ctrl+C to shut down.
+2026-04-06 21:42:27.801 +03:00 [INF] Hosting environment: Development
+2026-04-06 21:42:27.802 +03:00 [INF] Content root path: D:\UBB - IE2\ISS\BankApp\BankApp\src\BankApp.Server
+2026-04-06 21:42:28.374 +03:00 [INF] Request starting HTTP/1.1 GET http://localhost:5024/swagger/index.html - null null
+2026-04-06 21:42:28.579 +03:00 [INF] Request finished HTTP/1.1 GET http://localhost:5024/swagger/index.html - 200 null text/html;charset=utf-8 206.0946ms
+2026-04-06 21:42:28.586 +03:00 [INF] Request starting HTTP/1.1 GET http://localhost:5024/_framework/aspnetcore-browser-refresh.js - null null
+2026-04-06 21:42:28.595 +03:00 [INF] Request starting HTTP/1.1 GET http://localhost:5024/_vs/browserLink - null null
+2026-04-06 21:42:28.598 +03:00 [INF] Request finished HTTP/1.1 GET http://localhost:5024/_framework/aspnetcore-browser-refresh.js - 200 14895 application/javascript; charset=utf-8 12.5087ms
+2026-04-06 21:42:28.642 +03:00 [INF] Request finished HTTP/1.1 GET http://localhost:5024/_vs/browserLink - 200 null text/javascript; charset=UTF-8 46.686ms
+2026-04-06 21:42:28.800 +03:00 [INF] Request starting HTTP/1.1 GET http://localhost:5024/swagger/v1/swagger.json - null null
+2026-04-06 21:42:28.822 +03:00 [INF] Request finished HTTP/1.1 GET http://localhost:5024/swagger/v1/swagger.json - 200 null application/json;charset=utf-8 21.6613ms
