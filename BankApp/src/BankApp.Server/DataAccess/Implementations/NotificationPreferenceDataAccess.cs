@@ -8,6 +8,7 @@ using BankApp.Core.Entities;
 using BankApp.Infrastructure.DataAccess.Interfaces;
 using BankApp.Core.Extensions;
 using BankApp.Core.Enums;
+using BankApp.Server.DataAccess;
 
 namespace BankApp.Infrastructure.DataAccess.Implementations
 {

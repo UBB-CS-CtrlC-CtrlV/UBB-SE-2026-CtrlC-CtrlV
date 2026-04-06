@@ -1,4 +1,3 @@
-using System;
 using BankApp.Infrastructure.DataAccess;
 using BankApp.Infrastructure.DataAccess.Implementations;
 using BankApp.Infrastructure.DataAccess.Interfaces;
@@ -8,10 +7,11 @@ using BankApp.Infrastructure.Services.Implementations;
 using BankApp.Infrastructure.Services.Infrastructure.Implementations;
 using BankApp.Infrastructure.Services.Infrastructure.Interfaces;
 using BankApp.Infrastructure.Services.Interfaces;
-using Microsoft.Extensions.Configuration;
-using Microsoft.Extensions.DependencyInjection;
+using BankApp.Server.DataAccess;
+using BankApp.Server.Services.Infrastructure.Implementations;
+using BankApp.Server.Services.Infrastructure.Interfaces;
 
-namespace BankApp.Infrastructure.DependencyInjection;
+namespace BankApp.Server.DependencyInjection;
 
 /// <summary>
 /// Provides extension methods for registering infrastructure services with the dependency injection container.

@@ -1,6 +1,7 @@
 using System.Data;
 using BankApp.Core.Entities;
 using BankApp.Infrastructure.DataAccess.Interfaces;
+using BankApp.Server.DataAccess;
 using Microsoft.Data.SqlClient;
 
 namespace BankApp.Infrastructure.DataAccess.Implementations

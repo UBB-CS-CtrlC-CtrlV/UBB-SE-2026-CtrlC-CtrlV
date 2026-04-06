@@ -1,6 +1,11 @@
-CREATE DATABASE BankApp;
-USE BankApp;
+IF DB_ID('BankAppDb') IS NULL
+    CREATE DATABASE BankAppDb;
+GO
 
+USE BankAppDb;
+GO
+
+IF OBJECT_ID('dbo.[User]', 'U') IS NULL
 CREATE TABLE [User] (
     Id INT IDENTITY(1,1) PRIMARY KEY,
     Email VARCHAR(255) NOT NULL UNIQUE,
@@ -19,7 +24,9 @@ CREATE TABLE [User] (
     CreatedAt DATETIME2 DEFAULT GETUTCDATE(),
     UpdatedAt DATETIME2 DEFAULT GETUTCDATE()
 );
+GO
 
+IF OBJECT_ID('dbo.[Session]', 'U') IS NULL
 CREATE TABLE [Session] (
     Id INT IDENTITY(1,1) PRIMARY KEY,
     UserId INT NOT NULL FOREIGN KEY REFERENCES [User](Id),
@@ -32,7 +39,9 @@ CREATE TABLE [Session] (
     IsRevoked BIT DEFAULT 0,
     CreatedAt DATETIME2 DEFAULT GETUTCDATE()
 );
+GO
 
+IF OBJECT_ID('dbo.OAuthLink', 'U') IS NULL
 CREATE TABLE OAuthLink (
     Id INT IDENTITY(1,1) PRIMARY KEY,
     UserId INT NOT NULL FOREIGN KEY REFERENCES [User](Id),
@@ -41,7 +50,9 @@ CREATE TABLE OAuthLink (
     ProviderEmail VARCHAR(255),
     LinkedAt DATETIME2 DEFAULT GETUTCDATE()
 );
+GO
 
+IF OBJECT_ID('dbo.Account', 'U') IS NULL
 CREATE TABLE Account (
     Id INT IDENTITY(1,1) PRIMARY KEY,
     UserId INT NOT NULL FOREIGN KEY REFERENCES [User](Id),
@@ -53,7 +64,9 @@ CREATE TABLE Account (
     Status VARCHAR(20) DEFAULT 'Active',
     CreatedAt DATETIME2 DEFAULT GETUTCDATE()
 );
+GO
 
+IF OBJECT_ID('dbo.Card', 'U') IS NULL
 CREATE TABLE Card (
     Id INT IDENTITY(1,1) PRIMARY KEY,
     AccountId INT NOT NULL FOREIGN KEY REFERENCES Account(Id),
@@ -75,14 +88,18 @@ CREATE TABLE Card (
     CancelledAt DATETIME2 NULL,
     CreatedAt DATETIME2 DEFAULT GETUTCDATE()
 );
+GO
 
+IF OBJECT_ID('dbo.Category', 'U') IS NULL
 CREATE TABLE Category (
     Id INT IDENTITY(1,1) PRIMARY KEY,
     Name VARCHAR(100) NOT NULL,
     Icon VARCHAR(50),
     IsSystem BIT DEFAULT 1
 );
+GO
 
+IF OBJECT_ID('dbo.[Transaction]', 'U') IS NULL
 CREATE TABLE [Transaction] (
     Id INT IDENTITY(1,1) PRIMARY KEY,
     AccountId INT NOT NULL FOREIGN KEY REFERENCES Account(Id),
@@ -105,7 +122,9 @@ CREATE TABLE [Transaction] (
     RelatedEntityId INT,
     CreatedAt DATETIME2 DEFAULT GETUTCDATE()
 );
+GO
 
+IF OBJECT_ID('dbo.Notification', 'U') IS NULL
 CREATE TABLE Notification (
     Id INT IDENTITY(1,1) PRIMARY KEY,
     UserId INT NOT NULL FOREIGN KEY REFERENCES [User](Id),
@@ -118,7 +137,9 @@ CREATE TABLE Notification (
     RelatedEntityId INT,
     CreatedAt DATETIME2 DEFAULT GETUTCDATE()
 );
+GO
 
+IF OBJECT_ID('dbo.NotificationPreference', 'U') IS NULL
 CREATE TABLE NotificationPreference (
     Id INT IDENTITY(1,1) PRIMARY KEY,
     UserId INT NOT NULL FOREIGN KEY REFERENCES [User](Id),
@@ -128,7 +149,9 @@ CREATE TABLE NotificationPreference (
     SmsEnabled BIT DEFAULT 0,
     MinAmountThreshold DECIMAL(18,2)
 );
+GO
 
+IF OBJECT_ID('dbo.PasswordResetToken', 'U') IS NULL
 CREATE TABLE PasswordResetToken (
     Id INT IDENTITY(1,1) PRIMARY KEY,
     UserId INT NOT NULL FOREIGN KEY REFERENCES [User](Id),
@@ -137,10 +160,13 @@ CREATE TABLE PasswordResetToken (
     UsedAt DATETIME2 NULL,
     CreatedAt DATETIME2 DEFAULT GETUTCDATE()
 );
+GO
 
+IF OBJECT_ID('dbo.TransactionCategoryOverride', 'U') IS NULL
 CREATE TABLE TransactionCategoryOverride (
     Id INT IDENTITY(1,1) PRIMARY KEY,
     TransactionId INT NOT NULL FOREIGN KEY REFERENCES [Transaction](Id),
     UserId INT NOT NULL FOREIGN KEY REFERENCES [User](Id),
     CategoryId INT NOT NULL FOREIGN KEY REFERENCES Category(Id)
 );
+GO

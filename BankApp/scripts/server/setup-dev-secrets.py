@@ -1,11 +1,6 @@
 #!/usr/bin/env python3
-# setup-dev-secrets.py
-# Generates a random JWT secret and sets all required User Secrets for local development.
-# Requires Python 3.6+ and the .NET SDK. No third-party packages needed.
-#
-# Run from the repo root:
-#
-#   python scripts/setup-dev-secrets.py
+# Sets dotnet user-secrets for local (non-Docker) development.
+# Run from the repo root: python scripts/server/setup-dev-secrets.py
 
 import base64
 import getpass
@@ -33,16 +28,12 @@ def main() -> None:
     print("BankApp.Server — dev secrets setup")
     print("------------------------------------")
 
-    # --- JWT Secret (auto-generated) ---
-    # 48 random bytes → 64-character base64 string.
     jwt_secret = base64.b64encode(secrets.token_bytes(48)).decode()
     set_secret("Jwt:Secret", jwt_secret)
 
-    # --- SMTP (must be real credentials) ---
     print()
     print("SMTP credentials must be real Gmail values and cannot be generated.")
-    print("Use a Gmail App Password, not your account password.")
-    print("Generate one at: Google Account > Security > 2-Step Verification > App passwords")
+    print("Use a Gmail App Password (Google Account > Security > 2-Step Verification > App passwords)")
     print()
 
     smtp_user = input("    Email:SmtpUser    (Gmail address): ").strip()

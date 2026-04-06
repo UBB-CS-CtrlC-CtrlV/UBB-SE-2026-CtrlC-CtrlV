@@ -6,6 +6,7 @@ using BankApp.Infrastructure.Services.Infrastructure.Implementations;
 using BankApp.Infrastructure.Services.Infrastructure.Interfaces;
 using BankApp.Infrastructure.Services.Interfaces;
 using BankApp.Infrastructure.Utilities;
+using BankApp.Server.Services.Infrastructure.Interfaces;
 using Google.Apis.Auth;
 
 namespace BankApp.Infrastructure.Services.Implementations

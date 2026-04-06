@@ -1,16 +1,8 @@
 #!/usr/bin/env python3
-# setup-dev-env.py
-# Generates a .env file for running the server with Docker Compose.
-# DB password and JWT secret are auto-generated.
-# SMTP credentials must be real values — pass --no-email to skip them
-# and use placeholder values instead (server starts, but emails are not sent).
+# Generates .env for Docker Compose. DB password and JWT secret are auto-generated.
+# Pass --no-email to skip SMTP prompts and use placeholders.
 #
-# Requires Python 3.6+. No third-party packages needed.
-#
-# Run from the BankApp/ directory:
-#
-#   python scripts/server/setup-dev-env.py
-#   python scripts/server/setup-dev-env.py --no-email
+#   python scripts/server/setup-dev-env.py [--no-email] [--force]
 
 import argparse
 import base64
@@ -25,8 +17,7 @@ ENV_FILE = REPO_ROOT / ".env"
 
 
 def gen_db_password(length: int = 20) -> str:
-    """Return a random password that satisfies SQL Server complexity rules."""
-    # SQL Server requires uppercase, lowercase, digit, and a special character.
+    """Random password satisfying SQL Server complexity rules."""
     specials = "!@#$%^&*"
     pool = string.ascii_letters + string.digits + specials
     while True:
@@ -41,95 +32,55 @@ def gen_db_password(length: int = 20) -> str:
 
 
 def gen_jwt_secret() -> str:
-    """Return a 64-character base64 string (48 random bytes)."""
+    """64-character base64 string from 48 random bytes."""
     return base64.b64encode(secrets.token_bytes(48)).decode()
 
 
 def main() -> None:
-    parser = argparse.ArgumentParser(
-        description="Generate a .env file for BankApp Docker Compose."
-    )
-    parser.add_argument(
-        "--no-email",
-        action="store_true",
-        help="Skip SMTP prompts and use placeholder values (emails will not be sent).",
-    )
-    parser.add_argument(
-        "--force",
-        action="store_true",
-        help="Overwrite an existing .env without prompting.",
-    )
+    parser = argparse.ArgumentParser(description="Generate .env for BankApp Docker Compose.")
+    parser.add_argument("--no-email", action="store_true", help="Use SMTP placeholders.")
+    parser.add_argument("--force", action="store_true", help="Overwrite existing .env.")
     args = parser.parse_args()
 
-    print()
-    print("BankApp.Server — Docker .env setup")
-    print("------------------------------------")
+    print("\nBankApp.Server — Docker .env setup\n------------------------------------")
 
     if ENV_FILE.exists() and not args.force:
         print(f"\n[WARN] {ENV_FILE} already exists.")
-        answer = input("         Overwrite? [y/N] ").strip().lower()
-        if answer != "y":
+        if input("         Overwrite? [y/N] ").strip().lower() != "y":
             print("Aborted.")
             sys.exit(0)
 
-    # ── Auto-generated values ──────────────────────────────────────────────────
     db_password = gen_db_password()
     jwt_secret = gen_jwt_secret()
-
-    print()
-    print(f"[OK] {'DB_SA_PASSWORD':<25} generated ({len(db_password)} chars)")
+    print(f"\n[OK] {'DB_SA_PASSWORD':<25} generated ({len(db_password)} chars)")
     print(f"[OK] {'JWT_SECRET':<25} generated ({len(jwt_secret)} chars)")
 
-    # ── SMTP credentials ───────────────────────────────────────────────────────
     if args.no_email:
-        smtp_host = "smtp.example.com"
-        smtp_port = "587"
-        smtp_user = "dev@example.com"
-        smtp_pass = "placeholder"
-        smtp_from = "dev@example.com"
-        print()
-        print("[INFO] SMTP skipped — placeholder values written.")
-        print("       Email sends will fail and be logged; the server will still start.")
+        smtp_host, smtp_port, smtp_user = "smtp.example.com", "587", "dev@example.com"
+        smtp_pass, smtp_from = "placeholder", "dev@example.com"
+        print("\n[INFO] SMTP skipped — placeholders written. Email sends will fail and be logged.")
     else:
-        print()
-        print("SMTP credentials must be real values and cannot be generated.")
-        print("Use a Gmail App Password, not your account password.")
-        print("Generate one at: Google Account > Security > 2-Step Verification > App passwords")
-        print()
+        print("\nSMTP credentials cannot be generated. Use a Gmail App Password.")
+        print("Generate one at: Google Account > Security > 2-Step Verification > App passwords\n")
         smtp_host = input("    EMAIL_SMTP_HOST    (e.g. smtp.gmail.com): ").strip() or "smtp.gmail.com"
         smtp_port = input("    EMAIL_SMTP_PORT    (press Enter for 587): ").strip() or "587"
         smtp_user = input("    EMAIL_SMTP_USER    (Gmail address): ").strip()
         smtp_pass = getpass.getpass("    EMAIL_SMTP_PASS    (App password, input hidden): ")
-        smtp_from = input("    EMAIL_FROM_ADDRESS (press Enter to use same as SmtpUser): ").strip()
-        if not smtp_from:
-            smtp_from = smtp_user
+        smtp_from = input("    EMAIL_FROM_ADDRESS (Enter to reuse SmtpUser): ").strip() or smtp_user
 
-    # ── Write .env ─────────────────────────────────────────────────────────────
-    content = f"""\
-# Generated by scripts/server/setup-dev-env.py — do not commit this file.
+    ENV_FILE.write_text(
+        f"# Generated by scripts/server/setup-dev-env.py — do not commit.\n\n"
+        f"DB_SA_PASSWORD={db_password}\n"
+        f"JWT_SECRET={jwt_secret}\n\n"
+        f"EMAIL_SMTP_HOST={smtp_host}\n"
+        f"EMAIL_SMTP_PORT={smtp_port}\n"
+        f"EMAIL_SMTP_USER={smtp_user}\n"
+        f"EMAIL_SMTP_PASS={smtp_pass}\n"
+        f"EMAIL_FROM_ADDRESS={smtp_from}\n",
+        encoding="utf-8",
+    )
 
-# ── Database ─────────────────────────────────────────────────────────────────
-DB_SA_PASSWORD={db_password}
-
-# ── JWT ──────────────────────────────────────────────────────────────────────
-JWT_SECRET={jwt_secret}
-
-# ── Email (SMTP) ─────────────────────────────────────────────────────────────
-EMAIL_SMTP_HOST={smtp_host}
-EMAIL_SMTP_PORT={smtp_port}
-EMAIL_SMTP_USER={smtp_user}
-EMAIL_SMTP_PASS={smtp_pass}
-EMAIL_FROM_ADDRESS={smtp_from}
-"""
-
-    ENV_FILE.write_text(content, encoding="utf-8")
-
-    print()
-    print(f"[OK] Written to {ENV_FILE}")
-    print()
-    print("Next steps:")
-    print("  docker compose up --build")
-    print()
+    print(f"\n[OK] Written to {ENV_FILE}\n\nNext steps:\n  docker compose up --build\n")
 
 
 if __name__ == "__main__":

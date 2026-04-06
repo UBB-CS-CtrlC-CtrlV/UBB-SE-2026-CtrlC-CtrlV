@@ -1,6 +1,7 @@
 using System.Data;
 using BankApp.Core.Entities;
 using BankApp.Infrastructure.DataAccess.Interfaces;
+using BankApp.Server.DataAccess;
 
 namespace BankApp.Infrastructure.DataAccess.Implementations
 {

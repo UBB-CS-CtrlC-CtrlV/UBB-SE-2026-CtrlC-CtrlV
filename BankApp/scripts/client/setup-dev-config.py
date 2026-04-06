@@ -1,13 +1,6 @@
 #!/usr/bin/env python3
-# setup-dev-config.py
-# Creates src/BankApp.Client/appsettings.Local.json with OAuth credentials for local development.
-# Requires Python 3.6+. No third-party packages needed.
-#
-# Run from the repo root:
-#
-#   python scripts/client/setup-dev-config.py
-#
-# appsettings.Local.json is gitignored and overrides appsettings.json locally.
+# Creates src/BankApp.Client/appsettings.Local.json with Google OAuth credentials.
+# Run from the repo root: python scripts/client/setup-dev-config.py
 # Re-running is safe — the file is fully overwritten each time.
 
 import getpass
@@ -23,8 +16,7 @@ def main() -> None:
     print("BankApp.Client — dev config setup")
     print("-----------------------------------")
     print()
-    print("OAuth credentials are required. Obtain them from the Google Cloud Console:")
-    print("  console.cloud.google.com > APIs & Services > Credentials > OAuth 2.0 Client IDs")
+    print("OAuth credentials required. Google Cloud Console > APIs & Services > Credentials > OAuth 2.0 Client IDs")
     print()
 
     client_id = input("    OAuth:Google:ClientId     : ").strip()
@@ -44,8 +36,7 @@ def main() -> None:
         f.write("\n")
 
     print()
-    print(f"[OK] {OUTPUT_PATH} created.")
-    print("     This file is gitignored and will never be committed.")
+    print(f"[OK] {OUTPUT_PATH} written (gitignored).")
     print()
 
 

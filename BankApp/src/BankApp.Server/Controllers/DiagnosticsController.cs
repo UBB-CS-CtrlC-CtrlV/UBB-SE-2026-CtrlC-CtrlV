@@ -4,6 +4,7 @@
 using BankApp.Infrastructure.DataAccess;
 using BankApp.Infrastructure.DataAccess.Interfaces;
 using BankApp.Infrastructure.Services.Infrastructure.Interfaces;
+using BankApp.Server.DataAccess;
 using Microsoft.AspNetCore.Mvc;
 
 namespace BankApp.Server.Controllers
