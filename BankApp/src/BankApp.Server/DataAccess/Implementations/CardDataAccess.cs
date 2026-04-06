@@ -23,29 +23,28 @@ namespace BankApp.Infrastructure.DataAccess.Implementations
         /// <inheritdoc />
         public Card? FindById(int id)
         {
-            var query = @"SELECT * FROM Card where Id = @p0";
-            using var reader = dbContext.ExecuteQuery(query, new object[] { id });
-            if (reader.Read())
-            {
-                return MapToCard(reader);
-            }
-            return null;
+            var sql = @"SELECT * FROM Card WHERE Id = @p0";
+
+            return this.dbContext.ExecuteQuery(sql, new object[] { id }, reader =>
+                reader.Read() ? this.MapToCard(reader) : null);
         }
 
-        /// <inheritdoc />
+        /// <inheritdoc/>
         public List<Card> FindByUserId(int userId)
         {
-            var cards = new List<Card>();
-            var query = @"SELECT * FROM Card where UserId = @p0";
-            using var reader = dbContext.ExecuteQuery(query, new object[] { userId });
-            while (reader.Read())
+            var sql = @"SELECT * FROM Card WHERE UserId = @p0";
+
+            return this.dbContext.ExecuteQuery(sql, new object[] { userId }, reader =>
             {
-                cards.Add(MapToCard(reader));
-            }
+                var cards = new List<Card>();
+                while (reader.Read())
+                {
+                    cards.Add(this.MapToCard(reader));
+                }
 
-            return cards;
+                return cards;
+            });
         }
-
         private Card MapToCard(System.Data.IDataReader reader)
         {
             return new Card

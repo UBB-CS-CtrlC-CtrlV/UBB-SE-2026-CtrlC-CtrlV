@@ -22,31 +22,32 @@ namespace BankApp.Infrastructure.DataAccess.Implementations
         }
 
         /// <inheritdoc />
+        /// <inheritdoc />
         public Account? FindById(int id)
         {
             var query =
-                @"SELECT Id, UserId, AccountName, IBAN, Currency, Balance, AccountType, Status, CreatedAt from Account where Id = @p0";
-            using var reader = dbContext.ExecuteQuery(query, new object[] { id });
-            if (reader.Read())
-            {
-                return MapToAccount(reader);
-            }
-            return null;
+                @"SELECT Id, UserId, AccountName, IBAN, Currency, Balance, AccountType, Status, CreatedAt FROM Account WHERE Id = @p0";
+
+            return this.dbContext.ExecuteQuery(query, new object[] { id }, reader =>
+                reader.Read() ? this.MapToAccount(reader) : null);
         }
 
         /// <inheritdoc />
         public List<Account> FindByUserId(int userId)
         {
-            var accounts = new List<Account>();
             var query =
-                @"SELECT Id, UserId, AccountName, IBAN, Currency, Balance, AccountType, Status, CreatedAt from Account where UserId = @p0";
-            using var reader = this.dbContext.ExecuteQuery(query, new object[] { userId });
-            while (reader.Read())
-            {
-                accounts.Add(this.MapToAccount(reader));
-            }
+                @"SELECT Id, UserId, AccountName, IBAN, Currency, Balance, AccountType, Status, CreatedAt FROM Account WHERE UserId = @p0";
 
-            return accounts;
+            return this.dbContext.ExecuteQuery(query, new object[] { userId }, reader =>
+            {
+                var accounts = new List<Account>();
+                while (reader.Read())
+                {
+                    accounts.Add(this.MapToAccount(reader));
+                }
+
+                return accounts;
+            });
         }
 
         private Account MapToAccount(IDataReader reader)

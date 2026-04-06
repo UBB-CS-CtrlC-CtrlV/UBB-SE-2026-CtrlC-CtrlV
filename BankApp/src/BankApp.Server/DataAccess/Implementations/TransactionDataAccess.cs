@@ -22,21 +22,23 @@ namespace BankApp.Infrastructure.DataAccess.Implementations
         }
 
         /// <inheritdoc />
+        /// <inheritdoc />
         public List<Transaction> FindRecentByAccountId(int accountId, int limit = 10)
         {
-            var transactions = new List<Transaction>();
-            var query = @"SELECT TOP (@p1) * FROM [Transaction] 
-                  WHERE AccountId = @p0 
+            var query = @"SELECT TOP (@p1) * FROM [Transaction]
+                  WHERE AccountId = @p0
                   ORDER BY CreatedAt DESC";
 
-            using var reader = dbContext.ExecuteQuery(query, new object[] { accountId, limit });
-
-            while (reader.Read())
+            return this.dbContext.ExecuteQuery(query, new object[] { accountId, limit }, reader =>
             {
-                transactions.Add(MapToTransaction(reader));
-            }
+                var transactions = new List<Transaction>();
+                while (reader.Read())
+                {
+                    transactions.Add(this.MapToTransaction(reader));
+                }
 
-            return transactions;
+                return transactions;
+            });
         }
 
         private Transaction MapToTransaction(IDataReader reader)

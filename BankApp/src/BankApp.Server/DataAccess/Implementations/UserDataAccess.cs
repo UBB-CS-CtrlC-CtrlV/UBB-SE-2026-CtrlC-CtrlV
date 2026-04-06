@@ -24,32 +24,24 @@ namespace BankApp.Infrastructure.DataAccess.Implementations
         public User? FindByEmail(string email)
         {
             var sql = @"SELECT Id, Email, PasswordHash, FullName, PhoneNumber, DateOfBirth,
-                        [Address], Nationality, PreferredLanguage, Is2FAEnabled, Preferred2FAMethod,
-                        IsLocked, LockoutEnd, FailedLoginAttempts, CreatedAt, UpdatedAt
-                        FROM [User] WHERE Email = @p0";
+                [Address], Nationality, PreferredLanguage, Is2FAEnabled, Preferred2FAMethod,
+                IsLocked, LockoutEnd, FailedLoginAttempts, CreatedAt, UpdatedAt
+                FROM [User] WHERE Email = @p0";
 
-            using var reader = dbContext.ExecuteQuery(sql, new object[] { email });
-            if (reader.Read())
-            {
-                return MapUser(reader);
-            }
-            return null;
+            return this.dbContext.ExecuteQuery(sql, new object[] { email }, reader =>
+                reader.Read() ? this.MapUser(reader) : null);
         }
 
-        /// <inheritdoc />
+        /// <inheritdoc/>
         public User? FindById(int id)
         {
             var sql = @"SELECT Id, Email, PasswordHash, FullName, PhoneNumber, DateOfBirth,
-                        [Address], Nationality, PreferredLanguage, Is2FAEnabled, Preferred2FAMethod,
-                        IsLocked, LockoutEnd, FailedLoginAttempts, CreatedAt, UpdatedAt
-                        FROM [User] WHERE Id = @p0";
+                [Address], Nationality, PreferredLanguage, Is2FAEnabled, Preferred2FAMethod,
+                IsLocked, LockoutEnd, FailedLoginAttempts, CreatedAt, UpdatedAt
+                FROM [User] WHERE Id = @p0";
 
-            using var reader = dbContext.ExecuteQuery(sql, new object[] { id });
-            if (reader.Read())
-            {
-                return MapUser(reader);
-            }
-            return null;
+            return this.dbContext.ExecuteQuery(sql, new object[] { id }, reader =>
+                reader.Read() ? this.MapUser(reader) : null);
         }
 
         /// <inheritdoc />
