@@ -51,7 +51,7 @@
   </ItemGroup>
   <ItemGroup>
     <PackageReference Include="Duende.IdentityModel.OidcClient" Version="7.1.0" />
-    <PackageReference Include="ErrorOr" Version="2.0.7" />
+    <PackageReference Include="ErrorOr" Version="2.1.0" />
     <PackageReference Include="Microsoft.Extensions.Configuration" Version="10.0.0" />
     <PackageReference Include="Microsoft.Extensions.Logging" Version="10.0.0" />
     <PackageReference Include="Serilog" Version="4.1.0" />

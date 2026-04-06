@@ -53,6 +53,11 @@ public static class ServiceCollectionExtensions
         services.AddTransient<TwoFactorViewModel>();
         services.AddTransient<ForgotPasswordViewModel>();
         services.AddTransient<DashboardViewModel>();
+        services.AddTransient<PersonalInfoViewModel>();
+        services.AddTransient<SecurityViewModel>();
+        services.AddTransient<OAuthViewModel>();
+        services.AddTransient<NotificationsViewModel>();
+        services.AddTransient<SessionsViewModel>();
         services.AddTransient<ProfileViewModel>();
 
         // Views are registered as transient so the navigation service can resolve them
