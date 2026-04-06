@@ -100,12 +100,14 @@ public class AppDbContext : IDbContext
     }
 
     /// <inheritdoc />
-    public IDataReader ExecuteQuery(string sqlStatement, object[] parameters)
+    /// <inheritdoc />
+    public T ExecuteQuery<T>(string sqlStatement, object[] parameters, Func<IDataReader, T> map)
     {
-        var activeConnection = GetConnection();
-        var command = new SqlCommand(sqlStatement, activeConnection, currentTransaction);
-        AddParameters(command, parameters);
-        return command.ExecuteReader();
+        var activeConnection = this.GetConnection();
+        using var command = new SqlCommand(sqlStatement, activeConnection, this.currentTransaction);
+        this.AddParameters(command, parameters);
+        using var reader = command.ExecuteReader();
+        return map(reader);
     }
 
     /// <inheritdoc />

@@ -27,10 +27,11 @@ public interface IDbContext : IDisposable
     /// <summary>
     /// Executes a SQL query and returns the resulting data reader.
     /// </summary>
-    /// <param name="sql">The SQL statement to execute.</param>
+    /// <param name="sqlStatement">The SQL statement to execute.</param>
     /// <param name="parameters">The positional parameters for the SQL statement.</param>
+    /// <param name="map"></param>
     /// <returns>An <see cref="IDataReader"/> containing the query results.</returns>
-    IDataReader ExecuteQuery(string sql, object[] parameters);
+    T ExecuteQuery<T>(string sqlStatement, object[] parameters, Func<IDataReader, T> map);
 
     /// <summary>
     /// Executes a SQL command that does not return rows.

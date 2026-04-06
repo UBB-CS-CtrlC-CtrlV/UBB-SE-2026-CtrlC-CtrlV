@@ -21,31 +21,31 @@ namespace BankApp.Infrastructure.DataAccess.Implementations
         }
 
         /// <inheritdoc />
+        /// <inheritdoc />
         public int CountUnreadByUserId(int userId)
         {
-            var query = @"SELECT COUNT(*) FROM Notification WHERE UserId = @p0 and IsRead = 0";
-            using var reader = dbContext.ExecuteQuery(query, new object[] { userId });
-            if (reader.Read())
-            {
-                return reader.GetInt32(0);
-            }
-            return 0;
+            var query = @"SELECT COUNT(*) FROM Notification WHERE UserId = @p0 AND IsRead = 0";
+
+            return this.dbContext.ExecuteQuery(query, new object[] { userId }, reader =>
+                reader.Read() ? reader.GetInt32(0) : 0);
         }
 
         /// <inheritdoc />
         public List<Notification> FindByUserId(int userId)
         {
-            var notifications = new List<Notification>();
-            var query = @"SELECT * FROM Notification where UserId = @p0";
-            using var reader = dbContext.ExecuteQuery(query, new object[] { userId });
-            while (reader.Read())
+            var query = @"SELECT * FROM Notification WHERE UserId = @p0";
+
+            return this.dbContext.ExecuteQuery(query, new object[] { userId }, reader =>
             {
-                notifications.Add(MapToNotification(reader));
-            }
+                var notifications = new List<Notification>();
+                while (reader.Read())
+                {
+                    notifications.Add(this.MapToNotification(reader));
+                }
 
-            return notifications;
+                return notifications;
+            });
         }
-
         private Notification MapToNotification(System.Data.IDataReader reader)
         {
             return new Notification

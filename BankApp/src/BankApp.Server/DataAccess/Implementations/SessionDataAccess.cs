@@ -22,57 +22,58 @@ namespace BankApp.Infrastructure.DataAccess
         }
 
         /// <inheritdoc />
+        /// <inheritdoc />
         public Session Create(int userId, string token, string? deviceInfo, string? browser, string? ipAddress)
         {
             var sql = @"INSERT INTO [Session] (UserId, Token, DeviceInfo, Browser, IpAddress, LastActiveAt, ExpiresAt)
-                        OUTPUT INSERTED.Id, INSERTED.UserId, INSERTED.Token, INSERTED.DeviceInfo,
-                               INSERTED.Browser, INSERTED.IpAddress, INSERTED.LastActiveAt,
-                               INSERTED.ExpiresAt, INSERTED.IsRevoked, INSERTED.CreatedAt
-                        VALUES (@p0, @p1, @p2, @p3, @p4, GETUTCDATE(), DATEADD(DAY, @p5, GETUTCDATE()))";
+                OUTPUT INSERTED.Id, INSERTED.UserId, INSERTED.Token, INSERTED.DeviceInfo,
+                       INSERTED.Browser, INSERTED.IpAddress, INSERTED.LastActiveAt,
+                       INSERTED.ExpiresAt, INSERTED.IsRevoked, INSERTED.CreatedAt
+                VALUES (@p0, @p1, @p2, @p3, @p4, GETUTCDATE(), DATEADD(DAY, @p5, GETUTCDATE()))";
 
-            using var reader = dbContext.ExecuteQuery(sql, new object[]
+            return this.dbContext.ExecuteQuery(sql, new object[]
             {
-                userId,
-                token,
-                deviceInfo ?? (object)DBNull.Value,
-                browser ?? (object)DBNull.Value,
-                ipAddress ?? (object)DBNull.Value,
-                SessionExpirationDays
+        userId,
+        token,
+        deviceInfo ?? (object)DBNull.Value,
+        browser ?? (object)DBNull.Value,
+        ipAddress ?? (object)DBNull.Value,
+        SessionExpirationDays,
+            }, reader =>
+            {
+                reader.Read();
+                return this.MapSession(reader);
             });
-
-            reader.Read();
-            return MapSession(reader);
         }
 
         /// <inheritdoc />
         public Session? FindByToken(string token)
         {
             var sql = @"SELECT Id, UserId, Token, DeviceInfo, Browser, IpAddress,
-                        LastActiveAt, ExpiresAt, IsRevoked, CreatedAt
-                        FROM [Session] WHERE Token = @p0 AND IsRevoked = 0 AND ExpiresAt > GETUTCDATE()";
+                LastActiveAt, ExpiresAt, IsRevoked, CreatedAt
+                FROM [Session] WHERE Token = @p0 AND IsRevoked = 0 AND ExpiresAt > GETUTCDATE()";
 
-            using var reader = dbContext.ExecuteQuery(sql, new object[] { token });
-            if (reader.Read())
-            {
-                return MapSession(reader);
-            }
-            return null;
+            return this.dbContext.ExecuteQuery(sql, new object[] { token }, reader =>
+                reader.Read() ? this.MapSession(reader) : null);
         }
 
         /// <inheritdoc />
         public List<Session> FindByUserId(int userId)
         {
             var sql = @"SELECT Id, UserId, Token, DeviceInfo, Browser, IpAddress,
-                        LastActiveAt, ExpiresAt, IsRevoked, CreatedAt
-                        FROM [Session] WHERE UserId = @p0 AND IsRevoked = 0 AND ExpiresAt > GETUTCDATE()";
+                LastActiveAt, ExpiresAt, IsRevoked, CreatedAt
+                FROM [Session] WHERE UserId = @p0 AND IsRevoked = 0 AND ExpiresAt > GETUTCDATE()";
 
-            using var reader = dbContext.ExecuteQuery(sql, new object[] { userId });
-            var sessions = new List<Session>();
-            while (reader.Read())
+            return this.dbContext.ExecuteQuery(sql, new object[] { userId }, reader =>
             {
-                sessions.Add(MapSession(reader));
-            }
-            return sessions;
+                var sessions = new List<Session>();
+                while (reader.Read())
+                {
+                    sessions.Add(this.MapSession(reader));
+                }
+
+                return sessions;
+            });
         }
 
         /// <inheritdoc />

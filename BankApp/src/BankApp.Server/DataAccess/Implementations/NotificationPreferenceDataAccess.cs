@@ -49,30 +49,30 @@ namespace BankApp.Infrastructure.DataAccess.Implementations
         }
 
         /// <inheritdoc />
+        /// <inheritdoc />
         public List<NotificationPreference> FindByUserId(int userId)
         {
-            List<NotificationPreference> notificationPreferences = new List<NotificationPreference>();
-            string selectQuery = @"SELECT * FROM NotificationPreference WHERE userId = @p0";
+            string selectQuery = @"SELECT * FROM NotificationPreference WHERE UserId = @p0";
 
-            using IDataReader reader = this.appDbContext.ExecuteQuery(selectQuery, new object[] { userId });
-
-            while (reader.Read())
+            return this.appDbContext.ExecuteQuery(selectQuery, new object[] { userId }, reader =>
             {
-                NotificationPreference notificationPreference = new NotificationPreference
+                var notificationPreferences = new List<NotificationPreference>();
+                while (reader.Read())
                 {
-                    Id = Convert.ToInt32(reader["Id"]),
-                    UserId = Convert.ToInt32(reader["UserId"]),
-                    Category = NotificationTypeExtensions.FromString(Convert.ToString(reader["Category"]) ?? string.Empty),
-                    PushEnabled = Convert.ToBoolean(reader["PushEnabled"]),
-                    EmailEnabled = Convert.ToBoolean(reader["EmailEnabled"]),
-                    SmsEnabled = Convert.ToBoolean(reader["SmsEnabled"]),
-                    MinAmountThreshold = reader["MinAmountThreshold"] == DBNull.Value ? null : Convert.ToDecimal(reader["MinAmountThreshold"])
-                };
+                    notificationPreferences.Add(new NotificationPreference
+                    {
+                        Id = Convert.ToInt32(reader["Id"]),
+                        UserId = Convert.ToInt32(reader["UserId"]),
+                        Category = NotificationTypeExtensions.FromString(Convert.ToString(reader["Category"]) ?? string.Empty),
+                        PushEnabled = Convert.ToBoolean(reader["PushEnabled"]),
+                        EmailEnabled = Convert.ToBoolean(reader["EmailEnabled"]),
+                        SmsEnabled = Convert.ToBoolean(reader["SmsEnabled"]),
+                        MinAmountThreshold = reader["MinAmountThreshold"] == DBNull.Value ? null : Convert.ToDecimal(reader["MinAmountThreshold"]),
+                    });
+                }
 
-                notificationPreferences.Add(notificationPreference);
-            }
-
-            return notificationPreferences;
+                return notificationPreferences;
+            });
         }
 
         /// <inheritdoc />

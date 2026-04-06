@@ -38,32 +38,31 @@ namespace BankApp.Infrastructure.DataAccess.Implementations
         }
 
         /// <inheritdoc />
+        /// <inheritdoc />
         public OAuthLink? FindByProvider(string provider, string providerUserId)
         {
             string sql = "SELECT Id, UserId, Provider, ProviderUserId, ProviderEmail FROM OAuthLink WHERE Provider = @p0 AND ProviderUserId = @p1";
-            using IDataReader reader = context.ExecuteQuery(sql, new object[] { provider, providerUserId });
 
-            if (reader.Read())
-            {
-                return MapToOAuthLink(reader);
-            }
-            return null;
+            return this.context.ExecuteQuery(sql, new object[] { provider, providerUserId }, reader =>
+                reader.Read() ? this.MapToOAuthLink(reader) : null);
         }
 
         /// <inheritdoc />
         public List<OAuthLink> FindByUserId(int userId)
         {
             string sql = "SELECT Id, UserId, Provider, ProviderUserId, ProviderEmail FROM OAuthLink WHERE UserId = @p0";
-            List<OAuthLink> links = new List<OAuthLink>();
-            using IDataReader reader = context.ExecuteQuery(sql, new object[] { userId });
 
-            while (reader.Read())
+            return this.context.ExecuteQuery(sql, new object[] { userId }, reader =>
             {
-                links.Add(MapToOAuthLink(reader));
-            }
-            return links;
-        }
+                var links = new List<OAuthLink>();
+                while (reader.Read())
+                {
+                    links.Add(this.MapToOAuthLink(reader));
+                }
 
+                return links;
+            });
+        }
         private OAuthLink MapToOAuthLink(IDataReader reader)
         {
             return new OAuthLink
