@@ -1,0 +1,11 @@
+USE BankAppDb; GO
+IF OBJECT_ID('dbo.OAuthLink', 'U') IS NULL
+CREATE TABLE OAuthLink (
+    Id INT IDENTITY(1,1) PRIMARY KEY,
+    UserId INT NOT NULL FOREIGN KEY REFERENCES [User](Id),
+    Provider VARCHAR(20) NOT NULL,
+    ProviderUserId VARCHAR(255) NOT NULL,
+    ProviderEmail VARCHAR(255),
+    LinkedAt DATETIME2 DEFAULT GETUTCDATE()
+);
+GO
