@@ -4,11 +4,15 @@
 
 using System.Net;
 using System.Threading;
+using BankApp.Client.Enums;
 using BankApp.Client.Utilities;
 using BankApp.Client.ViewModels;
 using BankApp.Core.DTOs.Dashboard;
 using BankApp.Core.Entities;
-using BankApp.Core.Enums;
+using ErrorOr;
+using Microsoft.Extensions.Configuration;
+using Microsoft.Extensions.Logging;
+using Microsoft.Extensions.Logging.Abstractions;
 
 namespace BankApp.Client.Tests;
 
@@ -49,11 +53,11 @@ public class DashboardViewModelTests
             },
         };
 
-        var viewModel = new DashboardViewModel(apiClient);
+        var viewModel = new DashboardViewModel(apiClient, NullLogger<DashboardViewModel>.Instance);
 
         var result = await viewModel.LoadDashboard();
 
-        Assert.True(result);
+        Assert.False(result.IsError);
         Assert.Equal(DashboardState.Success, viewModel.State.Value);
         Assert.Equal("Ada Lovelace", viewModel.CurrentUser?.FullName);
         Assert.Single(viewModel.Cards);
@@ -64,22 +68,22 @@ public class DashboardViewModelTests
     }
 
     /// <summary>
-    /// When the dashboard response is missing the current user the view model should enter the error state.
+    /// When the dashboard response is missing the current user the view model should still load successfully.
     /// </summary>
     /// <returns>A <see cref="Task"/> representing the result of the asynchronous operation.</returns>
     [Fact]
-    public async Task LoadDashboard_WhenCurrentUserIsMissing_SetsErrorState()
+    public async Task LoadDashboard_WhenCurrentUserIsMissing_StillSucceeds()
     {
         var viewModel = new DashboardViewModel(new FakeApiClient
         {
             Response = new DashboardResponse(),
-        });
+        }, NullLogger<DashboardViewModel>.Instance);
 
         var result = await viewModel.LoadDashboard();
 
-        Assert.False(result);
-        Assert.Equal(DashboardState.Error, viewModel.State.Value);
-        Assert.Equal("The dashboard response was incomplete.", viewModel.ErrorMessage);
+        Assert.False(result.IsError);
+        Assert.Equal(DashboardState.Success, viewModel.State.Value);
+        Assert.Null(viewModel.CurrentUser);
     }
 
     /// <summary>
@@ -91,12 +95,12 @@ public class DashboardViewModelTests
     {
         var viewModel = new DashboardViewModel(new FakeApiClient
         {
-            Exception = new ApiException(HttpStatusCode.Unauthorized, "Unauthorized"),
-        });
+            ErrorToReturn = Error.Unauthorized(description: "Unauthorized"),
+        }, NullLogger<DashboardViewModel>.Instance);
 
         var result = await viewModel.LoadDashboard();
 
-        Assert.False(result);
+        Assert.True(result.IsError);
         Assert.Equal(DashboardState.Error, viewModel.State.Value);
         Assert.Equal("Your session expired. Please sign in again.", viewModel.ErrorMessage);
     }
@@ -106,32 +110,41 @@ public class DashboardViewModelTests
     /// </summary>
     private sealed class FakeApiClient : ApiClient
     {
+        private static readonly IConfiguration EmptyConfig = new ConfigurationBuilder().Build();
+
+        /// <summary>
+        /// Initializes a new instance of the <see cref="FakeApiClient"/> class.
+        /// </summary>
+        public FakeApiClient()
+            : base(EmptyConfig, NullLogger<ApiClient>.Instance)
+        {
+        }
+
         /// <summary>
         /// Gets the response returned by the fake client.
         /// </summary>
         public DashboardResponse? Response { get; init; }
 
         /// <summary>
-        /// Gets the exception thrown by the fake client, if any.
+        /// Gets the error returned by the fake client, if any.
         /// </summary>
-        public Exception? Exception { get; init; }
+        public Error? ErrorToReturn { get; init; }
 
         /// <summary>
-        /// Returns the configured response or throws the configured exception.
+        /// Returns the configured response or the configured error.
         /// </summary>
         /// <typeparam name="TResponse">The requested response type.</typeparam>
         /// <param name="endpoint">The endpoint requested by the caller.</param>
         /// <param name="cancellationToken">The cancellation token for the request.</param>
         /// <returns>A task containing the configured response cast to the requested type.</returns>
-        public override Task<TResponse?> GetAsync<TResponse>(string endpoint, CancellationToken cancellationToken = default)
-            where TResponse : default
+        public override Task<ErrorOr<TResponse>> GetAsync<TResponse>(string endpoint, CancellationToken cancellationToken = default)
         {
-            if (this.Exception != null)
+            if (this.ErrorToReturn is { } error)
             {
-                throw this.Exception;
+                return Task.FromResult<ErrorOr<TResponse>>(error);
             }
 
-            return Task.FromResult((TResponse?)(object?)this.Response);
+            return Task.FromResult<ErrorOr<TResponse>>((TResponse)(object)this.Response!);
         }
     }
 }
