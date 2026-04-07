@@ -1,0 +1,6 @@
+IF DB_ID('BankAppDb') IS NULL
+    CREATE DATABASE BankAppDb;
+GO
+
+USE BankAppDb;
+GO

@@ -1,0 +1,15 @@
+USE BankAppDb; GO
+IF OBJECT_ID('dbo.[Session]', 'U') IS NULL
+CREATE TABLE [Session] (
+    Id INT IDENTITY(1,1) PRIMARY KEY,
+    UserId INT NOT NULL FOREIGN KEY REFERENCES [User](Id),
+    Token VARCHAR(512) NOT NULL,
+    DeviceInfo VARCHAR(255),
+    Browser VARCHAR(100),
+    IpAddress VARCHAR(45),
+    LastActiveAt DATETIME2,
+    ExpiresAt DATETIME2 NOT NULL,
+    IsRevoked BIT DEFAULT 0,
+    CreatedAt DATETIME2 DEFAULT GETUTCDATE()
+);
+GO
