@@ -21,7 +21,7 @@ namespace BankApp.Client.ViewModels;
 /// binds to directly via <c>{x:Bind}</c>, keeping all business decisions out of the
 /// code-behind.
 /// </summary>
-public class TwoFactorViewModel : INotifyPropertyChanged
+public partial class TwoFactorViewModel : INotifyPropertyChanged
 {
     private const int ResendCooldownSeconds = 30;
     private const int OtpRequiredLength = 6;
