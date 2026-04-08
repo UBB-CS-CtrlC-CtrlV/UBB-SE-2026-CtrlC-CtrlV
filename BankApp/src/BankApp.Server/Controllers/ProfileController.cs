@@ -3,7 +3,6 @@
 // </copyright>
 using System.Collections.Generic;
 using BankApp.Contracts.DTOs.Profile;
-using BankApp.Contracts.Entities;
 using BankApp.Server.Services.Profile;
 using Microsoft.AspNetCore.Mvc;
 
@@ -40,13 +39,13 @@ public class ProfileController : ControllerBase
     {
         int userId = this.GetAuthenticatedUserId();
 
-        User? user = this.profileService.GetUserById(userId);
-        if (user == null)
+        GetProfileResponse? response = this.profileService.GetProfile(userId);
+        if (response == null)
         {
             return this.NotFound(new GetProfileResponse(false, "User not found."));
         }
 
-        return this.Ok(new GetProfileResponse(true, "Successfully retrieved profile information.", user));
+        return this.Ok(response);
     }
 
     /// <summary>
@@ -103,7 +102,7 @@ public class ProfileController : ControllerBase
     /// Retrieves all OAuth provider links associated with the currently authenticated user.
     /// </summary>
     /// <returns>
-    /// 200 OK with a list of <see cref="OAuthLink"/> on success,
+    /// 200 OK with a list of <see cref="OAuthLinkDto"/> on success,
     /// or 404 Not Found if no OAuth links exist for the user.
     /// </returns>
     [HttpGet("oauthlinks")]
@@ -111,7 +110,7 @@ public class ProfileController : ControllerBase
     {
         int userId = this.GetAuthenticatedUserId();
 
-        List<OAuthLink> links = this.profileService.GetOAuthLinks(userId);
+        List<OAuthLinkDto> links = this.profileService.GetOAuthLinks(userId);
 
         if (links.Count == 0)
         {
@@ -125,7 +124,7 @@ public class ProfileController : ControllerBase
     /// Retrieves the notification preferences of the currently authenticated user.
     /// </summary>
     /// <returns>
-    /// 200 OK with a list of <see cref="NotificationPreference"/> on success,
+    /// 200 OK with a list of <see cref="NotificationPreferenceDto"/> on success,
     /// or 404 Not Found if no preferences exist for the user.
     /// </returns>
     [HttpGet("notifications/preferences")]
@@ -133,7 +132,7 @@ public class ProfileController : ControllerBase
     {
         int userId = this.GetAuthenticatedUserId();
 
-        List<NotificationPreference> prefs = this.profileService.GetNotificationPreferences(userId);
+        List<NotificationPreferenceDto> prefs = this.profileService.GetNotificationPreferences(userId);
 
         if (prefs.Count == 0)
         {
@@ -152,7 +151,7 @@ public class ProfileController : ControllerBase
     /// or 400 Bad Request if the update fails.
     /// </returns>
     [HttpPut("notifications/preferences")]
-    public IActionResult UpdateNotificationPreferences([FromBody] List<NotificationPreference> prefs)
+    public IActionResult UpdateNotificationPreferences([FromBody] List<NotificationPreferenceDto> prefs)
     {
         int userId = this.GetAuthenticatedUserId();
 

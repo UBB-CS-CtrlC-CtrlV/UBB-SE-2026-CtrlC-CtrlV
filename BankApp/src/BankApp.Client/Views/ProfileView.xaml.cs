@@ -8,7 +8,7 @@ using System.Linq;
 using BankApp.Client.Master;
 using BankApp.Client.Utilities;
 using BankApp.Client.ViewModels;
-using BankApp.Contracts.Entities;
+using BankApp.Contracts.DTOs.Profile;
 using BankApp.Client.Enums;
 using BankApp.Contracts.Enums;
 using BankApp.Contracts.Extensions;
@@ -315,7 +315,7 @@ public sealed partial class ProfileView : IStateObserver<ProfileState>
 
     private async void RemoveConnectedAccount_Click(object sender, RoutedEventArgs e)
     {
-        if (sender is Button { Tag: OAuthLink link })
+        if (sender is Button { Tag: OAuthLinkDto link })
         {
             var success = await this.viewModel.OAuth.UnlinkOAuth(link.Provider);
 
@@ -341,7 +341,7 @@ public sealed partial class ProfileView : IStateObserver<ProfileState>
             return;
         }
 
-        if (sender is ToggleSwitch { Tag: NotificationPreference pref } toggle)
+        if (sender is ToggleSwitch { Tag: NotificationPreferenceDto pref } toggle)
         {
             this.isUpdatingToggle = true;
 
@@ -496,7 +496,7 @@ public sealed partial class ProfileView : IStateObserver<ProfileState>
         this.TabNotificationsBtn.Style = (Style)this.Resources["TabButtonActiveStyle"];
     }
 
-    private void PopulateOAuthLinks(List<OAuthLink>? links)
+    private void PopulateOAuthLinks(List<OAuthLinkDto>? links)
     {
         this.OAuthLinksPanel.Children.Clear();
 
@@ -516,7 +516,7 @@ public sealed partial class ProfileView : IStateObserver<ProfileState>
         }
     }
 
-    private void PopulateNotificationPreferences(List<NotificationPreference>? prefs)
+    private void PopulateNotificationPreferences(List<NotificationPreferenceDto>? prefs)
     {
         this.isPopulating = true;
 

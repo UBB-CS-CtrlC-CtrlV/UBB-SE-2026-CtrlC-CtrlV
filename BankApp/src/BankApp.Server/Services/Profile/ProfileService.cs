@@ -27,9 +27,18 @@ public class ProfileService : IProfileService
     }
 
     /// <inheritdoc />
-    public User? GetUserById(int userId)
+    public GetProfileResponse? GetProfile(int userId)
     {
-        return userRepository.FindById(userId);
+        User? user = userRepository.FindById(userId);
+        if (user == null)
+        {
+            return null;
+        }
+
+        return new GetProfileResponse(true, "Successfully retrieved profile information.")
+        {
+            ProfileInfo = new ProfileInfo(user),
+        };
     }
 
     /// <inheritdoc />
@@ -128,15 +137,23 @@ public class ProfileService : IProfileService
     }
 
     /// <inheritdoc />
-    public List<OAuthLink> GetOAuthLinks(int userId)
+    public List<OAuthLinkDto> GetOAuthLinks(int userId)
     {
         User? user = userRepository.FindById(userId);
         if (user == null)
         {
-            return new List<OAuthLink>();
+            return new List<OAuthLinkDto>();
         }
 
-        return userRepository.GetLinkedProviders(userId);
+        return userRepository.GetLinkedProviders(userId)
+            .Select(o => new OAuthLinkDto
+            {
+                Id = o.Id,
+                Provider = o.Provider,
+                ProviderEmail = o.ProviderEmail,
+                LinkedAt = o.LinkedAt,
+            })
+            .ToList();
     }
 
     /// <inheritdoc />
@@ -152,19 +169,30 @@ public class ProfileService : IProfileService
     }
 
     /// <inheritdoc />
-    public List<NotificationPreference> GetNotificationPreferences(int userId)
+    public List<NotificationPreferenceDto> GetNotificationPreferences(int userId)
     {
         User? user = userRepository.FindById(userId);
         if (user == null)
         {
-            return new List<NotificationPreference>();
+            return new List<NotificationPreferenceDto>();
         }
 
-        return userRepository.GetNotificationPreferences(userId);
+        return userRepository.GetNotificationPreferences(userId)
+            .Select(p => new NotificationPreferenceDto
+            {
+                Id = p.Id,
+                UserId = p.UserId,
+                Category = p.Category,
+                PushEnabled = p.PushEnabled,
+                EmailEnabled = p.EmailEnabled,
+                SmsEnabled = p.SmsEnabled,
+                MinAmountThreshold = p.MinAmountThreshold,
+            })
+            .ToList();
     }
 
     /// <inheritdoc />
-    public bool UpdateNotificationPreferences(int userId, List<NotificationPreference> preferences)
+    public bool UpdateNotificationPreferences(int userId, List<NotificationPreferenceDto> preferences)
     {
         User? user = userRepository.FindById(userId);
         if (user == null)
@@ -172,7 +200,20 @@ public class ProfileService : IProfileService
             return false;
         }
 
-        return userRepository.UpdateNotificationPreferences(userId, preferences);
+        List<NotificationPreference> entities = preferences
+            .Select(p => new NotificationPreference
+            {
+                Id = p.Id,
+                UserId = p.UserId,
+                Category = p.Category,
+                PushEnabled = p.PushEnabled,
+                EmailEnabled = p.EmailEnabled,
+                SmsEnabled = p.SmsEnabled,
+                MinAmountThreshold = p.MinAmountThreshold,
+            })
+            .ToList();
+
+        return userRepository.UpdateNotificationPreferences(userId, entities);
     }
 
     /// <inheritdoc />

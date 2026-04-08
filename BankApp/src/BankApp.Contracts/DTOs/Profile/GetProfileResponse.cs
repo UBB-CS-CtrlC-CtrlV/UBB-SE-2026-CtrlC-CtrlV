@@ -1,5 +1,3 @@
-using BankApp.Contracts.Entities;
-
 namespace BankApp.Contracts.DTOs.Profile;
 
 /// <summary>
@@ -38,19 +36,5 @@ public class GetProfileResponse
     {
         Success = success;
         Message = message;
-    }
-
-    /// <summary>
-    /// Initializes a new instance of the <see cref="GetProfileResponse"/> class
-    /// and populates the profile info from the given user entity.
-    /// </summary>
-    /// <param name="success">Whether the profile retrieval was successful.</param>
-    /// <param name="message">A message describing the result.</param>
-    /// <param name="user">The user entity to extract profile info from.</param>
-    public GetProfileResponse(bool success, string message, User user)
-    {
-        Success = success;
-        Message = message;
-        ProfileInfo = new ProfileInfo(user);
     }
 }

@@ -6,7 +6,7 @@ using System;
 using System.Collections.Generic;
 using System.Threading.Tasks;
 using BankApp.Client.Utilities;
-using BankApp.Contracts.Entities;
+using BankApp.Contracts.DTOs.Profile;
 using BankApp.Client.Enums;
 using Microsoft.Extensions.Logging;
 
@@ -30,7 +30,7 @@ public class OAuthViewModel
         this.apiClient = apiClient ?? throw new ArgumentNullException(nameof(apiClient));
         this.logger = logger ?? throw new ArgumentNullException(nameof(logger));
         this.State = new ObservableState<ProfileState>(ProfileState.Idle);
-        this.OAuthLinks = new List<OAuthLink>();
+        this.OAuthLinks = new List<OAuthLinkDto>();
     }
 
     /// <summary>
@@ -41,7 +41,7 @@ public class OAuthViewModel
     /// <summary>
     /// Gets the linked OAuth accounts for the current user.
     /// </summary>
-    public List<OAuthLink> OAuthLinks { get; private set; }
+    public List<OAuthLinkDto> OAuthLinks { get; private set; }
 
     /// <summary>
     /// Loads the OAuth links for the current user from the server.
@@ -49,7 +49,7 @@ public class OAuthViewModel
     /// <returns><see langword="true"/> if loaded successfully; otherwise, <see langword="false"/>.</returns>
     public async Task<bool> LoadOAuthLinks()
     {
-        var oauthResult = await this.apiClient.GetAsync<List<OAuthLink>>("api/profile/oauthlinks");
+        var oauthResult = await this.apiClient.GetAsync<List<OAuthLinkDto>>("api/profile/oauthlinks");
         if (oauthResult.IsError)
         {
             this.logger.LogError("LoadOAuthLinks: request failed: {Errors}", oauthResult.Errors);
@@ -116,7 +116,7 @@ public class OAuthViewModel
             return Task.FromResult(false);
         }
 
-        OAuthLink? existing = this.OAuthLinks.Find(o =>
+        OAuthLinkDto? existing = this.OAuthLinks.Find(o =>
             string.Equals(o.Provider, provider, StringComparison.OrdinalIgnoreCase));
         if (existing == null)
         {

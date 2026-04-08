@@ -1,5 +1,8 @@
+// <copyright file="IProfileService.cs" company="CtrlC CtrlV">
+// Copyright (c) CtrlC CtrlV. All rights reserved.
+// </copyright>
+
 using BankApp.Contracts.DTOs.Profile;
-using BankApp.Contracts.Entities;
 using BankApp.Contracts.Enums;
 
 namespace BankApp.Server.Services.Profile;
@@ -10,11 +13,11 @@ namespace BankApp.Server.Services.Profile;
 public interface IProfileService
 {
     /// <summary>
-    /// Gets a user by their unique identifier.
+    /// Gets the profile response for the specified user.
     /// </summary>
     /// <param name="userId">The user identifier.</param>
-    /// <returns>The matching <see cref="User"/>, or <see langword="null"/> if not found.</returns>
-    User? GetUserById(int userId);
+    /// <returns>A populated <see cref="GetProfileResponse"/>, or <see langword="null"/> if the user does not exist.</returns>
+    GetProfileResponse? GetProfile(int userId);
 
     /// <summary>
     /// Updates the personal information for a user.
@@ -49,8 +52,8 @@ public interface IProfileService
     /// Gets all OAuth provider links for the specified user.
     /// </summary>
     /// <param name="userId">The identifier of the user.</param>
-    /// <returns>A list of <see cref="OAuthLink"/> instances.</returns>
-    List<OAuthLink> GetOAuthLinks(int userId);
+    /// <returns>A list of <see cref="OAuthLinkDto"/> instances.</returns>
+    List<OAuthLinkDto> GetOAuthLinks(int userId);
 
     /// <summary>
     /// Links an OAuth provider to the specified user.
@@ -72,8 +75,8 @@ public interface IProfileService
     /// Gets all notification preferences for the specified user.
     /// </summary>
     /// <param name="userId">The identifier of the user.</param>
-    /// <returns>A list of <see cref="NotificationPreference"/> instances.</returns>
-    List<NotificationPreference> GetNotificationPreferences(int userId);
+    /// <returns>A list of <see cref="NotificationPreferenceDto"/> instances.</returns>
+    List<NotificationPreferenceDto> GetNotificationPreferences(int userId);
 
     /// <summary>
     /// Replaces all notification preferences for the specified user.
@@ -81,7 +84,7 @@ public interface IProfileService
     /// <param name="userId">The identifier of the user.</param>
     /// <param name="preferences">The updated list of notification preferences.</param>
     /// <returns><see langword="true"/> if the preferences were updated successfully; otherwise, <see langword="false"/>.</returns>
-    bool UpdateNotificationPreferences(int userId, List<NotificationPreference> preferences);
+    bool UpdateNotificationPreferences(int userId, List<NotificationPreferenceDto> preferences);
 
     /// <summary>
     /// Verifies the password for the specified user.
