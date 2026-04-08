@@ -8,6 +8,7 @@ using System.Globalization;
 using System.Linq;
 using System.Threading;
 using System.Threading.Tasks;
+using System.Collections.ObjectModel;
 using BankApp.Client.Enums;
 using BankApp.Client.Utilities;
 using BankApp.Contracts.DTOs.Dashboard;
@@ -102,6 +103,14 @@ public class DashboardViewModel
     /// Gets a value indicating whether the user has any linked cards.
     /// </summary>
     public bool HasCards => this.Cards.Count > 0;
+
+    /// <summary>
+    /// Gets the ordered list of card-dot view models for the carousel indicator.
+    /// Each dot knows whether it represents the currently active card.
+    /// </summary>
+    public IReadOnlyList<CardDotViewModel> CardDots =>
+        this.Cards.Select((_, index) => new CardDotViewModel { IsActive = index == this.CurrentCardIndex })
+            .ToList();
 
     /// <summary>
     /// Gets a value indicating whether the user has any recent transactions.

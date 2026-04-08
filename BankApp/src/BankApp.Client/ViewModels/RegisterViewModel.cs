@@ -55,6 +55,9 @@ public class RegisterViewModel
     /// <returns>A <see cref="Task"/> representing the asynchronous operation.</returns>
     public async Task Register(string email, string password, string confirmPassword, string fullName)
     {
+        email = email?.Trim() ?? string.Empty;
+        fullName = fullName?.Trim() ?? string.Empty;
+
         RegisterState? validationError = this.ValidateLocally(email, password, confirmPassword, fullName);
         if (validationError != null)
         {

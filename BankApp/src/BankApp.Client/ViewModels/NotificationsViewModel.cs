@@ -28,8 +28,15 @@ public class NotificationsViewModel
     /// <returns>A <see cref="Task{TResult}"/> representing the result of the asynchronous operation.</returns>
     public async Task<bool> ToggleNotificationPreference(NotificationPreferenceDto preference, bool enabled)
     {
+        bool previousValue = preference.EmailEnabled;
         preference.EmailEnabled = enabled;
-        return await this.UpdateNotificationPreferences(this.NotificationPreferences);
+        bool success = await this.UpdateNotificationPreferences(this.NotificationPreferences);
+        if (!success)
+        {
+            preference.EmailEnabled = previousValue;
+        }
+
+        return success;
     }
 
     /// <summary>

@@ -59,6 +59,16 @@ public class LoginViewModel
     public ObservableState<LoginState> State { get; }
 
     /// <summary>
+    /// Returns <see langword="true"/> when both <paramref name="email"/> and
+    /// <paramref name="password"/> are non-empty and a login attempt can be made.
+    /// </summary>
+    /// <param name="email">The email address entered by the user.</param>
+    /// <param name="password">The password entered by the user.</param>
+    /// <returns><see langword="true"/> if the inputs are sufficient to attempt login.</returns>
+    public bool CanLogin(string email, string password) =>
+        !string.IsNullOrWhiteSpace(email) && !string.IsNullOrWhiteSpace(password);
+
+    /// <summary>
     /// Attempts to sign in with the provided email address and password.
     /// </summary>
     /// <param name="email">The email address entered by the user.</param>

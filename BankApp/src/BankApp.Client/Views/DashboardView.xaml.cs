@@ -162,18 +162,15 @@ public sealed partial class DashboardView : IStateObserver<DashboardState>
     private void BuildCardDots()
     {
         this.CardDots.Children.Clear();
-        var count = this.viewModel.Cards.Count;
-        this.CardDots.Visibility = count > 1 ? Visibility.Visible : Visibility.Collapsed;
-        for (var i = 0; i < count; i++)
+        var dots = this.viewModel.CardDots;
+        this.CardDots.Visibility = dots.Count > 1 ? Visibility.Visible : Visibility.Collapsed;
+        foreach (var dotViewModel in dots)
         {
             var dot = new Ellipse
             {
-                Width = i == this.viewModel.CurrentCardIndex ? ActiveCardDotSize : InactiveCardDotSize,
+                Width = dotViewModel.IsActive ? ActiveCardDotSize : InactiveCardDotSize,
                 Height = InactiveCardDotSize,
-                Fill = new SolidColorBrush(
-                    i == this.viewModel.CurrentCardIndex
-                    ? ActiveDotColor
-                    : InactiveDotColor),
+                Fill = new SolidColorBrush(dotViewModel.IsActive ? ActiveDotColor : InactiveDotColor),
             };
             this.CardDots.Children.Add(dot);
         }
@@ -181,18 +178,16 @@ public sealed partial class DashboardView : IStateObserver<DashboardState>
 
     private void UpdateCardDots()
     {
+        var dots = this.viewModel.CardDots;
         for (var i = 0; i < this.CardDots.Children.Count; i++)
         {
-            if (this.CardDots.Children[i] is not Ellipse dot)
+            if (this.CardDots.Children[i] is not Ellipse dot || i >= dots.Count)
             {
                 continue;
             }
 
-            dot.Width = i == this.viewModel.CurrentCardIndex ? ActiveCardDotSize : InactiveCardDotSize;
-            dot.Fill = new SolidColorBrush(
-                i == this.viewModel.CurrentCardIndex
-                ? ActiveDotColor
-                : InactiveDotColor);
+            dot.Width = dots[i].IsActive ? ActiveCardDotSize : InactiveCardDotSize;
+            dot.Fill = new SolidColorBrush(dots[i].IsActive ? ActiveDotColor : InactiveDotColor);
         }
     }
 

@@ -43,6 +43,13 @@ public class PersonalInfoViewModel
     public ProfileInfo ProfileInfo { get; private set; }
 
     /// <summary>
+    /// Gets the display text for the two-factor phone field.
+    /// Returns a placeholder when no phone number has been set.
+    /// </summary>
+    public string TwoFactorPhoneDisplay =>
+        string.IsNullOrEmpty(this.ProfileInfo.PhoneNumber) ? "No phone number set" : this.ProfileInfo.PhoneNumber;
+
+    /// <summary>
     /// Loads the current user's profile information from the server.
     /// </summary>
     /// <returns><see langword="true"/> if the profile loaded successfully; otherwise, <see langword="false"/>.</returns>

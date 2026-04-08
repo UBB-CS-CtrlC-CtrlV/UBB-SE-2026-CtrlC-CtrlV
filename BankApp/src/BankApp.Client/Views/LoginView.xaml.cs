@@ -128,7 +128,7 @@ public sealed partial class LoginView : IStateObserver<LoginState>
         var email = this.EmailBox.Text.Trim();
         var password = this.PasswordBox.Password;
 
-        if (string.IsNullOrWhiteSpace(email) || string.IsNullOrWhiteSpace(password))
+        if (!this.viewModel.CanLogin(email, password))
         {
             this.ShowError("Please enter email and password.");
             return;
