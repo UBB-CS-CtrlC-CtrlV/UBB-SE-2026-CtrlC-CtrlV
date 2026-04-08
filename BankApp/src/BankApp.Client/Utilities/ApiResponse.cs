@@ -2,7 +2,7 @@
 // Copyright (c) CtrlC CtrlV. All rights reserved.
 // </copyright>
 
-namespace BankApp.Client;
+namespace BankApp.Client.Utilities;
 
 /// <summary>
 /// Represents a simple API response containing either a success message or an error message.
