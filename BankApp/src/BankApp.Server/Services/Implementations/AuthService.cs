@@ -420,7 +420,7 @@ namespace BankApp.Infrastructure.Services.Implementations
 
             if (!ValidationUtilities.IsStrongPassword(request.Password))
             {
-                return "Password must be at least 8 characters with uppercase, lowercase, and a digit.";
+                return "Password must be at least 8 characters with uppercase, lowercase, a digit, and a special character.";
             }
 
             if (string.IsNullOrWhiteSpace(request.FullName))

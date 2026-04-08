@@ -5,7 +5,7 @@
 using System;
 using System.Threading.Tasks;
 using BankApp.Client.Utilities;
-using BankApp.Core.Enums;
+using BankApp.Client.Enums;
 
 namespace BankApp.Client.Tests;
 
@@ -131,13 +131,13 @@ public class PasswordRecoveryManagerTests
     /// IsPasswordValid should reject passwords that miss a complexity requirement.
     /// </summary>
     [Theory]
-    [InlineData("short1!")]        // fewer than 8 chars
+    [InlineData("short1!")] // fewer than 8 chars
     [InlineData("alllowercase1!")] // no uppercase
     [InlineData("ALLUPPERCASE1!")] // no lowercase
-    [InlineData("NoDigitsHere!")]  // no digit
-    [InlineData("NoSpecial1ABC")]  // no special char
-    [InlineData("")]               // empty
-    [InlineData("   ")]            // whitespace only
+    [InlineData("NoDigitsHere!")] // no digit
+    [InlineData("NoSpecial1ABC")] // no special char
+    [InlineData("")] // empty
+    [InlineData("   ")] // whitespace only
     public void IsPasswordValid_WithWeakPassword_ReturnsFalse(string password)
     {
         var manager = BuildManager(new FakeSystemClock(DateTime.UtcNow), succeedApi: false);
@@ -147,7 +147,6 @@ public class PasswordRecoveryManagerTests
     // -------------------------------------------------------------------------
     //  Helpers
     // -------------------------------------------------------------------------
-
     private static IPasswordRecoveryManager BuildManager(FakeSystemClock clock, bool succeedApi)
     {
         return BuildManagerWithFakeResponder(clock, new FakeApiResponder { ShouldSucceed = succeedApi });

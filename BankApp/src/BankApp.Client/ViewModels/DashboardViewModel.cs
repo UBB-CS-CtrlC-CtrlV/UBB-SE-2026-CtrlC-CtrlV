@@ -8,10 +8,10 @@ using System.Globalization;
 using System.Linq;
 using System.Threading;
 using System.Threading.Tasks;
+using BankApp.Client.Enums;
 using BankApp.Client.Utilities;
 using BankApp.Core.DTOs.Dashboard;
 using BankApp.Core.Entities;
-using BankApp.Client.Enums;
 using ErrorOr;
 using Microsoft.Extensions.Logging;
 
@@ -87,7 +87,7 @@ public class DashboardViewModel
     /// <summary>
     /// Gets the currently selected card, or <see langword="null"/> if no cards are available.
     /// </summary>
-    public Card? SelectedCard => this.Cards.Count > 0 ? this.Cards[this.CurrentCardIndex] : null;
+    private Card? SelectedCard => this.Cards.Count > 0 ? this.Cards[this.CurrentCardIndex] : null;
 
     /// <summary>
     /// Gets a value indicating whether the user can navigate to the previous card.
@@ -174,7 +174,7 @@ public class DashboardViewModel
     /// </summary>
     /// <param name="cardNumber">The raw card number.</param>
     /// <returns>A masked string such as "**** **** **** 1234".</returns>
-    public static string MaskCardNumber(string? cardNumber)
+    private static string MaskCardNumber(string? cardNumber)
     {
         if (string.IsNullOrWhiteSpace(cardNumber))
         {
@@ -229,6 +229,13 @@ public class DashboardViewModel
         return result.Match<ErrorOr<Success>>(
             dashboard =>
             {
+                if (dashboard.CurrentUser is null)
+                {
+                    this.ErrorMessage = "The dashboard response was incomplete.";
+                    this.State.SetValue(DashboardState.Error);
+                    return Error.Failure(description: "The dashboard response was incomplete.");
+                }
+
                 this.CurrentUser = dashboard.CurrentUser;
                 this.Cards = dashboard.Cards;
                 this.RecentTransactions = dashboard.RecentTransactions;

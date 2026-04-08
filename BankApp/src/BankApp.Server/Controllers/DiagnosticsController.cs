@@ -31,10 +31,11 @@ namespace BankApp.Server.Controllers
         {
             try
             {
-                var reader = db.ExecuteQuery("SELECT COUNT(*) FROM [User]", Array.Empty<object>());
-                reader.Read();
-                var count = reader.GetInt32(0);
-                reader.Close();
+                var count = db.ExecuteQuery("SELECT COUNT(*) FROM [User]", Array.Empty<object>(), reader =>
+                {
+                    reader.Read();
+                    return reader.GetInt32(0);
+                });
                 return this.Ok(new { message = "Connection works!", userCount = count });
             }
             catch (Exception ex)

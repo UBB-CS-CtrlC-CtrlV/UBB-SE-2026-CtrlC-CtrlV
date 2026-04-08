@@ -23,7 +23,7 @@ public partial class App
     /// Only resolve services at the composition root boundary (i.e. in <see cref="OnLaunched"/>).
     /// All other classes must receive their dependencies via constructor injection.
     /// </summary>
-    public IServiceProvider Services { get; }
+    private IServiceProvider Services { get; }
 
     private Window? window;
 
@@ -38,7 +38,7 @@ public partial class App
         var configuration = new ConfigurationBuilder()
             .SetBasePath(AppContext.BaseDirectory)
             .AddJsonFile("appsettings.json", optional: false)
-            // appsettings.Local.json is `.gitignored`
+            // appsettings.Local.json is `.gitignore`
             // and only exists in dev environments.
             // It overrides appsettings.json locally.
             .AddJsonFile("appsettings.Local.json", optional: true)

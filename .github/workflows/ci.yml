@@ -1,0 +1,67 @@
+name: CI
+
+on:
+  push:
+    branches: ['**']
+  pull_request:
+    branches: [main]
+
+jobs:
+  build-and-test:
+    name: Build, Test & Docker check
+    runs-on: ubuntu-latest
+    permissions:
+      checks: write
+      pull-requests: write
+
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+
+      - name: Setup .NET 10
+        uses: actions/setup-dotnet@v4
+        with:
+          dotnet-version: '10.x'
+
+      - name: Cache NuGet packages
+        uses: actions/cache@v4
+        with:
+          path: ~/.nuget/packages
+          key: ${{ runner.os }}-nuget-${{ hashFiles('BankApp/src/BankApp.Server/**/*.csproj', 'BankApp/src/BankApp.Contracts/**/*.csproj', 'BankApp/tests/BankApp.Server.Tests/**/*.csproj', 'BankApp/tests/BankApp.Contracts.Tests/**/*.csproj', 'BankApp/Directory.Build.props') }}
+          restore-keys: |
+            ${{ runner.os }}-nuget-
+
+      - name: Restore dependencies
+        run: |
+          dotnet restore BankApp/src/BankApp.Server/BankApp.Server.csproj
+          dotnet restore BankApp/tests/BankApp.Server.Tests/BankApp.Server.Tests.csproj
+          dotnet restore BankApp/tests/BankApp.Contracts.Tests/BankApp.Contracts.Tests.csproj
+
+      - name: Build (StyleCop)
+        run: dotnet build BankApp/src/BankApp.Server/BankApp.Server.csproj --no-restore --configuration Release
+
+      - name: Test
+        run: |
+          dotnet test BankApp/tests/BankApp.Server.Tests/BankApp.Server.Tests.csproj \
+            --no-restore --configuration Release \
+            --logger "trx;LogFileName=server-tests.trx" \
+            --results-directory BankApp/test-results
+          dotnet test BankApp/tests/BankApp.Contracts.Tests/BankApp.Contracts.Tests.csproj \
+            --no-restore --configuration Release \
+            --logger "trx;LogFileName=contracts-tests.trx" \
+            --results-directory BankApp/test-results
+
+      - name: Publish test results
+        uses: dorny/test-reporter@v1
+        if: always()
+        with:
+          name: Test Results
+          path: BankApp/test-results/*.trx
+          reporter: dotnet-trx
+
+      - name: Docker build check
+        run: |
+          docker build \
+            -f BankApp/src/BankApp.Server/Dockerfile \
+            -t bankapp-server:ci \
+            BankApp/

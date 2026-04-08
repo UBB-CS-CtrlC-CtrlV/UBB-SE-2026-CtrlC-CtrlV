@@ -1,4 +1,3 @@
-USE BankAppDb; GO
 IF OBJECT_ID('dbo.PasswordResetToken', 'U') IS NULL
 CREATE TABLE PasswordResetToken (
     Id INT IDENTITY(1,1) PRIMARY KEY,

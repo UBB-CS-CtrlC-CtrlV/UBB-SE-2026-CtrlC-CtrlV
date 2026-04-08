@@ -1,4 +1,3 @@
-USE BankAppDb; GO
 IF OBJECT_ID('dbo.TransactionCategoryOverride', 'U') IS NULL
 CREATE TABLE TransactionCategoryOverride (
     Id INT IDENTITY(1,1) PRIMARY KEY,

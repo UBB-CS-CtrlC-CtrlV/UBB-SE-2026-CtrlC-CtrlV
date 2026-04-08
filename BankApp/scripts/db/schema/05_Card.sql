@@ -1,4 +1,3 @@
-USE BankAppDb; GO
 IF OBJECT_ID('dbo.Card', 'U') IS NULL
 CREATE TABLE Card (
     Id INT IDENTITY(1,1) PRIMARY KEY,

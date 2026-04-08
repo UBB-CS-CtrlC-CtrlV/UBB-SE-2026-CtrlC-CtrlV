@@ -103,6 +103,14 @@
                          Message="Account created! You can now sign in."
                          Margin="0,16,0,0" IsClosable="True"/>
 
+                <!-- Back to Login (shown after successful registration) -->
+                <Button x:Name="BackToLoginButton" Content="Back to Login"
+                        Click="SignInButton_Click" Visibility="Collapsed"
+                        HorizontalAlignment="Stretch" Height="42"
+                        Background="Transparent" BorderBrush="#4ECDC4" BorderThickness="1"
+                        Foreground="#4ECDC4" FontWeight="SemiBold"
+                        CornerRadius="6" Margin="0,8,0,0"/>
+
                 <!-- Login Link -->
                 <StackPanel Orientation="Horizontal" HorizontalAlignment="Center" 
                             Margin="0,20,0,0">

@@ -4,7 +4,6 @@
     <TargetFramework>net10.0-windows10.0.19041.0</TargetFramework>
     <TargetPlatformMinVersion>10.0.17763.0</TargetPlatformMinVersion>
     <RootNamespace>BankApp.Client</RootNamespace>
-    <CodeAnalysisRuleSet>..\..\SE.ruleset</CodeAnalysisRuleSet>
     <GenerateDocumentationFile>true</GenerateDocumentationFile>
     <ApplicationManifest>app.manifest</ApplicationManifest>
     <Platforms>x86;x64;ARM64</Platforms>
@@ -116,5 +115,8 @@
     <PublishReadyToRun Condition="'$(Configuration)' != 'Debug'">True</PublishReadyToRun>
     <PublishTrimmed Condition="'$(Configuration)' == 'Debug'">False</PublishTrimmed>
     <PublishTrimmed Condition="'$(Configuration)' != 'Debug'">True</PublishTrimmed>
+    <!-- Suppress IL trim analysis warnings during regular builds (dotnet build / test).
+         Actual trimming still runs on dotnet publish. -->
+    <SuppressTrimAnalysisWarnings Condition="'$(Publish)' != 'true'">true</SuppressTrimAnalysisWarnings>
   </PropertyGroup>
 </Project>

@@ -1,4 +1,3 @@
-USE BankAppDb; GO
 IF OBJECT_ID('dbo.OAuthLink', 'U') IS NULL
 CREATE TABLE OAuthLink (
     Id INT IDENTITY(1,1) PRIMARY KEY,

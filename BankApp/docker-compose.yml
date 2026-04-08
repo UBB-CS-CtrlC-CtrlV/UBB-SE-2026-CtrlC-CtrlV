@@ -21,12 +21,13 @@ services:
       start_period: 60s
 
   db-init:
-    image: mcr.microsoft.com/mssql/server:2022-latest
+    image: mcr.microsoft.com/mssql/server:2025-latest
     depends_on:
       db:
         condition: service_healthy
     volumes:
       - ./scripts/db:/scripts:ro
+    working_dir: /scripts
     environment:
       # SQLCMDPASSWORD is read automatically by sqlcmd — avoids passing password on the command line.
       SQLCMDPASSWORD: "${DB_SA_PASSWORD}"
