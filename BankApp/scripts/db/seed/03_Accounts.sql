@@ -1,6 +1,3 @@
-USE BankAppDb;
-GO
-
 IF NOT EXISTS (SELECT 1 FROM Account WHERE IBAN = 'RO49AAAA1B31007593840000')
 BEGIN
     INSERT INTO Account (UserId, AccountName, IBAN, Currency, Balance, AccountType, Status)

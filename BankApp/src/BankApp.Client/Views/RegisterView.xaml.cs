@@ -45,6 +45,7 @@ public sealed partial class RegisterView : IStateObserver<RegisterState>
             this.HideLoading();
             this.ErrorInfoBar.IsOpen = false;
             this.SuccessInfoBar.IsOpen = false;
+            this.BackToLoginButton.Visibility = Visibility.Collapsed;
 
             switch (state)
             {
@@ -57,6 +58,7 @@ public sealed partial class RegisterView : IStateObserver<RegisterState>
 
                 case RegisterState.Success:
                     this.SuccessInfoBar.IsOpen = true;
+                    this.BackToLoginButton.Visibility = Visibility.Visible;
                     this.ClearForm();
                     break;
 

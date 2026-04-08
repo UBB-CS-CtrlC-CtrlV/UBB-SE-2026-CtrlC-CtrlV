@@ -1,6 +1,3 @@
-USE BankAppDb;
-GO
-
 -- Password for both users is Test1234!
 -- BCrypt hash generated with cost factor 11
 IF NOT EXISTS (SELECT 1 FROM [User] WHERE Email = 'john.doe@bankapp.com')

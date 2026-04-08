@@ -1,6 +1,3 @@
-USE BankAppDb;
-GO
-
 IF NOT EXISTS (SELECT 1 FROM NotificationPreference
                WHERE UserId = (SELECT Id FROM [User] WHERE Email = 'john.doe@bankapp.com'))
 BEGIN
