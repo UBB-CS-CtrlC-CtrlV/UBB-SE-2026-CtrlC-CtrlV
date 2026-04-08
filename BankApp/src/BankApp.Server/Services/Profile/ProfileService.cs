@@ -2,11 +2,10 @@ using BankApp.Contracts.DTOs.Profile;
 using BankApp.Contracts.Entities;
 using BankApp.Contracts.Enums;
 using BankApp.Server.Repositories.Interfaces;
-using BankApp.Server.Services.Common.Interfaces;
-using BankApp.Server.Services.Interfaces;
+using BankApp.Server.Services.Security;
 using BankApp.Server.Utilities;
 
-namespace BankApp.Server.Services.Implementations;
+namespace BankApp.Server.Services.Profile;
 
 /// <summary>
 /// Provides user profile management operations including personal info, passwords, 2FA, OAuth, and notifications.

@@ -1,5 +1,5 @@
 using BankApp.Server.Repositories.Interfaces;
-using BankApp.Server.Services.Common.Interfaces;
+using BankApp.Server.Services.Security;
 
 namespace BankApp.Server.Middleware;
 

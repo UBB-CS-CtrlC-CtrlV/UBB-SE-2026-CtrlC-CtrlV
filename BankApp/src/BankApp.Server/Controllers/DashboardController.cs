@@ -2,7 +2,7 @@
 // Copyright (c) CtrlC CtrlV. All rights reserved.
 // </copyright>
 using BankApp.Contracts.DTOs.Dashboard;
-using BankApp.Server.Services.Interfaces;
+using BankApp.Server.Services.Dashboard;
 using Microsoft.AspNetCore.Mvc;
 
 namespace BankApp.Server.Controllers;

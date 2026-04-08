@@ -3,10 +3,11 @@ using BankApp.Server.DataAccess.Implementations;
 using BankApp.Server.DataAccess.Interfaces;
 using BankApp.Server.Repositories.Implementations;
 using BankApp.Server.Repositories.Interfaces;
-using BankApp.Server.Services.Implementations;
-using BankApp.Server.Services.Common.Implementations;
-using BankApp.Server.Services.Common.Interfaces;
-using BankApp.Server.Services.Interfaces;
+using BankApp.Server.Services.Auth;
+using BankApp.Server.Services.Notifications;
+using BankApp.Server.Services.Security;
+using BankApp.Server.Services.Dashboard;
+using BankApp.Server.Services.Profile;
 
 namespace BankApp.Server.DependencyInjection;
 

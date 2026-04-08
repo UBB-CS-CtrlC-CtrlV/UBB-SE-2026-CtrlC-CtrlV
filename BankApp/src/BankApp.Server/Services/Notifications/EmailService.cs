@@ -1,8 +1,8 @@
 using System.Net;
 using System.Net.Mail;
-using BankApp.Server.Services.Common.Interfaces;
+using BankApp.Server.Services.Notifications;
 
-namespace BankApp.Server.Services.Common.Implementations;
+namespace BankApp.Server.Services.Notifications;
 
 /// <summary>
 /// Sends transactional emails using SMTP configuration from application settings.

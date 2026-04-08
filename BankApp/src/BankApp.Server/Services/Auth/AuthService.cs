@@ -2,12 +2,12 @@ using BankApp.Contracts.DTOs.Auth;
 using BankApp.Contracts.Entities;
 using BankApp.Contracts.Enums;
 using BankApp.Server.Repositories.Interfaces;
-using BankApp.Server.Services.Common.Interfaces;
-using BankApp.Server.Services.Interfaces;
+using BankApp.Server.Services.Notifications;
+using BankApp.Server.Services.Security;
 using BankApp.Server.Utilities;
 using Google.Apis.Auth;
 
-namespace BankApp.Server.Services.Implementations;
+namespace BankApp.Server.Services.Auth;
 
 /// <summary>
 /// Provides authentication, registration, OTP verification, and password management operations.

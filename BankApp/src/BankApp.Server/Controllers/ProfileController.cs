@@ -4,7 +4,7 @@
 using System.Collections.Generic;
 using BankApp.Contracts.DTOs.Profile;
 using BankApp.Contracts.Entities;
-using BankApp.Server.Services.Interfaces;
+using BankApp.Server.Services.Profile;
 using Microsoft.AspNetCore.Mvc;
 
 namespace BankApp.Server.Controllers;

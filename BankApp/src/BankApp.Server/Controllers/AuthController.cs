@@ -3,7 +3,7 @@
 // </copyright>
 using BankApp.Contracts.DTOs.Auth;
 using BankApp.Contracts.Enums;
-using BankApp.Server.Services.Interfaces;
+using BankApp.Server.Services.Auth;
 using Microsoft.AspNetCore.Mvc;
 
 namespace BankApp.Server.Controllers;

@@ -1,9 +1,8 @@
 using BankApp.Contracts.Entities;
 using BankApp.Contracts.DTOs.Dashboard;
 using BankApp.Server.Repositories.Interfaces;
-using BankApp.Server.Services.Interfaces;
 
-namespace BankApp.Server.Services.Implementations;
+namespace BankApp.Server.Services.Dashboard;
 
 /// <summary>
 /// Provides aggregated dashboard data for users.

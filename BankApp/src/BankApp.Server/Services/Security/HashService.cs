@@ -1,6 +1,6 @@
-using BankApp.Server.Services.Common.Interfaces;
+using BankApp.Server.Services.Security;
 
-namespace BankApp.Server.Services.Common.Implementations;
+namespace BankApp.Server.Services.Security;
 
 /// <summary>
 /// Provides BCrypt-based password hashing and verification.

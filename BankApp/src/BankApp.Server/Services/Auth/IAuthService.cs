@@ -1,7 +1,7 @@
 using BankApp.Contracts.DTOs.Auth;
 using BankApp.Contracts.Enums;
 
-namespace BankApp.Server.Services.Interfaces;
+namespace BankApp.Server.Services.Auth;
 
 /// <summary>
 /// Defines operations for user authentication, registration, and password management.

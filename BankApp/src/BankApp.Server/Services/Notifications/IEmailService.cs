@@ -1,4 +1,4 @@
-namespace BankApp.Server.Services.Common.Interfaces;
+namespace BankApp.Server.Services.Notifications;
 
 /// <summary>
 /// Defines operations for sending transactional emails.

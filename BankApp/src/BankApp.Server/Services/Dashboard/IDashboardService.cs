@@ -1,6 +1,6 @@
 using BankApp.Contracts.DTOs.Dashboard;
 
-namespace BankApp.Server.Services.Interfaces;
+namespace BankApp.Server.Services.Dashboard;
 
 /// <summary>
 /// Defines operations for retrieving aggregated dashboard data.

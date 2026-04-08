@@ -1,10 +1,10 @@
 using System.Text;
 using System.Security.Claims;
 using System.IdentityModel.Tokens.Jwt;
-using BankApp.Server.Services.Common.Interfaces;
+using BankApp.Server.Services.Security;
 using Microsoft.IdentityModel.Tokens;
 
-namespace BankApp.Server.Services.Common.Implementations;
+namespace BankApp.Server.Services.Security;
 
 /// <summary>
 /// Provides JWT generation, validation, and claim extraction using HMAC-SHA256.
