@@ -229,6 +229,13 @@ public class DashboardViewModel
         return result.Match<ErrorOr<Success>>(
             dashboard =>
             {
+                if (dashboard.CurrentUser is null)
+                {
+                    this.ErrorMessage = "The dashboard response was incomplete.";
+                    this.State.SetValue(DashboardState.Error);
+                    return Error.Failure(description: "The dashboard response was incomplete.");
+                }
+
                 this.CurrentUser = dashboard.CurrentUser;
                 this.Cards = dashboard.Cards;
                 this.RecentTransactions = dashboard.RecentTransactions;

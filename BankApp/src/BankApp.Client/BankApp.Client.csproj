@@ -115,5 +115,8 @@
     <PublishReadyToRun Condition="'$(Configuration)' != 'Debug'">True</PublishReadyToRun>
     <PublishTrimmed Condition="'$(Configuration)' == 'Debug'">False</PublishTrimmed>
     <PublishTrimmed Condition="'$(Configuration)' != 'Debug'">True</PublishTrimmed>
+    <!-- Suppress IL trim analysis warnings during regular builds (dotnet build / test).
+         Actual trimming still runs on dotnet publish. -->
+    <SuppressTrimAnalysisWarnings Condition="'$(Publish)' != 'true'">true</SuppressTrimAnalysisWarnings>
   </PropertyGroup>
 </Project>
