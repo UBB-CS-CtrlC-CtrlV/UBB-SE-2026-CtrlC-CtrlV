@@ -75,7 +75,7 @@ public class LoginViewModel
         };
 
         var result = await this.apiClient.PostAsync<BankApp.Contracts.DTOs.Auth.LoginRequest, LoginResponse>(
-            "/api/auth/login",
+            ApiEndpoints.Login,
             request);
 
         result.Switch(
@@ -167,7 +167,7 @@ public class LoginViewModel
             };
 
             var result = await this.apiClient.PostAsync<OAuthLoginRequest, LoginResponse>(
-                "/api/auth/oauth-login",
+                ApiEndpoints.OAuthLogin,
                 apiRequest);
 
             result.Switch(

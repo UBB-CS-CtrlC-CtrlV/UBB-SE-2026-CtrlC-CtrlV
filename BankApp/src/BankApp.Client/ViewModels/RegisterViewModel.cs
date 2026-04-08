@@ -74,7 +74,7 @@ public class RegisterViewModel
             FullName = fullName,
         };
 
-        var result = await this.apiClient.PostAsync<RegisterRequest, RegisterResponse>("/api/auth/register", request);
+        var result = await this.apiClient.PostAsync<RegisterRequest, RegisterResponse>(ApiEndpoints.Register, request);
 
         result.Switch(
             response =>
@@ -159,7 +159,7 @@ public class RegisterViewModel
                 ProviderToken = loginResult.IdentityToken,
             };
 
-            var result = await this.apiClient.PostAsync<OAuthLoginRequest, LoginResponse>("/api/auth/oauth-login", apiRequest);
+            var result = await this.apiClient.PostAsync<OAuthLoginRequest, LoginResponse>(ApiEndpoints.OAuthLogin, apiRequest);
 
             result.Switch(
                 response =>

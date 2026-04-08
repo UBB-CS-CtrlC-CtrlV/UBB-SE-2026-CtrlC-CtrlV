@@ -210,7 +210,7 @@ public partial class TwoFactorViewModel : INotifyPropertyChanged
         };
 
         var result = await this.apiClient.PostAsync<VerifyOTPRequest, LoginResponse>(
-            "/api/auth/verify-otp", request);
+            ApiEndpoints.VerifyOtp, request);
 
         result.Switch(
             response =>
@@ -263,7 +263,7 @@ public partial class TwoFactorViewModel : INotifyPropertyChanged
         }
 
         var result = await this.apiClient.PostAsync<object?, object>(
-            $"/api/auth/resend-otp?userId={userId.Value}", null);
+            $"{ApiEndpoints.ResendOtp}?userId={userId.Value}", null);
 
         result.Switch(
             _ => { },

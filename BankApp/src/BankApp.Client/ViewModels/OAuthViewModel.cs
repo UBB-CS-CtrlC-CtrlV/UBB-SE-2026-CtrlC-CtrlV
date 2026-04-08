@@ -49,7 +49,7 @@ public class OAuthViewModel
     /// <returns><see langword="true"/> if loaded successfully; otherwise, <see langword="false"/>.</returns>
     public async Task<bool> LoadOAuthLinks()
     {
-        var oauthResult = await this.apiClient.GetAsync<List<OAuthLinkDto>>("api/profile/oauthlinks");
+        var oauthResult = await this.apiClient.GetAsync<List<OAuthLinkDto>>(ApiEndpoints.OAuthLinks);
         if (oauthResult.IsError)
         {
             this.logger.LogError("LoadOAuthLinks: request failed: {Errors}", oauthResult.Errors);
@@ -82,7 +82,7 @@ public class OAuthViewModel
         this.State.SetValue(ProfileState.Loading);
 
         var request = new { Provider = provider.Trim() };
-        var result = await this.apiClient.PostAsync<object, bool>("api/profile/oauth/link", request);
+        var result = await this.apiClient.PostAsync<object, bool>(ApiEndpoints.LinkOAuth, request);
 
         return result.Match(
             linked =>

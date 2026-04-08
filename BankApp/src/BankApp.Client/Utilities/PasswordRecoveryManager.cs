@@ -81,7 +81,7 @@ public class PasswordRecoveryManager : IPasswordRecoveryManager
 
         var request = new ForgotPasswordRequest { Email = email };
         var result = await this.apiClient.PostAsync<ForgotPasswordRequest, ApiResponse>(
-            "/api/auth/forgot-password", request);
+            ApiEndpoints.ForgotPassword, request);
 
         return result.Match(
             response =>
@@ -106,7 +106,7 @@ public class PasswordRecoveryManager : IPasswordRecoveryManager
         }
 
         var result = await this.apiClient.PostAsync<object, ApiResponse>(
-            "/api/auth/verify-reset-token", new { Token = token });
+            ApiEndpoints.VerifyResetToken, new { Token = token });
 
         return result.Match(
             response => this.MapTokenResponse(response, ForgotPasswordState.TokenValid),
@@ -128,7 +128,7 @@ public class PasswordRecoveryManager : IPasswordRecoveryManager
         };
 
         var result = await this.apiClient.PostAsync<ResetPasswordRequest, ApiResponse>(
-            "/api/auth/reset-password", request);
+            ApiEndpoints.ResetPassword, request);
 
         return result.Match(
             response => this.MapTokenResponse(response, ForgotPasswordState.PasswordResetSuccess),

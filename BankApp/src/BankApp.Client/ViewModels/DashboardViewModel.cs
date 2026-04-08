@@ -222,7 +222,7 @@ public class DashboardViewModel
         this.ErrorMessage = string.Empty;
 
         var result = await this.apiClient.GetAsync<DashboardResponse>(
-            "/api/dashboard/",
+            ApiEndpoints.Dashboard,
             cancellationToken);
 
         return result.Match<ErrorOr<Success>>(

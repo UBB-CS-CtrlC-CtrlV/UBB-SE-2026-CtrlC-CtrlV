@@ -50,7 +50,7 @@ public class PersonalInfoViewModel
     {
         this.State.SetValue(ProfileState.Loading);
 
-        var profileResult = await this.apiClient.GetAsync<GetProfileResponse>("api/profile/");
+        var profileResult = await this.apiClient.GetAsync<GetProfileResponse>(ApiEndpoints.Profile);
         if (profileResult.IsError)
         {
             this.logger.LogError("LoadProfile: profile request failed: {Errors}", profileResult.Errors);
@@ -90,7 +90,7 @@ public class PersonalInfoViewModel
         string? trimmedAddress = string.IsNullOrWhiteSpace(address) ? null : address.Trim();
 
         var request = new UpdateProfileRequest(this.ProfileInfo.UserId, trimmedPhone, trimmedAddress);
-        var result = await this.apiClient.PutAsync<UpdateProfileRequest, UpdateProfileResponse>("api/profile/", request);
+        var result = await this.apiClient.PutAsync<UpdateProfileRequest, UpdateProfileResponse>(ApiEndpoints.Profile, request);
 
         return result.Match(
             response =>
@@ -129,7 +129,7 @@ public class PersonalInfoViewModel
             return false;
         }
 
-        var result = await this.apiClient.PostAsync<string, bool>("api/profile/verify-password", password);
+        var result = await this.apiClient.PostAsync<string, bool>(ApiEndpoints.VerifyPassword, password);
 
         return result.Match(
             valid =>

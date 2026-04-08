@@ -75,7 +75,7 @@ public class SecurityViewModel
         this.State.SetValue(ProfileState.Loading);
 
         var request = new ChangePasswordRequest(userId, currentPassword, newPassword);
-        var result = await this.apiClient.PutAsync<ChangePasswordRequest, ChangePasswordResponse>("api/profile/password", request);
+        var result = await this.apiClient.PutAsync<ChangePasswordRequest, ChangePasswordResponse>(ApiEndpoints.ChangePassword, request);
 
         return result.Match(
             response =>
@@ -107,7 +107,7 @@ public class SecurityViewModel
         this.State.SetValue(ProfileState.Loading);
 
         var request = new { Method = method };
-        var result = await this.apiClient.PutAsync<object, Toggle2FAResponse>("api/profile/2fa/enable", request);
+        var result = await this.apiClient.PutAsync<object, Toggle2FAResponse>(ApiEndpoints.Enable2Fa, request);
 
         return result.Match(
             response =>
@@ -137,7 +137,7 @@ public class SecurityViewModel
     {
         this.State.SetValue(ProfileState.Loading);
 
-        var result = await this.apiClient.PutAsync<object, Toggle2FAResponse>("api/profile/2fa/disable", new { });
+        var result = await this.apiClient.PutAsync<object, Toggle2FAResponse>(ApiEndpoints.Disable2Fa, new { });
 
         return result.Match(
             response =>
