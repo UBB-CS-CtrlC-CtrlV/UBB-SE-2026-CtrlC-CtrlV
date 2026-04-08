@@ -1,13 +1,12 @@
-namespace BankApp.Core.DTOs
+namespace BankApp.Contracts.DTOs;
+
+/// <summary>
+/// Represents an error response returned by the API.
+/// </summary>
+public class ApiErrorResponse
 {
     /// <summary>
-    /// Represents an error response returned by the API.
+    /// Gets or sets the error message.
     /// </summary>
-    public class ApiErrorResponse
-    {
-        /// <summary>
-        /// Gets or sets the error message.
-        /// </summary>
-        public string Message { get; set; } = string.Empty;
-    }
+    public string Message { get; set; } = string.Empty;
 }

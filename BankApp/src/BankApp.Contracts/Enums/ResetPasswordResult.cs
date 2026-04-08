@@ -2,31 +2,30 @@
 // Copyright (c) CtrlC CtrlV. All rights reserved.
 // </copyright>
 
-namespace BankApp.Core.Enums
+namespace BankApp.Contracts.Enums;
+
+/// <summary>
+/// Represents the result of attempting to reset a password with a reset token.
+/// </summary>
+public enum ResetPasswordResult
 {
     /// <summary>
-    /// Represents the result of attempting to reset a password with a reset token.
+    /// The password was reset successfully.
     /// </summary>
-    public enum ResetPasswordResult
-    {
-        /// <summary>
-        /// The password was reset successfully.
-        /// </summary>
-        Success,
+    Success,
 
-        /// <summary>
-        /// The provided token is invalid.
-        /// </summary>
-        InvalidToken,
+    /// <summary>
+    /// The provided token is invalid.
+    /// </summary>
+    InvalidToken,
 
-        /// <summary>
-        /// The provided token has expired.
-        /// </summary>
-        ExpiredToken,
+    /// <summary>
+    /// The provided token has expired.
+    /// </summary>
+    ExpiredToken,
 
-        /// <summary>
-        /// The provided token has already been used.
-        /// </summary>
-        TokenAlreadyUsed,
-    }
+    /// <summary>
+    /// The provided token has already been used.
+    /// </summary>
+    TokenAlreadyUsed,
 }

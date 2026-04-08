@@ -21,6 +21,7 @@
 
   <ItemGroup>
     <ProjectReference Include="..\..\src\BankApp.Client\BankApp.Client.csproj" />
+    <ProjectReference Include="..\..\src\BankApp.Contracts\BankApp.Contracts.csproj" />
   </ItemGroup>
 
 </Project>

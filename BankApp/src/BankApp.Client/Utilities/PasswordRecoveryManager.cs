@@ -5,7 +5,7 @@
 using System;
 using System.Linq;
 using System.Threading.Tasks;
-using BankApp.Core.DTOs.Auth;
+using BankApp.Contracts.DTOs.Auth;
 using BankApp.Client.Enums;
 using ErrorOr;
 

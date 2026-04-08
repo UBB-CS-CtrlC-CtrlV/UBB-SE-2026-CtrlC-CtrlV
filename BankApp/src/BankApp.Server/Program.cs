@@ -1,4 +1,4 @@
-using BankApp.Infrastructure.Middleware;
+using BankApp.Server.Middleware;
 using BankApp.Server.DependencyInjection;
 using Serilog;
 using Serilog.Events;

@@ -5,7 +5,7 @@
 using System;
 using System.Collections.Generic;
 using BankApp.Client.Utilities;
-using BankApp.Core.Entities;
+using BankApp.Contracts.Entities;
 using BankApp.Client.Enums;
 using Microsoft.Extensions.Logging;
 

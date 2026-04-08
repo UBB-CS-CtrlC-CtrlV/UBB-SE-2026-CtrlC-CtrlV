@@ -1,18 +1,17 @@
-namespace BankApp.Core.DTOs.Auth
+namespace BankApp.Contracts.DTOs.Auth;
+
+/// <summary>
+/// Represents a login request using an OAuth provider token.
+/// </summary>
+public class OAuthLoginRequest
 {
     /// <summary>
-    /// Represents a login request using an OAuth provider token.
+    /// Gets or sets the OAuth provider name (e.g. Google, Facebook).
     /// </summary>
-    public class OAuthLoginRequest
-    {
-        /// <summary>
-        /// Gets or sets the OAuth provider name (e.g. Google, Facebook).
-        /// </summary>
-        public string Provider { get; set; } = string.Empty;
+    public string Provider { get; set; } = string.Empty;
 
-        /// <summary>
-        /// Gets or sets the token received from the OAuth provider.
-        /// </summary>
-        public string ProviderToken { get; set; } = string.Empty;
-    }
+    /// <summary>
+    /// Gets or sets the token received from the OAuth provider.
+    /// </summary>
+    public string ProviderToken { get; set; } = string.Empty;
 }

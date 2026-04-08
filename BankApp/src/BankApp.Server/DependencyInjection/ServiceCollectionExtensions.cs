@@ -1,15 +1,12 @@
-using BankApp.Infrastructure.DataAccess;
-using BankApp.Infrastructure.DataAccess.Implementations;
-using BankApp.Infrastructure.DataAccess.Interfaces;
-using BankApp.Infrastructure.Repositories.Implementations;
-using BankApp.Infrastructure.Repositories.Interfaces;
-using BankApp.Infrastructure.Services.Implementations;
-using BankApp.Infrastructure.Services.Infrastructure.Implementations;
-using BankApp.Infrastructure.Services.Infrastructure.Interfaces;
-using BankApp.Infrastructure.Services.Interfaces;
 using BankApp.Server.DataAccess;
+using BankApp.Server.DataAccess.Implementations;
+using BankApp.Server.DataAccess.Interfaces;
+using BankApp.Server.Repositories.Implementations;
+using BankApp.Server.Repositories.Interfaces;
+using BankApp.Server.Services.Implementations;
 using BankApp.Server.Services.Infrastructure.Implementations;
 using BankApp.Server.Services.Infrastructure.Interfaces;
+using BankApp.Server.Services.Interfaces;
 
 namespace BankApp.Server.DependencyInjection;
 

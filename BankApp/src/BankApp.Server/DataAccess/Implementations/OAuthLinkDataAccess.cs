@@ -1,81 +1,75 @@
 using System.Data;
-using BankApp.Core.Entities;
-using BankApp.Infrastructure.DataAccess.Interfaces;
-using BankApp.Server.DataAccess;
-using Microsoft.Data.SqlClient;
+using BankApp.Contracts.Entities;
+using BankApp.Server.DataAccess.Interfaces;
 
-namespace BankApp.Infrastructure.DataAccess.Implementations
+namespace BankApp.Server.DataAccess.Implementations;
+
+/// <summary>
+/// Provides SQL Server data access for OAuth provider link records.
+/// </summary>
+public class OAuthLinkDataAccess : IOAuthLinkDataAccess
 {
+    private readonly AppDbContext context;
+
     /// <summary>
-    /// Provides SQL Server data access for OAuth provider link records.
+    /// Initializes a new instance of the <see cref="OAuthLinkDataAccess"/> class.
     /// </summary>
-    public class OAuthLinkDataAccess : IOAuthLinkDataAccess
+    /// <param name="context">The database context used for executing queries.</param>
+    public OAuthLinkDataAccess(AppDbContext context)
     {
-        private readonly AppDbContext context;
+        this.context = context;
+    }
 
-        /// <summary>
-        /// Initializes a new instance of the <see cref="OAuthLinkDataAccess"/> class.
-        /// </summary>
-        /// <param name="context">The database context used for executing queries.</param>
-        public OAuthLinkDataAccess(AppDbContext context)
+    /// <inheritdoc />
+    public bool Create(int userId, string provider, string providerUserId, string? providerEmail)
+    {
+        string sql = "INSERT INTO OAuthLink (UserId, Provider, ProviderUserId, ProviderEmail) VALUES (@p0, @p1, @p2, @p3)";
+        int rowsAffected = context.ExecuteNonQuery(sql, new object[] { userId, provider, providerUserId, (object?)providerEmail ?? DBNull.Value });
+        return rowsAffected > 0;
+    }
+
+    /// <inheritdoc />
+    public void Delete(int id)
+    {
+        string sql = "DELETE FROM OAuthLink WHERE Id = @p0";
+        context.ExecuteNonQuery(sql, new object[] { id });
+    }
+
+    /// <inheritdoc />
+    /// <inheritdoc />
+    public OAuthLink? FindByProvider(string provider, string providerUserId)
+    {
+        string sql = "SELECT Id, UserId, Provider, ProviderUserId, ProviderEmail FROM OAuthLink WHERE Provider = @p0 AND ProviderUserId = @p1";
+
+        return this.context.ExecuteQuery(sql, new object[] { provider, providerUserId }, reader =>
+            reader.Read() ? this.MapToOAuthLink(reader) : null);
+    }
+
+    /// <inheritdoc />
+    public List<OAuthLink> FindByUserId(int userId)
+    {
+        string sql = "SELECT Id, UserId, Provider, ProviderUserId, ProviderEmail FROM OAuthLink WHERE UserId = @p0";
+
+        return this.context.ExecuteQuery(sql, new object[] { userId }, reader =>
         {
-            this.context = context;
-        }
-
-        /// <inheritdoc />
-        public bool Create(int userId, string provider, string providerUserId, string? providerEmail)
-        {
-            string sql = "INSERT INTO OAuthLink (UserId, Provider, ProviderUserId, ProviderEmail) VALUES (@p0, @p1, @p2, @p3)";
-            int rowsAffected = context.ExecuteNonQuery(sql, new object[] { userId, provider, providerUserId, (object?)providerEmail ?? DBNull.Value });
-            return rowsAffected > 0;
-        }
-
-        /// <inheritdoc />
-        public void Delete(int id)
-        {
-            string sql = "DELETE FROM OAuthLink WHERE Id = @p0";
-            context.ExecuteNonQuery(sql, new object[] { id });
-        }
-
-        /// <inheritdoc />
-        /// <inheritdoc />
-        public OAuthLink? FindByProvider(string provider, string providerUserId)
-        {
-            string sql = "SELECT Id, UserId, Provider, ProviderUserId, ProviderEmail FROM OAuthLink WHERE Provider = @p0 AND ProviderUserId = @p1";
-
-            return this.context.ExecuteQuery(sql, new object[] { provider, providerUserId }, reader =>
-                reader.Read() ? this.MapToOAuthLink(reader) : null);
-        }
-
-        /// <inheritdoc />
-        public List<OAuthLink> FindByUserId(int userId)
-        {
-            string sql = "SELECT Id, UserId, Provider, ProviderUserId, ProviderEmail FROM OAuthLink WHERE UserId = @p0";
-
-            return this.context.ExecuteQuery(sql, new object[] { userId }, reader =>
+            var links = new List<OAuthLink>();
+            while (reader.Read())
             {
-                var links = new List<OAuthLink>();
-                while (reader.Read())
-                {
-                    links.Add(this.MapToOAuthLink(reader));
-                }
+                links.Add(this.MapToOAuthLink(reader));
+            }
 
-                return links;
-            });
-        }
-        private OAuthLink MapToOAuthLink(IDataReader reader)
+            return links;
+        });
+    }
+    private OAuthLink MapToOAuthLink(IDataReader reader)
+    {
+        return new OAuthLink
         {
-            return new OAuthLink
-            {
-                Id = reader.GetInt32(reader.GetOrdinal("Id")),
-                UserId = reader.GetInt32(reader.GetOrdinal("UserId")),
-                Provider = reader.GetString(reader.GetOrdinal("Provider")),
-                ProviderUserId = reader.GetString(reader.GetOrdinal("ProviderUserId")),
-                ProviderEmail = reader.IsDBNull(reader.GetOrdinal("ProviderEmail")) ? null : reader.GetString(reader.GetOrdinal("ProviderEmail"))
-            };
-        }
+            Id = reader.GetInt32(reader.GetOrdinal("Id")),
+            UserId = reader.GetInt32(reader.GetOrdinal("UserId")),
+            Provider = reader.GetString(reader.GetOrdinal("Provider")),
+            ProviderUserId = reader.GetString(reader.GetOrdinal("ProviderUserId")),
+            ProviderEmail = reader.IsDBNull(reader.GetOrdinal("ProviderEmail")) ? null : reader.GetString(reader.GetOrdinal("ProviderEmail"))
+        };
     }
 }
-
-
-

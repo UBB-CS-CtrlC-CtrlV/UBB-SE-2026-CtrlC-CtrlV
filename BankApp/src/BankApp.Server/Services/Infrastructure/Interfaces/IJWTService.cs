@@ -1,6 +1,6 @@
 using System.Security.Claims;
 
-namespace BankApp.Infrastructure.Services.Infrastructure.Interfaces;
+namespace BankApp.Server.Services.Infrastructure.Interfaces;
 
 /// <summary>
 /// Defines operations for generating, validating, and extracting data from JSON Web Tokens.

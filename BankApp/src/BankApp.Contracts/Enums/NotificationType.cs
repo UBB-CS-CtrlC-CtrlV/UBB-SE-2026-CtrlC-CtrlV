@@ -1,4 +1,4 @@
-namespace BankApp.Core.Enums;
+namespace BankApp.Contracts.Enums;
 
 /// <summary>
 /// Represents the category of a user notification.
