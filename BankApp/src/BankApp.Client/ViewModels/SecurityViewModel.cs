@@ -18,8 +18,6 @@ namespace BankApp.Client.ViewModels;
 /// </summary>
 public class SecurityViewModel
 {
-    private const int MinimumPasswordLength = 8;
-
     private readonly ApiClient apiClient;
     private readonly ILogger<SecurityViewModel> logger;
 
@@ -62,7 +60,7 @@ public class SecurityViewModel
     /// <returns>A tuple indicating success and an optional error message.</returns>
     public async Task<(bool Success, string ErrorMessage)> ChangePassword(int userId, string currentPassword, string newPassword, string confirmPassword)
     {
-        if (newPassword.Length < MinimumPasswordLength)
+        if (!PasswordValidator.MeetsMinimumLength(newPassword))
         {
             return (false, "Minimum 8 characters required.");
         }

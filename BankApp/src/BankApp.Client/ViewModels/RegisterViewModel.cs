@@ -3,7 +3,6 @@
 // </copyright>
 
 using System;
-using System.Linq;
 using System.Threading.Tasks;
 using BankApp.Client.Utilities;
 using BankApp.Contracts.DTOs.Auth;
@@ -19,8 +18,6 @@ namespace BankApp.Client.ViewModels;
 /// </summary>
 public class RegisterViewModel
 {
-    private const int MinimumPasswordLength = 8;
-
     private readonly ApiClient apiClient;
     private readonly IConfiguration configuration;
     private readonly ILogger<RegisterViewModel> logger;
@@ -202,12 +199,7 @@ public class RegisterViewModel
             return RegisterState.InvalidEmail;
         }
 
-        if (string.IsNullOrWhiteSpace(password)
-            || password.Length < MinimumPasswordLength
-            || !password.Any(char.IsUpper)
-            || !password.Any(char.IsLower)
-            || !password.Any(char.IsDigit)
-            || !password.Any(c => !char.IsLetterOrDigit(c)))
+        if (!PasswordValidator.IsStrong(password))
         {
             return RegisterState.WeakPassword;
         }
