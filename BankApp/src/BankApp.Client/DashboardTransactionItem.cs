@@ -9,8 +9,8 @@ using System.Net;
 using System.Threading;
 using System.Threading.Tasks;
 using BankApp.Client.Utilities;
-using BankApp.Core.DTOs.Dashboard;
-using BankApp.Core.Entities;
+using BankApp.Contracts.DTOs.Dashboard;
+using BankApp.Contracts.Entities;
 using BankApp.Client.Enums;
 
 namespace BankApp.Client.ViewModels;

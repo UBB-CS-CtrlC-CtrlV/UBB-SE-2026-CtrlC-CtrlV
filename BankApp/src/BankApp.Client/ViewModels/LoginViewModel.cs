@@ -5,7 +5,7 @@
 using System;
 using System.Threading.Tasks;
 using BankApp.Client.Utilities;
-using BankApp.Core.DTOs.Auth;
+using BankApp.Contracts.DTOs.Auth;
 using BankApp.Client.Enums;
 using Duende.IdentityModel.OidcClient;
 using ErrorOr;
@@ -68,13 +68,13 @@ public class LoginViewModel
     {
         this.State.SetValue(LoginState.Loading);
 
-        var request = new Core.DTOs.Auth.LoginRequest
+        var request = new BankApp.Contracts.DTOs.Auth.LoginRequest
         {
             Email = email,
             Password = password,
         };
 
-        var result = await this.apiClient.PostAsync<Core.DTOs.Auth.LoginRequest, LoginResponse>(
+        var result = await this.apiClient.PostAsync<BankApp.Contracts.DTOs.Auth.LoginRequest, LoginResponse>(
             "/api/auth/login",
             request);
 

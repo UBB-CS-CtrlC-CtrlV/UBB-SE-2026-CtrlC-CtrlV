@@ -1,71 +1,70 @@
-using BankApp.Core.Entities;
+using BankApp.Contracts.Entities;
 
-namespace BankApp.Core.DTOs.Profile
+namespace BankApp.Contracts.DTOs.Profile;
+
+/// <summary>
+/// Represents the profile information of a user.
+/// </summary>
+public class ProfileInfo
 {
     /// <summary>
-    /// Represents the profile information of a user.
+    /// Gets or sets the user identifier.
     /// </summary>
-    public class ProfileInfo
+    public int? UserId { get; set; }
+
+    /// <summary>
+    /// Gets or sets the email address.
+    /// </summary>
+    public string? Email { get; set; }
+
+    /// <summary>
+    /// Gets or sets the full name.
+    /// </summary>
+    public string? FullName { get; set; }
+
+    /// <summary>
+    /// Gets or sets the phone number.
+    /// </summary>
+    public string? PhoneNumber { get; set; }
+
+    /// <summary>
+    /// Gets or sets the address.
+    /// </summary>
+    public string? Address { get; set; }
+
+    /// <summary>
+    /// Gets or sets the nationality.
+    /// </summary>
+    public string? Nationality { get; set; }
+
+    /// <summary>
+    /// Gets or sets a value indicating whether two-factor authentication is enabled.
+    /// </summary>
+    public bool Is2FAEnabled { get; set; }
+
+    /// <summary>
+    /// Initializes a new instance of the <see cref="ProfileInfo"/> class.
+    /// </summary>
+    public ProfileInfo()
     {
-        /// <summary>
-        /// Gets or sets the user identifier.
-        /// </summary>
-        public int? UserId { get; set; }
+    }
 
-        /// <summary>
-        /// Gets or sets the email address.
-        /// </summary>
-        public string? Email { get; set; }
-
-        /// <summary>
-        /// Gets or sets the full name.
-        /// </summary>
-        public string? FullName { get; set; }
-
-        /// <summary>
-        /// Gets or sets the phone number.
-        /// </summary>
-        public string? PhoneNumber { get; set; }
-
-        /// <summary>
-        /// Gets or sets the address.
-        /// </summary>
-        public string? Address { get; set; }
-
-        /// <summary>
-        /// Gets or sets the nationality.
-        /// </summary>
-        public string? Nationality { get; set; }
-
-        /// <summary>
-        /// Gets or sets a value indicating whether two-factor authentication is enabled.
-        /// </summary>
-        public bool Is2FAEnabled { get; set; }
-
-        /// <summary>
-        /// Initializes a new instance of the <see cref="ProfileInfo"/> class.
-        /// </summary>
-        public ProfileInfo()
+    /// <summary>
+    /// Initializes a new instance of the <see cref="ProfileInfo"/> class
+    /// from a user entity.
+    /// </summary>
+    /// <param name="user">The user entity to extract profile info from.</param>
+    public ProfileInfo(User user)
+    {
+        if (user != null)
         {
-        }
-
-        /// <summary>
-        /// Initializes a new instance of the <see cref="ProfileInfo"/> class
-        /// from a user entity.
-        /// </summary>
-        /// <param name="user">The user entity to extract profile info from.</param>
-        public ProfileInfo(User user)
-        {
-            if (user != null)
-            {
-                UserId = user.Id;
-                Email = user.Email;
-                FullName = user.FullName;
-                PhoneNumber = user.PhoneNumber;
-                Address = user.Address;
-                Nationality = user.Nationality;
-                Is2FAEnabled = user.Is2FAEnabled;
-            }
+            UserId = user.Id;
+            Email = user.Email;
+            FullName = user.FullName;
+            PhoneNumber = user.PhoneNumber;
+            Address = user.Address;
+            Nationality = user.Nationality;
+            Is2FAEnabled = user.Is2FAEnabled;
         }
     }
 }

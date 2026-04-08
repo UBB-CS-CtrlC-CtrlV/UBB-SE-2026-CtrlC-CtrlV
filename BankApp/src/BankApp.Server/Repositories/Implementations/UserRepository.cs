@@ -1,10 +1,10 @@
-using BankApp.Core.Enums;
+using BankApp.Contracts.Enums;
 
-namespace BankApp.Infrastructure.Repositories.Implementations;
+namespace BankApp.Server.Repositories.Implementations;
 
-using BankApp.Core.Entities;
-using BankApp.Infrastructure.DataAccess.Interfaces;
-using BankApp.Infrastructure.Repositories.Interfaces;
+using BankApp.Contracts.Entities;
+using BankApp.Server.DataAccess.Interfaces;
+using BankApp.Server.Repositories.Interfaces;
 
 /// <summary>
 /// Provides repository operations for user profile management, sessions, OAuth links, and notification preferences.

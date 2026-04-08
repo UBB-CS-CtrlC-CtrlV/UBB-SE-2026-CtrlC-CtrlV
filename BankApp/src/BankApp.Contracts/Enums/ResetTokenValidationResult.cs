@@ -2,31 +2,30 @@
 // Copyright (c) CtrlC CtrlV. All rights reserved.
 // </copyright>
 
-namespace BankApp.Core.Enums
+namespace BankApp.Contracts.Enums;
+
+/// <summary>
+/// Represents the validation state of a password reset token.
+/// </summary>
+public enum ResetTokenValidationResult
 {
     /// <summary>
-    /// Represents the validation state of a password reset token.
+    /// The token is valid and can be used.
     /// </summary>
-    public enum ResetTokenValidationResult
-    {
-        /// <summary>
-        /// The token is valid and can be used.
-        /// </summary>
-        Valid,
+    Valid,
 
-        /// <summary>
-        /// The token is invalid or does not exist.
-        /// </summary>
-        Invalid,
+    /// <summary>
+    /// The token is invalid or does not exist.
+    /// </summary>
+    Invalid,
 
-        /// <summary>
-        /// The token has expired.
-        /// </summary>
-        Expired,
+    /// <summary>
+    /// The token has expired.
+    /// </summary>
+    Expired,
 
-        /// <summary>
-        /// The token has already been used.
-        /// </summary>
-        AlreadyUsed,
-    }
+    /// <summary>
+    /// The token has already been used.
+    /// </summary>
+    AlreadyUsed,
 }

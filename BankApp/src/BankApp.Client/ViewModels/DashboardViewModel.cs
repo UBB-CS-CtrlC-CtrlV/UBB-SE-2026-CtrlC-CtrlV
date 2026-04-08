@@ -10,8 +10,8 @@ using System.Threading;
 using System.Threading.Tasks;
 using BankApp.Client.Enums;
 using BankApp.Client.Utilities;
-using BankApp.Core.DTOs.Dashboard;
-using BankApp.Core.Entities;
+using BankApp.Contracts.DTOs.Dashboard;
+using BankApp.Contracts.Entities;
 using ErrorOr;
 using Microsoft.Extensions.Logging;
 

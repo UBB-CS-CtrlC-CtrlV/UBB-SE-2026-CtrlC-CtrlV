@@ -5,7 +5,7 @@
 using System;
 using System.Threading.Tasks;
 using BankApp.Client.Utilities;
-using BankApp.Core.DTOs.Profile;
+using BankApp.Contracts.DTOs.Profile;
 using BankApp.Client.Enums;
 using Microsoft.Extensions.Logging;
 
