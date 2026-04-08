@@ -146,12 +146,12 @@ public class ProfileService : IProfileService
         }
 
         return userRepository.GetLinkedProviders(userId)
-            .Select(o => new OAuthLinkDto
+            .Select(oauthLink => new OAuthLinkDto
             {
-                Id = o.Id,
-                Provider = o.Provider,
-                ProviderEmail = o.ProviderEmail,
-                LinkedAt = o.LinkedAt,
+                Id = oauthLink.Id,
+                Provider = oauthLink.Provider,
+                ProviderEmail = oauthLink.ProviderEmail,
+                LinkedAt = oauthLink.LinkedAt,
             })
             .ToList();
     }
@@ -178,15 +178,15 @@ public class ProfileService : IProfileService
         }
 
         return userRepository.GetNotificationPreferences(userId)
-            .Select(p => new NotificationPreferenceDto
+            .Select(preference => new NotificationPreferenceDto
             {
-                Id = p.Id,
-                UserId = p.UserId,
-                Category = p.Category,
-                PushEnabled = p.PushEnabled,
-                EmailEnabled = p.EmailEnabled,
-                SmsEnabled = p.SmsEnabled,
-                MinAmountThreshold = p.MinAmountThreshold,
+                Id = preference.Id,
+                UserId = preference.UserId,
+                Category = preference.Category,
+                PushEnabled = preference.PushEnabled,
+                EmailEnabled = preference.EmailEnabled,
+                SmsEnabled = preference.SmsEnabled,
+                MinAmountThreshold = preference.MinAmountThreshold,
             })
             .ToList();
     }
@@ -201,15 +201,15 @@ public class ProfileService : IProfileService
         }
 
         List<NotificationPreference> entities = preferences
-            .Select(p => new NotificationPreference
+            .Select(preference => new NotificationPreference
             {
-                Id = p.Id,
-                UserId = p.UserId,
-                Category = p.Category,
-                PushEnabled = p.PushEnabled,
-                EmailEnabled = p.EmailEnabled,
-                SmsEnabled = p.SmsEnabled,
-                MinAmountThreshold = p.MinAmountThreshold,
+                Id = preference.Id,
+                UserId = preference.UserId,
+                Category = preference.Category,
+                PushEnabled = preference.PushEnabled,
+                EmailEnabled = preference.EmailEnabled,
+                SmsEnabled = preference.SmsEnabled,
+                MinAmountThreshold = preference.MinAmountThreshold,
             })
             .ToList();
 

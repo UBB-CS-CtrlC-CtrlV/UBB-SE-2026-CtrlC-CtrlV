@@ -31,13 +31,13 @@ public partial class LoopbackHttpListener : IDisposable
             path = path[1..];
         }
 
-        var url1 = $"http://127.0.0.1:{port}/{path}";
+        var primaryListenerUrl = $"http://127.0.0.1:{port}/{path}";
 
         this.listener = new HttpListener();
-        this.listener.Prefixes.Add(url1);
-        if (!url1.EndsWith('/'))
+        this.listener.Prefixes.Add(primaryListenerUrl);
+        if (!primaryListenerUrl.EndsWith('/'))
         {
-            this.listener.Prefixes.Add(url1 + "/");
+            this.listener.Prefixes.Add(primaryListenerUrl + "/");
         }
 
         this.listener.Start();

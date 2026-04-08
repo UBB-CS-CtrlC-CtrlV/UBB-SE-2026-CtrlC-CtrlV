@@ -48,32 +48,32 @@ public class DashboardService : IDashboardService
                 Is2FAEnabled = user.Is2FAEnabled,
             },
             Cards = dashboardRepository.GetCardsByUser(userId)
-                .Select(c => new CardDto
+                .Select(card => new CardDto
                 {
-                    Id = c.Id,
-                    CardNumber = c.CardNumber,
-                    CardholderName = c.CardholderName,
-                    CardType = c.CardType,
-                    CardBrand = c.CardBrand,
-                    ExpiryDate = c.ExpiryDate,
-                    Status = c.Status,
-                    IsContactlessEnabled = c.IsContactlessEnabled,
-                    IsOnlineEnabled = c.IsOnlineEnabled,
+                    Id = card.Id,
+                    CardNumber = card.CardNumber,
+                    CardholderName = card.CardholderName,
+                    CardType = card.CardType,
+                    CardBrand = card.CardBrand,
+                    ExpiryDate = card.ExpiryDate,
+                    Status = card.Status,
+                    IsContactlessEnabled = card.IsContactlessEnabled,
+                    IsOnlineEnabled = card.IsOnlineEnabled,
                 })
                 .ToList(),
             RecentTransactions = dashboardRepository.GetRecentTransactions(userId, DefaultRecentTransactionLimit)
-                .Select(t => new TransactionDto
+                .Select(transaction => new TransactionDto
                 {
-                    Id = t.Id,
-                    Type = t.Type,
-                    Direction = t.Direction,
-                    Amount = t.Amount,
-                    Currency = t.Currency,
-                    Description = t.Description,
-                    MerchantName = t.MerchantName,
-                    CounterpartyName = t.CounterpartyName,
-                    Status = t.Status,
-                    CreatedAt = t.CreatedAt,
+                    Id = transaction.Id,
+                    Type = transaction.Type,
+                    Direction = transaction.Direction,
+                    Amount = transaction.Amount,
+                    Currency = transaction.Currency,
+                    Description = transaction.Description,
+                    MerchantName = transaction.MerchantName,
+                    CounterpartyName = transaction.CounterpartyName,
+                    Status = transaction.Status,
+                    CreatedAt = transaction.CreatedAt,
                 })
                 .ToList(),
             UnreadNotificationCount = dashboardRepository.GetUnreadNotificationCount(userId),
