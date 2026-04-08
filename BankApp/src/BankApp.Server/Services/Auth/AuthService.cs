@@ -23,8 +23,6 @@ public class AuthService : IAuthService
     private const int MaxFailedAttempts = 5;
     private const int LockoutMinutes = 30;
     private const int PasswordResetTokenExpiryMinutes = 5;
-    private const int OtpRangeMinimum = 100000;
-    private const int OtpRangeMaximum = 999999;
 
     /// <summary>
     /// Initializes a new instance of the <see cref="AuthService"/> class.

@@ -9,6 +9,8 @@ namespace BankApp.Server.DataAccess.Implementations;
 /// </summary>
 public class TransactionDataAccess : ITransactionDataAccess
 {
+    private const int DefaultTransactionLimit = 10;
+
     private readonly AppDbContext dbContext;
 
     /// <summary>
@@ -22,7 +24,7 @@ public class TransactionDataAccess : ITransactionDataAccess
 
     /// <inheritdoc />
     /// <inheritdoc />
-    public List<Transaction> FindRecentByAccountId(int accountId, int limit = 10)
+    public List<Transaction> FindRecentByAccountId(int accountId, int limit = DefaultTransactionLimit)
     {
         var query = @"SELECT TOP (@p1) * FROM [Transaction]
                   WHERE AccountId = @p0

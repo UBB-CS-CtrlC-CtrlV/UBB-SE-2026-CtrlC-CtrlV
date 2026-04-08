@@ -23,6 +23,11 @@ namespace BankApp.Client.Views;
 /// </summary>
 public sealed partial class DashboardView : IStateObserver<DashboardState>
 {
+    private const int ActiveCardDotSize = 18;
+    private const int InactiveCardDotSize = 8;
+    private static readonly Color ActiveDotColor = Color.FromArgb(255, 78, 205, 196);
+    private static readonly Color InactiveDotColor = Color.FromArgb(100, 78, 205, 196);
+
     private readonly DashboardViewModel viewModel;
     private bool isObserverAttached;
     private CancellationTokenSource? loadCancellationTokenSource;
@@ -163,12 +168,12 @@ public sealed partial class DashboardView : IStateObserver<DashboardState>
         {
             var dot = new Ellipse
             {
-                Width = i == this.viewModel.CurrentCardIndex ? 18 : 8,
-                Height = 8,
+                Width = i == this.viewModel.CurrentCardIndex ? ActiveCardDotSize : InactiveCardDotSize,
+                Height = InactiveCardDotSize,
                 Fill = new SolidColorBrush(
                     i == this.viewModel.CurrentCardIndex
-                    ? Color.FromArgb(255, 78, 205, 196)
-                    : Color.FromArgb(100, 78, 205, 196)),
+                    ? ActiveDotColor
+                    : InactiveDotColor),
             };
             this.CardDots.Children.Add(dot);
         }
@@ -183,11 +188,11 @@ public sealed partial class DashboardView : IStateObserver<DashboardState>
                 continue;
             }
 
-            dot.Width = i == this.viewModel.CurrentCardIndex ? 18 : 8;
+            dot.Width = i == this.viewModel.CurrentCardIndex ? ActiveCardDotSize : InactiveCardDotSize;
             dot.Fill = new SolidColorBrush(
                 i == this.viewModel.CurrentCardIndex
-                ? Color.FromArgb(255, 78, 205, 196)
-                : Color.FromArgb(100, 78, 205, 196));
+                ? ActiveDotColor
+                : InactiveDotColor);
         }
     }
 

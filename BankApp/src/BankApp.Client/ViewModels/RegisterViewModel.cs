@@ -19,6 +19,8 @@ namespace BankApp.Client.ViewModels;
 /// </summary>
 public class RegisterViewModel
 {
+    private const int MinimumPasswordLength = 8;
+
     private readonly ApiClient apiClient;
     private readonly IConfiguration configuration;
     private readonly ILogger<RegisterViewModel> logger;
@@ -201,7 +203,7 @@ public class RegisterViewModel
         }
 
         if (string.IsNullOrWhiteSpace(password)
-            || password.Length < 8
+            || password.Length < MinimumPasswordLength
             || !password.Any(char.IsUpper)
             || !password.Any(char.IsLower)
             || !password.Any(char.IsDigit)
