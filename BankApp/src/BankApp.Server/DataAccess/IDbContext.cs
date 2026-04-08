@@ -25,19 +25,20 @@ public interface IDbContext : IDisposable
     void RollbackTransaction();
 
     /// <summary>
-    /// Executes a SQL query and returns the resulting data reader.
+    /// Executes a SQL query and maps the result using the provided function.
     /// </summary>
+    /// <typeparam name="T">The type of the value returned by the mapping function.</typeparam>
     /// <param name="sqlStatement">The SQL statement to execute.</param>
     /// <param name="parameters">The positional parameters for the SQL statement.</param>
-    /// <param name="map"></param>
-    /// <returns>An <see cref="IDataReader"/> containing the query results.</returns>
+    /// <param name="map">A function that maps the <see cref="IDataReader"/> to the desired result.</param>
+    /// <returns>The value produced by <paramref name="map"/>.</returns>
     T ExecuteQuery<T>(string sqlStatement, object[] parameters, Func<IDataReader, T> map);
 
     /// <summary>
     /// Executes a SQL command that does not return rows.
     /// </summary>
-    /// <param name="sql">The SQL statement to execute.</param>
+    /// <param name="sqlStatement">The SQL statement to execute.</param>
     /// <param name="parameters">The positional parameters for the SQL statement.</param>
     /// <returns>The number of rows affected.</returns>
-    int ExecuteNonQuery(string sql, object[] parameters);
+    int ExecuteNonQuery(string sqlStatement, object[] parameters);
 }

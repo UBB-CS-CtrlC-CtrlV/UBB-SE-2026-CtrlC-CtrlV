@@ -1,5 +1,4 @@
 using System.Data;
-using BankApp.Infrastructure.DataAccess;
 using Microsoft.Data.SqlClient;
 
 namespace BankApp.Server.DataAccess;
@@ -26,19 +25,21 @@ public class AppDbContext : IDbContext
     /// Gets an open <see cref="SqlConnection"/>, creating one if necessary.
     /// </summary>
     /// <returns>An open <see cref="SqlConnection"/> instance.</returns>
-    public SqlConnection GetConnection()
+    private SqlConnection GetConnection()
     {
-        if (connection == null || connection.State == ConnectionState.Closed)
+        if (connection is not null && connection.State is not ConnectionState.Closed)
         {
-            try
-            {
-                connection = new SqlConnection(connectionString);
-                connection.Open();
-            }
-            catch (SqlException sqlException)
-            {
-                throw new Exception($"Failed to connect to the database: {sqlException.Message}", sqlException);
-            }
+            return connection;
+        }
+
+        try
+        {
+            connection = new SqlConnection(connectionString);
+            connection.Open();
+        }
+        catch (SqlException sqlException)
+        {
+            throw new Exception($"Failed to connect to the database: {sqlException.Message}", sqlException);
         }
         return connection;
     }
@@ -61,51 +62,50 @@ public class AppDbContext : IDbContext
     /// <inheritdoc />
     public void CommitTransaction()
     {
-        if (currentTransaction != null)
+        if (currentTransaction is null)
         {
-            currentTransaction.Commit();
-            currentTransaction = null;
+            return;
         }
+
+        currentTransaction.Commit();
+        currentTransaction = null;
     }
 
     /// <inheritdoc />
     public void RollbackTransaction()
     {
-        if (currentTransaction != null)
+        if (currentTransaction is null)
         {
-            currentTransaction.Rollback();
-            currentTransaction = null;
+            return;
         }
+
+        currentTransaction.Rollback();
+        currentTransaction = null;
     }
 
     /// <summary>
     /// Gets the currently active transaction, or <see langword="null"/> if none exists.
     /// </summary>
     /// <returns>The current <see cref="SqlTransaction"/>, or <see langword="null"/>.</returns>
-    public SqlTransaction? GetCurrentTransaction()
+    private SqlTransaction? GetCurrentTransaction()
     {
         return currentTransaction;
     }
 
-    private void AddParameters(SqlCommand command, object[] parameters)
+    private static void AddParameters(SqlCommand command, object[] parameters)
     {
-        if (parameters == null)
+        for (var parameterIndex = 0; parameterIndex < parameters.Length; parameterIndex++)
         {
-            return;
-        }
-        for (int parameterIndex = 0; parameterIndex < parameters.Length; parameterIndex++)
-        {
-            command.Parameters.AddWithValue($"@p{parameterIndex}", parameters[parameterIndex] ?? DBNull.Value);
+            command.Parameters.AddWithValue($"@p{parameterIndex}", parameters[parameterIndex]);
         }
     }
 
-    /// <inheritdoc />
     /// <inheritdoc />
     public T ExecuteQuery<T>(string sqlStatement, object[] parameters, Func<IDataReader, T> map)
     {
         var activeConnection = this.GetConnection();
         using var command = new SqlCommand(sqlStatement, activeConnection, this.currentTransaction);
-        this.AddParameters(command, parameters);
+        AppDbContext.AddParameters(command, parameters);
         using var reader = command.ExecuteReader();
         return map(reader);
     }
@@ -122,20 +122,21 @@ public class AppDbContext : IDbContext
     /// <inheritdoc />
     public void Dispose()
     {
-        if (currentTransaction != null)
+        GC.SuppressFinalize(this);
+
+        currentTransaction?.Dispose();
+
+        if (connection is null)
         {
-            currentTransaction.Dispose();
+            return;
         }
 
-        if (connection != null)
+        if (connection.State != ConnectionState.Closed)
         {
-            if (connection.State != ConnectionState.Closed)
-            {
-                connection.Close();
-            }
-
-            connection.Dispose();
-            connection = null;
+            connection.Close();
         }
+
+        connection.Dispose();
+        connection = null;
     }
 }
