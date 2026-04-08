@@ -11,7 +11,6 @@ using System.Threading.Tasks;
 using BankApp.Client.Enums;
 using BankApp.Client.Utilities;
 using BankApp.Contracts.DTOs.Dashboard;
-using BankApp.Contracts.Entities;
 using ErrorOr;
 using Microsoft.Extensions.Logging;
 
@@ -37,8 +36,8 @@ public class DashboardViewModel
         this.logger = logger ?? throw new ArgumentNullException(nameof(logger));
         this.CurrentUser = null;
         this.State = new ObservableState<DashboardState>(DashboardState.Idle);
-        this.Cards = new List<Card>();
-        this.RecentTransactions = new List<Transaction>();
+        this.Cards = new List<CardDto>();
+        this.RecentTransactions = new List<TransactionDto>();
         this.RecentTransactionItems = new List<DashboardTransactionItem>();
         this.UnreadNotificationCount = 0;
         this.ErrorMessage = string.Empty;
@@ -53,12 +52,12 @@ public class DashboardViewModel
     /// <summary>
     /// Gets the current user whose dashboard data has been loaded.
     /// </summary>
-    public User? CurrentUser { get; private set; }
+    public UserSummaryDto? CurrentUser { get; private set; }
 
     /// <summary>
     /// Gets the cards.
     /// </summary>
-    public List<Card> Cards { get; private set; }
+    public List<CardDto> Cards { get; private set; }
 
     /// <summary>
     /// Gets the formatted dashboard transaction rows for display.
@@ -87,7 +86,7 @@ public class DashboardViewModel
     /// <summary>
     /// Gets the currently selected card, or <see langword="null"/> if no cards are available.
     /// </summary>
-    private Card? SelectedCard => this.Cards.Count > 0 ? this.Cards[this.CurrentCardIndex] : null;
+    private CardDto? SelectedCard => this.Cards.Count > 0 ? this.Cards[this.CurrentCardIndex] : null;
 
     /// <summary>
     /// Gets a value indicating whether the user can navigate to the previous card.
@@ -262,7 +261,7 @@ public class DashboardViewModel
             });
     }
 
-    private List<DashboardTransactionItem> BuildTransactionItems(IEnumerable<Transaction> transactions)
+    private List<DashboardTransactionItem> BuildTransactionItems(IEnumerable<TransactionDto> transactions)
     {
         var items = new List<DashboardTransactionItem>();
 
@@ -294,5 +293,5 @@ public class DashboardViewModel
     /// <summary>
     /// Gets or sets the recent transactions.
     /// </summary>
-    private List<Transaction> RecentTransactions { get; set; }
+    private List<TransactionDto> RecentTransactions { get; set; }
 }

@@ -1,5 +1,9 @@
-using BankApp.Contracts.Entities;
+// <copyright file="DashboardService.cs" company="CtrlC CtrlV">
+// Copyright (c) CtrlC CtrlV. All rights reserved.
+// </copyright>
+
 using BankApp.Contracts.DTOs.Dashboard;
+using BankApp.Contracts.Entities;
 using BankApp.Server.Repositories.Interfaces;
 
 namespace BankApp.Server.Services.Dashboard;
@@ -36,10 +40,43 @@ public class DashboardService : IDashboardService
 
         return new DashboardResponse
         {
-            CurrentUser = user,
-            Cards = dashboardRepository.GetCardsByUser(userId),
-            RecentTransactions = dashboardRepository.GetRecentTransactions(userId, DefaultRecentTransactionLimit),
-            UnreadNotificationCount = dashboardRepository.GetUnreadNotificationCount(userId)
+            CurrentUser = new UserSummaryDto
+            {
+                FullName = user.FullName,
+                Email = user.Email,
+                PhoneNumber = user.PhoneNumber,
+                Is2FAEnabled = user.Is2FAEnabled,
+            },
+            Cards = dashboardRepository.GetCardsByUser(userId)
+                .Select(c => new CardDto
+                {
+                    Id = c.Id,
+                    CardNumber = c.CardNumber,
+                    CardholderName = c.CardholderName,
+                    CardType = c.CardType,
+                    CardBrand = c.CardBrand,
+                    ExpiryDate = c.ExpiryDate,
+                    Status = c.Status,
+                    IsContactlessEnabled = c.IsContactlessEnabled,
+                    IsOnlineEnabled = c.IsOnlineEnabled,
+                })
+                .ToList(),
+            RecentTransactions = dashboardRepository.GetRecentTransactions(userId, DefaultRecentTransactionLimit)
+                .Select(t => new TransactionDto
+                {
+                    Id = t.Id,
+                    Type = t.Type,
+                    Direction = t.Direction,
+                    Amount = t.Amount,
+                    Currency = t.Currency,
+                    Description = t.Description,
+                    MerchantName = t.MerchantName,
+                    CounterpartyName = t.CounterpartyName,
+                    Status = t.Status,
+                    CreatedAt = t.CreatedAt,
+                })
+                .ToList(),
+            UnreadNotificationCount = dashboardRepository.GetUnreadNotificationCount(userId),
         };
     }
 }
