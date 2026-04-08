@@ -1,4 +1,3 @@
-USE BankAppDb; GO
 IF OBJECT_ID('dbo.Notification', 'U') IS NULL
 CREATE TABLE Notification (
     Id INT IDENTITY(1,1) PRIMARY KEY,

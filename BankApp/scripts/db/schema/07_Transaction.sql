@@ -1,4 +1,3 @@
-USE BankAppDb; GO
 IF OBJECT_ID('dbo.[Transaction]', 'U') IS NULL
 CREATE TABLE [Transaction] (
     Id INT IDENTITY(1,1) PRIMARY KEY,

@@ -128,6 +128,15 @@ public class ApiClient
 
             if (!response.IsSuccessStatusCode)
             {
+                if (response.StatusCode == HttpStatusCode.BadRequest)
+                {
+                    var parsed = await response.Content.ReadFromJsonAsync<TResponse>();
+                    if (parsed is not null)
+                    {
+                        return parsed;
+                    }
+                }
+
                 return await MapErrorAsync(response, endpoint, CancellationToken.None);
             }
 
