@@ -23,6 +23,10 @@ public class AuthService : IAuthService
     private const int MaxFailedAttempts = 5;
     private const int LockoutMinutes = 30;
     private const int PasswordResetTokenExpiryMinutes = 5;
+    private const string GoogleOAuthProvider = "Google";
+    private const string DefaultLanguage = "en";
+    private const string TemporaryPasswordSuffix = "A1a!";
+    private static readonly string EmailTwoFactorMethod = TwoFactorMethod.Email.ToString();
 
     /// <summary>
     /// Initializes a new instance of the <see cref="AuthService"/> class.
@@ -103,7 +107,7 @@ public class AuthService : IAuthService
     /// <inheritdoc />
     public async Task<LoginResponse> OAuthLoginAsync(OAuthLoginRequest request)
     {
-        if (request.Provider.Equals("Google", StringComparison.OrdinalIgnoreCase))
+        if (request.Provider.Equals(GoogleOAuthProvider, StringComparison.OrdinalIgnoreCase))
         {
             GoogleJsonWebSignature.Payload payload;
             try
@@ -132,13 +136,13 @@ public class AuthService : IAuthService
                 user = authRepository.FindUserByEmail(email);
                 if (user == null)
                 {
-                    string randomPassword = Guid.NewGuid().ToString() + "A1a!";
+                    string generatedTemporaryPassword = Guid.NewGuid().ToString() + TemporaryPasswordSuffix;
                     user = new User
                     {
                         Email = email,
-                        PasswordHash = hashService.GetHash(randomPassword),
+                        PasswordHash = hashService.GetHash(generatedTemporaryPassword),
                         FullName = fullName,
-                        PreferredLanguage = "en",
+                        PreferredLanguage = DefaultLanguage,
                         Is2FAEnabled = false,
                         IsLocked = false,
                         FailedLoginAttempts = 0
@@ -201,13 +205,13 @@ public class AuthService : IAuthService
         }
         else
         {
-            string randomPassword = Guid.NewGuid().ToString() + "A1a!";
+            string generatedTemporaryPassword = Guid.NewGuid().ToString() + TemporaryPasswordSuffix;
             User newUser = new User
             {
                 Email = request.Email,
-                PasswordHash = hashService.GetHash(randomPassword),
+                PasswordHash = hashService.GetHash(generatedTemporaryPassword),
                 FullName = request.FullName,
-                PreferredLanguage = "en",
+                PreferredLanguage = DefaultLanguage,
                 Is2FAEnabled = false,
                 IsLocked = false,
                 FailedLoginAttempts = 0
@@ -272,7 +276,8 @@ public class AuthService : IAuthService
         }
 
         string oneTimePassword = otpService.GenerateTOTP(user.Id);
-        if (method == "email" || user.Preferred2FAMethod == "email")
+        if (string.Equals(method, EmailTwoFactorMethod, StringComparison.OrdinalIgnoreCase)
+            || string.Equals(user.Preferred2FAMethod, EmailTwoFactorMethod, StringComparison.OrdinalIgnoreCase))
         {
             emailService.SendOTPCode(user.Email, oneTimePassword);
         }
@@ -376,7 +381,7 @@ public class AuthService : IAuthService
     {
         string oneTimePassword = otpService.GenerateTOTP(user.Id);
 
-        if (user.Preferred2FAMethod == "email")
+        if (string.Equals(user.Preferred2FAMethod, EmailTwoFactorMethod, StringComparison.OrdinalIgnoreCase))
         {
             emailService.SendOTPCode(user.Email, oneTimePassword);
         }
@@ -434,7 +439,7 @@ public class AuthService : IAuthService
             Email = request.Email,
             PasswordHash = hashService.GetHash(request.Password),
             FullName = request.FullName,
-            PreferredLanguage = "en",
+            PreferredLanguage = DefaultLanguage,
             Is2FAEnabled = false,
             IsLocked = false,
             FailedLoginAttempts = 0

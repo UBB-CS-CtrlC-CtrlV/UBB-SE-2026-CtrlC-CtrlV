@@ -1,6 +1,7 @@
 using System.Security.Cryptography;
 using System.Text;
 using BankApp.Server.Services.Security;
+using Microsoft.Extensions.Configuration;
 
 namespace BankApp.Server.Services.Security;
 
@@ -9,9 +10,9 @@ namespace BankApp.Server.Services.Security;
 /// </summary>
 public class OtpService : IOtpService
 {
-    private static readonly Dictionary<int, (string Code, DateTime ExpiryTime)> TemporarySmsStorage = new
-        ();
+    private static readonly Dictionary<int, (string Code, DateTime ExpiryTime)> TemporarySmsStorage = new Dictionary<int, (string Code, DateTime ExpiryTime)>();
     private const int SmsOtpExpiryMinutes = 5;
+    private const string FallbackOtpServerSecret = "BankApp-Default-OTP-Secret";
     private const int TotpWindowSeconds = 300;
     private const int OtpRangeMinimum = 100000;
     private const int OtpRangeMaximum = 999999;
@@ -21,11 +22,15 @@ public class OtpService : IOtpService
     private const int SignBitMask = 0x7F;
     private const int ByteMask = 0xFF;
 
+    private readonly string otpServerSecret;
+
     /// <summary>
     /// Initializes a new instance of the <see cref="OtpService"/> class.
     /// </summary>
-    public OtpService()
+    /// <param name="configuration">The application configuration used to read <c>Otp:ServerSecret</c>.</param>
+    public OtpService(IConfiguration configuration)
     {
+        this.otpServerSecret = configuration["Otp:ServerSecret"] ?? FallbackOtpServerSecret;
     }
 
     /// <inheritdoc />
@@ -94,7 +99,7 @@ public class OtpService : IOtpService
 
     private string GenerateHmacCode(int userId, long timeWindow)
     {
-        string secret = $"User_Secret_Key_{userId}_BankApp";
+        string secret = $"{this.otpServerSecret}_{userId}";
         using var hmac = new HMACSHA1(Encoding.UTF8.GetBytes(secret));
         byte[] hash = hmac.ComputeHash(BitConverter.GetBytes(timeWindow));
         int offset = hash[hash.Length - 1] & TruncationOffsetMask;

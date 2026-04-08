@@ -8,6 +8,9 @@ namespace BankApp.Server.Middleware;
 /// </summary>
 public class SessionValidationMiddleware
 {
+    private const string BearerPrefix = "Bearer ";
+    private static readonly string[] PublicEndpointPrefixes = new[] { "/auth/", "/swagger", "/test/" };
+
     private readonly RequestDelegate next;
 
     /// <summary>
@@ -40,13 +43,13 @@ public class SessionValidationMiddleware
         var authHeader = context.Request.Headers["Authorization"].FirstOrDefault();
 
         // No token provided
-        if (authHeader == null || !authHeader.StartsWith("Bearer "))
+        if (authHeader == null || !authHeader.StartsWith(BearerPrefix))
         {
             await RejectRequest(context, "No token provided.");
             return;
         }
 
-        var token = authHeader.Substring("Bearer ".Length);
+        var token = authHeader.Substring(BearerPrefix.Length);
 
         // Check if JWT valid
         var userId = jwtService.ExtractUserId(token);
@@ -77,9 +80,7 @@ public class SessionValidationMiddleware
             return false;
         }
 
-        return path.Contains("/auth/")
-               || path.Contains("/swagger")
-               || path.Contains("/test/");
+        return Array.Exists(PublicEndpointPrefixes, prefix => path.Contains(prefix));
     }
 
     private async Task RejectRequest(HttpContext context, string error)
