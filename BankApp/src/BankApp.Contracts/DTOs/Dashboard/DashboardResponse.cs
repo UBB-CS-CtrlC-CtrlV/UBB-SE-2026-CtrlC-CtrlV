@@ -15,12 +15,12 @@ public class DashboardResponse
     /// <summary>
     /// Gets or sets the list of cards belonging to the user.
     /// </summary>
-    public List<Card> Cards { get; set; } = new ();
+    public List<Card> Cards { get; set; } = [];
 
     /// <summary>
     /// Gets or sets the list of recent transactions.
     /// </summary>
-    public List<Transaction> RecentTransactions { get; set; } = new ();
+    public List<Transaction> RecentTransactions { get; set; } = [];
 
     /// <summary>
     /// Gets or sets the count of unread notifications.
