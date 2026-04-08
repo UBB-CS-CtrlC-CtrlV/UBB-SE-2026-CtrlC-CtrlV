@@ -1,8 +1,8 @@
 using System.Security.Cryptography;
 using System.Text;
-using BankApp.Server.Services.Infrastructure.Interfaces;
+using BankApp.Server.Services.Common.Interfaces;
 
-namespace BankApp.Server.Services.Infrastructure.Implementations;
+namespace BankApp.Server.Services.Common.Implementations;
 
 /// <summary>
 /// Provides HMAC-based TOTP and in-memory SMS OTP generation and verification.

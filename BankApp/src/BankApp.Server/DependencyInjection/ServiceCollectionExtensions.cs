@@ -4,8 +4,8 @@ using BankApp.Server.DataAccess.Interfaces;
 using BankApp.Server.Repositories.Implementations;
 using BankApp.Server.Repositories.Interfaces;
 using BankApp.Server.Services.Implementations;
-using BankApp.Server.Services.Infrastructure.Implementations;
-using BankApp.Server.Services.Infrastructure.Interfaces;
+using BankApp.Server.Services.Common.Implementations;
+using BankApp.Server.Services.Common.Interfaces;
 using BankApp.Server.Services.Interfaces;
 
 namespace BankApp.Server.DependencyInjection;

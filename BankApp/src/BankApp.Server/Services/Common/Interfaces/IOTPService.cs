@@ -1,4 +1,4 @@
-namespace BankApp.Server.Services.Infrastructure.Interfaces;
+namespace BankApp.Server.Services.Common.Interfaces;
 
 /// <summary>
 /// Defines operations for generating and verifying one-time passwords.

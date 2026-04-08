@@ -1,4 +1,4 @@
-namespace BankApp.Server.Services.Infrastructure.Interfaces;
+namespace BankApp.Server.Services.Common.Interfaces;
 
 /// <summary>
 /// Defines operations for hashing and verifying values.

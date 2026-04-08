@@ -2,7 +2,7 @@ using BankApp.Contracts.DTOs.Auth;
 using BankApp.Contracts.Entities;
 using BankApp.Contracts.Enums;
 using BankApp.Server.Repositories.Interfaces;
-using BankApp.Server.Services.Infrastructure.Interfaces;
+using BankApp.Server.Services.Common.Interfaces;
 using BankApp.Server.Services.Interfaces;
 using BankApp.Server.Utilities;
 using Google.Apis.Auth;

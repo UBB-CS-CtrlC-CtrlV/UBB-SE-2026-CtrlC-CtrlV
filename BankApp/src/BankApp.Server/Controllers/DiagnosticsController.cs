@@ -3,7 +3,7 @@
 // </copyright>
 using BankApp.Server.DataAccess;
 using BankApp.Server.DataAccess.Interfaces;
-using BankApp.Server.Services.Infrastructure.Interfaces;
+using BankApp.Server.Services.Common.Interfaces;
 using Microsoft.AspNetCore.Mvc;
 
 namespace BankApp.Server.Controllers;
