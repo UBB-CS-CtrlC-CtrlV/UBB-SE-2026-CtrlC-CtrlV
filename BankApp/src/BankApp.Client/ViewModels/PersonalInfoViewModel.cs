@@ -7,6 +7,7 @@ using System.Threading.Tasks;
 using BankApp.Client.Utilities;
 using BankApp.Contracts.DTOs.Profile;
 using BankApp.Client.Enums;
+using ErrorOr;
 using Microsoft.Extensions.Logging;
 
 namespace BankApp.Client.ViewModels;
@@ -43,6 +44,18 @@ public class PersonalInfoViewModel
     public ProfileInfo ProfileInfo { get; private set; }
 
     /// <summary>
+    /// Gets a value indicating whether the user has a phone number on file.
+    /// </summary>
+    public bool HasPhoneNumber => !string.IsNullOrEmpty(this.ProfileInfo.PhoneNumber);
+
+    /// <summary>
+    /// Gets the display text for the two-factor phone field.
+    /// Returns a placeholder when no phone number has been set.
+    /// </summary>
+    public string TwoFactorPhoneDisplay =>
+        this.HasPhoneNumber ? this.ProfileInfo.PhoneNumber! : "No phone number set";
+
+    /// <summary>
     /// Loads the current user's profile information from the server.
     /// </summary>
     /// <returns><see langword="true"/> if the profile loaded successfully; otherwise, <see langword="false"/>.</returns>
@@ -50,7 +63,7 @@ public class PersonalInfoViewModel
     {
         this.State.SetValue(ProfileState.Loading);
 
-        var profileResult = await this.apiClient.GetAsync<GetProfileResponse>("api/profile/");
+        ErrorOr<ProfileInfo> profileResult = await this.apiClient.GetAsync<ProfileInfo>(ApiEndpoints.Profile);
         if (profileResult.IsError)
         {
             this.logger.LogError("LoadProfile: profile request failed: {Errors}", profileResult.Errors);
@@ -58,13 +71,7 @@ public class PersonalInfoViewModel
             return false;
         }
 
-        if (!profileResult.Value.Success || profileResult.Value.ProfileInfo == null)
-        {
-            this.State.SetValue(ProfileState.Error);
-            return false;
-        }
-
-        this.ProfileInfo = profileResult.Value.ProfileInfo;
+        this.ProfileInfo = profileResult.Value;
         this.State.SetValue(ProfileState.UpdateSuccess);
         return true;
     }
@@ -89,18 +96,12 @@ public class PersonalInfoViewModel
         string? trimmedPhone = string.IsNullOrWhiteSpace(phone) ? null : phone.Trim();
         string? trimmedAddress = string.IsNullOrWhiteSpace(address) ? null : address.Trim();
 
-        var request = new UpdateProfileRequest(this.ProfileInfo.UserId, trimmedPhone, trimmedAddress);
-        var result = await this.apiClient.PutAsync<UpdateProfileRequest, UpdateProfileResponse>("api/profile/", request);
+        UpdateProfileRequest request = new UpdateProfileRequest(this.ProfileInfo.UserId, trimmedPhone, trimmedAddress);
+        ErrorOr<Success> result = await this.apiClient.PutAsync<UpdateProfileRequest>(ApiEndpoints.Profile, request);
 
         return result.Match(
-            response =>
+            _ =>
             {
-                if (!response.Success)
-                {
-                    this.State.SetValue(ProfileState.Error);
-                    return false;
-                }
-
                 this.ProfileInfo.PhoneNumber = trimmedPhone;
                 this.ProfileInfo.Address = trimmedAddress;
                 this.State.SetValue(ProfileState.UpdateSuccess);
@@ -129,7 +130,7 @@ public class PersonalInfoViewModel
             return false;
         }
 
-        var result = await this.apiClient.PostAsync<string, bool>("api/profile/verify-password", password);
+        ErrorOr<bool> result = await this.apiClient.PostAsync<string, bool>(ApiEndpoints.VerifyPassword, password);
 
         return result.Match(
             valid =>

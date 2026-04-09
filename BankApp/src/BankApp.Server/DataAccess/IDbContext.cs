@@ -1,44 +1,38 @@
 using System.Data;
+using ErrorOr;
 using Microsoft.Data.SqlClient;
 
 namespace BankApp.Server.DataAccess;
 
 /// <summary>
-/// Provides an abstraction over the database connection, supporting transactions and command execution.
+/// Provides an abstraction over the database connection, supporting transactions and safe query execution.
 /// </summary>
 public interface IDbContext : IDisposable
 {
     /// <summary>
+    /// Executes a database operation using an open connection, returning the result as <see cref="ErrorOr{T}"/>.
+    /// </summary>
+    /// <typeparam name="T">The type of the value returned by the operation.</typeparam>
+    /// <param name="operation">A function that receives an open <see cref="SqlConnection"/> and returns a value.</param>
+    /// <returns>The result of the operation, or <see cref="Error.Failure"/> if an exception occurred.</returns>
+    /// <remarks>
+    /// Any exception thrown during connection or query execution is caught and returned as <see cref="Error.Failure"/>.
+    /// </remarks>
+    ErrorOr<T> Query<T>(Func<SqlConnection, T> operation);
+
+    /// <summary>
     /// Begins a new database transaction.
     /// </summary>
     /// <returns>The <see cref="SqlTransaction"/> that was started.</returns>
-    SqlTransaction BeginTransaction();
+    ErrorOr<SqlTransaction> BeginTransaction();
 
     /// <summary>
     /// Commits the current database transaction.
     /// </summary>
-    void CommitTransaction();
+    ErrorOr<Success> CommitTransaction();
 
     /// <summary>
     /// Rolls back the current database transaction.
     /// </summary>
-    void RollbackTransaction();
-
-    /// <summary>
-    /// Executes a SQL query and maps the result using the provided function.
-    /// </summary>
-    /// <typeparam name="T">The type of the value returned by the mapping function.</typeparam>
-    /// <param name="sqlStatement">The SQL statement to execute.</param>
-    /// <param name="parameters">The positional parameters for the SQL statement.</param>
-    /// <param name="map">A function that maps the <see cref="IDataReader"/> to the desired result.</param>
-    /// <returns>The value produced by <paramref name="map"/>.</returns>
-    T ExecuteQuery<T>(string sqlStatement, object[] parameters, Func<IDataReader, T> map);
-
-    /// <summary>
-    /// Executes a SQL command that does not return rows.
-    /// </summary>
-    /// <param name="sqlStatement">The SQL statement to execute.</param>
-    /// <param name="parameters">The positional parameters for the SQL statement.</param>
-    /// <returns>The number of rows affected.</returns>
-    int ExecuteNonQuery(string sqlStatement, object[] parameters);
+    ErrorOr<Success> RollbackTransaction();
 }

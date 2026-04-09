@@ -31,22 +31,29 @@ scripts/
 
 ## Quick start
 
-### Server (Docker — recommended)
+### 1. Server
 
 ```bash
-python scripts/server/setup-dev-env.py   # generates .env
+# Generate .env with auto-created secrets (re-run with --force to regenerate)
+python scripts/server/setup-dev-env.py --force
+
 docker compose up --build
 ```
 
-API available at **http://localhost:5024**. The database schema is applied automatically on first start.
+API available at **http://localhost:5024**. The database schema and seed data are applied automatically on first start.
 
-See [`src/BankApp.Server`](src/BankApp.Server/README.md) for the full server setup guide.
+See [`src/BankApp.Server`](src/BankApp.Server/README.md) for the full server setup guide, script flag reference, and database connection instructions.
 
-### Client
+### 2. Client
 
 ```bash
-python scripts/client/setup-dev-config.py   # writes appsettings.Local.json with OAuth credentials
+# Write appsettings.Local.json with your Google OAuth credentials
+python scripts/client/setup-dev-config.py \
+    --client-id <your-client-id> \
+    --client-secret <your-client-secret>
 ```
+
+Obtain credentials: Google Cloud Console → APIs & Services → Credentials → OAuth 2.0 Client IDs.
 
 Open `BankApp.slnx`, set `BankApp.Client` as the startup project, select the `x64` platform, and press F5. The server must be running first.
 

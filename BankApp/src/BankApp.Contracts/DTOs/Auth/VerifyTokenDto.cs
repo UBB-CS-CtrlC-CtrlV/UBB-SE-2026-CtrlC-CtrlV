@@ -2,7 +2,7 @@
 // Copyright (c) CtrlC CtrlV. All rights reserved.
 // </copyright>
 
-namespace BankApp.Server.Controllers;
+namespace BankApp.Contracts.DTOs.Auth;
 
 /// <summary>
 /// Data transfer object used for reset token verification requests.

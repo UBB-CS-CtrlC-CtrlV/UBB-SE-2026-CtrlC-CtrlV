@@ -1,6 +1,7 @@
-using System.Data;
 using BankApp.Contracts.Entities;
 using BankApp.Server.DataAccess.Interfaces;
+using Dapper;
+using ErrorOr;
 
 namespace BankApp.Server.DataAccess.Implementations;
 
@@ -9,69 +10,61 @@ namespace BankApp.Server.DataAccess.Implementations;
 /// </summary>
 public class PasswordResetTokenDataAccess : IPasswordResetTokenDataAccess
 {
-    private readonly AppDbContext context;
+    private readonly AppDbContext db;
 
     /// <summary>
     /// Initializes a new instance of the <see cref="PasswordResetTokenDataAccess"/> class.
     /// </summary>
-    /// <param name="context">The database context used for executing queries.</param>
-    public PasswordResetTokenDataAccess(AppDbContext context)
+    /// <param name="db">The database context used for executing queries.</param>
+    public PasswordResetTokenDataAccess(AppDbContext db)
     {
-        this.context = context;
+        this.db = db;
     }
 
     /// <inheritdoc />
-    /// <inheritdoc />
-    public PasswordResetToken Create(int userId, string tokenHash, DateTime expiresAt)
+    public ErrorOr<PasswordResetToken> Create(int userId, string tokenHash, DateTime expiresAt)
     {
-        string sql = @"INSERT INTO PasswordResetToken (UserId, TokenHash, ExpiresAt)
-                   OUTPUT INSERTED.Id, INSERTED.UserId, INSERTED.TokenHash, INSERTED.ExpiresAt, INSERTED.UsedAt, INSERTED.CreatedAt
-                   VALUES (@p0, @p1, @p2)";
+        const string sql = """
+            INSERT INTO PasswordResetToken (UserId, TokenHash, ExpiresAt)
+            OUTPUT INSERTED.Id, INSERTED.UserId, INSERTED.TokenHash,
+                   INSERTED.ExpiresAt, INSERTED.UsedAt, INSERTED.CreatedAt
+            VALUES (@UserId, @TokenHash, @ExpiresAt)
+            """;
 
-        return this.context.ExecuteQuery(sql, new object[] { userId, tokenHash, expiresAt }, reader =>
+        return this.db.Query(conn => conn.QueryFirstOrDefault<PasswordResetToken>(sql, new
         {
-            if (reader.Read())
-            {
-                return this.MapToPasswordResetToken(reader);
-            }
-
-            throw new Exception("Failed to create password reset token.");
-        });
+            UserId = userId,
+            TokenHash = tokenHash,
+            ExpiresAt = expiresAt,
+        })).Then(token => token ?? (ErrorOr<PasswordResetToken>)Error.Failure(description: "Failed to create password reset token."));
     }
 
     /// <inheritdoc />
-    public PasswordResetToken? FindByToken(string tokenHash)
+    public ErrorOr<PasswordResetToken> FindByToken(string tokenHash)
     {
-        string sql = "SELECT Id, UserId, TokenHash, ExpiresAt, UsedAt, CreatedAt FROM PasswordResetToken WHERE TokenHash = @p0";
+        const string sql = """
+            SELECT Id, UserId, TokenHash, ExpiresAt, UsedAt, CreatedAt
+            FROM PasswordResetToken
+            WHERE TokenHash = @TokenHash
+            """;
 
-        return this.context.ExecuteQuery(sql, new object[] { tokenHash }, reader =>
-            reader.Read() ? this.MapToPasswordResetToken(reader) : null);
+        return this.db.Query(conn => conn.QueryFirstOrDefault<PasswordResetToken>(sql, new { TokenHash = tokenHash }))
+            .Then(token => token ?? (ErrorOr<PasswordResetToken>)Error.NotFound(description: "Password reset token not found."));
     }
 
     /// <inheritdoc />
-    public void DeleteExpired()
+    public ErrorOr<Success> MarkAsUsed(int tokenId)
     {
-        string sql = "DELETE FROM PasswordResetToken WHERE ExpiresAt < GETUTCDATE()";
-        context.ExecuteNonQuery(sql, Array.Empty<object>());
+        const string sql = "UPDATE PasswordResetToken SET UsedAt = GETUTCDATE() WHERE Id = @Id";
+        return this.db.Query(conn => conn.Execute(sql, new { Id = tokenId }))
+            .Then(_ => (ErrorOr<Success>)Result.Success);
     }
 
     /// <inheritdoc />
-    public void MarkAsUsed(int tokenId)
+    public ErrorOr<Success> DeleteExpired()
     {
-        string sql = "UPDATE PasswordResetToken SET UsedAt = GETUTCDATE() WHERE Id = @p0";
-        context.ExecuteNonQuery(sql, new object[] { tokenId });
-    }
-
-    private PasswordResetToken MapToPasswordResetToken(IDataReader reader)
-    {
-        return new PasswordResetToken
-        {
-            Id = reader.GetInt32(reader.GetOrdinal("Id")),
-            UserId = reader.GetInt32(reader.GetOrdinal("UserId")),
-            TokenHash = reader.GetString(reader.GetOrdinal("TokenHash")),
-            ExpiresAt = reader.GetDateTime(reader.GetOrdinal("ExpiresAt")),
-            UsedAt = reader.IsDBNull(reader.GetOrdinal("UsedAt")) ? null : reader.GetDateTime(reader.GetOrdinal("UsedAt")),
-            CreatedAt = reader.GetDateTime(reader.GetOrdinal("CreatedAt"))
-        };
+        const string sql = "DELETE FROM PasswordResetToken WHERE ExpiresAt < GETUTCDATE()";
+        return this.db.Query(conn => conn.Execute(sql))
+            .Then(_ => (ErrorOr<Success>)Result.Success);
     }
 }

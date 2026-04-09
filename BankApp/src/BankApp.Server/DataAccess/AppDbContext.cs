@@ -1,4 +1,5 @@
 using System.Data;
+using ErrorOr;
 using Microsoft.Data.SqlClient;
 
 namespace BankApp.Server.DataAccess;
@@ -21,102 +22,59 @@ public class AppDbContext : IDbContext
         this.connectionString = connectionString;
     }
 
-    /// <summary>
-    /// Gets an open <see cref="SqlConnection"/>, creating one if necessary.
-    /// </summary>
-    /// <returns>An open <see cref="SqlConnection"/> instance.</returns>
-    private SqlConnection GetConnection()
+    /// <inheritdoc />
+    public ErrorOr<T> Query<T>(Func<SqlConnection, T> operation)
     {
-        if (connection is not null && connection.State is not ConnectionState.Closed)
-        {
-            return connection;
-        }
-
         try
         {
-            connection = new SqlConnection(connectionString);
-            connection.Open();
+            return operation(this.GetConnection());
         }
-        catch (SqlException sqlException)
+        catch (Exception ex)
         {
-            throw new Exception($"Failed to connect to the database: {sqlException.Message}", sqlException);
+            return Error.Failure(description: ex.Message);
         }
-        return connection;
     }
 
     /// <inheritdoc />
-    public SqlTransaction BeginTransaction()
+    public ErrorOr<SqlTransaction> BeginTransaction()
     {
-        SqlConnection activeConnection = GetConnection();
+        SqlConnection activeConnection = this.GetConnection();
         try
         {
             currentTransaction = activeConnection.BeginTransaction();
         }
-        catch (SqlException sqlException)
+        catch (Exception ex) when (ex is SqlException or InvalidOperationException)
         {
-            throw new Exception($"Failed to begin transaction: {sqlException.Message}", sqlException);
+            return Error.Failure(description: $"Failed to begin transaction: {ex.Message}");
         }
+
         return currentTransaction;
     }
 
     /// <inheritdoc />
-    public void CommitTransaction()
+    public ErrorOr<Success> CommitTransaction()
     {
         if (currentTransaction is null)
         {
-            return;
+            return Error.Conflict(description: "No active transaction to commit.");
         }
 
         currentTransaction.Commit();
         currentTransaction = null;
+        return Result.Success;
     }
 
     /// <inheritdoc />
-    public void RollbackTransaction()
+    public ErrorOr<Success> RollbackTransaction()
     {
         if (currentTransaction is null)
         {
-            return;
+            return Error.Conflict(description: "No active transaction to rollback.");
         }
 
         currentTransaction.Rollback();
         currentTransaction = null;
-    }
-
-    /// <summary>
-    /// Gets the currently active transaction, or <see langword="null"/> if none exists.
-    /// </summary>
-    /// <returns>The current <see cref="SqlTransaction"/>, or <see langword="null"/>.</returns>
-    private SqlTransaction? GetCurrentTransaction()
-    {
-        return currentTransaction;
-    }
-
-    private static void AddParameters(SqlCommand command, object[] parameters)
-    {
-        for (var parameterIndex = 0; parameterIndex < parameters.Length; parameterIndex++)
-        {
-            command.Parameters.AddWithValue($"@p{parameterIndex}", parameters[parameterIndex]);
-        }
-    }
-
-    /// <inheritdoc />
-    public T ExecuteQuery<T>(string sqlStatement, object[] parameters, Func<IDataReader, T> map)
-    {
-        var activeConnection = this.GetConnection();
-        using var command = new SqlCommand(sqlStatement, activeConnection, this.currentTransaction);
-        AppDbContext.AddParameters(command, parameters);
-        using var reader = command.ExecuteReader();
-        return map(reader);
-    }
-
-    /// <inheritdoc />
-    public int ExecuteNonQuery(string sqlStatement, object[] parameters)
-    {
-        var activeConnection = GetConnection();
-        using var command = new SqlCommand(sqlStatement, activeConnection, currentTransaction);
-        AddParameters(command, parameters);
-        return command.ExecuteNonQuery();
+        return Result.Success;
     }
 
     /// <inheritdoc />
@@ -138,5 +96,17 @@ public class AppDbContext : IDbContext
 
         connection.Dispose();
         connection = null;
+    }
+
+    private SqlConnection GetConnection()
+    {
+        if (connection is not null && connection.State is not ConnectionState.Closed)
+        {
+            return connection;
+        }
+
+        connection = new SqlConnection(connectionString);
+        connection.Open();
+        return connection;
     }
 }

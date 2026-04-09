@@ -1,9 +1,11 @@
 // <copyright file="AuthController.cs" company="CtrlC CtrlV">
 // Copyright (c) CtrlC CtrlV. All rights reserved.
 // </copyright>
+
+using BankApp.Contracts.DTOs;
 using BankApp.Contracts.DTOs.Auth;
-using BankApp.Contracts.Enums;
-using BankApp.Server.Services.Interfaces;
+using BankApp.Server.Services.Auth;
+using ErrorOr;
 using Microsoft.AspNetCore.Mvc;
 
 namespace BankApp.Server.Controllers;
@@ -15,8 +17,10 @@ namespace BankApp.Server.Controllers;
 /// </summary>
 [ApiController]
 [Route("api/[controller]")]
-public class AuthController : ControllerBase
+public class AuthController : ApiControllerBase
 {
+    private const string BearerPrefix = "Bearer ";
+
     private readonly IAuthService authService;
 
     /// <summary>
@@ -30,70 +34,57 @@ public class AuthController : ControllerBase
 
     /// <summary>
     /// Authenticates a user with their email and password.
-    /// If 2FA is enabled, an OTP will be sent and must be verified separately.
+    /// If 2FA is enabled, an OTP will be sent and <see cref="LoginSuccessResponse.Requires2FA"/> will be <see langword="true"/>.
     /// </summary>
     /// <param name="request">The login request containing email and password.</param>
     /// <returns>
-    /// 200 OK with a <see cref="LoginResponse"/> on success,
-    /// or 400 Bad Request if credentials are invalid.
+    /// 200 OK with a <see cref="LoginSuccessResponse"/> on success,
+    /// 400 Bad Request for invalid email format,
+    /// 401 Unauthorized for wrong credentials,
+    /// or 403 Forbidden if the account is locked.
     /// </returns>
     [HttpPost("login")]
     public IActionResult Login([FromBody] LoginRequest request)
     {
-        LoginResponse response = this.authService.Login(request);
-        if (!response.Success)
-        {
-            return this.BadRequest(response);
-        }
-
-        return this.Ok(response);
+        ErrorOr<LoginSuccess> result = this.authService.Login(request);
+        return this.ToActionResult(result, this.MapLoginSuccess);
     }
 
     /// <summary>
     /// Registers a new user account in the system.
     /// </summary>
-    /// <param name="request">The registration request containing user details such as name, email, and password.</param>
+    /// <param name="request">The registration request containing user details.</param>
     /// <returns>
-    /// 200 OK with a <see cref="RegisterResponse"/> on success,
-    /// or 400 Bad Request if registration fails (e.g. email already in use).
+    /// 204 No Content on success,
+    /// 400 Bad Request if validation fails,
+    /// or 409 Conflict if the email is already registered.
     /// </returns>
     [HttpPost("register")]
     public IActionResult Register([FromBody] RegisterRequest request)
     {
-        RegisterResponse response = this.authService.Register(request);
-        if (!response.Success)
-        {
-            return this.BadRequest(response);
-        }
-
-        return this.Ok(response);
+        return this.ToActionResult(this.authService.Register(request));
     }
 
     /// <summary>
     /// Verifies a One-Time Password (OTP) as part of the two-factor authentication (2FA) flow.
-    /// This should be called after a successful login when 2FA is required.
+    /// Should be called after a successful login when <see cref="LoginSuccessResponse.Requires2FA"/> is <see langword="true"/>.
     /// </summary>
     /// <param name="request">The OTP verification request containing the user ID and OTP code.</param>
     /// <returns>
-    /// 200 OK with a <see cref="LoginResponse"/> including a JWT token on success,
-    /// or 400 Bad Request if the OTP is invalid or expired.
+    /// 200 OK with a <see cref="LoginSuccessResponse"/> including a JWT token on success,
+    /// 401 Unauthorized if the OTP is invalid or expired,
+    /// or 404 Not Found if the user does not exist.
     /// </returns>
     [HttpPost("verify-otp")]
     public IActionResult VerifyOTP([FromBody] VerifyOTPRequest request)
     {
-        LoginResponse response = this.authService.VerifyOTP(request);
-        if (!response.Success)
-        {
-            return this.BadRequest(response);
-        }
-
-        return this.Ok(response);
+        ErrorOr<LoginSuccess> result = this.authService.VerifyOTP(request);
+        return this.ToActionResult(result, this.MapLoginSuccess);
     }
 
     /// <summary>
     /// Initiates the password reset flow by sending a reset link to the provided email address.
-    /// For security purposes, the response is always generic regardless of whether the email exists,
-    /// preventing user enumeration attacks.
+    /// The response is always generic to prevent user enumeration attacks.
     /// </summary>
     /// <param name="request">The forgot password request containing the user's email address.</param>
     /// <returns>
@@ -105,80 +96,61 @@ public class AuthController : ControllerBase
     {
         if (string.IsNullOrWhiteSpace(request.Email))
         {
-            return this.BadRequest(new { error = "Email is required." });
+            return this.BadRequest(new ApiErrorResponse { Error = "Email is required." });
         }
 
-        this.authService.RequestPasswordReset(request.Email);
-
-        // Always return an OK response with a generic message ( prevent malicious operations )
+        // Always return a generic response regardless of whether the email exists.
+        _ = this.authService.RequestPasswordReset(request.Email);
         return this.Ok(new { message = "If an account with that email exists, a password reset link has been sent." });
     }
 
     /// <summary>
     /// Resets the user's password using a valid reset token received via email.
-    /// The token must not be expired or already used, and the new password must meet strength requirements.
     /// </summary>
     /// <param name="request">The reset password request containing the reset token and new password.</param>
     /// <returns>
-    /// 200 OK on successful password reset,
-    /// 400 Bad Request if the token is invalid, expired, or already used,
-    /// or if the new password does not meet strength requirements.
+    /// 204 No Content on successful password reset,
+    /// 400 Bad Request if inputs are missing, the password is weak, or the token is invalid/expired/used,
+    /// or 500 Internal Server Error if a post-reset cleanup step fails.
     /// </returns>
     [HttpPost("reset-password")]
     public IActionResult ResetPassword([FromBody] ResetPasswordRequest request)
     {
         if (string.IsNullOrWhiteSpace(request.Token) || string.IsNullOrWhiteSpace(request.NewPassword))
         {
-            return this.BadRequest(new { error = "Token and new password are required." });
+            return this.BadRequest(new ApiErrorResponse { Error = "Token and new password are required." });
         }
 
-        if (!BankApp.Server.Utilities.ValidationUtilities.IsStrongPassword(request.NewPassword))
+        if (!Utilities.ValidationUtilities.IsStrongPassword(request.NewPassword))
         {
-            return this.BadRequest(new { error = "Password must be at least 8 characters with uppercase, lowercase, a digit, and a special character." });
-        }
-
-        ResetPasswordResult result = this.authService.ResetPassword(request.Token, request.NewPassword);
-        if (result != ResetPasswordResult.Success)
-        {
-            return result switch
+            return this.BadRequest(new ApiErrorResponse
             {
-                ResetPasswordResult.ExpiredToken => this.BadRequest(new { error = "The reset token has expired.", errorCode = "token_expired" }),
-                ResetPasswordResult.TokenAlreadyUsed => this.BadRequest(new { error = "The reset token has already been used.", errorCode = "token_already_used" }),
-                _ => this.BadRequest(new { error = "The reset token is invalid.", errorCode = "token_invalid" }),
-            };
+                Error = "Password must be at least 8 characters with uppercase, lowercase, a digit, and a special character.",
+                ErrorCode = "weak_password",
+            });
         }
 
-        return this.Ok(new { message = "Password reset successfully. You may now log in with your new password." });
+        return this.ToActionResult(this.authService.ResetPassword(request.Token, request.NewPassword));
     }
 
     /// <summary>
     /// Logs out the currently authenticated user by invalidating their session.
-    /// Note: Full JWT invalidation is not yet implemented. The token is extracted from
-    /// the Authorization header but is not blacklisted server-side.
     /// </summary>
     /// <param name="authorization">The Authorization header containing the Bearer JWT token.</param>
     /// <returns>
-    /// 200 OK on successful logout,
+    /// 204 No Content on successful logout,
     /// or 400 Bad Request if no token is provided or the session is invalid.
     /// </returns>
     [HttpPost("logout")]
     public IActionResult Logout([FromHeader(Name = "Authorization")] string authorization)
     {
-        // Bogdan: this implementation is not enough, still need to invalidate JWT, but this is not on original diagram
-        // can expand in the future.
-        if (string.IsNullOrWhiteSpace(authorization) || !authorization.StartsWith("Bearer "))
+        if (string.IsNullOrWhiteSpace(authorization) || !authorization.StartsWith(BearerPrefix, StringComparison.Ordinal))
         {
-            return this.BadRequest(new { error = "No token provided." });
+            return this.BadRequest(new ApiErrorResponse { Error = "No token provided." });
         }
 
-        string token = authorization.Substring("Bearer ".Length);
-
-        if (!this.authService.Logout(token))
-        {
-            return this.BadRequest(new { error = "Invalid session." });
-        }
-
-        return this.Ok(new { message = "Logged out successfully." });
+        string token = authorization.Substring(BearerPrefix.Length);
+        return this.ToActionResult(this.authService.Logout(token));
     }
 
     /// <summary>
@@ -191,44 +163,39 @@ public class AuthController : ControllerBase
     [HttpPost("resend-otp")]
     public IActionResult ResendOTP([FromQuery] int userId, [FromQuery] string method = "email")
     {
-        this.authService.ResendOTP(userId, method);
+        // Always return a generic response regardless of outcome.
+        _ = this.authService.ResendOTP(userId, method);
         return this.Ok(new { message = "If the user exists, a new code has been sent." });
     }
 
     /// <summary>
-    /// Authenticates a user via an external OAuth provider (e.g. Google, GitHub).
-    /// If the user does not exist, a new account may be created automatically.
+    /// Authenticates a user via an external OAuth provider (e.g. Google).
+    /// If the user does not exist, a new account is created automatically.
     /// </summary>
     /// <param name="request">The OAuth login request containing the provider name and provider token.</param>
     /// <returns>
-    /// 200 OK with a <see cref="LoginResponse"/> including a JWT token on success,
-    /// or 400 Bad Request if the provider or token is missing, or authentication fails.
+    /// 200 OK with a <see cref="LoginSuccessResponse"/> on success,
+    /// 400 Bad Request if the provider/token is missing or the provider is unsupported,
+    /// or 403 Forbidden if the account is locked.
     /// </returns>
     [HttpPost("oauth-login")]
     public async Task<IActionResult> OAuthLogin([FromBody] OAuthLoginRequest request)
     {
         if (string.IsNullOrWhiteSpace(request.Provider) || string.IsNullOrWhiteSpace(request.ProviderToken))
         {
-            return this.BadRequest(new { error = "Provider and ProviderToken are required." });
+            return this.BadRequest(new ApiErrorResponse { Error = "Provider and ProviderToken are required." });
         }
 
-        LoginResponse response = await this.authService.OAuthLoginAsync(request);
-
-        if (!response.Success)
-        {
-            return this.BadRequest(response);
-        }
-
-        return this.Ok(response);
+        ErrorOr<LoginSuccess> result = await this.authService.OAuthLoginAsync(request);
+        return this.ToActionResult(result, this.MapLoginSuccess);
     }
 
     /// <summary>
-    /// Verifies whether a password reset token is valid before allowing the user to proceed
-    /// to the reset password form. Checks for expiry and prior usage.
+    /// Verifies whether a password reset token is valid before allowing the user to proceed.
     /// </summary>
     /// <param name="request">The request containing the reset token to validate.</param>
     /// <returns>
-    /// 200 OK if the token is valid,
+    /// 204 No Content if the token is valid,
     /// or 400 Bad Request with a specific error code if the token is expired, already used, or invalid.
     /// </returns>
     [HttpPost("verify-reset-token")]
@@ -236,20 +203,16 @@ public class AuthController : ControllerBase
     {
         if (string.IsNullOrWhiteSpace(request.Token))
         {
-            return this.BadRequest(new { error = "Token is required." });
+            return this.BadRequest(new ApiErrorResponse { Error = "Token is required." });
         }
 
-        ResetTokenValidationResult result = this.authService.VerifyResetToken(request.Token);
-        if (result != ResetTokenValidationResult.Valid)
-        {
-            return result switch
-            {
-                ResetTokenValidationResult.Expired => this.BadRequest(new { error = "The reset token has expired.", errorCode = "token_expired" }),
-                ResetTokenValidationResult.AlreadyUsed => this.BadRequest(new { error = "The reset token has already been used.", errorCode = "token_already_used" }),
-                _ => this.BadRequest(new { error = "The reset token is invalid.", errorCode = "token_invalid" }),
-            };
-        }
-
-        return this.Ok(new { message = "Token is valid." });
+        return this.ToActionResult(this.authService.VerifyResetToken(request.Token));
     }
+
+    private IActionResult MapLoginSuccess(LoginSuccess success) => success switch
+    {
+        FullLogin full => this.Ok(new LoginSuccessResponse { UserId = full.UserId, Token = full.Token }),
+        RequiresTwoFactor tfa => this.Ok(new LoginSuccessResponse { UserId = tfa.UserId, Requires2FA = true }),
+        _ => this.StatusCode(StatusCodes.Status500InternalServerError, new ApiErrorResponse { Error = "Unexpected login result type." }),
+    };
 }

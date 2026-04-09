@@ -1,8 +1,8 @@
 using System.Net;
 using System.Net.Mail;
-using BankApp.Server.Services.Infrastructure.Interfaces;
+using BankApp.Server.Services.Notifications;
 
-namespace BankApp.Server.Services.Infrastructure.Implementations;
+namespace BankApp.Server.Services.Notifications;
 
 /// <summary>
 /// Sends transactional emails using SMTP configuration from application settings.
@@ -27,33 +27,25 @@ public class EmailService : IEmailService
     /// <inheritdoc />
     public void SendLockNotification(string email)
     {
-        string subject = "BankApp - Account Locked";
-        string body = "Hello,\n\nYour account has been temporarily locked due to multiple failed login attempts. Please try again later or reset your password.";
-        SendEmail(email, subject, body);
+        SendEmail(email, EmailTemplates.AccountLockedSubject, EmailTemplates.AccountLockedBody);
     }
 
     /// <inheritdoc />
     public void SendLoginAlert(string email)
     {
-        string subject = "BankApp - New Login Detected";
-        string body = "Hello,\n\nWe detected a new login to your BankApp account. If this was you, no action is needed. If this wasn't you, please change your password immediately.";
-        SendEmail(email, subject, body);
+        SendEmail(email, EmailTemplates.LoginAlertSubject, EmailTemplates.LoginAlertBody);
     }
 
     /// <inheritdoc />
     public void SendOTPCode(string email, string code)
     {
-        string subject = "Your BankApp Login Code";
-        string body = $"Hello,\n\nYour One-Time Password (OTP) is: {code}\n\nThis code is valid for 5 minutes. Do not share it with anyone.";
-        SendEmail(email, subject, body);
+        SendEmail(email, EmailTemplates.OtpSubject, EmailTemplates.GetOtpBody(code));
     }
 
     /// <inheritdoc />
     public void SendPasswordResetLink(string email, string token)
     {
-        string subject = "BankApp - Password Reset Code";
-        string body = $"Hello,\n\nYou requested a password reset. Please copy and paste the recovery code below into the app:\n\n{token}\n\nIf you did not request this, please ignore this email.";
-        SendEmail(email, subject, body);
+        SendEmail(email, EmailTemplates.PasswordResetSubject, EmailTemplates.GetPasswordResetBody(token));
     }
 
     private void SendEmail(string toEmail, string subject, string body)

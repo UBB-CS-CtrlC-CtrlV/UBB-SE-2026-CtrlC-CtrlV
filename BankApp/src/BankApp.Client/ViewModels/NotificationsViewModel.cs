@@ -6,8 +6,9 @@ using System;
 using System.Collections.Generic;
 using System.Threading.Tasks;
 using BankApp.Client.Utilities;
-using BankApp.Contracts.Entities;
+using BankApp.Contracts.DTOs.Profile;
 using BankApp.Client.Enums;
+using ErrorOr;
 using Microsoft.Extensions.Logging;
 
 namespace BankApp.Client.ViewModels;
@@ -26,10 +27,17 @@ public class NotificationsViewModel
     /// <param name="preference"></param>
     /// <param name="enabled"></param>
     /// <returns>A <see cref="Task{TResult}"/> representing the result of the asynchronous operation.</returns>
-    public async Task<bool> ToggleNotificationPreference(NotificationPreference preference, bool enabled)
+    public async Task<bool> ToggleNotificationPreference(NotificationPreferenceDto preference, bool enabled)
     {
+        bool previousValue = preference.EmailEnabled;
         preference.EmailEnabled = enabled;
-        return await this.UpdateNotificationPreferences(this.NotificationPreferences);
+        bool success = await this.UpdateNotificationPreferences(this.NotificationPreferences);
+        if (!success)
+        {
+            preference.EmailEnabled = previousValue;
+        }
+
+        return success;
     }
 
     /// <summary>
@@ -42,7 +50,7 @@ public class NotificationsViewModel
         this.apiClient = apiClient ?? throw new ArgumentNullException(nameof(apiClient));
         this.logger = logger ?? throw new ArgumentNullException(nameof(logger));
         this.State = new ObservableState<ProfileState>(ProfileState.Idle);
-        this.NotificationPreferences = new List<NotificationPreference>();
+        this.NotificationPreferences = new List<NotificationPreferenceDto>();
     }
 
     /// <summary>
@@ -53,7 +61,7 @@ public class NotificationsViewModel
     /// <summary>
     /// Gets the notification preferences for the current user.
     /// </summary>
-    public List<NotificationPreference> NotificationPreferences { get; private set; }
+    public List<NotificationPreferenceDto> NotificationPreferences { get; private set; }
 
     /// <summary>
     /// Loads notification preferences for the current user from the server.
@@ -61,7 +69,7 @@ public class NotificationsViewModel
     /// <returns><see langword="true"/> if loaded successfully; otherwise, <see langword="false"/>.</returns>
     public async Task<bool> LoadNotificationPreferences()
     {
-        var prefsResult = await this.apiClient.GetAsync<List<NotificationPreference>>("api/profile/notifications/preferences");
+        var prefsResult = await this.apiClient.GetAsync<List<NotificationPreferenceDto>>(ApiEndpoints.NotificationPreferences);
         if (prefsResult.IsError)
         {
             this.logger.LogError("LoadNotificationPreferences: request failed: {Errors}", prefsResult.Errors);
@@ -77,7 +85,7 @@ public class NotificationsViewModel
     /// </summary>
     /// <param name="preferences">The preferences to persist.</param>
     /// <returns><see langword="true"/> if the preferences were updated; otherwise, <see langword="false"/>.</returns>
-    public async Task<bool> UpdateNotificationPreferences(List<NotificationPreference> preferences)
+    public async Task<bool> UpdateNotificationPreferences(List<NotificationPreferenceDto> preferences)
     {
         if (preferences.Count == 0)
         {
@@ -86,17 +94,11 @@ public class NotificationsViewModel
 
         this.State.SetValue(ProfileState.Loading);
 
-        var result = await this.apiClient.PutAsync<List<NotificationPreference>, bool>("api/profile/notifications/preferences", preferences);
+        ErrorOr<Success> result = await this.apiClient.PutAsync<List<NotificationPreferenceDto>>(ApiEndpoints.NotificationPreferences, preferences);
 
         return result.Match(
-            updated =>
+            _ =>
             {
-                if (!updated)
-                {
-                    this.State.SetValue(ProfileState.Error);
-                    return false;
-                }
-
                 this.NotificationPreferences = preferences;
                 this.State.SetValue(ProfileState.UpdateSuccess);
                 return true;

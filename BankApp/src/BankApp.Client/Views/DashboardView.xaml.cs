@@ -23,6 +23,11 @@ namespace BankApp.Client.Views;
 /// </summary>
 public sealed partial class DashboardView : IStateObserver<DashboardState>
 {
+    private const int ActiveCardDotSize = 18;
+    private const int InactiveCardDotSize = 8;
+    private static readonly Color ActiveDotColor = Color.FromArgb(255, 78, 205, 196);
+    private static readonly Color InactiveDotColor = Color.FromArgb(100, 78, 205, 196);
+
     private readonly DashboardViewModel viewModel;
     private bool isObserverAttached;
     private CancellationTokenSource? loadCancellationTokenSource;
@@ -58,8 +63,6 @@ public sealed partial class DashboardView : IStateObserver<DashboardState>
         this.CancelPendingLoad();
         this.DetachObserver();
     }
-
-    // ─── State Handling ────────────────────────────────────────────────────────
 
     /// <summary>
     /// Reacts to dashboard state updates from the view model.
@@ -123,8 +126,6 @@ public sealed partial class DashboardView : IStateObserver<DashboardState>
         NavView.Current?.UpdateNotificationBadge(this.viewModel.UnreadNotificationCount);
     }
 
-    // ─── Card Display ──────────────────────────────────────────────────────────
-
     /// <summary>
     /// Renders the card at the current index stored in the ViewModel.
     /// All data and formatting decisions come from the ViewModel.
@@ -157,18 +158,15 @@ public sealed partial class DashboardView : IStateObserver<DashboardState>
     private void BuildCardDots()
     {
         this.CardDots.Children.Clear();
-        var count = this.viewModel.Cards.Count;
-        this.CardDots.Visibility = count > 1 ? Visibility.Visible : Visibility.Collapsed;
-        for (var i = 0; i < count; i++)
+        var dots = this.viewModel.CardDots;
+        this.CardDots.Visibility = dots.Count > 1 ? Visibility.Visible : Visibility.Collapsed;
+        foreach (var dotViewModel in dots)
         {
             var dot = new Ellipse
             {
-                Width = i == this.viewModel.CurrentCardIndex ? 18 : 8,
-                Height = 8,
-                Fill = new SolidColorBrush(
-                    i == this.viewModel.CurrentCardIndex
-                    ? Color.FromArgb(255, 78, 205, 196)
-                    : Color.FromArgb(100, 78, 205, 196)),
+                Width = dotViewModel.IsActive ? ActiveCardDotSize : InactiveCardDotSize,
+                Height = InactiveCardDotSize,
+                Fill = new SolidColorBrush(dotViewModel.IsActive ? ActiveDotColor : InactiveDotColor),
             };
             this.CardDots.Children.Add(dot);
         }
@@ -176,18 +174,16 @@ public sealed partial class DashboardView : IStateObserver<DashboardState>
 
     private void UpdateCardDots()
     {
+        var dots = this.viewModel.CardDots;
         for (var i = 0; i < this.CardDots.Children.Count; i++)
         {
-            if (this.CardDots.Children[i] is not Ellipse dot)
+            if (this.CardDots.Children[i] is not Ellipse dot || i >= dots.Count)
             {
                 continue;
             }
 
-            dot.Width = i == this.viewModel.CurrentCardIndex ? 18 : 8;
-            dot.Fill = new SolidColorBrush(
-                i == this.viewModel.CurrentCardIndex
-                ? Color.FromArgb(255, 78, 205, 196)
-                : Color.FromArgb(100, 78, 205, 196));
+            dot.Width = dots[i].IsActive ? ActiveCardDotSize : InactiveCardDotSize;
+            dot.Fill = new SolidColorBrush(dots[i].IsActive ? ActiveDotColor : InactiveDotColor);
         }
     }
 
@@ -254,8 +250,6 @@ public sealed partial class DashboardView : IStateObserver<DashboardState>
     {
         _ = this.RunUiTaskAsync(this.ShowCurrentCardDetailsAsync);
     }
-
-    // ─── Dialog Helpers ────────────────────────────────────────────────────────
 
     /// <summary>
     /// Shows a ContentDialog with the details of the currently selected card.

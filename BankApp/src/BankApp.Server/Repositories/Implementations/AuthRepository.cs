@@ -1,8 +1,9 @@
-using BankApp.Server.Repositories.Interfaces;
-using BankApp.Server.DataAccess.Interfaces;
 using BankApp.Contracts.Entities;
 using BankApp.Contracts.Enums;
 using BankApp.Contracts.Extensions;
+using BankApp.Server.DataAccess.Interfaces;
+using BankApp.Server.Repositories.Interfaces;
+using ErrorOr;
 
 namespace BankApp.Server.Repositories.Implementations;
 
@@ -36,134 +37,89 @@ public class AuthRepository : IAuthRepository
     }
 
     /// <inheritdoc />
-    public User? FindUserByEmail(string email)
-    {
-        return userDataAccess.FindByEmail(email);
-    }
+    public ErrorOr<User> FindUserByEmail(string email) => userDataAccess.FindByEmail(email);
 
     /// <inheritdoc />
-    public bool CreateUser(User user)
+    public ErrorOr<User> FindUserById(int id) => userDataAccess.FindById(id);
+
+    /// <inheritdoc />
+    public ErrorOr<Success> CreateUser(User user)
     {
-        bool success = userDataAccess.Create(user);
-        if (!success)
+        var createResult = userDataAccess.Create(user);
+        if (createResult.IsError)
         {
-            return false;
+            return createResult.FirstError;
         }
 
-        User? createdUser = userDataAccess.FindByEmail(user.Email);
-        if (createdUser == null)
+        var createdUser = userDataAccess.FindByEmail(user.Email);
+        if (createdUser.IsError)
         {
-            return false;
+            return createdUser.FirstError;
         }
 
         foreach (NotificationType type in Enum.GetValues(typeof(NotificationType)))
         {
-            success = notificationPreferenceDataAccess.Create(createdUser.Id, NotificationTypeExtensions.ToDisplayName(type));
-            if (!success)
+            var prefResult = notificationPreferenceDataAccess.Create(createdUser.Value.Id, type.ToDisplayName());
+            if (prefResult.IsError)
             {
-                return false;
+                return prefResult.FirstError;
             }
         }
 
-        return true;
+        return Result.Success;
     }
 
     /// <inheritdoc />
-    public OAuthLink? FindOAuthLink(string provider, string providerUserId)
-    {
-        return oAuthLinkDataAccess.FindByProvider(provider, providerUserId);
-    }
+    public ErrorOr<OAuthLink> FindOAuthLink(string provider, string providerUserId) =>
+        oAuthLinkDataAccess.FindByProvider(provider, providerUserId);
 
     /// <inheritdoc />
-    public bool CreateOAuthLink(OAuthLink link)
-    {
-        return oAuthLinkDataAccess.Create(link.UserId, link.Provider, link.ProviderUserId, link.ProviderEmail);
-    }
+    public ErrorOr<Success> CreateOAuthLink(OAuthLink link) =>
+        oAuthLinkDataAccess.Create(link.UserId, link.Provider, link.ProviderUserId, link.ProviderEmail);
 
     /// <inheritdoc />
-    public Session CreateSession(int userId, string token, string? deviceInfo, string? browser, string? ipAddress)
-    {
-        return sessionDataAccess.Create(userId, token, deviceInfo, browser, ipAddress);
-    }
+    public ErrorOr<Session> CreateSession(int userId, string token, string? deviceInfo, string? browser, string? ipAddress) =>
+        sessionDataAccess.Create(userId, token, deviceInfo, browser, ipAddress);
 
     /// <inheritdoc />
-    public Session? FindSessionByToken(string token)
-    {
-        return sessionDataAccess.FindByToken(token);
-    }
+    public ErrorOr<Session> FindSessionByToken(string token) => sessionDataAccess.FindByToken(token);
 
     /// <inheritdoc />
-    public void InvalidateAllSessions(int userId)
-    {
-        sessionDataAccess.RevokeAll(userId);
-    }
+    public ErrorOr<List<Session>> FindSessionsByUserId(int userId) => sessionDataAccess.FindByUserId(userId);
 
     /// <inheritdoc />
-    public List<Session> FindSessionsByUserId(int userId)
-    {
-        return sessionDataAccess.FindByUserId(userId);
-    }
+    public ErrorOr<Success> UpdateSessionToken(int sessionId) => sessionDataAccess.Revoke(sessionId);
 
     /// <inheritdoc />
-    public bool UpdateSessionToken(int sessionId)
-    {
-        // Revoke the old session
-        // the service layer will create a new one
-        sessionDataAccess.Revoke(sessionId);
-        return true;
-    }
+    public ErrorOr<Success> InvalidateAllSessions(int userId) => sessionDataAccess.RevokeAll(userId);
 
     /// <inheritdoc />
-    public void SavePasswordResetToken(PasswordResetToken token)
-    {
-        passwordResetTokenDataAccess.Create(token.UserId, token.TokenHash, token.ExpiresAt);
-    }
+    public ErrorOr<Success> SavePasswordResetToken(PasswordResetToken token) =>
+        passwordResetTokenDataAccess.Create(token.UserId, token.TokenHash, token.ExpiresAt)
+            .Then(_ => Result.Success);
 
     /// <inheritdoc />
-    public PasswordResetToken? FindPasswordResetToken(string tokenHash)
-    {
-        return passwordResetTokenDataAccess.FindByToken(tokenHash);
-    }
+    public ErrorOr<PasswordResetToken> FindPasswordResetToken(string tokenHash) =>
+        passwordResetTokenDataAccess.FindByToken(tokenHash);
 
     /// <inheritdoc />
-    public void MarkPasswordResetTokenAsUsed(int tokenId)
-    {
+    public ErrorOr<Success> MarkPasswordResetTokenAsUsed(int tokenId) =>
         passwordResetTokenDataAccess.MarkAsUsed(tokenId);
-    }
 
     /// <inheritdoc />
-    public void DeleteExpiredPasswordResetTokens()
-    {
+    public ErrorOr<Success> DeleteExpiredPasswordResetTokens() =>
         passwordResetTokenDataAccess.DeleteExpired();
-    }
 
     /// <inheritdoc />
-    public void IncrementFailedAttempts(int userId)
-    {
-        userDataAccess.IncrementFailedAttempts(userId);
-    }
+    public ErrorOr<Success> IncrementFailedAttempts(int userId) => userDataAccess.IncrementFailedAttempts(userId);
 
     /// <inheritdoc />
-    public void ResetFailedAttempts(int userId)
-    {
-        userDataAccess.ResetFailedAttempts(userId);
-    }
+    public ErrorOr<Success> ResetFailedAttempts(int userId) => userDataAccess.ResetFailedAttempts(userId);
 
     /// <inheritdoc />
-    public void LockAccount(int userId, DateTime lockoutEnd)
-    {
-        userDataAccess.LockAccount(userId, lockoutEnd);
-    }
+    public ErrorOr<Success> LockAccount(int userId, DateTime lockoutEnd) => userDataAccess.LockAccount(userId, lockoutEnd);
 
     /// <inheritdoc />
-    public User? FindUserById(int id)
-    {
-        return userDataAccess.FindById(id);
-    }
-
-    /// <inheritdoc />
-    public bool UpdatePassword(int userId, string newPasswordHash)
-    {
-        return userDataAccess.UpdatePassword(userId, newPasswordHash);
-    }
+    public ErrorOr<Success> UpdatePassword(int userId, string newPasswordHash) =>
+        userDataAccess.UpdatePassword(userId, newPasswordHash);
 }

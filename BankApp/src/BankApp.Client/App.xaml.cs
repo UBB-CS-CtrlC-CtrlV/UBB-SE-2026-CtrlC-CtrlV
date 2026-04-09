@@ -35,7 +35,7 @@ public partial class App
     {
         ConfigureLogging();
 
-        var configuration = new ConfigurationBuilder()
+        IConfigurationRoot configuration = new ConfigurationBuilder()
             .SetBasePath(AppContext.BaseDirectory)
             .AddJsonFile("appsettings.json", optional: false)
             // appsettings.Local.json is `.gitignore`
@@ -75,7 +75,7 @@ public partial class App
 
     private static void ConfigureLogging()
     {
-        var logDirectory = Path.Combine(
+        string logDirectory = Path.Combine(
             Environment.GetFolderPath(Environment.SpecialFolder.LocalApplicationData),
             "BankApp",
             "Logs");

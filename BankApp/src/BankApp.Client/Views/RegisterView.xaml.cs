@@ -67,23 +67,23 @@ public sealed partial class RegisterView : IStateObserver<RegisterState>
                     break;
 
                 case RegisterState.EmailAlreadyExists:
-                    this.ShowError("This email is already registered.");
+                    this.ShowError(UserMessages.Register.EmailAlreadyExists);
                     break;
 
                 case RegisterState.InvalidEmail:
-                    this.ShowError("Please enter a valid email address.");
+                    this.ShowError(UserMessages.Register.InvalidEmail);
                     break;
 
                 case RegisterState.WeakPassword:
-                    this.ShowError("Password must be at least 8 characters with uppercase, lowercase, a digit and a special character.");
+                    this.ShowError(UserMessages.Register.WeakPassword);
                     break;
 
                 case RegisterState.PasswordMismatch:
-                    this.ShowError("Passwords do not match.");
+                    this.ShowError(UserMessages.Register.PasswordMismatch);
                     break;
 
                 case RegisterState.Error:
-                    this.ShowError("Please fill in all fields.");
+                    this.ShowError(UserMessages.Register.AllFieldsRequired);
                     break;
 
                 default:
@@ -123,10 +123,10 @@ public sealed partial class RegisterView : IStateObserver<RegisterState>
     private async void RegisterButton_Click(object sender, RoutedEventArgs e)
     {
         await this.viewModel.Register(
-            this.EmailBox.Text.Trim(),
+            this.EmailBox.Text,
             this.PasswordBox.Password,
             this.ConfirmPasswordBox.Password,
-            this.FullNameBox.Text.Trim());
+            this.FullNameBox.Text);
     }
 
     private async void GoogleRegisterButton_Click(object sender, RoutedEventArgs e)

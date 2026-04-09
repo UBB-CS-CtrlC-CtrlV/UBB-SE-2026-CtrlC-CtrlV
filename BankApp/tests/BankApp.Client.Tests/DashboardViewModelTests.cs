@@ -7,7 +7,6 @@ using System.Threading.Tasks;
 using BankApp.Client.Utilities;
 using BankApp.Client.ViewModels;
 using BankApp.Contracts.DTOs.Dashboard;
-using BankApp.Contracts.Entities;
 using BankApp.Client.Enums;
 using ErrorOr;
 using Microsoft.Extensions.Configuration;
@@ -31,10 +30,10 @@ public class DashboardViewModelTests
         {
             Response = new DashboardResponse
             {
-                CurrentUser = new User { FullName = "Ada Lovelace" },
+                CurrentUser = new UserSummaryDto { FullName = "Ada Lovelace" },
                 Cards =
                 [
-                    new Card
+                    new CardDto
                     {
                         CardBrand = "Visa", CardType = "Debit", CardholderName = "Ada Lovelace",
                         CardNumber = "1234567812345678",
@@ -42,7 +41,7 @@ public class DashboardViewModelTests
                 ],
                 RecentTransactions =
                 [
-                    new Transaction
+                    new TransactionDto
                     {
                         MerchantName = "Coffee Shop", Type = "Card payment", Direction = "Out", Amount = 12.5m,
                         Currency = "USD",

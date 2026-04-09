@@ -3,7 +3,6 @@
 // </copyright>
 
 using System;
-using System.Linq;
 using System.Threading.Tasks;
 using BankApp.Client.Utilities;
 using BankApp.Contracts.DTOs.Auth;
@@ -56,6 +55,9 @@ public class RegisterViewModel
     /// <returns>A <see cref="Task"/> representing the asynchronous operation.</returns>
     public async Task Register(string email, string password, string confirmPassword, string fullName)
     {
+        email = email?.Trim() ?? string.Empty;
+        fullName = fullName?.Trim() ?? string.Empty;
+
         RegisterState? validationError = this.ValidateLocally(email, password, confirmPassword, fullName);
         if (validationError != null)
         {
@@ -65,38 +67,31 @@ public class RegisterViewModel
 
         this.State.SetValue(RegisterState.Loading);
 
-        var request = new RegisterRequest
+        RegisterRequest request = new RegisterRequest
         {
             Email = email,
             Password = password,
             FullName = fullName,
         };
 
-        var result = await this.apiClient.PostAsync<RegisterRequest, RegisterResponse>("/api/auth/register", request);
+        ErrorOr<Success> result = await this.apiClient.PostAsync<RegisterRequest>(ApiEndpoints.Register, request);
 
         result.Switch(
-            response =>
-            {
-                if (!response.Success)
-                {
-                    this.HandleRegisterError(response);
-                    return;
-                }
-
-                this.State.SetValue(RegisterState.Success);
-            },
+            _ => { this.State.SetValue(RegisterState.Success); },
             errors =>
             {
-                if (errors[0].Type == ErrorType.Validation)
+                Error error = errors[0];
+                if (error.Type == ErrorType.Conflict)
                 {
-                    if (errors[0].Description.Contains("email", StringComparison.OrdinalIgnoreCase))
-                    {
-                        this.State.SetValue(RegisterState.InvalidEmail);
-                    }
-                    else
-                    {
-                        this.State.SetValue(RegisterState.WeakPassword);
-                    }
+                    this.State.SetValue(RegisterState.EmailAlreadyExists);
+                }
+                else if (error.Code == "invalid_email")
+                {
+                    this.State.SetValue(RegisterState.InvalidEmail);
+                }
+                else if (error.Code == "weak_password")
+                {
+                    this.State.SetValue(RegisterState.WeakPassword);
                 }
                 else
                 {
@@ -123,16 +118,16 @@ public class RegisterViewModel
                 return;
             }
 
-            var authority = this.configuration["OAuth:Google:Authority"]
+            string authority = this.configuration["OAuth:Google:Authority"]
                 ?? throw new InvalidOperationException("OAuth:Google:Authority is missing from configuration.");
-            var clientId = this.configuration["OAuth:Google:ClientId"]
+            string clientId = this.configuration["OAuth:Google:ClientId"]
                 ?? throw new InvalidOperationException("OAuth:Google:ClientId is missing from configuration.");
-            var clientSecret = this.configuration["OAuth:Google:ClientSecret"]
+            string clientSecret = this.configuration["OAuth:Google:ClientSecret"]
                 ?? throw new InvalidOperationException("OAuth:Google:ClientSecret is missing from configuration.");
-            var redirectUri = this.configuration["OAuth:Google:RedirectUri"]
+            string redirectUri = this.configuration["OAuth:Google:RedirectUri"]
                 ?? throw new InvalidOperationException("OAuth:Google:RedirectUri is missing from configuration.");
 
-            var options = new Duende.IdentityModel.OidcClient.OidcClientOptions
+            Duende.IdentityModel.OidcClient.OidcClientOptions options = new Duende.IdentityModel.OidcClient.OidcClientOptions
             {
                 Authority = authority,
                 ClientId = clientId,
@@ -143,33 +138,27 @@ public class RegisterViewModel
             };
             options.Policy.Discovery.ValidateEndpoints = false;
 
-            var oidcClient = new Duende.IdentityModel.OidcClient.OidcClient(options);
-            var loginResult = await oidcClient.LoginAsync(new Duende.IdentityModel.OidcClient.LoginRequest());
+            Duende.IdentityModel.OidcClient.OidcClient oidcClient = new Duende.IdentityModel.OidcClient.OidcClient(options);
+            Duende.IdentityModel.OidcClient.LoginResult loginResult = await oidcClient.LoginAsync(new Duende.IdentityModel.OidcClient.LoginRequest());
             if (loginResult.IsError)
             {
                 this.State.SetValue(RegisterState.Error);
                 return;
             }
 
-            var apiRequest = new OAuthLoginRequest
+            OAuthLoginRequest apiRequest = new OAuthLoginRequest
             {
                 Provider = "Google",
                 ProviderToken = loginResult.IdentityToken,
             };
 
-            var result = await this.apiClient.PostAsync<OAuthLoginRequest, LoginResponse>("/api/auth/oauth-login", apiRequest);
+            ErrorOr<LoginSuccessResponse> result = await this.apiClient.PostAsync<OAuthLoginRequest, LoginSuccessResponse>(ApiEndpoints.OAuthLogin, apiRequest);
 
             result.Switch(
                 response =>
                 {
-                    if (!response.Success)
-                    {
-                        this.State.SetValue(RegisterState.Error);
-                        return;
-                    }
-
                     this.apiClient.SetToken(response.Token!);
-                    this.apiClient.CurrentUserId = response.UserId!.Value;
+                    this.apiClient.CurrentUserId = response.UserId;
                     this.State.SetValue(RegisterState.AutoLoggedIn);
                 },
                 errors =>
@@ -200,12 +189,7 @@ public class RegisterViewModel
             return RegisterState.InvalidEmail;
         }
 
-        if (string.IsNullOrWhiteSpace(password)
-            || password.Length < 8
-            || !password.Any(char.IsUpper)
-            || !password.Any(char.IsLower)
-            || !password.Any(char.IsDigit)
-            || !password.Any(c => !char.IsLetterOrDigit(c)))
+        if (!PasswordValidator.IsStrong(password))
         {
             return RegisterState.WeakPassword;
         }
@@ -216,25 +200,5 @@ public class RegisterViewModel
         }
 
         return null;
-    }
-
-    private void HandleRegisterError(RegisterResponse response)
-    {
-        if (response.Error != null && response.Error.Contains("already registered", StringComparison.OrdinalIgnoreCase))
-        {
-            this.State.SetValue(RegisterState.EmailAlreadyExists);
-        }
-        else if (response.Error != null && response.Error.Contains("email", StringComparison.OrdinalIgnoreCase))
-        {
-            this.State.SetValue(RegisterState.InvalidEmail);
-        }
-        else if (response.Error != null && response.Error.Contains("password", StringComparison.OrdinalIgnoreCase))
-        {
-            this.State.SetValue(RegisterState.WeakPassword);
-        }
-        else
-        {
-            this.State.SetValue(RegisterState.Error);
-        }
     }
 }

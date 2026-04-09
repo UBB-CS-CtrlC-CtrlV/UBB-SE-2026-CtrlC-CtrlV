@@ -1,10 +1,9 @@
-using BankApp.Contracts.Enums;
-
-namespace BankApp.Server.Repositories.Implementations;
-
 using BankApp.Contracts.Entities;
 using BankApp.Server.DataAccess.Interfaces;
 using BankApp.Server.Repositories.Interfaces;
+using ErrorOr;
+
+namespace BankApp.Server.Repositories.Implementations;
 
 /// <summary>
 /// Provides repository operations for user profile management, sessions, OAuth links, and notification preferences.
@@ -33,64 +32,36 @@ public class UserRepository : IUserRepository
     }
 
     /// <inheritdoc />
-    public User? FindById(int id)
-    {
-        return userDataAccess.FindById(id);
-    }
+    public ErrorOr<User> FindById(int id) => userDataAccess.FindById(id);
 
     /// <inheritdoc />
-    public bool UpdateUser(User user)
-    {
-        return userDataAccess.Update(user);
-    }
+    public ErrorOr<Success> UpdateUser(User user) => userDataAccess.Update(user);
 
     /// <inheritdoc />
-    public bool UpdatePassword(int userId, string newPasswordHash)
-    {
-        return userDataAccess.UpdatePassword(userId, newPasswordHash);
-    }
+    public ErrorOr<Success> UpdatePassword(int userId, string newPasswordHash) =>
+        userDataAccess.UpdatePassword(userId, newPasswordHash);
 
     /// <inheritdoc />
-    public List<Session> GetActiveSessions(int userId)
-    {
-        return sessionDataAccess.FindByUserId(userId);
-    }
+    public ErrorOr<List<Session>> GetActiveSessions(int userId) => sessionDataAccess.FindByUserId(userId);
 
     /// <inheritdoc />
-    public void RevokeSession(int sessionId)
-    {
-        sessionDataAccess.Revoke(sessionId);
-    }
+    public ErrorOr<Success> RevokeSession(int sessionId) => sessionDataAccess.Revoke(sessionId);
 
     /// <inheritdoc />
-    public List<OAuthLink> GetLinkedProviders(int userId)
-    {
-        return oAuthLinkDataAccess.FindByUserId(userId);
-    }
+    public ErrorOr<List<OAuthLink>> GetLinkedProviders(int userId) => oAuthLinkDataAccess.FindByUserId(userId);
 
     /// <inheritdoc />
-    public bool SaveOAuthLink(int userId, string provider, string providerUserId, string? email)
-    {
-        return oAuthLinkDataAccess.Create(userId, provider, providerUserId, email);
-    }
+    public ErrorOr<Success> SaveOAuthLink(int userId, string provider, string providerUserId, string? email) =>
+        oAuthLinkDataAccess.Create(userId, provider, providerUserId, email);
 
     /// <inheritdoc />
-    public void DeleteOAuthLink(int linkId)
-    {
-        oAuthLinkDataAccess.Delete(linkId);
-    }
+    public ErrorOr<Success> DeleteOAuthLink(int linkId) => oAuthLinkDataAccess.Delete(linkId);
 
     /// <inheritdoc />
-    public List<NotificationPreference> GetNotificationPreferences(int userId)
-    {
-        return notificationPreferenceDataAccess.FindByUserId(userId);
-    }
+    public ErrorOr<List<NotificationPreference>> GetNotificationPreferences(int userId) =>
+        notificationPreferenceDataAccess.FindByUserId(userId);
 
     /// <inheritdoc />
-    public bool UpdateNotificationPreferences(int userId, List<NotificationPreference> preferences)
-    {
-        return notificationPreferenceDataAccess.Update(userId, preferences);
-    }
+    public ErrorOr<Success> UpdateNotificationPreferences(int userId, List<NotificationPreference> preferences) =>
+        notificationPreferenceDataAccess.Update(userId, preferences);
 }
-
-

@@ -3,6 +3,8 @@ using BankApp.Server.DependencyInjection;
 using Serilog;
 using Serilog.Events;
 
+const string DefaultLogFilePath = "logs/bankapp-server-.log";
+
 // Configure Serilog before building the host so that startup errors are also captured.
 Log.Logger = new LoggerConfiguration()
     .MinimumLevel.Override("Microsoft", LogEventLevel.Warning)
@@ -10,7 +12,7 @@ Log.Logger = new LoggerConfiguration()
     .Enrich.FromLogContext()
     .WriteTo.Console()
     .WriteTo.File(
-        path: "logs/bankapp-server-.log",
+        path: DefaultLogFilePath,
         rollingInterval: RollingInterval.Day,
         retainedFileCountLimit: 14)
     .CreateBootstrapLogger();
@@ -30,7 +32,7 @@ try
             .Enrich.FromLogContext()
             .WriteTo.Console()
             .WriteTo.File(
-                path: "logs/bankapp-server-.log",
+                path: context.Configuration["Logging:FilePath"] ?? DefaultLogFilePath,
                 rollingInterval: RollingInterval.Day,
                 retainedFileCountLimit: 14));
 

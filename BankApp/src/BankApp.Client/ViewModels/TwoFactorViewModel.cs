@@ -21,7 +21,7 @@ namespace BankApp.Client.ViewModels;
 /// binds to directly via <c>{x:Bind}</c>, keeping all business decisions out of the
 /// code-behind.
 /// </summary>
-public class TwoFactorViewModel : INotifyPropertyChanged
+public partial class TwoFactorViewModel : INotifyPropertyChanged
 {
     private const int ResendCooldownSeconds = 30;
     private const int OtpRequiredLength = 6;
@@ -209,21 +209,15 @@ public class TwoFactorViewModel : INotifyPropertyChanged
             OTPCode = this.OtpCode,
         };
 
-        var result = await this.apiClient.PostAsync<VerifyOTPRequest, LoginResponse>(
-            "/api/auth/verify-otp", request);
+        var result = await this.apiClient.PostAsync<VerifyOTPRequest, LoginSuccessResponse>(
+            ApiEndpoints.VerifyOtp, request);
 
         result.Switch(
             response =>
             {
-                if (response.Success)
-                {
-                    this.apiClient.SetToken(response.Token!);
-                    this.IsLoading = false;
-                    this.State.SetValue(TwoFactorState.Success);
-                    return;
-                }
-
-                this.ApplyInvalidOtp();
+                this.apiClient.SetToken(response.Token!);
+                this.IsLoading = false;
+                this.State.SetValue(TwoFactorState.Success);
             },
             errors =>
             {
@@ -263,7 +257,7 @@ public class TwoFactorViewModel : INotifyPropertyChanged
         }
 
         var result = await this.apiClient.PostAsync<object?, object>(
-            $"/api/auth/resend-otp?userId={userId.Value}", null);
+            $"{ApiEndpoints.ResendOtp}?userId={userId.Value}", null);
 
         result.Switch(
             _ => { },

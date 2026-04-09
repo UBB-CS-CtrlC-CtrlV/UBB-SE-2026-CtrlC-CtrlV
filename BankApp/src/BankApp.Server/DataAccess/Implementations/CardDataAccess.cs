@@ -1,5 +1,7 @@
 using BankApp.Contracts.Entities;
 using BankApp.Server.DataAccess.Interfaces;
+using Dapper;
+using ErrorOr;
 
 namespace BankApp.Server.DataAccess.Implementations;
 
@@ -8,65 +10,38 @@ namespace BankApp.Server.DataAccess.Implementations;
 /// </summary>
 public class CardDataAccess : ICardDataAccess
 {
-    private readonly AppDbContext dbContext;
+    private const string SelectAllColumns = """
+        SELECT Id, AccountId, UserId, CardNumber, CardholderName,
+               ExpiryDate, CVV, CardType, CardBrand, Status,
+               DailyTransactionLimit, MonthlySpendingCap, AtmWithdrawalLimit,
+               ContactlessLimit, IsContactlessEnabled, IsOnlineEnabled,
+               SortOrder, CancelledAt, CreatedAt
+        FROM Card
+        """;
+
+    private readonly AppDbContext db;
 
     /// <summary>
     /// Initializes a new instance of the <see cref="CardDataAccess"/> class.
     /// </summary>
-    /// <param name="dbContext">The database context used for executing queries.</param>
-    public CardDataAccess(AppDbContext dbContext)
+    /// <param name="db">The database context used for executing queries.</param>
+    public CardDataAccess(AppDbContext db)
     {
-        this.dbContext = dbContext;
+        this.db = db;
     }
 
     /// <inheritdoc />
-    public Card? FindById(int id)
+    public ErrorOr<Card> FindById(int id)
     {
-        var sql = @"SELECT * FROM Card WHERE Id = @p0";
-
-        return this.dbContext.ExecuteQuery(sql, new object[] { id }, reader =>
-            reader.Read() ? this.MapToCard(reader) : null);
+        const string query = $"{SelectAllColumns} WHERE Id = @Id";
+        return this.db.Query(conn => conn.QueryFirstOrDefault<Card>(query, new { Id = id }))
+            .Then(card => card ?? (ErrorOr<Card>)Error.NotFound(description: "Card not found."));
     }
 
-    /// <inheritdoc/>
-    public List<Card> FindByUserId(int userId)
+    /// <inheritdoc />
+    public ErrorOr<List<Card>> FindByUserId(int userId)
     {
-        var sql = @"SELECT * FROM Card WHERE UserId = @p0";
-
-        return this.dbContext.ExecuteQuery(sql, new object[] { userId }, reader =>
-        {
-            var cards = new List<Card>();
-            while (reader.Read())
-            {
-                cards.Add(this.MapToCard(reader));
-            }
-
-            return cards;
-        });
-    }
-    private Card MapToCard(System.Data.IDataReader reader)
-    {
-        return new Card
-        {
-            Id = reader.GetInt32(reader.GetOrdinal("Id")),
-            AccountId = reader.GetInt32(reader.GetOrdinal("AccountId")),
-            UserId = reader.GetInt32(reader.GetOrdinal("UserId")),
-            CardNumber = reader.GetString(reader.GetOrdinal("CardNumber")),
-            CardholderName = reader.GetString(reader.GetOrdinal("CardholderName")),
-            ExpiryDate = reader.GetDateTime(reader.GetOrdinal("ExpiryDate")),
-            CVV = reader.GetString(reader.GetOrdinal("CVV")),
-            CardType = reader.GetString(reader.GetOrdinal("CardType")),
-            CardBrand = reader.IsDBNull(reader.GetOrdinal("CardBrand")) ? null : reader.GetString(reader.GetOrdinal("CardBrand")),
-            Status = reader.GetString(reader.GetOrdinal("Status")),
-            DailyTransactionLimit = reader.IsDBNull(reader.GetOrdinal("DailyTransactionLimit")) ? null : reader.GetDecimal(reader.GetOrdinal("DailyTransactionLimit")),
-            MonthlySpendingCap = reader.IsDBNull(reader.GetOrdinal("MonthlySpendingCap")) ? null : reader.GetDecimal(reader.GetOrdinal("MonthlySpendingCap")),
-            AtmWithdrawalLimit = reader.IsDBNull(reader.GetOrdinal("AtmWithdrawalLimit")) ? null : reader.GetDecimal(reader.GetOrdinal("AtmWithdrawalLimit")),
-            ContactlessLimit = reader.IsDBNull(reader.GetOrdinal("ContactlessLimit")) ? null : reader.GetDecimal(reader.GetOrdinal("ContactlessLimit")),
-            IsContactlessEnabled = reader.GetBoolean(reader.GetOrdinal("IsContactlessEnabled")),
-            IsOnlineEnabled = reader.GetBoolean(reader.GetOrdinal("IsOnlineEnabled")),
-            SortOrder = reader.GetInt32(reader.GetOrdinal("SortOrder")),
-            CancelledAt = reader.IsDBNull(reader.GetOrdinal("CancelledAt")) ? null : reader.GetDateTime(reader.GetOrdinal("CancelledAt")),
-            CreatedAt = reader.GetDateTime(reader.GetOrdinal("CreatedAt"))
-        };
+        const string query = $"{SelectAllColumns} WHERE UserId = @UserId";
+        return this.db.Query(conn => conn.Query<Card>(query, new { UserId = userId }).AsList());
     }
 }

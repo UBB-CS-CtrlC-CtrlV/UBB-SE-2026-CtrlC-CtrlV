@@ -34,6 +34,25 @@ internal static class UserMessages
         internal const string IncorrectCode = "The code you entered is incorrect.";
     }
 
+    /// <summary>Messages shown in the registration view.</summary>
+    internal static class Register
+    {
+        /// <summary>Shown when the email address is already associated with an account.</summary>
+        internal const string EmailAlreadyExists = "This email is already registered.";
+
+        /// <summary>Shown when the entered email address is not valid.</summary>
+        internal const string InvalidEmail = "Please enter a valid email address.";
+
+        /// <summary>Shown when the chosen password does not meet strength requirements.</summary>
+        internal const string WeakPassword = "Password must be at least 8 characters with uppercase, lowercase, a digit and a special character.";
+
+        /// <summary>Shown when the password and confirmation password do not match.</summary>
+        internal const string PasswordMismatch = "Passwords do not match.";
+
+        /// <summary>Shown when one or more required fields are left blank.</summary>
+        internal const string AllFieldsRequired = "Please fill in all fields.";
+    }
+
     /// <summary>Messages shown in the forgot-password view.</summary>
     internal static class ForgotPassword
     {

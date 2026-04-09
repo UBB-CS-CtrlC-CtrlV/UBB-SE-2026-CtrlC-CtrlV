@@ -1,108 +1,85 @@
 using BankApp.Contracts.Entities;
 using BankApp.Server.DataAccess.Interfaces;
+using Dapper;
+using ErrorOr;
 
-namespace BankApp.Server.DataAccess;
+namespace BankApp.Server.DataAccess.Implementations;
 
 /// <summary>
 /// Provides SQL Server data access for user session records.
 /// </summary>
 public class SessionDataAccess : ISessionDataAccess
 {
-    private readonly AppDbContext dbContext;
     private const int SessionExpirationDays = 7;
+
+    private const string SelectAllColumns = """
+        SELECT Id, UserId, Token, DeviceInfo, Browser, IpAddress,
+               LastActiveAt, ExpiresAt, IsRevoked, CreatedAt
+        FROM [Session]
+        """;
+
+    private readonly AppDbContext db;
 
     /// <summary>
     /// Initializes a new instance of the <see cref="SessionDataAccess"/> class.
     /// </summary>
-    /// <param name="dbContext">The database context used for executing queries.</param>
-    public SessionDataAccess(AppDbContext dbContext)
+    /// <param name="db">The database context used for executing queries.</param>
+    public SessionDataAccess(AppDbContext db)
     {
-        this.dbContext = dbContext;
+        this.db = db;
     }
 
     /// <inheritdoc />
-    /// <inheritdoc />
-    public Session Create(int userId, string token, string? deviceInfo, string? browser, string? ipAddress)
+    public ErrorOr<Session> Create(int userId, string token, string? deviceInfo, string? browser, string? ipAddress)
     {
-        var sql = @"INSERT INTO [Session] (UserId, Token, DeviceInfo, Browser, IpAddress, LastActiveAt, ExpiresAt)
-                OUTPUT INSERTED.Id, INSERTED.UserId, INSERTED.Token, INSERTED.DeviceInfo,
-                       INSERTED.Browser, INSERTED.IpAddress, INSERTED.LastActiveAt,
-                       INSERTED.ExpiresAt, INSERTED.IsRevoked, INSERTED.CreatedAt
-                VALUES (@p0, @p1, @p2, @p3, @p4, GETUTCDATE(), DATEADD(DAY, @p5, GETUTCDATE()))";
+        const string sql = """
+            INSERT INTO [Session] (UserId, Token, DeviceInfo, Browser, IpAddress, LastActiveAt, ExpiresAt)
+            OUTPUT INSERTED.Id, INSERTED.UserId, INSERTED.Token, INSERTED.DeviceInfo,
+                   INSERTED.Browser, INSERTED.IpAddress, INSERTED.LastActiveAt,
+                   INSERTED.ExpiresAt, INSERTED.IsRevoked, INSERTED.CreatedAt
+            VALUES (@UserId, @Token, @DeviceInfo, @Browser, @IpAddress,
+                    GETUTCDATE(), DATEADD(DAY, @ExpirationDays, GETUTCDATE()))
+            """;
 
-        return this.dbContext.ExecuteQuery(sql, new object[]
+        return this.db.Query(conn => conn.QueryFirstOrDefault<Session>(sql, new
         {
-            userId,
-            token,
-            deviceInfo ?? (object)DBNull.Value,
-            browser ?? (object)DBNull.Value,
-            ipAddress ?? (object)DBNull.Value,
-            SessionExpirationDays,
-        }, reader =>
-        {
-            reader.Read();
-            return this.MapSession(reader);
-        });
+            UserId = userId,
+            Token = token,
+            DeviceInfo = deviceInfo,
+            Browser = browser,
+            IpAddress = ipAddress,
+            ExpirationDays = SessionExpirationDays,
+        })).Then(session => session ?? (ErrorOr<Session>)Error.Failure(description: "Failed to create session."));
     }
 
     /// <inheritdoc />
-    public Session? FindByToken(string token)
+    public ErrorOr<Session> FindByToken(string token)
     {
-        var sql = @"SELECT Id, UserId, Token, DeviceInfo, Browser, IpAddress,
-                LastActiveAt, ExpiresAt, IsRevoked, CreatedAt
-                FROM [Session] WHERE Token = @p0 AND IsRevoked = 0 AND ExpiresAt > GETUTCDATE()";
-
-        return this.dbContext.ExecuteQuery(sql, new object[] { token }, reader =>
-            reader.Read() ? this.MapSession(reader) : null);
+        const string query = $"{SelectAllColumns} WHERE Token = @Token AND IsRevoked = 0 AND ExpiresAt > GETUTCDATE()";
+        return this.db.Query(conn => conn.QueryFirstOrDefault<Session>(query, new { Token = token }))
+            .Then(session => session ?? (ErrorOr<Session>)Error.NotFound(description: "Session not found."));
     }
 
     /// <inheritdoc />
-    public List<Session> FindByUserId(int userId)
+    public ErrorOr<List<Session>> FindByUserId(int userId)
     {
-        var sql = @"SELECT Id, UserId, Token, DeviceInfo, Browser, IpAddress,
-                LastActiveAt, ExpiresAt, IsRevoked, CreatedAt
-                FROM [Session] WHERE UserId = @p0 AND IsRevoked = 0 AND ExpiresAt > GETUTCDATE()";
-
-        return this.dbContext.ExecuteQuery(sql, new object[] { userId }, reader =>
-        {
-            var sessions = new List<Session>();
-            while (reader.Read())
-            {
-                sessions.Add(this.MapSession(reader));
-            }
-
-            return sessions;
-        });
+        const string query = $"{SelectAllColumns} WHERE UserId = @UserId AND IsRevoked = 0 AND ExpiresAt > GETUTCDATE()";
+        return this.db.Query(conn => conn.Query<Session>(query, new { UserId = userId }).AsList());
     }
 
     /// <inheritdoc />
-    public void Revoke(int sessionId)
+    public ErrorOr<Success> Revoke(int sessionId)
     {
-        var sql = "UPDATE [Session] SET IsRevoked = 1 WHERE Id = @p0";
-        dbContext.ExecuteNonQuery(sql, new object[] { sessionId });
+        const string sql = "UPDATE [Session] SET IsRevoked = 1 WHERE Id = @Id";
+        return this.db.Query(conn => conn.Execute(sql, new { Id = sessionId }))
+            .Then(_ => (ErrorOr<Success>)Result.Success);
     }
 
     /// <inheritdoc />
-    public void RevokeAll(int userId)
+    public ErrorOr<Success> RevokeAll(int userId)
     {
-        var sql = "UPDATE [Session] SET IsRevoked = 1 WHERE UserId = @p0 AND IsRevoked = 0";
-        dbContext.ExecuteNonQuery(sql, new object[] { userId });
-    }
-
-    private Session MapSession(System.Data.IDataReader reader)
-    {
-        return new Session
-        {
-            Id = reader.GetInt32(reader.GetOrdinal("Id")),
-            UserId = reader.GetInt32(reader.GetOrdinal("UserId")),
-            Token = reader.GetString(reader.GetOrdinal("Token")),
-            DeviceInfo = reader.IsDBNull(reader.GetOrdinal("DeviceInfo")) ? null : reader.GetString(reader.GetOrdinal("DeviceInfo")),
-            Browser = reader.IsDBNull(reader.GetOrdinal("Browser")) ? null : reader.GetString(reader.GetOrdinal("Browser")),
-            IpAddress = reader.IsDBNull(reader.GetOrdinal("IpAddress")) ? null : reader.GetString(reader.GetOrdinal("IpAddress")),
-            LastActiveAt = reader.IsDBNull(reader.GetOrdinal("LastActiveAt")) ? null : reader.GetDateTime(reader.GetOrdinal("LastActiveAt")),
-            ExpiresAt = reader.GetDateTime(reader.GetOrdinal("ExpiresAt")),
-            IsRevoked = reader.GetBoolean(reader.GetOrdinal("IsRevoked")),
-            CreatedAt = reader.GetDateTime(reader.GetOrdinal("CreatedAt"))
-        };
+        const string sql = "UPDATE [Session] SET IsRevoked = 1 WHERE UserId = @UserId AND IsRevoked = 0";
+        return this.db.Query(conn => conn.Execute(sql, new { UserId = userId }))
+            .Then(_ => (ErrorOr<Success>)Result.Success);
     }
 }

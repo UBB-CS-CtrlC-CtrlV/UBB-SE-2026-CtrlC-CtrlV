@@ -125,10 +125,10 @@ public sealed partial class LoginView : IStateObserver<LoginState>
 
     private async void SignInButton_Click(object sender, RoutedEventArgs e)
     {
-        var email = this.EmailBox.Text.Trim();
+        var email = this.EmailBox.Text;
         var password = this.PasswordBox.Password;
 
-        if (string.IsNullOrWhiteSpace(email) || string.IsNullOrWhiteSpace(password))
+        if (!this.viewModel.CanLogin(email, password))
         {
             this.ShowError("Please enter email and password.");
             return;
