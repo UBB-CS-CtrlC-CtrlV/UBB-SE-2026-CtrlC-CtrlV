@@ -108,8 +108,8 @@ public class DashboardViewModel
     /// Gets the ordered list of card-dot view models for the carousel indicator.
     /// Each dot knows whether it represents the currently active card.
     /// </summary>
-    public IReadOnlyList<CardDotViewModel> CardDots =>
-        this.Cards.Select((_, index) => new CardDotViewModel { IsActive = index == this.CurrentCardIndex })
+    public IReadOnlyList<CardPageIndicatorViewModel> CardDots =>
+        this.Cards.Select((_, index) => new CardPageIndicatorViewModel { IsActive = index == this.CurrentCardIndex })
             .ToList();
 
     /// <summary>

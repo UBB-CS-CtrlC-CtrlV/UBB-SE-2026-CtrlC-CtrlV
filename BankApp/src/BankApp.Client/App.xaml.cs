@@ -75,7 +75,7 @@ public partial class App
 
     private static void ConfigureLogging()
     {
-        var logDirectory = Path.Combine(
+        string logDirectory = Path.Combine(
             Environment.GetFolderPath(Environment.SpecialFolder.LocalApplicationData),
             "BankApp",
             "Logs");
