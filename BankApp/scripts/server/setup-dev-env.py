@@ -1,12 +1,23 @@
 #!/usr/bin/env python3
-# Generates .env for Docker Compose. DB password and JWT secret are auto-generated.
-# Pass --no-email to skip SMTP prompts and use placeholders.
+# Generates .env for Docker Compose. All secrets are auto-generated.
+# SMTP settings are optional — omitting them writes placeholders and logs a warning.
 #
-#   python scripts/server/setup-dev-env.py [--no-email] [--force]
+# Usage:
+#   python scripts/server/setup-dev-env.py [options]
+#
+# Options:
+#   --force                    Overwrite an existing .env without prompting.
+#   --smtp-host HOST           SMTP host          (default: smtp.gmail.com)
+#   --smtp-port PORT           SMTP port          (default: 587)
+#   --smtp-user USER           SMTP username / Gmail address  [non-crucial]
+#   --smtp-pass PASS           SMTP password / App password   [non-crucial]
+#   --smtp-from FROM           From address       (default: same as --smtp-user)
+#
+# All other values (DB_SA_PASSWORD, JWT_SECRET, OTP_SERVER_SECRET) are always
+# generated fresh; there is no flag to supply them manually.
 
 import argparse
 import base64
-import getpass
 import secrets
 import string
 import sys
@@ -14,6 +25,10 @@ from pathlib import Path
 
 REPO_ROOT = Path(__file__).resolve().parent.parent.parent
 ENV_FILE = REPO_ROOT / ".env"
+
+SMTP_PLACEHOLDER_HOST = "smtp.example.com"
+SMTP_PLACEHOLDER_USER = "dev@example.com"
+SMTP_PLACEHOLDER_PASS = "placeholder"
 
 
 def gen_db_password(length: int = 20) -> str:
@@ -36,42 +51,74 @@ def gen_jwt_secret() -> str:
     return base64.b64encode(secrets.token_bytes(48)).decode()
 
 
+def gen_otp_secret() -> str:
+    """32-character hex string used as the server-side OTP HMAC seed."""
+    return secrets.token_hex(16)
+
+
 def main() -> None:
-    parser = argparse.ArgumentParser(description="Generate .env for BankApp Docker Compose.")
-    parser.add_argument("--no-email", action="store_true", help="Use SMTP placeholders.")
+    parser = argparse.ArgumentParser(
+        description="Generate .env for BankApp Docker Compose.",
+        formatter_class=argparse.RawDescriptionHelpFormatter,
+        epilog=(
+            "examples:\n"
+            "  # Minimal — auto-generates all secrets, SMTP uses placeholders (warns)\n"
+            "  python scripts/server/setup-dev-env.py --force\n\n"
+            "  # With real SMTP credentials\n"
+            "  python scripts/server/setup-dev-env.py --force \\\n"
+            "      --smtp-user you@gmail.com --smtp-pass <app-password>\n\n"
+            "notes:\n"
+            "  DB_SA_PASSWORD, JWT_SECRET, and OTP_SERVER_SECRET are always auto-generated.\n"
+            "  SMTP settings are non-crucial — omitting them writes placeholders; email\n"
+            "  sends will fail at runtime but everything else keeps working.\n"
+            "  Run with --force to regenerate an existing .env."
+        ),
+    )
     parser.add_argument("--force", action="store_true", help="Overwrite existing .env.")
+    parser.add_argument("--smtp-host", default=None, metavar="HOST", help="SMTP host (default: smtp.gmail.com).")
+    parser.add_argument("--smtp-port", default="587", metavar="PORT", help="SMTP port (default: 587).")
+    parser.add_argument("--smtp-user", default=None, metavar="USER", help="SMTP username / Gmail address.")
+    parser.add_argument("--smtp-pass", default=None, metavar="PASS", help="SMTP password / App password.")
+    parser.add_argument("--smtp-from", default=None, metavar="FROM", help="From address (default: same as --smtp-user).")
     args = parser.parse_args()
 
     print("\nBankApp.Server — Docker .env setup\n------------------------------------")
 
     if ENV_FILE.exists() and not args.force:
-        print(f"\n[WARN] {ENV_FILE} already exists.")
-        if input("         Overwrite? [y/N] ").strip().lower() != "y":
-            print("Aborted.")
-            sys.exit(0)
+        print(f"[ERROR] {ENV_FILE} already exists. Pass --force to overwrite.", file=sys.stderr)
+        sys.exit(1)
 
     db_password = gen_db_password()
     jwt_secret = gen_jwt_secret()
-    print(f"\n[OK] {'DB_SA_PASSWORD':<25} generated ({len(db_password)} chars)")
-    print(f"[OK] {'JWT_SECRET':<25} generated ({len(jwt_secret)} chars)")
+    otp_secret = gen_otp_secret()
+    print(f"[OK]   {'DB_SA_PASSWORD':<25} generated ({len(db_password)} chars)")
+    print(f"[OK]   {'JWT_SECRET':<25} generated ({len(jwt_secret)} chars)")
+    print(f"[OK]   {'OTP_SERVER_SECRET':<25} generated ({len(otp_secret)} chars)")
 
-    if args.no_email:
-        smtp_host, smtp_port, smtp_user = "smtp.example.com", "587", "dev@example.com"
-        smtp_pass, smtp_from = "placeholder", "dev@example.com"
-        print("\n[INFO] SMTP skipped — placeholders written. Email sends will fail and be logged.")
-    else:
-        print("\nSMTP credentials cannot be generated. Use a Gmail App Password.")
-        print("Generate one at: Google Account > Security > 2-Step Verification > App passwords\n")
-        smtp_host = input("    EMAIL_SMTP_HOST    (e.g. smtp.gmail.com): ").strip() or "smtp.gmail.com"
-        smtp_port = input("    EMAIL_SMTP_PORT    (press Enter for 587): ").strip() or "587"
-        smtp_user = input("    EMAIL_SMTP_USER    (Gmail address): ").strip()
-        smtp_pass = getpass.getpass("    EMAIL_SMTP_PASS    (App password, input hidden): ")
-        smtp_from = input("    EMAIL_FROM_ADDRESS (Enter to reuse SmtpUser): ").strip() or smtp_user
+    # SMTP — non-crucial: warn and use placeholders when not supplied.
+    smtp_missing = not args.smtp_user or not args.smtp_pass
+    if smtp_missing:
+        print(
+            "\n[WARN] --smtp-user / --smtp-pass not provided. "
+            "Placeholder SMTP values written — email sends will fail at runtime.\n"
+            "       Re-run with --force and the SMTP flags to fix this later."
+        )
+
+    smtp_host = args.smtp_host or SMTP_PLACEHOLDER_HOST
+    smtp_port = args.smtp_port
+    smtp_user = args.smtp_user or SMTP_PLACEHOLDER_USER
+    smtp_pass = args.smtp_pass or SMTP_PLACEHOLDER_PASS
+    smtp_from = args.smtp_from or smtp_user
+
+    if not smtp_missing:
+        print(f"[OK]   {'EMAIL_SMTP_HOST':<25} {smtp_host}")
+        print(f"[OK]   {'EMAIL_SMTP_USER':<25} {smtp_user}")
 
     ENV_FILE.write_text(
         f"# Generated by scripts/server/setup-dev-env.py — do not commit.\n\n"
         f"DB_SA_PASSWORD={db_password}\n"
-        f"JWT_SECRET={jwt_secret}\n\n"
+        f"JWT_SECRET={jwt_secret}\n"
+        f"OTP_SERVER_SECRET={otp_secret}\n\n"
         f"EMAIL_SMTP_HOST={smtp_host}\n"
         f"EMAIL_SMTP_PORT={smtp_port}\n"
         f"EMAIL_SMTP_USER={smtp_user}\n"
@@ -80,7 +127,7 @@ def main() -> None:
         encoding="utf-8",
     )
 
-    print(f"\n[OK] Written to {ENV_FILE}\n\nNext steps:\n  docker compose up --build\n")
+    print(f"\n[OK]   Written to {ENV_FILE}\n\nNext steps:\n  docker compose up --build\n")
 
 
 if __name__ == "__main__":

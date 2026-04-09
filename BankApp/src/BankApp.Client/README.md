@@ -6,13 +6,29 @@ The server must be running before launching the client. See [`src/BankApp.Server
 
 ## Setup
 
-```bash
-python scripts/client/setup-dev-config.py
+### `setup-dev-config.py` — writes `appsettings.Local.json`
+
+Both flags are required. The app cannot perform Google OAuth login without them.
+
+```
+usage: setup-dev-config.py --client-id ID --client-secret SECRET
+
+  --client-id ID        Google OAuth client ID      [required]
+  --client-secret SECRET  Google OAuth client secret  [required]
 ```
 
-Creates `src/BankApp.Client/appsettings.Local.json` with your Google OAuth credentials. Gitignored, never committed. Re-running overwrites it safely.
+Example:
+```bash
+python scripts/client/setup-dev-config.py \
+    --client-id 123456.apps.googleusercontent.com \
+    --client-secret GOCSPX-abc123
+```
 
-OAuth credentials: Google Cloud Console → APIs & Services → Credentials → OAuth 2.0 Client IDs.
+Creates `src/BankApp.Client/appsettings.Local.json`. Gitignored, never committed. Re-running overwrites it safely.
+
+Obtain credentials: Google Cloud Console → APIs & Services → Credentials → OAuth 2.0 Client IDs.
+
+Run `python scripts/client/setup-dev-config.py --help` for full usage.
 
 ## Configuration
 
