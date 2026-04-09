@@ -8,6 +8,7 @@ using BankApp.Client.Utilities;
 using BankApp.Contracts.DTOs.Profile;
 using BankApp.Client.Enums;
 using BankApp.Contracts.Enums;
+using ErrorOr;
 using Microsoft.Extensions.Logging;
 
 namespace BankApp.Client.ViewModels;
@@ -20,18 +21,6 @@ public class SecurityViewModel
 {
     private readonly ApiClient apiClient;
     private readonly ILogger<SecurityViewModel> logger;
-
-    /// <summary>
-    ///
-    /// </summary>
-    /// <param name="enabled"></param>
-    /// <returns>A <see cref="Task{TResult}"/> representing the result of the asynchronous operation.</returns>
-    public async Task<bool> SetTwoFactorEnabled(bool enabled)
-    {
-        return enabled
-            ? await this.EnableTwoFactor(TwoFactorMethod.Email)
-            : await this.DisableTwoFactor();
-    }
 
     /// <summary>
     /// Initializes a new instance of the <see cref="SecurityViewModel"/> class.
@@ -49,6 +38,20 @@ public class SecurityViewModel
     /// Gets the current security workflow state.
     /// </summary>
     public ObservableState<ProfileState> State { get; }
+
+    /// <summary>
+    /// Enables or disables two-factor authentication for the current user.
+    /// </summary>
+    /// <param name="enabled">
+    /// <see langword="true"/> to enable 2FA via email; <see langword="false"/> to disable it.
+    /// </param>
+    /// <returns>A <see cref="Task{TResult}"/> representing the result of the asynchronous operation.</returns>
+    public async Task<bool> SetTwoFactorEnabled(bool enabled)
+    {
+        return enabled
+            ? await this.EnableTwoFactor(TwoFactorMethod.Email)
+            : await this.DisableTwoFactor();
+    }
 
     /// <summary>
     /// Changes the current user's password.
@@ -72,18 +75,12 @@ public class SecurityViewModel
 
         this.State.SetValue(ProfileState.Loading);
 
-        var request = new ChangePasswordRequest(userId, currentPassword, newPassword);
-        var result = await this.apiClient.PutAsync<ChangePasswordRequest, ChangePasswordResponse>(ApiEndpoints.ChangePassword, request);
+        ChangePasswordRequest request = new ChangePasswordRequest(userId, currentPassword, newPassword);
+        ErrorOr<Success> result = await this.apiClient.PutAsync<ChangePasswordRequest>(ApiEndpoints.ChangePassword, request);
 
         return result.Match(
-            response =>
+            _ =>
             {
-                if (!response.Success)
-                {
-                    this.State.SetValue(ProfileState.Error);
-                    return (false, "The server rejected the change. Please check your connection.");
-                }
-
                 this.State.SetValue(ProfileState.UpdateSuccess);
                 return (true, string.Empty);
             },
@@ -91,7 +88,10 @@ public class SecurityViewModel
             {
                 this.logger.LogError("ChangePassword failed: {Errors}", errors);
                 this.State.SetValue(ProfileState.Error);
-                return (false, "An unexpected error occurred.");
+                string message = errors[0].Code == "incorrect_password"
+                    ? "Current password is incorrect."
+                    : "An unexpected error occurred.";
+                return (false, message);
             });
     }
 
@@ -104,18 +104,12 @@ public class SecurityViewModel
     {
         this.State.SetValue(ProfileState.Loading);
 
-        var request = new { Method = method };
-        var result = await this.apiClient.PutAsync<object, Toggle2FAResponse>(ApiEndpoints.Enable2Fa, request);
+        object request = new { Method = method };
+        ErrorOr<Success> result = await this.apiClient.PutAsync<object>(ApiEndpoints.Enable2Fa, request);
 
         return result.Match(
-            response =>
+            _ =>
             {
-                if (!response.Success)
-                {
-                    this.State.SetValue(ProfileState.Error);
-                    return false;
-                }
-
                 this.State.SetValue(ProfileState.UpdateSuccess);
                 return true;
             },
@@ -135,17 +129,11 @@ public class SecurityViewModel
     {
         this.State.SetValue(ProfileState.Loading);
 
-        var result = await this.apiClient.PutAsync<object, Toggle2FAResponse>(ApiEndpoints.Disable2Fa, new { });
+        ErrorOr<Success> result = await this.apiClient.PutAsync<object>(ApiEndpoints.Disable2Fa, new { });
 
         return result.Match(
-            response =>
+            _ =>
             {
-                if (!response.Success)
-                {
-                    this.State.SetValue(ProfileState.Error);
-                    return false;
-                }
-
                 this.State.SetValue(ProfileState.UpdateSuccess);
                 return true;
             },

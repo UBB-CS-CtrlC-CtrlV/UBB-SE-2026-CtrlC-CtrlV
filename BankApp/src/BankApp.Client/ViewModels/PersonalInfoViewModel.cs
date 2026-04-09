@@ -7,6 +7,7 @@ using System.Threading.Tasks;
 using BankApp.Client.Utilities;
 using BankApp.Contracts.DTOs.Profile;
 using BankApp.Client.Enums;
+using ErrorOr;
 using Microsoft.Extensions.Logging;
 
 namespace BankApp.Client.ViewModels;
@@ -57,7 +58,7 @@ public class PersonalInfoViewModel
     {
         this.State.SetValue(ProfileState.Loading);
 
-        var profileResult = await this.apiClient.GetAsync<GetProfileResponse>(ApiEndpoints.Profile);
+        ErrorOr<ProfileInfo> profileResult = await this.apiClient.GetAsync<ProfileInfo>(ApiEndpoints.Profile);
         if (profileResult.IsError)
         {
             this.logger.LogError("LoadProfile: profile request failed: {Errors}", profileResult.Errors);
@@ -65,13 +66,7 @@ public class PersonalInfoViewModel
             return false;
         }
 
-        if (!profileResult.Value.Success || profileResult.Value.ProfileInfo == null)
-        {
-            this.State.SetValue(ProfileState.Error);
-            return false;
-        }
-
-        this.ProfileInfo = profileResult.Value.ProfileInfo;
+        this.ProfileInfo = profileResult.Value;
         this.State.SetValue(ProfileState.UpdateSuccess);
         return true;
     }
@@ -96,18 +91,12 @@ public class PersonalInfoViewModel
         string? trimmedPhone = string.IsNullOrWhiteSpace(phone) ? null : phone.Trim();
         string? trimmedAddress = string.IsNullOrWhiteSpace(address) ? null : address.Trim();
 
-        var request = new UpdateProfileRequest(this.ProfileInfo.UserId, trimmedPhone, trimmedAddress);
-        var result = await this.apiClient.PutAsync<UpdateProfileRequest, UpdateProfileResponse>(ApiEndpoints.Profile, request);
+        UpdateProfileRequest request = new UpdateProfileRequest(this.ProfileInfo.UserId, trimmedPhone, trimmedAddress);
+        ErrorOr<Success> result = await this.apiClient.PutAsync<UpdateProfileRequest>(ApiEndpoints.Profile, request);
 
         return result.Match(
-            response =>
+            _ =>
             {
-                if (!response.Success)
-                {
-                    this.State.SetValue(ProfileState.Error);
-                    return false;
-                }
-
                 this.ProfileInfo.PhoneNumber = trimmedPhone;
                 this.ProfileInfo.Address = trimmedAddress;
                 this.State.SetValue(ProfileState.UpdateSuccess);
@@ -136,7 +125,7 @@ public class PersonalInfoViewModel
             return false;
         }
 
-        var result = await this.apiClient.PostAsync<string, bool>(ApiEndpoints.VerifyPassword, password);
+        ErrorOr<bool> result = await this.apiClient.PostAsync<string, bool>(ApiEndpoints.VerifyPassword, password);
 
         return result.Match(
             valid =>

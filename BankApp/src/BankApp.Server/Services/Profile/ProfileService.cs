@@ -1,3 +1,7 @@
+// <copyright file="ProfileService.cs" company="CtrlC CtrlV">
+// Copyright (c) CtrlC CtrlV. All rights reserved.
+// </copyright>
+
 using BankApp.Contracts.DTOs.Profile;
 using BankApp.Contracts.Entities;
 using BankApp.Contracts.Enums;
@@ -32,27 +36,24 @@ public class ProfileService : IProfileService
     }
 
     /// <inheritdoc />
-    public GetProfileResponse? GetProfile(int userId)
+    public ErrorOr<ProfileInfo> GetProfile(int userId)
     {
         ErrorOr<User> userResult = userRepository.FindById(userId);
         if (userResult.IsError)
         {
             logger.LogWarning("Profile fetch failed: user {UserId} not found.", userId);
-            return null;
+            return userResult.FirstError;
         }
 
-        return new GetProfileResponse(true, "Successfully retrieved profile information.")
-        {
-            ProfileInfo = new ProfileInfo(userResult.Value),
-        };
+        return new ProfileInfo(userResult.Value);
     }
 
     /// <inheritdoc />
-    public UpdateProfileResponse UpdatePersonalInfo(UpdateProfileRequest request)
+    public ErrorOr<Success> UpdatePersonalInfo(UpdateProfileRequest request)
     {
         if (request.UserId == null)
         {
-            return new UpdateProfileResponse(false, "Something went wrong. Please try again.");
+            return Error.Validation(code: "user_id_required", description: "User ID is required.");
         }
 
         int userId = request.UserId.Value;
@@ -61,7 +62,7 @@ public class ProfileService : IProfileService
         if (userResult.IsError)
         {
             logger.LogWarning("Profile update failed: user {UserId} not found.", userId);
-            return new UpdateProfileResponse(false, "User not found.");
+            return userResult.FirstError;
         }
 
         User user = userResult.Value;
@@ -70,7 +71,7 @@ public class ProfileService : IProfileService
         {
             if (!ValidationUtilities.IsValidPhoneNumber(request.PhoneNumber))
             {
-                return new UpdateProfileResponse(false, "Invalid phone number.");
+                return Error.Validation(code: "invalid_phone", description: "Invalid phone number.");
             }
 
             user.PhoneNumber = request.PhoneNumber;
@@ -84,53 +85,67 @@ public class ProfileService : IProfileService
         if (userRepository.UpdateUser(user).IsError)
         {
             logger.LogError("Profile update failed for user {UserId}.", userId);
-            return new UpdateProfileResponse(false, "Could not update user.");
+            return Error.Failure(code: "update_failed", description: "Could not update user.");
         }
 
-        return new UpdateProfileResponse(true, "User profile updated successfully.");
+        return Result.Success;
     }
 
     /// <inheritdoc />
-    public ChangePasswordResponse ChangePassword(ChangePasswordRequest request)
+    public ErrorOr<Success> ChangePassword(ChangePasswordRequest request)
     {
         ErrorOr<User> userResult = userRepository.FindById(request.UserId);
         if (userResult.IsError)
         {
             logger.LogWarning("Password change failed: user {UserId} not found.", request.UserId);
-            return new ChangePasswordResponse(false, "User not found.");
+            return userResult.FirstError;
         }
 
         User user = userResult.Value;
 
         if (!ValidationUtilities.IsStrongPassword(request.NewPassword))
         {
-            return new ChangePasswordResponse(false, "Password must contain at least one digit, one uppercase and one special symbol.");
+            return Error.Validation(code: "weak_password", description: "Password must contain at least one digit, one uppercase and one special symbol.");
         }
 
-        if (!hashService.Verify(request.CurrentPassword, user.PasswordHash))
+        ErrorOr<bool> verifyResult = hashService.Verify(request.CurrentPassword, user.PasswordHash);
+        if (verifyResult.IsError)
+        {
+            logger.LogError("Hash verification threw during password change for user {UserId}.", user.Id);
+            return verifyResult.FirstError;
+        }
+
+        if (!verifyResult.Value)
         {
             logger.LogWarning("Password change failed for user {UserId}: incorrect current password.", user.Id);
-            return new ChangePasswordResponse(false, "Current password is incorrect. Please try again.");
+            return Error.Validation(code: "incorrect_password", description: "Current password is incorrect. Please try again.");
         }
 
-        if (userRepository.UpdatePassword(user.Id, hashService.GetHash(request.NewPassword)).IsError)
+        ErrorOr<string> newHashResult = hashService.GetHash(request.NewPassword);
+        if (newHashResult.IsError)
+        {
+            logger.LogError("Hash generation failed during password change for user {UserId}.", user.Id);
+            return newHashResult.FirstError;
+        }
+
+        if (userRepository.UpdatePassword(user.Id, newHashResult.Value).IsError)
         {
             logger.LogError("Password update failed for user {UserId}.", user.Id);
-            return new ChangePasswordResponse(false, "Could not update password. Please try again.");
+            return Error.Failure(code: "update_failed", description: "Could not update password. Please try again.");
         }
 
         logger.LogInformation("Password changed successfully for user {UserId}.", user.Id);
-        return new ChangePasswordResponse(true, "Password changed successfully.");
+        return Result.Success;
     }
 
     /// <inheritdoc />
-    public bool Enable2FA(int userId, TwoFactorMethod method)
+    public ErrorOr<Success> Enable2FA(int userId, TwoFactorMethod method)
     {
         ErrorOr<User> userResult = userRepository.FindById(userId);
         if (userResult.IsError)
         {
             logger.LogWarning("Enable 2FA failed: user {UserId} not found.", userId);
-            return false;
+            return userResult.FirstError;
         }
 
         User user = userResult.Value;
@@ -140,21 +155,21 @@ public class ProfileService : IProfileService
         if (userRepository.UpdateUser(user).IsError)
         {
             logger.LogError("Failed to enable 2FA for user {UserId}.", userId);
-            return false;
+            return Error.Failure(code: "update_failed", description: "Failed to enable 2FA.");
         }
 
         logger.LogInformation("2FA enabled for user {UserId} via {Method}.", userId, method);
-        return true;
+        return Result.Success;
     }
 
     /// <inheritdoc />
-    public bool Disable2FA(int userId)
+    public ErrorOr<Success> Disable2FA(int userId)
     {
         ErrorOr<User> userResult = userRepository.FindById(userId);
         if (userResult.IsError)
         {
             logger.LogWarning("Disable 2FA failed: user {UserId} not found.", userId);
-            return false;
+            return userResult.FirstError;
         }
 
         User user = userResult.Value;
@@ -164,28 +179,28 @@ public class ProfileService : IProfileService
         if (userRepository.UpdateUser(user).IsError)
         {
             logger.LogError("Failed to disable 2FA for user {UserId}.", userId);
-            return false;
+            return Error.Failure(code: "update_failed", description: "Failed to disable 2FA.");
         }
 
         logger.LogInformation("2FA disabled for user {UserId}.", userId);
-        return true;
+        return Result.Success;
     }
 
     /// <inheritdoc />
-    public List<OAuthLinkDto> GetOAuthLinks(int userId)
+    public ErrorOr<List<OAuthLinkDto>> GetOAuthLinks(int userId)
     {
         ErrorOr<User> userResult = userRepository.FindById(userId);
         if (userResult.IsError)
         {
             logger.LogWarning("OAuth links fetch failed: user {UserId} not found.", userId);
-            return new List<OAuthLinkDto>();
+            return userResult.FirstError;
         }
 
         ErrorOr<List<OAuthLink>> linksResult = userRepository.GetLinkedProviders(userId);
         if (linksResult.IsError)
         {
             logger.LogError("Failed to fetch OAuth links for user {UserId}: {Error}", userId, linksResult.FirstError.Description);
-            return new List<OAuthLinkDto>();
+            return linksResult.FirstError;
         }
 
         return linksResult.Value
@@ -200,32 +215,32 @@ public class ProfileService : IProfileService
     }
 
     /// <inheritdoc />
-    public bool LinkOAuth(int userId, string provider)
+    public ErrorOr<Success> LinkOAuth(int userId, string provider)
     {
         throw new NotImplementedException();
     }
 
     /// <inheritdoc />
-    public bool UnlinkOAuth(int userId, string provider)
+    public ErrorOr<Success> UnlinkOAuth(int userId, string provider)
     {
         throw new NotImplementedException();
     }
 
     /// <inheritdoc />
-    public List<NotificationPreferenceDto> GetNotificationPreferences(int userId)
+    public ErrorOr<List<NotificationPreferenceDto>> GetNotificationPreferences(int userId)
     {
         ErrorOr<User> userResult = userRepository.FindById(userId);
         if (userResult.IsError)
         {
             logger.LogWarning("Notification preferences fetch failed: user {UserId} not found.", userId);
-            return new List<NotificationPreferenceDto>();
+            return userResult.FirstError;
         }
 
         ErrorOr<List<NotificationPreference>> prefsResult = userRepository.GetNotificationPreferences(userId);
         if (prefsResult.IsError)
         {
             logger.LogError("Failed to fetch notification preferences for user {UserId}: {Error}", userId, prefsResult.FirstError.Description);
-            return new List<NotificationPreferenceDto>();
+            return prefsResult.FirstError;
         }
 
         return prefsResult.Value
@@ -243,13 +258,13 @@ public class ProfileService : IProfileService
     }
 
     /// <inheritdoc />
-    public bool UpdateNotificationPreferences(int userId, List<NotificationPreferenceDto> preferences)
+    public ErrorOr<Success> UpdateNotificationPreferences(int userId, List<NotificationPreferenceDto> preferences)
     {
         ErrorOr<User> userResult = userRepository.FindById(userId);
         if (userResult.IsError)
         {
             logger.LogWarning("Notification preferences update failed: user {UserId} not found.", userId);
-            return false;
+            return userResult.FirstError;
         }
 
         List<NotificationPreference> entities = preferences
@@ -268,20 +283,20 @@ public class ProfileService : IProfileService
         if (userRepository.UpdateNotificationPreferences(userId, entities).IsError)
         {
             logger.LogError("Failed to update notification preferences for user {UserId}.", userId);
-            return false;
+            return Error.Failure(code: "update_failed", description: "Failed to update notification preferences.");
         }
 
-        return true;
+        return Result.Success;
     }
 
     /// <inheritdoc />
-    public bool VerifyPassword(int userId, string password)
+    public ErrorOr<bool> VerifyPassword(int userId, string password)
     {
         ErrorOr<User> userResult = userRepository.FindById(userId);
         if (userResult.IsError)
         {
             logger.LogWarning("Password verification failed: user {UserId} not found.", userId);
-            return false;
+            return userResult.FirstError;
         }
 
         return hashService.Verify(password, userResult.Value.PasswordHash);

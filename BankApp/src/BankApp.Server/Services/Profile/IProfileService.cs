@@ -4,93 +4,134 @@
 
 using BankApp.Contracts.DTOs.Profile;
 using BankApp.Contracts.Enums;
+using ErrorOr;
 
 namespace BankApp.Server.Services.Profile;
 
 /// <summary>
-/// Defines operations for user profile management, including personal info, passwords, 2FA, OAuth, and notifications.
+/// Defines operations for managing user profiles, including personal info, passwords,
+/// two-factor authentication, OAuth links, and notification preferences.
 /// </summary>
 public interface IProfileService
 {
     /// <summary>
-    /// Gets the profile response for the specified user.
+    /// Retrieves the profile information of the specified user.
     /// </summary>
-    /// <param name="userId">The user identifier.</param>
-    /// <returns>A populated <see cref="GetProfileResponse"/>, or <see langword="null"/> if the user does not exist.</returns>
-    GetProfileResponse? GetProfile(int userId);
+    /// <param name="userId">The identifier of the user.</param>
+    /// <returns>
+    /// The user's <see cref="ProfileInfo"/> on success,
+    /// or a not-found error if the user does not exist.
+    /// </returns>
+    ErrorOr<ProfileInfo> GetProfile(int userId);
 
     /// <summary>
-    /// Updates the personal information for a user.
+    /// Updates the personal information (phone, address) of the specified user.
     /// </summary>
-    /// <param name="request">The profile update details.</param>
-    /// <returns>An <see cref="UpdateProfileResponse"/> indicating the result.</returns>
-    UpdateProfileResponse UpdatePersonalInfo(UpdateProfileRequest request);
+    /// <param name="request">The update request containing the user ID and fields to change.</param>
+    /// <returns>
+    /// <see cref="Result.Success"/> on success,
+    /// a validation error with code <c>invalid_phone</c> if the phone number is malformed,
+    /// a not-found error if the user does not exist,
+    /// or a failure error if the database update fails.
+    /// </returns>
+    ErrorOr<Success> UpdatePersonalInfo(UpdateProfileRequest request);
 
     /// <summary>
-    /// Changes the password for a user.
+    /// Changes the password of the specified user after verifying the current password.
     /// </summary>
-    /// <param name="request">The password change details.</param>
-    /// <returns>A <see cref="ChangePasswordResponse"/> indicating the result.</returns>
-    ChangePasswordResponse ChangePassword(ChangePasswordRequest request);
+    /// <param name="request">The change-password request.</param>
+    /// <returns>
+    /// <see cref="Result.Success"/> on success,
+    /// a not-found error if the user does not exist,
+    /// a validation error with code <c>weak_password</c> if the new password does not meet strength requirements,
+    /// a validation error with code <c>incorrect_password</c> if the current password is wrong,
+    /// or a failure error if the database update fails.
+    /// </returns>
+    ErrorOr<Success> ChangePassword(ChangePasswordRequest request);
 
     /// <summary>
     /// Enables two-factor authentication for the specified user.
     /// </summary>
     /// <param name="userId">The identifier of the user.</param>
-    /// <param name="method">The preferred 2FA method.</param>
-    /// <returns><see langword="true"/> if 2FA was enabled successfully; otherwise, <see langword="false"/>.</returns>
-    bool Enable2FA(int userId, TwoFactorMethod method);
+    /// <param name="method">The two-factor delivery method to enable.</param>
+    /// <returns>
+    /// <see cref="Result.Success"/> on success,
+    /// a not-found error if the user does not exist,
+    /// or a failure error if the database update fails.
+    /// </returns>
+    ErrorOr<Success> Enable2FA(int userId, TwoFactorMethod method);
 
     /// <summary>
     /// Disables two-factor authentication for the specified user.
     /// </summary>
     /// <param name="userId">The identifier of the user.</param>
-    /// <returns><see langword="true"/> if 2FA was disabled successfully; otherwise, <see langword="false"/>.</returns>
-    bool Disable2FA(int userId);
+    /// <returns>
+    /// <see cref="Result.Success"/> on success,
+    /// a not-found error if the user does not exist,
+    /// or a failure error if the database update fails.
+    /// </returns>
+    ErrorOr<Success> Disable2FA(int userId);
 
     /// <summary>
-    /// Gets all OAuth provider links for the specified user.
+    /// Retrieves all OAuth provider links for the specified user.
     /// </summary>
     /// <param name="userId">The identifier of the user.</param>
-    /// <returns>A list of <see cref="OAuthLinkDto"/> instances.</returns>
-    List<OAuthLinkDto> GetOAuthLinks(int userId);
+    /// <returns>
+    /// The list of <see cref="OAuthLinkDto"/> on success (may be empty),
+    /// a not-found error if the user does not exist,
+    /// or a failure error if the repository call fails.
+    /// </returns>
+    ErrorOr<List<OAuthLinkDto>> GetOAuthLinks(int userId);
 
     /// <summary>
-    /// Links an OAuth provider to the specified user.
+    /// Links an OAuth provider account to the specified user. Not yet implemented.
     /// </summary>
     /// <param name="userId">The identifier of the user.</param>
-    /// <param name="provider">The OAuth provider name.</param>
-    /// <returns><see langword="true"/> if the provider was linked successfully; otherwise, <see langword="false"/>.</returns>
-    bool LinkOAuth(int userId, string provider);
+    /// <param name="provider">The OAuth provider to link.</param>
+    /// <returns>A failure error — not implemented.</returns>
+    ErrorOr<Success> LinkOAuth(int userId, string provider);
 
     /// <summary>
-    /// Unlinks an OAuth provider from the specified user.
+    /// Unlinks an OAuth provider account from the specified user. Not yet implemented.
     /// </summary>
     /// <param name="userId">The identifier of the user.</param>
-    /// <param name="provider">The OAuth provider name.</param>
-    /// <returns><see langword="true"/> if the provider was unlinked successfully; otherwise, <see langword="false"/>.</returns>
-    bool UnlinkOAuth(int userId, string provider);
+    /// <param name="provider">The OAuth provider to unlink.</param>
+    /// <returns>A failure error — not implemented.</returns>
+    ErrorOr<Success> UnlinkOAuth(int userId, string provider);
 
     /// <summary>
-    /// Gets all notification preferences for the specified user.
+    /// Retrieves all notification preferences for the specified user.
     /// </summary>
     /// <param name="userId">The identifier of the user.</param>
-    /// <returns>A list of <see cref="NotificationPreferenceDto"/> instances.</returns>
-    List<NotificationPreferenceDto> GetNotificationPreferences(int userId);
+    /// <returns>
+    /// The list of <see cref="NotificationPreferenceDto"/> on success (may be empty),
+    /// a not-found error if the user does not exist,
+    /// or a failure error if the repository call fails.
+    /// </returns>
+    ErrorOr<List<NotificationPreferenceDto>> GetNotificationPreferences(int userId);
 
     /// <summary>
-    /// Replaces all notification preferences for the specified user.
+    /// Updates the notification preferences of the specified user.
     /// </summary>
     /// <param name="userId">The identifier of the user.</param>
-    /// <param name="preferences">The updated list of notification preferences.</param>
-    /// <returns><see langword="true"/> if the preferences were updated successfully; otherwise, <see langword="false"/>.</returns>
-    bool UpdateNotificationPreferences(int userId, List<NotificationPreferenceDto> preferences);
+    /// <param name="preferences">The updated preferences to persist.</param>
+    /// <returns>
+    /// <see cref="Result.Success"/> on success,
+    /// a not-found error if the user does not exist,
+    /// or a failure error if the database update fails.
+    /// </returns>
+    ErrorOr<Success> UpdateNotificationPreferences(int userId, List<NotificationPreferenceDto> preferences);
 
     /// <summary>
-    /// Verifies the password for the specified user.
+    /// Verifies whether the supplied plain-text password matches the user's stored hash.
     /// </summary>
     /// <param name="userId">The identifier of the user.</param>
     /// <param name="password">The plain-text password to verify.</param>
-    /// <returns><see langword="true"/> if the password matches; otherwise, <see langword="false"/>.</returns>
-    bool VerifyPassword(int userId, string password);
+    /// <returns>
+    /// <see langword="true"/> if the password matches,
+    /// <see langword="false"/> if it does not,
+    /// a not-found error if the user does not exist,
+    /// or a failure error if the hash verification throws.
+    /// </returns>
+    ErrorOr<bool> VerifyPassword(int userId, string password);
 }

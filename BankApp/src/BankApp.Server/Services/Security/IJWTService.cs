@@ -9,11 +9,14 @@ namespace BankApp.Server.Services.Security;
 public interface IJwtService
 {
     /// <summary>
-    /// Generates a JWT for the specified user.
+    /// Generates a signed JWT for the specified user.
     /// </summary>
     /// <param name="userId">The identifier of the user.</param>
-    /// <returns>The signed JWT string.</returns>
-    string GenerateToken(int userId);
+    /// <returns>
+    /// The signed JWT string on success,
+    /// or a failure error with code <c>jwt.generate_failed</c> if the underlying cryptographic operation throws.
+    /// </returns>
+    ErrorOr<string> GenerateToken(int userId);
 
     /// <summary>
     /// Validates a JWT and returns the associated claims principal.

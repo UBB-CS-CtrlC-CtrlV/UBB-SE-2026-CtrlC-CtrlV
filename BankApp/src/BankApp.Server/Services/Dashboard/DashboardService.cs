@@ -30,13 +30,13 @@ public class DashboardService : IDashboardService
     }
 
     /// <inheritdoc />
-    public DashboardResponse? GetDashboardData(int userId)
+    public ErrorOr<DashboardResponse> GetDashboardData(int userId)
     {
         ErrorOr<User> userResult = userRepository.FindById(userId);
         if (userResult.IsError)
         {
             logger.LogWarning("Dashboard fetch failed: user {UserId} not found.", userId);
-            return null;
+            return userResult.FirstError;
         }
 
         ErrorOr<List<Card>> cardsResult = dashboardRepository.GetCardsByUser(userId);

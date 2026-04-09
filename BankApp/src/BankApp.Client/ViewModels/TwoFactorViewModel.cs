@@ -209,21 +209,15 @@ public partial class TwoFactorViewModel : INotifyPropertyChanged
             OTPCode = this.OtpCode,
         };
 
-        var result = await this.apiClient.PostAsync<VerifyOTPRequest, LoginResponse>(
+        var result = await this.apiClient.PostAsync<VerifyOTPRequest, LoginSuccessResponse>(
             ApiEndpoints.VerifyOtp, request);
 
         result.Switch(
             response =>
             {
-                if (response.Success)
-                {
-                    this.apiClient.SetToken(response.Token!);
-                    this.IsLoading = false;
-                    this.State.SetValue(TwoFactorState.Success);
-                    return;
-                }
-
-                this.ApplyInvalidOtp();
+                this.apiClient.SetToken(response.Token!);
+                this.IsLoading = false;
+                this.State.SetValue(TwoFactorState.Success);
             },
             errors =>
             {

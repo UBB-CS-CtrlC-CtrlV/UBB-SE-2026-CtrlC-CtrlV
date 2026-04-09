@@ -24,22 +24,23 @@ public class JwtService : IJwtService
     }
 
     /// <inheritdoc />
-    public string GenerateToken(int userId)
+    public ErrorOr<string> GenerateToken(int userId)
     {
-        var key = new SymmetricSecurityKey(Encoding.UTF8.GetBytes(secret));
-        var credentials = new SigningCredentials(key, SecurityAlgorithms.HmacSha256);
-
-        var claims = new[]
+        try
         {
-            new Claim("userId", userId.ToString())
-        };
-
-        var token = new JwtSecurityToken(
-            claims: claims,
-            expires: DateTime.UtcNow.AddDays(TokenExpirationDays),
-            signingCredentials: credentials);
-
-        return new JwtSecurityTokenHandler().WriteToken(token);
+            SymmetricSecurityKey key = new SymmetricSecurityKey(Encoding.UTF8.GetBytes(this.secret));
+            SigningCredentials credentials = new SigningCredentials(key, SecurityAlgorithms.HmacSha256);
+            Claim[] claims = new[] { new Claim("userId", userId.ToString()) };
+            JwtSecurityToken token = new JwtSecurityToken(
+                claims: claims,
+                expires: DateTime.UtcNow.AddDays(TokenExpirationDays),
+                signingCredentials: credentials);
+            return new JwtSecurityTokenHandler().WriteToken(token);
+        }
+        catch (Exception ex)
+        {
+            return Error.Failure(code: "jwt.generate_failed", description: ex.Message);
+        }
     }
 
     /// <inheritdoc />

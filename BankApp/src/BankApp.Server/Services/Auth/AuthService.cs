@@ -1,3 +1,7 @@
+// <copyright file="AuthService.cs" company="CtrlC CtrlV">
+// Copyright (c) CtrlC CtrlV. All rights reserved.
+// </copyright>
+
 using BankApp.Contracts.DTOs.Auth;
 using BankApp.Contracts.Entities;
 using BankApp.Contracts.Enums;
@@ -52,29 +56,36 @@ public class AuthService : IAuthService
     }
 
     /// <inheritdoc />
-    public LoginResponse Login(LoginRequest request)
+    public ErrorOr<LoginSuccess> Login(LoginRequest request)
     {
         if (!ValidationUtilities.IsValidEmail(request.Email))
         {
-            return new LoginResponse { Success = false, Error = "Invalid mail format." };
+            return Error.Validation(code: "invalid_email", description: "Invalid email format.");
         }
 
         ErrorOr<User> userResult = authRepository.FindUserByEmail(request.Email);
         if (userResult.IsError)
         {
-            logger.LogWarning("Login failed: user not found.");
-            return new LoginResponse { Success = false, Error = "Invalid email or password." };
+            logger.LogWarning("Login failed: user not found for email.");
+            return Error.Unauthorized(code: "invalid_credentials", description: "Invalid email or password.");
         }
 
         User user = userResult.Value;
 
-        LoginResponse? lockCheck = CheckAccountLock(user);
-        if (lockCheck != null)
+        Error? lockError = CheckAccountLock(user);
+        if (lockError is not null)
         {
-            return lockCheck;
+            return lockError.Value;
         }
 
-        if (!hashService.Verify(request.Password, user.PasswordHash))
+        ErrorOr<bool> verifyResult = hashService.Verify(request.Password, user.PasswordHash);
+        if (verifyResult.IsError)
+        {
+            logger.LogError("Password hash verification threw for user {UserId}: {Error}", user.Id, verifyResult.FirstError.Description);
+            return verifyResult.FirstError;
+        }
+
+        if (!verifyResult.Value)
         {
             return HandleFailedPassword(user);
         }
@@ -83,37 +94,42 @@ public class AuthService : IAuthService
     }
 
     /// <inheritdoc />
-    public RegisterResponse Register(RegisterRequest request)
+    public ErrorOr<Success> Register(RegisterRequest request)
     {
-        string? validationError = ValidateRegistration(request);
-        if (validationError != null)
+        Error? validationError = ValidateRegistration(request);
+        if (validationError is not null)
         {
-            return new RegisterResponse { Success = false, Error = validationError };
+            return validationError.Value;
         }
 
         if (!authRepository.FindUserByEmail(request.Email).IsError)
         {
             logger.LogInformation("Registration rejected: email already registered.");
-            return new RegisterResponse { Success = false, Error = "Email is already registered." };
+            return Error.Conflict(code: "email_registered", description: "Email is already registered.");
         }
 
-        User user = CreateUserFromRequest(request);
-        if (authRepository.CreateUser(user).IsError)
+        ErrorOr<User> newUserResult = CreateUserFromRequest(request);
+        if (newUserResult.IsError)
+        {
+            return newUserResult.FirstError;
+        }
+
+        if (authRepository.CreateUser(newUserResult.Value).IsError)
         {
             logger.LogError("User creation failed during registration.");
-            return new RegisterResponse { Success = false, Error = "Failed to create account." };
+            return Error.Failure(code: "user_creation_failed", description: "Failed to create account.");
         }
 
         logger.LogInformation("User registered successfully.");
-        return new RegisterResponse { Success = true };
+        return Result.Success;
     }
 
     /// <inheritdoc />
-    public async Task<LoginResponse> OAuthLoginAsync(OAuthLoginRequest request)
+    public async Task<ErrorOr<LoginSuccess>> OAuthLoginAsync(OAuthLoginRequest request)
     {
         if (!request.Provider.Equals(GoogleOAuthProvider, StringComparison.OrdinalIgnoreCase))
         {
-            return new LoginResponse { Success = false, Error = "Unsupported OAuth Provider." };
+            return Error.Validation(code: "unsupported_provider", description: "Unsupported OAuth Provider.");
         }
 
         GoogleJsonWebSignature.Payload payload;
@@ -124,7 +140,7 @@ public class AuthService : IAuthService
         catch (InvalidJwtException)
         {
             logger.LogWarning("OAuth login rejected: invalid Google token.");
-            return new LoginResponse { Success = false, Error = "Invalid Google authentication token." };
+            return Error.Validation(code: "invalid_google_token", description: "Invalid Google authentication token.");
         }
 
         string providerUserId = payload.Subject;
@@ -153,10 +169,17 @@ public class AuthService : IAuthService
             else
             {
                 string generatedTemporaryPassword = Guid.NewGuid().ToString() + TemporaryPasswordSuffix;
-                var newUser = new User
+                ErrorOr<string> hashResult = hashService.GetHash(generatedTemporaryPassword);
+                if (hashResult.IsError)
+                {
+                    logger.LogError("Hash generation failed during OAuth user creation for provider {Provider}.", request.Provider);
+                    return hashResult.FirstError;
+                }
+
+                User newUser = new User
                 {
                     Email = email,
-                    PasswordHash = hashService.GetHash(generatedTemporaryPassword),
+                    PasswordHash = hashResult.Value,
                     FullName = fullName,
                     PreferredLanguage = DefaultLanguage,
                     Is2FAEnabled = false,
@@ -167,54 +190,54 @@ public class AuthService : IAuthService
                 if (authRepository.CreateUser(newUser).IsError)
                 {
                     logger.LogError("OAuth user creation failed for provider {Provider}.", request.Provider);
-                    return new LoginResponse { Success = false, Error = "Failed to create user account." };
+                    return Error.Failure(code: "user_creation_failed", description: "Failed to create user account.");
                 }
 
                 ErrorOr<User> createdResult = authRepository.FindUserByEmail(email);
                 if (createdResult.IsError)
                 {
                     logger.LogError("Failed to retrieve user after OAuth creation for provider {Provider}.", request.Provider);
-                    return new LoginResponse { Success = false, Error = "Failed to retrieve created user." };
+                    return Error.Failure(code: "user_retrieval_failed", description: "Failed to retrieve created user.");
                 }
 
                 user = createdResult.Value;
             }
 
-            var newLink = new OAuthLink
+            OAuthLink newLink = new OAuthLink
             {
                 UserId = user.Id,
                 Provider = request.Provider,
                 ProviderUserId = providerUserId,
                 ProviderEmail = email,
             };
+
             if (authRepository.CreateOAuthLink(newLink).IsError)
             {
                 logger.LogError("Failed to create OAuth link for user {UserId}, provider {Provider}.", user.Id, request.Provider);
-                return new LoginResponse { Success = false, Error = "Failed to link OAuth account." };
+                return Error.Failure(code: "oauth_link_failed", description: "Failed to link OAuth account.");
             }
         }
 
-        LoginResponse? lockCheck = CheckAccountLock(user);
-        if (lockCheck != null)
+        Error? lockError = CheckAccountLock(user);
+        if (lockError is not null)
         {
-            return lockCheck;
+            return lockError.Value;
         }
 
         return user.Is2FAEnabled ? Handle2FA(user) : CompleteLogin(user);
     }
 
     /// <inheritdoc />
-    public RegisterResponse OAuthRegister(OAuthRegisterRequest request)
+    public ErrorOr<Success> OAuthRegister(OAuthRegisterRequest request)
     {
         if (!ValidationUtilities.IsValidEmail(request.Email))
         {
-            return new RegisterResponse { Success = false, Error = "Invalid email format." };
+            return Error.Validation(code: "invalid_email", description: "Invalid email format.");
         }
 
         if (!authRepository.FindOAuthLink(request.Provider, request.ProviderToken).IsError)
         {
-            return new RegisterResponse
-                { Success = false, Error = "This OAuth account is already registered. Please login." };
+            return Error.Conflict(code: "oauth_already_registered", description: "This OAuth account is already registered. Please login.");
         }
 
         int targetUserId;
@@ -226,10 +249,17 @@ public class AuthService : IAuthService
         else
         {
             string generatedTemporaryPassword = Guid.NewGuid().ToString() + TemporaryPasswordSuffix;
-            var newUser = new User
+            ErrorOr<string> hashResult = hashService.GetHash(generatedTemporaryPassword);
+            if (hashResult.IsError)
+            {
+                logger.LogError("Hash generation failed during OAuth register for provider {Provider}.", request.Provider);
+                return hashResult.FirstError;
+            }
+
+            User newUser = new User
             {
                 Email = request.Email,
-                PasswordHash = hashService.GetHash(generatedTemporaryPassword),
+                PasswordHash = hashResult.Value,
                 FullName = request.FullName,
                 PreferredLanguage = DefaultLanguage,
                 Is2FAEnabled = false,
@@ -239,19 +269,19 @@ public class AuthService : IAuthService
 
             if (authRepository.CreateUser(newUser).IsError)
             {
-                return new RegisterResponse { Success = false, Error = "Failed to create user account." };
+                return Error.Failure(code: "user_creation_failed", description: "Failed to create user account.");
             }
 
             ErrorOr<User> savedUserResult = authRepository.FindUserByEmail(request.Email);
             if (savedUserResult.IsError)
             {
-                return new RegisterResponse { Success = false, Error = "Error retrieving created user." };
+                return Error.Failure(code: "user_retrieval_failed", description: "Error retrieving created user.");
             }
 
             targetUserId = savedUserResult.Value.Id;
         }
 
-        var newLink = new OAuthLink
+        OAuthLink newLink = new OAuthLink
         {
             UserId = targetUserId,
             Provider = request.Provider,
@@ -259,27 +289,37 @@ public class AuthService : IAuthService
             ProviderEmail = request.Email,
         };
 
-        return authRepository.CreateOAuthLink(newLink).IsError
-            ? new RegisterResponse { Success = false, Error = "Failed to link OAuth account to user." }
-            : new RegisterResponse { Success = true };
+        if (authRepository.CreateOAuthLink(newLink).IsError)
+        {
+            return Error.Failure(code: "oauth_link_failed", description: "Failed to link OAuth account to user.");
+        }
+
+        return Result.Success;
     }
 
     /// <inheritdoc />
-    public LoginResponse VerifyOTP(VerifyOTPRequest request)
+    public ErrorOr<LoginSuccess> VerifyOTP(VerifyOTPRequest request)
     {
         ErrorOr<User> userResult = authRepository.FindUserById(request.UserId);
         if (userResult.IsError)
         {
             logger.LogWarning("OTP verification failed: user {UserId} not found.", request.UserId);
-            return new LoginResponse { Success = false, Error = "User not found." };
+            return Error.NotFound(code: "user_not_found", description: "User not found.");
         }
 
         User user = userResult.Value;
 
-        if (!otpService.VerifyTOTP(request.UserId, request.OTPCode))
+        ErrorOr<bool> verifyResult = otpService.VerifyTOTP(request.UserId, request.OTPCode);
+        if (verifyResult.IsError)
+        {
+            logger.LogError("TOTP verification threw for user {UserId}: {Error}", user.Id, verifyResult.FirstError.Description);
+            return verifyResult.FirstError;
+        }
+
+        if (!verifyResult.Value)
         {
             logger.LogWarning("OTP verification failed for user {UserId}: invalid or expired code.", user.Id);
-            return new LoginResponse { Success = false, Error = "Invalid or expired OTP code." };
+            return Error.Unauthorized(code: "invalid_otp", description: "Invalid or expired OTP code.");
         }
 
         otpService.InvalidateOTP(user.Id);
@@ -297,12 +337,18 @@ public class AuthService : IAuthService
         }
 
         User user = userResult.Value;
-        string oneTimePassword = otpService.GenerateTOTP(user.Id);
+
+        ErrorOr<string> otpResult = otpService.GenerateTOTP(user.Id);
+        if (otpResult.IsError)
+        {
+            logger.LogError("TOTP generation failed during resend for user {UserId}: {Error}", user.Id, otpResult.FirstError.Description);
+            return otpResult.FirstError;
+        }
 
         if (string.Equals(method, EmailTwoFactorMethod, StringComparison.OrdinalIgnoreCase)
             || string.Equals(user.Preferred2FAMethod, EmailTwoFactorMethod, StringComparison.OrdinalIgnoreCase))
         {
-            emailService.SendOTPCode(user.Email, oneTimePassword);
+            emailService.SendOTPCode(user.Email, otpResult.Value);
         }
 
         return Result.Success;
@@ -345,11 +391,11 @@ public class AuthService : IAuthService
     }
 
     /// <inheritdoc />
-    public ResetPasswordResult ResetPassword(string token, string newPassword)
+    public ErrorOr<Success> ResetPassword(string token, string newPassword)
     {
         if (string.IsNullOrWhiteSpace(token))
         {
-            return ResetPasswordResult.InvalidToken;
+            return Error.Validation(code: "token_invalid", description: "The reset token is invalid.");
         }
 
         string tokenHash = ComputeSha256Hash(token);
@@ -357,58 +403,62 @@ public class AuthService : IAuthService
         if (tokenResult.IsError)
         {
             logger.LogWarning("Password reset failed: token not found.");
-            return ResetPasswordResult.InvalidToken;
+            return Error.Validation(code: "token_invalid", description: "The reset token is invalid.");
         }
 
         PasswordResetToken resetToken = tokenResult.Value;
-        ResetTokenValidationResult validationResult = GetResetTokenValidationResult(resetToken);
-        if (validationResult != ResetTokenValidationResult.Valid)
+        ErrorOr<Success> validationResult = ValidateResetToken(resetToken);
+        if (validationResult.IsError)
         {
-            logger.LogWarning("Password reset failed for user {UserId}: {Reason}.", resetToken.UserId, validationResult);
-            return validationResult switch
-            {
-                ResetTokenValidationResult.Expired => ResetPasswordResult.ExpiredToken,
-                ResetTokenValidationResult.AlreadyUsed => ResetPasswordResult.TokenAlreadyUsed,
-                _ => ResetPasswordResult.InvalidToken,
-            };
+            logger.LogWarning("Password reset failed for user {UserId}: {Code}.", resetToken.UserId, validationResult.FirstError.Code);
+            return validationResult.FirstError;
         }
 
-        string finalPasswordHash = hashService.GetHash(newPassword);
-        if (authRepository.UpdatePassword(resetToken.UserId, finalPasswordHash).IsError)
+        ErrorOr<string> hashResult = hashService.GetHash(newPassword);
+        if (hashResult.IsError)
+        {
+            logger.LogError("Hash generation failed during password reset for user {UserId}.", resetToken.UserId);
+            return hashResult.FirstError;
+        }
+
+        if (authRepository.UpdatePassword(resetToken.UserId, hashResult.Value).IsError)
         {
             logger.LogError("Password update failed for user {UserId}.", resetToken.UserId);
-            return ResetPasswordResult.InvalidToken;
+            return Error.Validation(code: "token_invalid", description: "Failed to update password.");
         }
 
         if (authRepository.MarkPasswordResetTokenAsUsed(resetToken.Id).IsError)
         {
             logger.LogError("Failed to mark password reset token as used for user {UserId}. Token may be replayable.", resetToken.UserId);
-            return ResetPasswordResult.Failed;
+            return Error.Failure(code: "reset_failed", description: "Password was updated but the token could not be invalidated.");
         }
 
         if (authRepository.InvalidateAllSessions(resetToken.UserId).IsError)
         {
             logger.LogError("Failed to invalidate sessions for user {UserId} after password reset. Active sessions may remain valid.", resetToken.UserId);
-            return ResetPasswordResult.Failed;
+            return Error.Failure(code: "reset_failed", description: "Password was updated but active sessions could not be invalidated.");
         }
 
         logger.LogInformation("Password reset successfully for user {UserId}.", resetToken.UserId);
-        return ResetPasswordResult.Success;
+        return Result.Success;
     }
 
     /// <inheritdoc />
-    public ResetTokenValidationResult VerifyResetToken(string token)
+    public ErrorOr<Success> VerifyResetToken(string token)
     {
         if (string.IsNullOrWhiteSpace(token))
         {
-            return ResetTokenValidationResult.Invalid;
+            return Error.Validation(code: "token_invalid", description: "The reset token is invalid.");
         }
 
         string tokenHash = ComputeSha256Hash(token);
         ErrorOr<PasswordResetToken> tokenResult = authRepository.FindPasswordResetToken(tokenHash);
-        return tokenResult.IsError
-            ? ResetTokenValidationResult.Invalid
-            : GetResetTokenValidationResult(tokenResult.Value);
+        if (tokenResult.IsError)
+        {
+            return Error.Validation(code: "token_invalid", description: "The reset token is invalid.");
+        }
+
+        return ValidateResetToken(tokenResult.Value);
     }
 
     /// <inheritdoc />
@@ -426,7 +476,7 @@ public class AuthService : IAuthService
         return Result.Success;
     }
 
-    private LoginResponse? CheckAccountLock(User user)
+    private Error? CheckAccountLock(User user)
     {
         if (!user.IsLocked)
         {
@@ -436,97 +486,109 @@ public class AuthService : IAuthService
         if (user.LockoutEnd.HasValue && user.LockoutEnd.Value > DateTime.UtcNow)
         {
             logger.LogWarning("Login blocked: account {UserId} is locked until {LockoutEnd}.", user.Id, user.LockoutEnd);
-            return new LoginResponse { Success = false, Error = "Account is locked. Try again later." };
+            return Error.Forbidden(code: "account_locked", description: "Account is locked. Try again later.");
         }
 
         _ = authRepository.ResetFailedAttempts(user.Id);
         return null;
     }
 
-    private LoginResponse HandleFailedPassword(User user)
+    private Error HandleFailedPassword(User user)
     {
         _ = authRepository.IncrementFailedAttempts(user.Id);
         logger.LogWarning("Failed login attempt for user {UserId}. Attempt {Attempt}/{Max}.", user.Id, user.FailedLoginAttempts + 1, MaxFailedAttempts);
 
         if (user.FailedLoginAttempts + 1 < MaxFailedAttempts)
         {
-            return new LoginResponse { Success = false, Error = "Invalid email or password." };
+            return Error.Unauthorized(code: "invalid_credentials", description: "Invalid email or password.");
         }
 
         if (authRepository.LockAccount(user.Id, DateTime.UtcNow.AddMinutes(LockoutMinutes)).IsError)
         {
             logger.LogError("Failed to lock account {UserId} after {Max} failed attempts.", user.Id, MaxFailedAttempts);
-            return new LoginResponse { Success = false, Error = "Too many failed attempts. Please try again later." };
+            return Error.Unauthorized(code: "invalid_credentials", description: "Too many failed attempts. Please try again later.");
         }
 
         logger.LogWarning("Account {UserId} locked for {Minutes} minutes after {Max} failed attempts.", user.Id, LockoutMinutes, MaxFailedAttempts);
         emailService.SendLockNotification(user.Email);
-        return new LoginResponse { Success = false, Error = "Account locked due to too many failed attempts." };
+        return Error.Forbidden(code: "account_locked", description: "Account locked due to too many failed attempts.");
     }
 
-    private LoginResponse Handle2FA(User user)
+    private ErrorOr<LoginSuccess> Handle2FA(User user)
     {
-        string oneTimePassword = otpService.GenerateTOTP(user.Id);
+        ErrorOr<string> otpResult = otpService.GenerateTOTP(user.Id);
+        if (otpResult.IsError)
+        {
+            logger.LogError("TOTP generation failed for user {UserId}: {Error}", user.Id, otpResult.FirstError.Description);
+            return otpResult.FirstError;
+        }
 
         if (string.Equals(user.Preferred2FAMethod, EmailTwoFactorMethod, StringComparison.OrdinalIgnoreCase))
         {
-            emailService.SendOTPCode(user.Email, oneTimePassword);
+            emailService.SendOTPCode(user.Email, otpResult.Value);
         }
 
         logger.LogInformation("2FA required for user {UserId} via {Method}.", user.Id, user.Preferred2FAMethod);
-        return new LoginResponse
-        {
-            Success = true,
-            Requires2FA = true,
-            UserId = user.Id,
-            Token = null,
-        };
+        return new RequiresTwoFactor(user.Id);
     }
 
-    private LoginResponse CompleteLogin(User user)
+    private ErrorOr<LoginSuccess> CompleteLogin(User user)
     {
         _ = authRepository.ResetFailedAttempts(user.Id);
-        string token = jwtService.GenerateToken(user.Id);
+
+        ErrorOr<string> tokenResult = jwtService.GenerateToken(user.Id);
+        if (tokenResult.IsError)
+        {
+            logger.LogError("Token generation failed for user {UserId}: {Error}", user.Id, tokenResult.FirstError.Description);
+            return tokenResult.FirstError;
+        }
+
+        string token = tokenResult.Value;
 
         if (authRepository.CreateSession(user.Id, token, null, null, null).IsError)
         {
             logger.LogError("Session creation failed for user {UserId}.", user.Id);
-            return new LoginResponse { Success = false, Error = "Failed to create session." };
+            return Error.Failure(code: "session_failed", description: "Failed to create session.");
         }
 
         logger.LogInformation("User {UserId} logged in successfully.", user.Id);
         emailService.SendLoginAlert(user.Email);
-        return new LoginResponse
-        {
-            Success = true,
-            Token = token,
-            Requires2FA = false,
-            UserId = user.Id,
-        };
+        return new FullLogin(user.Id, token);
     }
 
-    private static string? ValidateRegistration(RegisterRequest request)
+    private static Error? ValidateRegistration(RegisterRequest request)
     {
         if (!ValidationUtilities.IsValidEmail(request.Email))
         {
-            return "Invalid email format.";
+            return Error.Validation(code: "invalid_email", description: "Invalid email format.");
         }
 
         if (!ValidationUtilities.IsStrongPassword(request.Password))
         {
-            return
-                "Password must be at least 8 characters with uppercase, lowercase, a digit, and a special character.";
+            return Error.Validation(code: "weak_password", description: "Password must be at least 8 characters with uppercase, lowercase, a digit, and a special character.");
         }
 
-        return string.IsNullOrWhiteSpace(request.FullName) ? "Full name is required." : null;
+        if (string.IsNullOrWhiteSpace(request.FullName))
+        {
+            return Error.Validation(code: "full_name_required", description: "Full name is required.");
+        }
+
+        return null;
     }
 
-    private User CreateUserFromRequest(RegisterRequest request)
+    private ErrorOr<User> CreateUserFromRequest(RegisterRequest request)
     {
+        ErrorOr<string> hashResult = hashService.GetHash(request.Password);
+        if (hashResult.IsError)
+        {
+            logger.LogError("Hash generation failed during registration.");
+            return hashResult.FirstError;
+        }
+
         return new User
         {
             Email = request.Email,
-            PasswordHash = hashService.GetHash(request.Password),
+            PasswordHash = hashResult.Value,
             FullName = request.FullName,
             PreferredLanguage = DefaultLanguage,
             Is2FAEnabled = false,
@@ -535,16 +597,19 @@ public class AuthService : IAuthService
         };
     }
 
-    private static ResetTokenValidationResult GetResetTokenValidationResult(PasswordResetToken resetToken)
+    private static ErrorOr<Success> ValidateResetToken(PasswordResetToken resetToken)
     {
         if (resetToken.UsedAt != null)
         {
-            return ResetTokenValidationResult.AlreadyUsed;
+            return Error.Validation(code: "token_already_used", description: "The reset token has already been used.");
         }
 
-        return resetToken.ExpiresAt < DateTime.UtcNow
-            ? ResetTokenValidationResult.Expired
-            : ResetTokenValidationResult.Valid;
+        if (resetToken.ExpiresAt < DateTime.UtcNow)
+        {
+            return Error.Validation(code: "token_expired", description: "The reset token has expired.");
+        }
+
+        return Result.Success;
     }
 
     private static string ComputeSha256Hash(string rawData)

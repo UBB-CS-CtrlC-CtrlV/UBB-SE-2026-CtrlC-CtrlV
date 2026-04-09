@@ -1,6 +1,10 @@
+// <copyright file="OtpService.cs" company="CtrlC CtrlV">
+// Copyright (c) CtrlC CtrlV. All rights reserved.
+// </copyright>
+
 using System.Security.Cryptography;
 using System.Text;
-using BankApp.Server.Services.Security;
+using ErrorOr;
 using Microsoft.Extensions.Configuration;
 
 namespace BankApp.Server.Services.Security;
@@ -34,19 +38,33 @@ public class OtpService : IOtpService
     }
 
     /// <inheritdoc />
-    public string GenerateSMSOTP(int userId)
+    public ErrorOr<string> GenerateSMSOTP(int userId)
     {
-        string code = RandomNumberGenerator.GetInt32(OtpRangeMinimum, OtpRangeMaximum).ToString();
-        DateTime expiryTime = DateTime.UtcNow.AddMinutes(SmsOtpExpiryMinutes);
-        TemporarySmsStorage[userId] = (code, expiryTime);
-        return code;
+        try
+        {
+            string code = RandomNumberGenerator.GetInt32(OtpRangeMinimum, OtpRangeMaximum).ToString();
+            DateTime expiryTime = DateTime.UtcNow.AddMinutes(SmsOtpExpiryMinutes);
+            TemporarySmsStorage[userId] = (code, expiryTime);
+            return code;
+        }
+        catch (Exception ex)
+        {
+            return Error.Failure(code: "otp.generate_sms_failed", description: ex.Message);
+        }
     }
 
     /// <inheritdoc />
-    public string GenerateTOTP(int userId)
+    public ErrorOr<string> GenerateTOTP(int userId)
     {
-        long currentWindow = DateTimeOffset.UtcNow.ToUnixTimeSeconds() / TotpWindowSeconds;
-        return GenerateHmacCode(userId, currentWindow);
+        try
+        {
+            long currentWindow = DateTimeOffset.UtcNow.ToUnixTimeSeconds() / TotpWindowSeconds;
+            return GenerateHmacCode(userId, currentWindow);
+        }
+        catch (Exception ex)
+        {
+            return Error.Failure(code: "otp.generate_totp_failed", description: ex.Message);
+        }
     }
 
     /// <inheritdoc />
@@ -62,45 +80,61 @@ public class OtpService : IOtpService
     }
 
     /// <inheritdoc />
-    public bool VerifySMSOTP(int userId, string code)
+    public ErrorOr<bool> VerifySMSOTP(int userId, string code)
     {
-        if (TemporarySmsStorage.TryGetValue(userId, out var storedOtpData))
+        try
         {
-            if (DateTime.UtcNow > storedOtpData.ExpiryTime)
+            if (TemporarySmsStorage.TryGetValue(userId, out (string Code, DateTime ExpiryTime) storedOtpData))
             {
-                InvalidateOTP(userId);
-                return false;
+                if (DateTime.UtcNow > storedOtpData.ExpiryTime)
+                {
+                    InvalidateOTP(userId);
+                    return false;
+                }
+
+                if (storedOtpData.Code == code)
+                {
+                    InvalidateOTP(userId);
+                    return true;
+                }
             }
-            if (storedOtpData.Code == code)
-            {
-                InvalidateOTP(userId);
-                return true;
-            }
+
+            return false;
         }
-        return false;
+        catch (Exception ex)
+        {
+            return Error.Failure(code: "otp.verify_sms_failed", description: ex.Message);
+        }
     }
 
     /// <inheritdoc />
-    public bool VerifyTOTP(int userId, string code)
+    public ErrorOr<bool> VerifyTOTP(int userId, string code)
     {
-        long currentWindow = DateTimeOffset.UtcNow.ToUnixTimeSeconds() / TotpWindowSeconds;
-        if (code == GenerateHmacCode(userId, currentWindow))
+        try
         {
-            return true;
-        }
+            long currentWindow = DateTimeOffset.UtcNow.ToUnixTimeSeconds() / TotpWindowSeconds;
+            if (code == GenerateHmacCode(userId, currentWindow))
+            {
+                return true;
+            }
 
-        if (code == GenerateHmacCode(userId, currentWindow - 1))
+            if (code == GenerateHmacCode(userId, currentWindow - 1))
+            {
+                return true;
+            }
+
+            return false;
+        }
+        catch (Exception ex)
         {
-            return true;
+            return Error.Failure(code: "otp.verify_totp_failed", description: ex.Message);
         }
-
-        return false;
     }
 
     private string GenerateHmacCode(int userId, long timeWindow)
     {
         string secret = $"{this.otpServerSecret}_{userId}";
-        using var hmac = new HMACSHA1(Encoding.UTF8.GetBytes(secret));
+        using HMACSHA1 hmac = new HMACSHA1(Encoding.UTF8.GetBytes(secret));
         byte[] hash = hmac.ComputeHash(BitConverter.GetBytes(timeWindow));
         int offset = hash[hash.Length - 1] & TruncationOffsetMask;
         int binary = ((hash[offset] & SignBitMask) << 24) |

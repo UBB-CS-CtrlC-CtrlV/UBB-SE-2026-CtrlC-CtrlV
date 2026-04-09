@@ -42,7 +42,7 @@ public class LoginViewModel
         // Determine initial state from configuration. If ApiClient is misconfigured the
         // view starts in ServerNotConfigured so the login form is disabled immediately.
         // The view reads State.Value after subscribing to apply this initial state.
-        var initialState = apiClient.EnsureConfigured().Match(
+        LoginState initialState = apiClient.EnsureConfigured().Match(
             _ => LoginState.Idle,
             errors =>
             {
@@ -78,39 +78,37 @@ public class LoginViewModel
     {
         this.State.SetValue(LoginState.Loading);
 
-        var request = new BankApp.Contracts.DTOs.Auth.LoginRequest
+        BankApp.Contracts.DTOs.Auth.LoginRequest request = new BankApp.Contracts.DTOs.Auth.LoginRequest
         {
             Email = email,
             Password = password,
         };
 
-        var result = await this.apiClient.PostAsync<BankApp.Contracts.DTOs.Auth.LoginRequest, LoginResponse>(
+        ErrorOr<LoginSuccessResponse> result = await this.apiClient.PostAsync<BankApp.Contracts.DTOs.Auth.LoginRequest, LoginSuccessResponse>(
             ApiEndpoints.Login,
             request);
 
         result.Switch(
             response =>
             {
-                if (!response.Success)
-                {
-                    this.HandleLoginError(response);
-                    return;
-                }
-
                 if (response.Requires2FA)
                 {
-                    this.apiClient.CurrentUserId = response.UserId!.Value;
+                    this.apiClient.CurrentUserId = response.UserId;
                     this.State.SetValue(LoginState.Require2Fa);
                     return;
                 }
 
                 this.apiClient.SetToken(response.Token!);
-                this.apiClient.CurrentUserId = response.UserId!.Value;
+                this.apiClient.CurrentUserId = response.UserId;
                 this.State.SetValue(LoginState.Success);
             },
             errors =>
             {
-                if (errors[0].Type == ErrorType.Unauthorized)
+                if (errors[0].Type == ErrorType.Forbidden)
+                {
+                    this.State.SetValue(LoginState.AccountLocked);
+                }
+                else if (errors[0].Type == ErrorType.Unauthorized)
                 {
                     this.State.SetValue(LoginState.InvalidCredentials);
                 }
@@ -139,16 +137,16 @@ public class LoginViewModel
                 return;
             }
 
-            var authority = this.configuration["OAuth:Google:Authority"]
+            string authority = this.configuration["OAuth:Google:Authority"]
                 ?? throw new InvalidOperationException("OAuth:Google:Authority is missing from configuration.");
-            var clientId = this.configuration["OAuth:Google:ClientId"]
+            string clientId = this.configuration["OAuth:Google:ClientId"]
                 ?? throw new InvalidOperationException("OAuth:Google:ClientId is missing from configuration.");
-            var clientSecret = this.configuration["OAuth:Google:ClientSecret"]
+            string clientSecret = this.configuration["OAuth:Google:ClientSecret"]
                 ?? throw new InvalidOperationException("OAuth:Google:ClientSecret is missing from configuration.");
-            var redirectUri = this.configuration["OAuth:Google:RedirectUri"]
+            string redirectUri = this.configuration["OAuth:Google:RedirectUri"]
                 ?? throw new InvalidOperationException("OAuth:Google:RedirectUri is missing from configuration.");
 
-            var options = new OidcClientOptions
+            OidcClientOptions options = new OidcClientOptions
             {
                 Authority = authority,
                 ClientId = clientId,
@@ -160,9 +158,8 @@ public class LoginViewModel
 
             options.Policy.Discovery.ValidateEndpoints = false;
 
-            var oidcClient = new OidcClient(options);
-
-            var loginResult = await oidcClient.LoginAsync(new Duende.IdentityModel.OidcClient.LoginRequest());
+            OidcClient oidcClient = new OidcClient(options);
+            LoginResult loginResult = await oidcClient.LoginAsync(new Duende.IdentityModel.OidcClient.LoginRequest());
 
             if (loginResult.IsError)
             {
@@ -170,34 +167,28 @@ public class LoginViewModel
                 return;
             }
 
-            var apiRequest = new OAuthLoginRequest
+            OAuthLoginRequest apiRequest = new OAuthLoginRequest
             {
                 Provider = "Google",
                 ProviderToken = loginResult.IdentityToken,
             };
 
-            var result = await this.apiClient.PostAsync<OAuthLoginRequest, LoginResponse>(
+            ErrorOr<LoginSuccessResponse> result = await this.apiClient.PostAsync<OAuthLoginRequest, LoginSuccessResponse>(
                 ApiEndpoints.OAuthLogin,
                 apiRequest);
 
             result.Switch(
                 response =>
                 {
-                    if (!response.Success)
-                    {
-                        this.State.SetValue(LoginState.Error);
-                        return;
-                    }
-
                     if (response.Requires2FA)
                     {
-                        this.apiClient.CurrentUserId = response.UserId!.Value;
+                        this.apiClient.CurrentUserId = response.UserId;
                         this.State.SetValue(LoginState.Require2Fa);
                         return;
                     }
 
                     this.apiClient.SetToken(response.Token!);
-                    this.apiClient.CurrentUserId = response.UserId!.Value;
+                    this.apiClient.CurrentUserId = response.UserId;
                     this.State.SetValue(LoginState.Success);
                 },
                 errors =>
@@ -210,18 +201,6 @@ public class LoginViewModel
         {
             this.logger.LogError(ex, "OAuthLogin OIDC flow failed.");
             this.State.SetValue(LoginState.Error);
-        }
-    }
-
-    private void HandleLoginError(LoginResponse response)
-    {
-        if (response.Error != null && response.Error.Contains("locked", StringComparison.OrdinalIgnoreCase))
-        {
-            this.State.SetValue(LoginState.AccountLocked);
-        }
-        else
-        {
-            this.State.SetValue(LoginState.InvalidCredentials);
         }
     }
 }
