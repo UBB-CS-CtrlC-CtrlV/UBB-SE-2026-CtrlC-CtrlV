@@ -1,6 +1,7 @@
 using BankApp.Contracts.Entities;
 using BankApp.Server.DataAccess.Interfaces;
 using Dapper;
+using ErrorOr;
 
 namespace BankApp.Server.DataAccess.Implementations;
 
@@ -11,19 +12,19 @@ public class TransactionDataAccess : ITransactionDataAccess
 {
     private const int DefaultTransactionLimit = 10;
 
-    private readonly AppDbContext dbContext;
+    private readonly AppDbContext db;
 
     /// <summary>
     /// Initializes a new instance of the <see cref="TransactionDataAccess"/> class.
     /// </summary>
-    /// <param name="dbContext">The database context used for executing queries.</param>
-    public TransactionDataAccess(AppDbContext dbContext)
+    /// <param name="db">The database context used for executing queries.</param>
+    public TransactionDataAccess(AppDbContext db)
     {
-        this.dbContext = dbContext;
+        this.db = db;
     }
 
     /// <inheritdoc />
-    public List<Transaction> FindRecentByAccountId(int accountId, int limit = DefaultTransactionLimit)
+    public ErrorOr<List<Transaction>> FindRecentByAccountId(int accountId, int limit = DefaultTransactionLimit)
     {
         const string sql = """
             SELECT TOP (@Limit)
@@ -36,8 +37,6 @@ public class TransactionDataAccess : ITransactionDataAccess
             ORDER BY CreatedAt DESC
             """;
 
-        return this.dbContext.GetConnection()
-            .Query<Transaction>(sql, new { AccountId = accountId, Limit = limit })
-            .AsList();
+        return this.db.Query(conn => conn.Query<Transaction>(sql, new { AccountId = accountId, Limit = limit }).AsList());
     }
 }

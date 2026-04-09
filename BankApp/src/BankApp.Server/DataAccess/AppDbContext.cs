@@ -1,4 +1,5 @@
 using System.Data;
+using ErrorOr;
 using Microsoft.Data.SqlClient;
 
 namespace BankApp.Server.DataAccess;
@@ -22,30 +23,22 @@ public class AppDbContext : IDbContext
     }
 
     /// <inheritdoc />
-    public IDbConnection GetConnection()
+    public ErrorOr<T> Query<T>(Func<SqlConnection, T> operation)
     {
-        if (connection is not null && connection.State is not ConnectionState.Closed)
-        {
-            return connection;
-        }
-
         try
         {
-            connection = new SqlConnection(connectionString);
-            connection.Open();
+            return operation(this.GetConnection());
         }
-        catch (SqlException sqlException)
+        catch (Exception ex)
         {
-            throw new Exception($"Failed to connect to the database: {sqlException.Message}", sqlException);
+            return Error.Failure(description: ex.Message);
         }
-
-        return connection;
     }
 
     /// <inheritdoc />
     public SqlTransaction BeginTransaction()
     {
-        SqlConnection activeConnection = (SqlConnection)GetConnection();
+        var activeConnection = this.GetConnection();
         try
         {
             currentTransaction = activeConnection.BeginTransaction();
@@ -101,5 +94,17 @@ public class AppDbContext : IDbContext
 
         connection.Dispose();
         connection = null;
+    }
+
+    private SqlConnection GetConnection()
+    {
+        if (connection is not null && connection.State is not ConnectionState.Closed)
+        {
+            return connection;
+        }
+
+        connection = new SqlConnection(connectionString);
+        connection.Open();
+        return connection;
     }
 }

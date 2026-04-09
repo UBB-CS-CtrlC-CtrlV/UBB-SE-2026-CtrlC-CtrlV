@@ -1,4 +1,5 @@
 using BankApp.Contracts.Entities;
+using ErrorOr;
 
 namespace BankApp.Server.DataAccess.Interfaces;
 
@@ -7,17 +8,13 @@ namespace BankApp.Server.DataAccess.Interfaces;
 /// </summary>
 public interface INotificationDataAccess
 {
-    /// <summary>
-    /// Finds all notifications belonging to the specified user.
-    /// </summary>
+    /// <summary>Finds all notifications belonging to the specified user.</summary>
     /// <param name="userId">The identifier of the user.</param>
-    /// <returns>A list of notifications for the user.</returns>
-    List<Notification> FindByUserId(int userId);
+    /// <returns>A list of notifications for the user, or an error if the operation failed.</returns>
+    ErrorOr<List<Notification>> FindByUserId(int userId);
 
-    /// <summary>
-    /// Counts the number of unread notifications for the specified user.
-    /// </summary>
+    /// <summary>Counts the number of unread notifications for the specified user.</summary>
     /// <param name="userId">The identifier of the user.</param>
-    /// <returns>The count of unread notifications.</returns>
-    int CountUnreadByUserId(int userId);
+    /// <returns>The count of unread notifications, or an error if the operation failed.</returns>
+    ErrorOr<int> CountUnreadByUserId(int userId);
 }

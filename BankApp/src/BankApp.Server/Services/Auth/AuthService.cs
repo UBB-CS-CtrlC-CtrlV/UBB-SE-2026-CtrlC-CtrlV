@@ -53,11 +53,13 @@ public class AuthService : IAuthService
             return new LoginResponse { Success = false, Error = "Invalid mail format." };
         }
 
-        User? user = authRepository.FindUserByEmail(request.Email);
-        if (user == null)
+        var userResult = authRepository.FindUserByEmail(request.Email);
+        if (userResult.IsError)
         {
             return new LoginResponse { Success = false, Error = "Invalid email or password." };
         }
+
+        User user = userResult.Value;
 
         LoginResponse? lockCheck = CheckAccountLock(user);
         if (lockCheck != null)
@@ -87,16 +89,13 @@ public class AuthService : IAuthService
             return new RegisterResponse { Success = false, Error = validationError };
         }
 
-        User? existingUser = authRepository.FindUserByEmail(request.Email);
-        if (existingUser != null)
+        if (!authRepository.FindUserByEmail(request.Email).IsError)
         {
             return new RegisterResponse { Success = false, Error = "Email is already registered." };
         }
 
         User user = CreateUserFromRequest(request);
-        bool created = authRepository.CreateUser(user);
-
-        if (!created)
+        if (authRepository.CreateUser(user).IsError)
         {
             return new RegisterResponse { Success = false, Error = "Failed to create account." };
         }
@@ -107,80 +106,94 @@ public class AuthService : IAuthService
     /// <inheritdoc />
     public async Task<LoginResponse> OAuthLoginAsync(OAuthLoginRequest request)
     {
-        if (request.Provider.Equals(GoogleOAuthProvider, StringComparison.OrdinalIgnoreCase))
+        if (!request.Provider.Equals(GoogleOAuthProvider, StringComparison.OrdinalIgnoreCase))
         {
-            GoogleJsonWebSignature.Payload payload;
-            try
-            {
-                payload = await GoogleJsonWebSignature.ValidateAsync(request.ProviderToken);
-            }
-            catch (InvalidJwtException)
-            {
-                return new LoginResponse { Success = false, Error = "Invalid Google authentication token." };
-            }
-
-            string providerUserId = payload.Subject;
-            string email = payload.Email;
-            string fullName = payload.Name;
-
-            OAuthLink? link = authRepository.FindOAuthLink(request.Provider, providerUserId);
-            User? user = null;
-
-            if (link != null)
-            {
-                user = authRepository.FindUserById(link.UserId);
-            }
-
-            if (user == null)
-            {
-                user = authRepository.FindUserByEmail(email);
-                if (user == null)
-                {
-                    string generatedTemporaryPassword = Guid.NewGuid().ToString() + TemporaryPasswordSuffix;
-                    user = new User
-                    {
-                        Email = email,
-                        PasswordHash = hashService.GetHash(generatedTemporaryPassword),
-                        FullName = fullName,
-                        PreferredLanguage = DefaultLanguage,
-                        Is2FAEnabled = false,
-                        IsLocked = false,
-                        FailedLoginAttempts = 0
-                    };
-
-                    if (!authRepository.CreateUser(user))
-                    {
-                        return new LoginResponse { Success = false, Error = "Failed to create user account." };
-                    }
-
-                    user = authRepository.FindUserByEmail(email);
-                }
-
-                OAuthLink newLink = new OAuthLink
-                {
-                    UserId = user!.Id,
-                    Provider = request.Provider,
-                    ProviderUserId = providerUserId,
-                    ProviderEmail = email
-                };
-                authRepository.CreateOAuthLink(newLink);
-            }
-
-            LoginResponse? lockCheck = CheckAccountLock(user);
-            if (lockCheck != null)
-            {
-                return lockCheck;
-            }
-
-            if (user.Is2FAEnabled)
-            {
-                return Handle2FA(user);
-            }
-
-            return CompleteLogin(user);
+            return new LoginResponse { Success = false, Error = "Unsupported OAuth Provider." };
         }
 
-        return new LoginResponse { Success = false, Error = "Unsupported OAuth Provider." };
+        GoogleJsonWebSignature.Payload payload;
+        try
+        {
+            payload = await GoogleJsonWebSignature.ValidateAsync(request.ProviderToken);
+        }
+        catch (InvalidJwtException)
+        {
+            return new LoginResponse { Success = false, Error = "Invalid Google authentication token." };
+        }
+
+        string providerUserId = payload.Subject;
+        string email = payload.Email;
+        string fullName = payload.Name;
+
+        var linkResult = authRepository.FindOAuthLink(request.Provider, providerUserId);
+        User? user = null;
+
+        if (!linkResult.IsError)
+        {
+            var userResult = authRepository.FindUserById(linkResult.Value.UserId);
+            if (!userResult.IsError)
+            {
+                user = userResult.Value;
+            }
+        }
+
+        if (user == null)
+        {
+            var byEmailResult = authRepository.FindUserByEmail(email);
+            if (!byEmailResult.IsError)
+            {
+                user = byEmailResult.Value;
+            }
+            else
+            {
+                string generatedTemporaryPassword = Guid.NewGuid().ToString() + TemporaryPasswordSuffix;
+                var newUser = new User
+                {
+                    Email = email,
+                    PasswordHash = hashService.GetHash(generatedTemporaryPassword),
+                    FullName = fullName,
+                    PreferredLanguage = DefaultLanguage,
+                    Is2FAEnabled = false,
+                    IsLocked = false,
+                    FailedLoginAttempts = 0,
+                };
+
+                if (authRepository.CreateUser(newUser).IsError)
+                {
+                    return new LoginResponse { Success = false, Error = "Failed to create user account." };
+                }
+
+                var createdResult = authRepository.FindUserByEmail(email);
+                if (createdResult.IsError)
+                {
+                    return new LoginResponse { Success = false, Error = "Failed to retrieve created user." };
+                }
+
+                user = createdResult.Value;
+            }
+
+            var newLink = new OAuthLink
+            {
+                UserId = user.Id,
+                Provider = request.Provider,
+                ProviderUserId = providerUserId,
+                ProviderEmail = email,
+            };
+            authRepository.CreateOAuthLink(newLink);
+        }
+
+        LoginResponse? lockCheck = CheckAccountLock(user);
+        if (lockCheck != null)
+        {
+            return lockCheck;
+        }
+
+        if (user.Is2FAEnabled)
+        {
+            return Handle2FA(user);
+        }
+
+        return CompleteLogin(user);
     }
 
     /// <inheritdoc />
@@ -191,17 +204,16 @@ public class AuthService : IAuthService
             return new RegisterResponse { Success = false, Error = "Invalid email format." };
         }
 
-        OAuthLink? existingLink = authRepository.FindOAuthLink(request.Provider, request.ProviderToken);
-        if (existingLink != null)
+        if (!authRepository.FindOAuthLink(request.Provider, request.ProviderToken).IsError)
         {
             return new RegisterResponse { Success = false, Error = "This OAuth account is already registered. Please login." };
         }
 
-        User? existingUser = authRepository.FindUserByEmail(request.Email);
         int targetUserId;
-        if (existingUser != null)
+        var existingUserResult = authRepository.FindUserByEmail(request.Email);
+        if (!existingUserResult.IsError)
         {
-            targetUserId = existingUser.Id;
+            targetUserId = existingUserResult.Value.Id;
         }
         else
         {
@@ -214,34 +226,32 @@ public class AuthService : IAuthService
                 PreferredLanguage = DefaultLanguage,
                 Is2FAEnabled = false,
                 IsLocked = false,
-                FailedLoginAttempts = 0
+                FailedLoginAttempts = 0,
             };
 
-            bool created = authRepository.CreateUser(newUser);
-            if (!created)
+            if (authRepository.CreateUser(newUser).IsError)
             {
                 return new RegisterResponse { Success = false, Error = "Failed to create user account." };
             }
 
-            User? savedUser = authRepository.FindUserByEmail(request.Email);
-            if (savedUser == null)
+            var savedUserResult = authRepository.FindUserByEmail(request.Email);
+            if (savedUserResult.IsError)
             {
                 return new RegisterResponse { Success = false, Error = "Error retrieving created user." };
             }
 
-            targetUserId = savedUser.Id;
+            targetUserId = savedUserResult.Value.Id;
         }
 
-        OAuthLink newLink = new OAuthLink
+        var newLink = new OAuthLink
         {
             UserId = targetUserId,
             Provider = request.Provider,
             ProviderUserId = request.ProviderToken,
-            ProviderEmail = request.Email
+            ProviderEmail = request.Email,
         };
 
-        bool linkCreated = authRepository.CreateOAuthLink(newLink);
-        if (!linkCreated)
+        if (authRepository.CreateOAuthLink(newLink).IsError)
         {
             return new RegisterResponse { Success = false, Error = "Failed to link OAuth account to user." };
         }
@@ -252,16 +262,19 @@ public class AuthService : IAuthService
     /// <inheritdoc />
     public LoginResponse VerifyOTP(VerifyOTPRequest request)
     {
-        User? user = authRepository.FindUserById(request.UserId);
-        if (user == null)
+        var userResult = authRepository.FindUserById(request.UserId);
+        if (userResult.IsError)
         {
             return new LoginResponse { Success = false, Error = "User not found." };
         }
-        bool isValid = otpService.VerifyTOTP(request.UserId, request.OTPCode);
-        if (!isValid)
+
+        User user = userResult.Value;
+
+        if (!otpService.VerifyTOTP(request.UserId, request.OTPCode))
         {
             return new LoginResponse { Success = false, Error = "Invalid or expired OTP code." };
         }
+
         otpService.InvalidateOTP(user.Id);
         return CompleteLogin(user);
     }
@@ -269,13 +282,15 @@ public class AuthService : IAuthService
     /// <inheritdoc />
     public void ResendOTP(int userId, string method)
     {
-        User? user = authRepository.FindUserById(userId);
-        if (user == null)
+        var userResult = authRepository.FindUserById(userId);
+        if (userResult.IsError)
         {
             return;
         }
 
+        User user = userResult.Value;
         string oneTimePassword = otpService.GenerateTOTP(user.Id);
+
         if (string.Equals(method, EmailTwoFactorMethod, StringComparison.OrdinalIgnoreCase)
             || string.Equals(user.Preferred2FAMethod, EmailTwoFactorMethod, StringComparison.OrdinalIgnoreCase))
         {
@@ -286,12 +301,13 @@ public class AuthService : IAuthService
     /// <inheritdoc />
     public void RequestPasswordReset(string email)
     {
-        User? user = authRepository.FindUserByEmail(email);
-        if (user == null)
+        var userResult = authRepository.FindUserByEmail(email);
+        if (userResult.IsError)
         {
             return;
         }
 
+        User user = userResult.Value;
         authRepository.DeleteExpiredPasswordResetTokens();
 
         byte[] randomBytes = System.Security.Cryptography.RandomNumberGenerator.GetBytes(32);
@@ -303,7 +319,7 @@ public class AuthService : IAuthService
             UserId = user.Id,
             TokenHash = tokenHashForDb,
             ExpiresAt = DateTime.UtcNow.AddMinutes(PasswordResetTokenExpiryMinutes),
-            CreatedAt = DateTime.UtcNow
+            CreatedAt = DateTime.UtcNow,
         };
 
         authRepository.SavePasswordResetToken(resetToken);
@@ -319,7 +335,13 @@ public class AuthService : IAuthService
         }
 
         string tokenHash = ComputeSha256Hash(token);
-        PasswordResetToken? resetToken = authRepository.FindPasswordResetToken(tokenHash);
+        var tokenResult = authRepository.FindPasswordResetToken(tokenHash);
+        if (tokenResult.IsError)
+        {
+            return ResetPasswordResult.InvalidToken;
+        }
+
+        PasswordResetToken resetToken = tokenResult.Value;
         ResetTokenValidationResult validationResult = this.GetResetTokenValidationResult(resetToken);
         if (validationResult != ResetTokenValidationResult.Valid)
         {
@@ -332,9 +354,7 @@ public class AuthService : IAuthService
         }
 
         string finalPasswordHash = hashService.GetHash(newPassword);
-        bool updated = authRepository.UpdatePassword(resetToken!.UserId, finalPasswordHash);
-
-        if (!updated)
+        if (authRepository.UpdatePassword(resetToken.UserId, finalPasswordHash).IsError)
         {
             return ResetPasswordResult.InvalidToken;
         }
@@ -345,7 +365,37 @@ public class AuthService : IAuthService
         return ResetPasswordResult.Success;
     }
 
-    // PRIVATE HELPERS
+    /// <inheritdoc />
+    public ResetTokenValidationResult VerifyResetToken(string token)
+    {
+        if (string.IsNullOrWhiteSpace(token))
+        {
+            return ResetTokenValidationResult.Invalid;
+        }
+
+        string tokenHash = ComputeSha256Hash(token);
+        var tokenResult = authRepository.FindPasswordResetToken(tokenHash);
+        if (tokenResult.IsError)
+        {
+            return ResetTokenValidationResult.Invalid;
+        }
+
+        return this.GetResetTokenValidationResult(tokenResult.Value);
+    }
+
+    /// <inheritdoc />
+    public bool Logout(string token)
+    {
+        var sessionResult = authRepository.FindSessionByToken(token);
+        if (sessionResult.IsError)
+        {
+            return false;
+        }
+
+        authRepository.UpdateSessionToken(sessionResult.Value.Id);
+        return true;
+    }
+
     private LoginResponse? CheckAccountLock(User user)
     {
         if (!user.IsLocked)
@@ -358,7 +408,6 @@ public class AuthService : IAuthService
             return new LoginResponse { Success = false, Error = "Account is locked. Try again later." };
         }
 
-        // Lockout expired, reset and allow login attempt
         authRepository.ResetFailedAttempts(user.Id);
         return null;
     }
@@ -391,7 +440,7 @@ public class AuthService : IAuthService
             Success = true,
             Requires2FA = true,
             UserId = user.Id,
-            Token = null
+            Token = null,
         };
     }
 
@@ -406,14 +455,12 @@ public class AuthService : IAuthService
             Success = true,
             Token = token,
             Requires2FA = false,
-            UserId = user.Id
+            UserId = user.Id,
         };
     }
 
     private string? ValidateRegistration(RegisterRequest request)
     {
-        // There should also be client-side validation, this is last resort
-        // can't trust the client
         if (!ValidationUtilities.IsValidEmail(request.Email))
         {
             return "Invalid email format.";
@@ -442,30 +489,12 @@ public class AuthService : IAuthService
             PreferredLanguage = DefaultLanguage,
             Is2FAEnabled = false,
             IsLocked = false,
-            FailedLoginAttempts = 0
+            FailedLoginAttempts = 0,
         };
     }
 
-    /// <inheritdoc />
-    public ResetTokenValidationResult VerifyResetToken(string token)
+    private ResetTokenValidationResult GetResetTokenValidationResult(PasswordResetToken resetToken)
     {
-        if (string.IsNullOrWhiteSpace(token))
-        {
-            return ResetTokenValidationResult.Invalid;
-        }
-
-        string tokenHash = ComputeSha256Hash(token);
-        PasswordResetToken? resetToken = authRepository.FindPasswordResetToken(tokenHash);
-        return this.GetResetTokenValidationResult(resetToken);
-    }
-
-    private ResetTokenValidationResult GetResetTokenValidationResult(PasswordResetToken? resetToken)
-    {
-        if (resetToken == null)
-        {
-            return ResetTokenValidationResult.Invalid;
-        }
-
         if (resetToken.UsedAt != null)
         {
             return ResetTokenValidationResult.AlreadyUsed;
@@ -477,18 +506,6 @@ public class AuthService : IAuthService
         }
 
         return ResetTokenValidationResult.Valid;
-    }
-
-    /// <inheritdoc />
-    public bool Logout(string token)
-    {
-        Session? session = authRepository.FindSessionByToken(token);
-        if (session == null)
-        {
-            return false;
-        }
-        authRepository.UpdateSessionToken(session.Id);
-        return true;
     }
 
     private string ComputeSha256Hash(string rawData)

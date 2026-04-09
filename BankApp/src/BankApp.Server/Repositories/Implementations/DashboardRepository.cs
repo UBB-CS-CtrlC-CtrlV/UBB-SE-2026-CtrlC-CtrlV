@@ -1,6 +1,7 @@
 using BankApp.Contracts.Entities;
-using BankApp.Server.Repositories.Interfaces;
 using BankApp.Server.DataAccess.Interfaces;
+using BankApp.Server.Repositories.Interfaces;
+using ErrorOr;
 
 namespace BankApp.Server.Repositories.Implementations;
 
@@ -21,7 +22,8 @@ public class DashboardRepository : IDashboardRepository
     /// <param name="cardDataAccess">The card data access component.</param>
     /// <param name="transactionDataAccess">The transaction data access component.</param>
     /// <param name="notificationDataAccess">The notification data access component.</param>
-    public DashboardRepository(IAccountDataAccess accountDataAccess, ICardDataAccess cardDataAccess, ITransactionDataAccess transactionDataAccess, INotificationDataAccess notificationDataAccess)
+    public DashboardRepository(IAccountDataAccess accountDataAccess, ICardDataAccess cardDataAccess,
+        ITransactionDataAccess transactionDataAccess, INotificationDataAccess notificationDataAccess)
     {
         this.accountDataAccess = accountDataAccess;
         this.cardDataAccess = cardDataAccess;
@@ -30,26 +32,16 @@ public class DashboardRepository : IDashboardRepository
     }
 
     /// <inheritdoc />
-    public List<Account> GetAccountsByUser(int userId)
-    {
-        return accountDataAccess.FindByUserId(userId);
-    }
+    public ErrorOr<List<Account>> GetAccountsByUser(int userId) => accountDataAccess.FindByUserId(userId);
 
     /// <inheritdoc />
-    public List<Card> GetCardsByUser(int userId)
-    {
-        return cardDataAccess.FindByUserId(userId);
-    }
+    public ErrorOr<List<Card>> GetCardsByUser(int userId) => cardDataAccess.FindByUserId(userId);
 
     /// <inheritdoc />
-    public List<Transaction> GetRecentTransactions(int accountId, int limit = 10)
-    {
-        return transactionDataAccess.FindRecentByAccountId(accountId, limit);
-    }
+    public ErrorOr<List<Transaction>> GetRecentTransactions(int accountId, int limit = 10) =>
+        transactionDataAccess.FindRecentByAccountId(accountId, limit);
 
     /// <inheritdoc />
-    public int GetUnreadNotificationCount(int userId)
-    {
-        return notificationDataAccess.CountUnreadByUserId(userId);
-    }
+    public ErrorOr<int> GetUnreadNotificationCount(int userId) =>
+        notificationDataAccess.CountUnreadByUserId(userId);
 }

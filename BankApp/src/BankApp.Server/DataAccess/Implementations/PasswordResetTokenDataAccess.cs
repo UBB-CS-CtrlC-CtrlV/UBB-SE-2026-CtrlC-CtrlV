@@ -10,15 +10,15 @@ namespace BankApp.Server.DataAccess.Implementations;
 /// </summary>
 public class PasswordResetTokenDataAccess : IPasswordResetTokenDataAccess
 {
-    private readonly AppDbContext context;
+    private readonly AppDbContext db;
 
     /// <summary>
     /// Initializes a new instance of the <see cref="PasswordResetTokenDataAccess"/> class.
     /// </summary>
-    /// <param name="context">The database context used for executing queries.</param>
-    public PasswordResetTokenDataAccess(AppDbContext context)
+    /// <param name="db">The database context used for executing queries.</param>
+    public PasswordResetTokenDataAccess(AppDbContext db)
     {
-        this.context = context;
+        this.db = db;
     }
 
     /// <inheritdoc />
@@ -31,20 +31,16 @@ public class PasswordResetTokenDataAccess : IPasswordResetTokenDataAccess
             VALUES (@UserId, @TokenHash, @ExpiresAt)
             """;
 
-        var token = this.context.GetConnection().QueryFirstOrDefault<PasswordResetToken>(sql, new
+        return this.db.Query(conn => conn.QueryFirstOrDefault<PasswordResetToken>(sql, new
         {
             UserId = userId,
             TokenHash = tokenHash,
             ExpiresAt = expiresAt,
-        });
-
-        return token is null
-            ? Error.Failure(description: "Failed to create password reset token.")
-            : token;
+        })).Then(token => token ?? (ErrorOr<PasswordResetToken>)Error.Failure(description: "Failed to create password reset token."));
     }
 
     /// <inheritdoc />
-    public PasswordResetToken? FindByToken(string tokenHash)
+    public ErrorOr<PasswordResetToken> FindByToken(string tokenHash)
     {
         const string sql = """
             SELECT Id, UserId, TokenHash, ExpiresAt, UsedAt, CreatedAt
@@ -52,20 +48,23 @@ public class PasswordResetTokenDataAccess : IPasswordResetTokenDataAccess
             WHERE TokenHash = @TokenHash
             """;
 
-        return this.context.GetConnection().QueryFirstOrDefault<PasswordResetToken>(sql, new { TokenHash = tokenHash });
+        return this.db.Query(conn => conn.QueryFirstOrDefault<PasswordResetToken>(sql, new { TokenHash = tokenHash }))
+            .Then(token => token ?? (ErrorOr<PasswordResetToken>)Error.NotFound(description: "Password reset token not found."));
     }
 
     /// <inheritdoc />
-    public void MarkAsUsed(int tokenId)
+    public ErrorOr<Success> MarkAsUsed(int tokenId)
     {
         const string sql = "UPDATE PasswordResetToken SET UsedAt = GETUTCDATE() WHERE Id = @Id";
-        this.context.GetConnection().Execute(sql, new { Id = tokenId });
+        return this.db.Query(conn => conn.Execute(sql, new { Id = tokenId }))
+            .Then(_ => (ErrorOr<Success>)Result.Success);
     }
 
     /// <inheritdoc />
-    public void DeleteExpired()
+    public ErrorOr<Success> DeleteExpired()
     {
         const string sql = "DELETE FROM PasswordResetToken WHERE ExpiresAt < GETUTCDATE()";
-        this.context.GetConnection().Execute(sql);
+        return this.db.Query(conn => conn.Execute(sql))
+            .Then(_ => (ErrorOr<Success>)Result.Success);
     }
 }

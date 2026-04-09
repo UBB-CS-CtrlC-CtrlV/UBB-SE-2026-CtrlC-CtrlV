@@ -29,15 +29,15 @@ public class ProfileService : IProfileService
     /// <inheritdoc />
     public GetProfileResponse? GetProfile(int userId)
     {
-        User? user = userRepository.FindById(userId);
-        if (user == null)
+        var userResult = userRepository.FindById(userId);
+        if (userResult.IsError)
         {
             return null;
         }
 
         return new GetProfileResponse(true, "Successfully retrieved profile information.")
         {
-            ProfileInfo = new ProfileInfo(user),
+            ProfileInfo = new ProfileInfo(userResult.Value),
         };
     }
 
@@ -51,13 +51,14 @@ public class ProfileService : IProfileService
 
         int userId = request.UserId.Value;
 
-        User? user = userRepository.FindById(userId);
-        if (user == null)
+        var userResult = userRepository.FindById(userId);
+        if (userResult.IsError)
         {
             return new UpdateProfileResponse(false, "User not found.");
         }
 
-        // Check and update phone number
+        User user = userResult.Value;
+
         if (request.PhoneNumber != null)
         {
             if (!ValidationUtilities.IsValidPhoneNumber(request.PhoneNumber))
@@ -68,14 +69,12 @@ public class ProfileService : IProfileService
             user.PhoneNumber = request.PhoneNumber;
         }
 
-        // Check and update address
         if (request.Address != null)
         {
             user.Address = request.Address;
         }
 
-        // Update the user in the repo
-        if (userRepository.UpdateUser(user) == false)
+        if (userRepository.UpdateUser(user).IsError)
         {
             return new UpdateProfileResponse(false, "Could not update user.");
         }
@@ -86,66 +85,74 @@ public class ProfileService : IProfileService
     /// <inheritdoc />
     public ChangePasswordResponse ChangePassword(ChangePasswordRequest request)
     {
-        User? user = userRepository.FindById(request.UserId);
-        if (user == null)
+        var userResult = userRepository.FindById(request.UserId);
+        if (userResult.IsError)
         {
             return new ChangePasswordResponse(false, "User not found.");
         }
+
+        User user = userResult.Value;
 
         if (!ValidationUtilities.IsStrongPassword(request.NewPassword))
         {
             return new ChangePasswordResponse(false, "Password must contain at least one digit, one uppercase and one special symbol.");
         }
 
-        if (hashService.Verify(request.CurrentPassword, user.PasswordHash))
-        {
-            user.PasswordHash = hashService.GetHash(request.NewPassword);
-            userRepository.UpdatePassword(user.Id, user.PasswordHash);
-            return new ChangePasswordResponse(true, "Password changed successfully.");
-        }
-        else
+        if (!hashService.Verify(request.CurrentPassword, user.PasswordHash))
         {
             return new ChangePasswordResponse(false, "Current password is incorrect. Please try again.");
         }
+
+        userRepository.UpdatePassword(user.Id, hashService.GetHash(request.NewPassword));
+        return new ChangePasswordResponse(true, "Password changed successfully.");
     }
 
     /// <inheritdoc />
     public bool Enable2FA(int userId, TwoFactorMethod method)
     {
-        User? user = userRepository.FindById(userId);
-        if (user == null)
+        var userResult = userRepository.FindById(userId);
+        if (userResult.IsError)
         {
             return false;
         }
+
+        User user = userResult.Value;
         user.Is2FAEnabled = true;
         user.Preferred2FAMethod = method.ToString();
-        return userRepository.UpdateUser(user);
+        return !userRepository.UpdateUser(user).IsError;
     }
 
     /// <inheritdoc />
     public bool Disable2FA(int userId)
     {
-        User? user = userRepository.FindById(userId);
-        if (user == null)
+        var userResult = userRepository.FindById(userId);
+        if (userResult.IsError)
         {
             return false;
         }
 
+        User user = userResult.Value;
         user.Is2FAEnabled = false;
         user.Preferred2FAMethod = null;
-        return userRepository.UpdateUser(user);
+        return !userRepository.UpdateUser(user).IsError;
     }
 
     /// <inheritdoc />
     public List<OAuthLinkDto> GetOAuthLinks(int userId)
     {
-        User? user = userRepository.FindById(userId);
-        if (user == null)
+        var userResult = userRepository.FindById(userId);
+        if (userResult.IsError)
         {
             return new List<OAuthLinkDto>();
         }
 
-        return userRepository.GetLinkedProviders(userId)
+        var linksResult = userRepository.GetLinkedProviders(userId);
+        if (linksResult.IsError)
+        {
+            return new List<OAuthLinkDto>();
+        }
+
+        return linksResult.Value
             .Select(oauthLink => new OAuthLinkDto
             {
                 Id = oauthLink.Id,
@@ -171,13 +178,19 @@ public class ProfileService : IProfileService
     /// <inheritdoc />
     public List<NotificationPreferenceDto> GetNotificationPreferences(int userId)
     {
-        User? user = userRepository.FindById(userId);
-        if (user == null)
+        var userResult = userRepository.FindById(userId);
+        if (userResult.IsError)
         {
             return new List<NotificationPreferenceDto>();
         }
 
-        return userRepository.GetNotificationPreferences(userId)
+        var prefsResult = userRepository.GetNotificationPreferences(userId);
+        if (prefsResult.IsError)
+        {
+            return new List<NotificationPreferenceDto>();
+        }
+
+        return prefsResult.Value
             .Select(preference => new NotificationPreferenceDto
             {
                 Id = preference.Id,
@@ -194,8 +207,8 @@ public class ProfileService : IProfileService
     /// <inheritdoc />
     public bool UpdateNotificationPreferences(int userId, List<NotificationPreferenceDto> preferences)
     {
-        User? user = userRepository.FindById(userId);
-        if (user == null)
+        var userResult = userRepository.FindById(userId);
+        if (userResult.IsError)
         {
             return false;
         }
@@ -213,19 +226,18 @@ public class ProfileService : IProfileService
             })
             .ToList();
 
-        return userRepository.UpdateNotificationPreferences(userId, entities);
+        return !userRepository.UpdateNotificationPreferences(userId, entities).IsError;
     }
 
     /// <inheritdoc />
     public bool VerifyPassword(int userId, string password)
     {
-        User? user = userRepository.FindById(userId);
-
-        if (user == null)
+        var userResult = userRepository.FindById(userId);
+        if (userResult.IsError)
         {
             return false;
         }
 
-        return hashService.Verify(password, user.PasswordHash);
+        return hashService.Verify(password, userResult.Value.PasswordHash);
     }
 }

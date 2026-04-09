@@ -18,15 +18,15 @@ public class SessionDataAccess : ISessionDataAccess
         FROM [Session]
         """;
 
-    private readonly AppDbContext dbContext;
+    private readonly AppDbContext db;
 
     /// <summary>
     /// Initializes a new instance of the <see cref="SessionDataAccess"/> class.
     /// </summary>
-    /// <param name="dbContext">The database context used for executing queries.</param>
-    public SessionDataAccess(AppDbContext dbContext)
+    /// <param name="db">The database context used for executing queries.</param>
+    public SessionDataAccess(AppDbContext db)
     {
-        this.dbContext = dbContext;
+        this.db = db;
     }
 
     /// <inheritdoc />
@@ -41,7 +41,7 @@ public class SessionDataAccess : ISessionDataAccess
                     GETUTCDATE(), DATEADD(DAY, @ExpirationDays, GETUTCDATE()))
             """;
 
-        var session = this.dbContext.GetConnection().QueryFirstOrDefault<Session>(sql, new
+        return this.db.Query(conn => conn.QueryFirstOrDefault<Session>(sql, new
         {
             UserId = userId,
             Token = token,
@@ -49,38 +49,37 @@ public class SessionDataAccess : ISessionDataAccess
             Browser = browser,
             IpAddress = ipAddress,
             ExpirationDays = SessionExpirationDays,
-        });
-
-        return session is null
-            ? Error.Failure(description: "Failed to create session.")
-            : session;
+        })).Then(session => session ?? (ErrorOr<Session>)Error.Failure(description: "Failed to create session."));
     }
 
     /// <inheritdoc />
-    public Session? FindByToken(string token)
+    public ErrorOr<Session> FindByToken(string token)
     {
         const string query = $"{SelectAllColumns} WHERE Token = @Token AND IsRevoked = 0 AND ExpiresAt > GETUTCDATE()";
-        return this.dbContext.GetConnection().QueryFirstOrDefault<Session>(query, new { Token = token });
+        return this.db.Query(conn => conn.QueryFirstOrDefault<Session>(query, new { Token = token }))
+            .Then(session => session ?? (ErrorOr<Session>)Error.NotFound(description: "Session not found."));
     }
 
     /// <inheritdoc />
-    public List<Session> FindByUserId(int userId)
+    public ErrorOr<List<Session>> FindByUserId(int userId)
     {
         const string query = $"{SelectAllColumns} WHERE UserId = @UserId AND IsRevoked = 0 AND ExpiresAt > GETUTCDATE()";
-        return this.dbContext.GetConnection().Query<Session>(query, new { UserId = userId }).AsList();
+        return this.db.Query(conn => conn.Query<Session>(query, new { UserId = userId }).AsList());
     }
 
     /// <inheritdoc />
-    public void Revoke(int sessionId)
+    public ErrorOr<Success> Revoke(int sessionId)
     {
         const string sql = "UPDATE [Session] SET IsRevoked = 1 WHERE Id = @Id";
-        this.dbContext.GetConnection().Execute(sql, new { Id = sessionId });
+        return this.db.Query(conn => conn.Execute(sql, new { Id = sessionId }))
+            .Then(_ => (ErrorOr<Success>)Result.Success);
     }
 
     /// <inheritdoc />
-    public void RevokeAll(int userId)
+    public ErrorOr<Success> RevokeAll(int userId)
     {
         const string sql = "UPDATE [Session] SET IsRevoked = 1 WHERE UserId = @UserId AND IsRevoked = 0";
-        this.dbContext.GetConnection().Execute(sql, new { UserId = userId });
+        return this.db.Query(conn => conn.Execute(sql, new { UserId = userId }))
+            .Then(_ => (ErrorOr<Success>)Result.Success);
     }
 }

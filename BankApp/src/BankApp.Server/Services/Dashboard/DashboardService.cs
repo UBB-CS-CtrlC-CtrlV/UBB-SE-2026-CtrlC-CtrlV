@@ -1,9 +1,4 @@
-// <copyright file="DashboardService.cs" company="CtrlC CtrlV">
-// Copyright (c) CtrlC CtrlV. All rights reserved.
-// </copyright>
-
 using BankApp.Contracts.DTOs.Dashboard;
-using BankApp.Contracts.Entities;
 using BankApp.Server.Repositories.Interfaces;
 
 namespace BankApp.Server.Services.Dashboard;
@@ -31,23 +26,26 @@ public class DashboardService : IDashboardService
     /// <inheritdoc />
     public DashboardResponse? GetDashboardData(int userId)
     {
-        User? user = userRepository.FindById(userId);
-
-        if (user == null)
+        var userResult = userRepository.FindById(userId);
+        if (userResult.IsError)
         {
             return null;
         }
+
+        var cardsResult = dashboardRepository.GetCardsByUser(userId);
+        var transactionsResult = dashboardRepository.GetRecentTransactions(userId, DefaultRecentTransactionLimit);
+        var notifCountResult = dashboardRepository.GetUnreadNotificationCount(userId);
 
         return new DashboardResponse
         {
             CurrentUser = new UserSummaryDto
             {
-                FullName = user.FullName,
-                Email = user.Email,
-                PhoneNumber = user.PhoneNumber,
-                Is2FAEnabled = user.Is2FAEnabled,
+                FullName = userResult.Value.FullName,
+                Email = userResult.Value.Email,
+                PhoneNumber = userResult.Value.PhoneNumber,
+                Is2FAEnabled = userResult.Value.Is2FAEnabled,
             },
-            Cards = dashboardRepository.GetCardsByUser(userId)
+            Cards = cardsResult.IsError ? new List<CardDto>() : cardsResult.Value
                 .Select(card => new CardDto
                 {
                     Id = card.Id,
@@ -61,7 +59,7 @@ public class DashboardService : IDashboardService
                     IsOnlineEnabled = card.IsOnlineEnabled,
                 })
                 .ToList(),
-            RecentTransactions = dashboardRepository.GetRecentTransactions(userId, DefaultRecentTransactionLimit)
+            RecentTransactions = transactionsResult.IsError ? new List<TransactionDto>() : transactionsResult.Value
                 .Select(transaction => new TransactionDto
                 {
                     Id = transaction.Id,
@@ -76,7 +74,7 @@ public class DashboardService : IDashboardService
                     CreatedAt = transaction.CreatedAt,
                 })
                 .ToList(),
-            UnreadNotificationCount = dashboardRepository.GetUnreadNotificationCount(userId),
+            UnreadNotificationCount = notifCountResult.IsError ? 0 : notifCountResult.Value,
         };
     }
 }
