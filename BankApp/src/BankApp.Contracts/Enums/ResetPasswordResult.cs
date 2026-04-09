@@ -28,4 +28,9 @@ public enum ResetPasswordResult
     /// The provided token has already been used.
     /// </summary>
     TokenAlreadyUsed,
+
+    /// <summary>
+    /// The password was updated but a post-reset security step (invalidating the token or sessions) failed.
+    /// </summary>
+    Failed,
 }

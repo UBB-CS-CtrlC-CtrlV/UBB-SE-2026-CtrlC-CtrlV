@@ -1,7 +1,6 @@
 using System.Text;
 using System.Security.Claims;
 using System.IdentityModel.Tokens.Jwt;
-using BankApp.Server.Services.Security;
 using Microsoft.IdentityModel.Tokens;
 using ErrorOr;
 
@@ -46,8 +45,8 @@ public class JwtService : IJwtService
     /// <inheritdoc />
     public ErrorOr<ClaimsPrincipal> ValidateToken(string token)
     {
-        SymmetricSecurityKey key = new SymmetricSecurityKey(Encoding.UTF8.GetBytes(secret));
-        JwtSecurityTokenHandler handler = new JwtSecurityTokenHandler();
+        var key = new SymmetricSecurityKey(Encoding.UTF8.GetBytes(secret));
+        var handler = new JwtSecurityTokenHandler();
 
         try
         {

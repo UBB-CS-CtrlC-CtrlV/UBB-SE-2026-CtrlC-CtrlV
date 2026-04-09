@@ -24,15 +24,15 @@ public interface IDbContext : IDisposable
     /// Begins a new database transaction.
     /// </summary>
     /// <returns>The <see cref="SqlTransaction"/> that was started.</returns>
-    SqlTransaction BeginTransaction();
+    ErrorOr<SqlTransaction> BeginTransaction();
 
     /// <summary>
     /// Commits the current database transaction.
     /// </summary>
-    void CommitTransaction();
+    ErrorOr<Success> CommitTransaction();
 
     /// <summary>
     /// Rolls back the current database transaction.
     /// </summary>
-    void RollbackTransaction();
+    ErrorOr<Success> RollbackTransaction();
 }

@@ -36,43 +36,45 @@ public class AppDbContext : IDbContext
     }
 
     /// <inheritdoc />
-    public SqlTransaction BeginTransaction()
+    public ErrorOr<SqlTransaction> BeginTransaction()
     {
-        var activeConnection = this.GetConnection();
+        SqlConnection activeConnection = this.GetConnection();
         try
         {
             currentTransaction = activeConnection.BeginTransaction();
         }
-        catch (SqlException sqlException)
+        catch (Exception ex) when (ex is SqlException or InvalidOperationException)
         {
-            throw new Exception($"Failed to begin transaction: {sqlException.Message}", sqlException);
+            return Error.Failure(description: $"Failed to begin transaction: {ex.Message}");
         }
 
         return currentTransaction;
     }
 
     /// <inheritdoc />
-    public void CommitTransaction()
+    public ErrorOr<Success> CommitTransaction()
     {
         if (currentTransaction is null)
         {
-            return;
+            return Error.Conflict(description: "No active transaction to commit.");
         }
 
         currentTransaction.Commit();
         currentTransaction = null;
+        return Result.Success;
     }
 
     /// <inheritdoc />
-    public void RollbackTransaction()
+    public ErrorOr<Success> RollbackTransaction()
     {
         if (currentTransaction is null)
         {
-            return;
+            return Error.Conflict(description: "No active transaction to rollback.");
         }
 
         currentTransaction.Rollback();
         currentTransaction = null;
+        return Result.Success;
     }
 
     /// <inheritdoc />

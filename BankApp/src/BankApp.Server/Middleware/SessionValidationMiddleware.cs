@@ -2,7 +2,6 @@ using BankApp.Contracts.Entities;
 using BankApp.Server.Repositories.Interfaces;
 using BankApp.Server.Services.Security;
 using ErrorOr;
-using Microsoft.Extensions.Logging;
 
 namespace BankApp.Server.Middleware;
 
@@ -31,6 +30,7 @@ public class SessionValidationMiddleware
     /// <param name="context">The current HTTP context.</param>
     /// <param name="authRepository">The authentication repository used to verify sessions.</param>
     /// <param name="jwtService">The JWT service used to extract and validate tokens.</param>
+    /// <param name="logger">Logger for validation errors.</param>
     /// <returns>A <see cref="Task"/> representing the asynchronous operation.</returns>
     public async Task Invoke(HttpContext context, IAuthRepository authRepository, IJwtService jwtService, ILogger<SessionValidationMiddleware> logger)
     {
@@ -78,17 +78,12 @@ public class SessionValidationMiddleware
         await next(context);
     }
 
-    private bool IsPublicEndpoint(string? path)
+    private static bool IsPublicEndpoint(string? path)
     {
-        if (path == null)
-        {
-            return false;
-        }
-
-        return Array.Exists(PublicEndpointPrefixes, prefix => path.Contains(prefix));
+        return path is not null && Array.Exists(PublicEndpointPrefixes, path.Contains);
     }
 
-    private async Task RejectRequest(HttpContext context, string error)
+    private static async Task RejectRequest(HttpContext context, string error)
     {
         context.Response.StatusCode = StatusCodes.Status401Unauthorized;
         context.Response.ContentType = "application/json";

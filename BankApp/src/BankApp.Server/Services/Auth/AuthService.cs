@@ -5,6 +5,7 @@ using BankApp.Server.Repositories.Interfaces;
 using BankApp.Server.Services.Notifications;
 using BankApp.Server.Services.Security;
 using BankApp.Server.Utilities;
+using ErrorOr;
 using Google.Apis.Auth;
 
 namespace BankApp.Server.Services.Auth;
@@ -26,7 +27,7 @@ public class AuthService : IAuthService
     private const string GoogleOAuthProvider = "Google";
     private const string DefaultLanguage = "en";
     private const string TemporaryPasswordSuffix = "A1a!";
-    private static readonly string EmailTwoFactorMethod = TwoFactorMethod.Email.ToString();
+    private const string EmailTwoFactorMethod = nameof(TwoFactorMethod.Email);
 
     /// <summary>
     /// Initializes a new instance of the <see cref="AuthService"/> class.
@@ -36,7 +37,8 @@ public class AuthService : IAuthService
     /// <param name="jwtService">The JWT token service.</param>
     /// <param name="otpService">The one-time password service.</param>
     /// <param name="emailService">The email delivery service.</param>
-    public AuthService(IAuthRepository authRepository, IHashService hashService, IJwtService jwtService, IOtpService otpService, IEmailService emailService)
+    public AuthService(IAuthRepository authRepository, IHashService hashService, IJwtService jwtService,
+        IOtpService otpService, IEmailService emailService)
     {
         this.authRepository = authRepository;
         this.hashService = hashService;
@@ -53,7 +55,7 @@ public class AuthService : IAuthService
             return new LoginResponse { Success = false, Error = "Invalid mail format." };
         }
 
-        var userResult = authRepository.FindUserByEmail(request.Email);
+        ErrorOr<User> userResult = authRepository.FindUserByEmail(request.Email);
         if (userResult.IsError)
         {
             return new LoginResponse { Success = false, Error = "Invalid email or password." };
@@ -72,12 +74,7 @@ public class AuthService : IAuthService
             return HandleFailedPassword(user);
         }
 
-        if (user.Is2FAEnabled)
-        {
-            return Handle2FA(user);
-        }
-
-        return CompleteLogin(user);
+        return user.Is2FAEnabled ? Handle2FA(user) : CompleteLogin(user);
     }
 
     /// <inheritdoc />
@@ -95,12 +92,9 @@ public class AuthService : IAuthService
         }
 
         User user = CreateUserFromRequest(request);
-        if (authRepository.CreateUser(user).IsError)
-        {
-            return new RegisterResponse { Success = false, Error = "Failed to create account." };
-        }
-
-        return new RegisterResponse { Success = true };
+        return authRepository.CreateUser(user).IsError
+            ? new RegisterResponse { Success = false, Error = "Failed to create account." }
+            : new RegisterResponse { Success = true };
     }
 
     /// <inheritdoc />
@@ -125,21 +119,21 @@ public class AuthService : IAuthService
         string email = payload.Email;
         string fullName = payload.Name;
 
-        var linkResult = authRepository.FindOAuthLink(request.Provider, providerUserId);
+        ErrorOr<OAuthLink> linkResult = authRepository.FindOAuthLink(request.Provider, providerUserId);
         User? user = null;
 
         if (!linkResult.IsError)
         {
-            var userResult = authRepository.FindUserById(linkResult.Value.UserId);
+            ErrorOr<User> userResult = authRepository.FindUserById(linkResult.Value.UserId);
             if (!userResult.IsError)
             {
                 user = userResult.Value;
             }
         }
 
-        if (user == null)
+        if (user is null)
         {
-            var byEmailResult = authRepository.FindUserByEmail(email);
+            ErrorOr<User> byEmailResult = authRepository.FindUserByEmail(email);
             if (!byEmailResult.IsError)
             {
                 user = byEmailResult.Value;
@@ -163,7 +157,7 @@ public class AuthService : IAuthService
                     return new LoginResponse { Success = false, Error = "Failed to create user account." };
                 }
 
-                var createdResult = authRepository.FindUserByEmail(email);
+                ErrorOr<User> createdResult = authRepository.FindUserByEmail(email);
                 if (createdResult.IsError)
                 {
                     return new LoginResponse { Success = false, Error = "Failed to retrieve created user." };
@@ -179,7 +173,10 @@ public class AuthService : IAuthService
                 ProviderUserId = providerUserId,
                 ProviderEmail = email,
             };
-            authRepository.CreateOAuthLink(newLink);
+            if (authRepository.CreateOAuthLink(newLink).IsError)
+            {
+                return new LoginResponse { Success = false, Error = "Failed to link OAuth account." };
+            }
         }
 
         LoginResponse? lockCheck = CheckAccountLock(user);
@@ -188,12 +185,7 @@ public class AuthService : IAuthService
             return lockCheck;
         }
 
-        if (user.Is2FAEnabled)
-        {
-            return Handle2FA(user);
-        }
-
-        return CompleteLogin(user);
+        return user.Is2FAEnabled ? Handle2FA(user) : CompleteLogin(user);
     }
 
     /// <inheritdoc />
@@ -206,11 +198,12 @@ public class AuthService : IAuthService
 
         if (!authRepository.FindOAuthLink(request.Provider, request.ProviderToken).IsError)
         {
-            return new RegisterResponse { Success = false, Error = "This OAuth account is already registered. Please login." };
+            return new RegisterResponse
+                { Success = false, Error = "This OAuth account is already registered. Please login." };
         }
 
         int targetUserId;
-        var existingUserResult = authRepository.FindUserByEmail(request.Email);
+        ErrorOr<User> existingUserResult = authRepository.FindUserByEmail(request.Email);
         if (!existingUserResult.IsError)
         {
             targetUserId = existingUserResult.Value.Id;
@@ -218,7 +211,7 @@ public class AuthService : IAuthService
         else
         {
             string generatedTemporaryPassword = Guid.NewGuid().ToString() + TemporaryPasswordSuffix;
-            User newUser = new User
+            var newUser = new User
             {
                 Email = request.Email,
                 PasswordHash = hashService.GetHash(generatedTemporaryPassword),
@@ -234,7 +227,7 @@ public class AuthService : IAuthService
                 return new RegisterResponse { Success = false, Error = "Failed to create user account." };
             }
 
-            var savedUserResult = authRepository.FindUserByEmail(request.Email);
+            ErrorOr<User> savedUserResult = authRepository.FindUserByEmail(request.Email);
             if (savedUserResult.IsError)
             {
                 return new RegisterResponse { Success = false, Error = "Error retrieving created user." };
@@ -251,18 +244,15 @@ public class AuthService : IAuthService
             ProviderEmail = request.Email,
         };
 
-        if (authRepository.CreateOAuthLink(newLink).IsError)
-        {
-            return new RegisterResponse { Success = false, Error = "Failed to link OAuth account to user." };
-        }
-
-        return new RegisterResponse { Success = true };
+        return authRepository.CreateOAuthLink(newLink).IsError
+            ? new RegisterResponse { Success = false, Error = "Failed to link OAuth account to user." }
+            : new RegisterResponse { Success = true };
     }
 
     /// <inheritdoc />
     public LoginResponse VerifyOTP(VerifyOTPRequest request)
     {
-        var userResult = authRepository.FindUserById(request.UserId);
+        ErrorOr<User> userResult = authRepository.FindUserById(request.UserId);
         if (userResult.IsError)
         {
             return new LoginResponse { Success = false, Error = "User not found." };
@@ -280,12 +270,12 @@ public class AuthService : IAuthService
     }
 
     /// <inheritdoc />
-    public void ResendOTP(int userId, string method)
+    public ErrorOr<Success> ResendOTP(int userId, string method)
     {
-        var userResult = authRepository.FindUserById(userId);
+        ErrorOr<User> userResult = authRepository.FindUserById(userId);
         if (userResult.IsError)
         {
-            return;
+            return userResult.FirstError;
         }
 
         User user = userResult.Value;
@@ -296,25 +286,27 @@ public class AuthService : IAuthService
         {
             emailService.SendOTPCode(user.Email, oneTimePassword);
         }
+
+        return Result.Success;
     }
 
     /// <inheritdoc />
-    public void RequestPasswordReset(string email)
+    public ErrorOr<Success> RequestPasswordReset(string email)
     {
-        var userResult = authRepository.FindUserByEmail(email);
+        ErrorOr<User> userResult = authRepository.FindUserByEmail(email);
         if (userResult.IsError)
         {
-            return;
+            return userResult.FirstError;
         }
 
         User user = userResult.Value;
-        authRepository.DeleteExpiredPasswordResetTokens();
+        _ = authRepository.DeleteExpiredPasswordResetTokens();
 
         byte[] randomBytes = System.Security.Cryptography.RandomNumberGenerator.GetBytes(32);
         string rawToken = Convert.ToBase64String(randomBytes);
         string tokenHashForDb = ComputeSha256Hash(rawToken);
 
-        PasswordResetToken resetToken = new PasswordResetToken
+        var resetToken = new PasswordResetToken
         {
             UserId = user.Id,
             TokenHash = tokenHashForDb,
@@ -322,8 +314,13 @@ public class AuthService : IAuthService
             CreatedAt = DateTime.UtcNow,
         };
 
-        authRepository.SavePasswordResetToken(resetToken);
+        if (authRepository.SavePasswordResetToken(resetToken).IsError)
+        {
+            return Error.Failure(description: "Failed to save password reset token.");
+        }
+
         emailService.SendPasswordResetLink(user.Email, rawToken);
+        return Result.Success;
     }
 
     /// <inheritdoc />
@@ -335,14 +332,14 @@ public class AuthService : IAuthService
         }
 
         string tokenHash = ComputeSha256Hash(token);
-        var tokenResult = authRepository.FindPasswordResetToken(tokenHash);
+        ErrorOr<PasswordResetToken> tokenResult = authRepository.FindPasswordResetToken(tokenHash);
         if (tokenResult.IsError)
         {
             return ResetPasswordResult.InvalidToken;
         }
 
         PasswordResetToken resetToken = tokenResult.Value;
-        ResetTokenValidationResult validationResult = this.GetResetTokenValidationResult(resetToken);
+        ResetTokenValidationResult validationResult = GetResetTokenValidationResult(resetToken);
         if (validationResult != ResetTokenValidationResult.Valid)
         {
             return validationResult switch
@@ -359,8 +356,15 @@ public class AuthService : IAuthService
             return ResetPasswordResult.InvalidToken;
         }
 
-        authRepository.MarkPasswordResetTokenAsUsed(resetToken.Id);
-        authRepository.InvalidateAllSessions(resetToken.UserId);
+        if (authRepository.MarkPasswordResetTokenAsUsed(resetToken.Id).IsError)
+        {
+            return ResetPasswordResult.Failed;
+        }
+
+        if (authRepository.InvalidateAllSessions(resetToken.UserId).IsError)
+        {
+            return ResetPasswordResult.Failed;
+        }
 
         return ResetPasswordResult.Success;
     }
@@ -374,26 +378,23 @@ public class AuthService : IAuthService
         }
 
         string tokenHash = ComputeSha256Hash(token);
-        var tokenResult = authRepository.FindPasswordResetToken(tokenHash);
-        if (tokenResult.IsError)
-        {
-            return ResetTokenValidationResult.Invalid;
-        }
-
-        return this.GetResetTokenValidationResult(tokenResult.Value);
+        ErrorOr<PasswordResetToken> tokenResult = authRepository.FindPasswordResetToken(tokenHash);
+        return tokenResult.IsError
+            ? ResetTokenValidationResult.Invalid
+            : GetResetTokenValidationResult(tokenResult.Value);
     }
 
     /// <inheritdoc />
-    public bool Logout(string token)
+    public ErrorOr<Success> Logout(string token)
     {
-        var sessionResult = authRepository.FindSessionByToken(token);
+        ErrorOr<Session> sessionResult = authRepository.FindSessionByToken(token);
         if (sessionResult.IsError)
         {
-            return false;
+            return sessionResult.FirstError;
         }
 
         authRepository.UpdateSessionToken(sessionResult.Value.Id);
-        return true;
+        return Result.Success;
     }
 
     private LoginResponse? CheckAccountLock(User user)
@@ -408,22 +409,26 @@ public class AuthService : IAuthService
             return new LoginResponse { Success = false, Error = "Account is locked. Try again later." };
         }
 
-        authRepository.ResetFailedAttempts(user.Id);
+        _ = authRepository.ResetFailedAttempts(user.Id);
         return null;
     }
 
     private LoginResponse HandleFailedPassword(User user)
     {
-        authRepository.IncrementFailedAttempts(user.Id);
+        _ = authRepository.IncrementFailedAttempts(user.Id);
 
-        if (user.FailedLoginAttempts + 1 >= MaxFailedAttempts)
+        if (user.FailedLoginAttempts + 1 < MaxFailedAttempts)
         {
-            authRepository.LockAccount(user.Id, DateTime.UtcNow.AddMinutes(LockoutMinutes));
-            emailService.SendLockNotification(user.Email);
-            return new LoginResponse { Success = false, Error = "Account locked due to too many failed attempts." };
+            return new LoginResponse { Success = false, Error = "Invalid email or password." };
         }
 
-        return new LoginResponse { Success = false, Error = "Invalid email or password." };
+        if (authRepository.LockAccount(user.Id, DateTime.UtcNow.AddMinutes(LockoutMinutes)).IsError)
+        {
+            return new LoginResponse { Success = false, Error = "Too many failed attempts. Please try again later." };
+        }
+
+        emailService.SendLockNotification(user.Email);
+        return new LoginResponse { Success = false, Error = "Account locked due to too many failed attempts." };
     }
 
     private LoginResponse Handle2FA(User user)
@@ -446,9 +451,14 @@ public class AuthService : IAuthService
 
     private LoginResponse CompleteLogin(User user)
     {
-        authRepository.ResetFailedAttempts(user.Id);
+        _ = authRepository.ResetFailedAttempts(user.Id);
         string token = jwtService.GenerateToken(user.Id);
-        authRepository.CreateSession(user.Id, token, null, null, null);
+
+        if (authRepository.CreateSession(user.Id, token, null, null, null).IsError)
+        {
+            return new LoginResponse { Success = false, Error = "Failed to create session." };
+        }
+
         emailService.SendLoginAlert(user.Email);
         return new LoginResponse
         {
@@ -459,7 +469,7 @@ public class AuthService : IAuthService
         };
     }
 
-    private string? ValidateRegistration(RegisterRequest request)
+    private static string? ValidateRegistration(RegisterRequest request)
     {
         if (!ValidationUtilities.IsValidEmail(request.Email))
         {
@@ -468,15 +478,11 @@ public class AuthService : IAuthService
 
         if (!ValidationUtilities.IsStrongPassword(request.Password))
         {
-            return "Password must be at least 8 characters with uppercase, lowercase, a digit, and a special character.";
+            return
+                "Password must be at least 8 characters with uppercase, lowercase, a digit, and a special character.";
         }
 
-        if (string.IsNullOrWhiteSpace(request.FullName))
-        {
-            return "Full name is required.";
-        }
-
-        return null;
+        return string.IsNullOrWhiteSpace(request.FullName) ? "Full name is required." : null;
     }
 
     private User CreateUserFromRequest(RegisterRequest request)
@@ -493,22 +499,19 @@ public class AuthService : IAuthService
         };
     }
 
-    private ResetTokenValidationResult GetResetTokenValidationResult(PasswordResetToken resetToken)
+    private static ResetTokenValidationResult GetResetTokenValidationResult(PasswordResetToken resetToken)
     {
         if (resetToken.UsedAt != null)
         {
             return ResetTokenValidationResult.AlreadyUsed;
         }
 
-        if (resetToken.ExpiresAt < DateTime.UtcNow)
-        {
-            return ResetTokenValidationResult.Expired;
-        }
-
-        return ResetTokenValidationResult.Valid;
+        return resetToken.ExpiresAt < DateTime.UtcNow
+            ? ResetTokenValidationResult.Expired
+            : ResetTokenValidationResult.Valid;
     }
 
-    private string ComputeSha256Hash(string rawData)
+    private static string ComputeSha256Hash(string rawData)
     {
         byte[] bytes = System.Security.Cryptography.SHA256.HashData(System.Text.Encoding.UTF8.GetBytes(rawData));
         return Convert.ToHexString(bytes).ToLowerInvariant();
