@@ -13,7 +13,7 @@ namespace BankApp.Server.Controllers;
 /// </summary>
 [ApiController]
 [Route("api/[controller]")]
-public class ProfileController : ControllerBase
+public class ProfileController : ApiControllerBase
 {
     private readonly IProfileService profileService;
 
@@ -232,11 +232,4 @@ public class ProfileController : ControllerBase
 
         return this.Ok(new Toggle2FAResponse { Success = true });
     }
-
-    /// <summary>
-    /// Extracts the authenticated user's ID from the HTTP context,
-    /// set by the authentication middleware.
-    /// </summary>
-    /// <returns>The ID of the currently authenticated user.</returns>
-    private int GetAuthenticatedUserId() => (int)this.HttpContext.Items["UserId"] !;
 }

@@ -13,7 +13,7 @@ namespace BankApp.Server.Controllers;
 /// </summary>
 [ApiController]
 [Route("api/[controller]")]
-public class DashboardController : ControllerBase
+public class DashboardController : ApiControllerBase
 {
     private readonly IDashboardService dashService;
 
