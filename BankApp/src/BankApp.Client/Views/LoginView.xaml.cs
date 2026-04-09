@@ -125,7 +125,7 @@ public sealed partial class LoginView : IStateObserver<LoginState>
 
     private async void SignInButton_Click(object sender, RoutedEventArgs e)
     {
-        var email = this.EmailBox.Text.Trim();
+        var email = this.EmailBox.Text;
         var password = this.PasswordBox.Password;
 
         if (!this.viewModel.CanLogin(email, password))

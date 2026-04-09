@@ -19,6 +19,8 @@ namespace BankApp.Server.Controllers;
 [Route("api/[controller]")]
 public class AuthController : ApiControllerBase
 {
+    private const string BearerPrefix = "Bearer ";
+
     private readonly IAuthService authService;
 
     /// <summary>
@@ -142,12 +144,12 @@ public class AuthController : ApiControllerBase
     [HttpPost("logout")]
     public IActionResult Logout([FromHeader(Name = "Authorization")] string authorization)
     {
-        if (string.IsNullOrWhiteSpace(authorization) || !authorization.StartsWith("Bearer ", StringComparison.Ordinal))
+        if (string.IsNullOrWhiteSpace(authorization) || !authorization.StartsWith(BearerPrefix, StringComparison.Ordinal))
         {
             return this.BadRequest(new ApiErrorResponse { Error = "No token provided." });
         }
 
-        string token = authorization.Substring("Bearer ".Length);
+        string token = authorization.Substring(BearerPrefix.Length);
         return this.ToActionResult(this.authService.Logout(token));
     }
 

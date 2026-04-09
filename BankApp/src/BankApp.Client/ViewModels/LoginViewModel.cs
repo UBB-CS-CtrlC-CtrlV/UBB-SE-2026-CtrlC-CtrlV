@@ -80,7 +80,7 @@ public class LoginViewModel
 
         BankApp.Contracts.DTOs.Auth.LoginRequest request = new BankApp.Contracts.DTOs.Auth.LoginRequest
         {
-            Email = email,
+            Email = email.Trim(),
             Password = password,
         };
 

@@ -52,10 +52,10 @@ public class ProfileViewModel
     public ObservableState<ProfileState> State { get; }
 
     /// <summary>
-    /// Gets or sets a value indicating whether the View is currently populating UI controls
+    /// Gets or sets a value indicating whether the View is currently initializing UI controls
     /// programmatically and toggle-changed events should be suppressed.
     /// </summary>
-    public bool IsPopulating { get; set; }
+    public bool IsInitializingView { get; set; }
 
     /// <summary>
     /// Gets the personal info sub-ViewModel.

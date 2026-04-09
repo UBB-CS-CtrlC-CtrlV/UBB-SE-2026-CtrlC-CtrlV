@@ -35,7 +35,7 @@ public partial class App
     {
         ConfigureLogging();
 
-        var configuration = new ConfigurationBuilder()
+        IConfigurationRoot configuration = new ConfigurationBuilder()
             .SetBasePath(AppContext.BaseDirectory)
             .AddJsonFile("appsettings.json", optional: false)
             // appsettings.Local.json is `.gitignore`

@@ -8,6 +8,7 @@ using System.Threading.Tasks;
 using BankApp.Client.Utilities;
 using BankApp.Contracts.DTOs.Profile;
 using BankApp.Client.Enums;
+using ErrorOr;
 using Microsoft.Extensions.Logging;
 
 namespace BankApp.Client.ViewModels;
@@ -93,17 +94,11 @@ public class NotificationsViewModel
 
         this.State.SetValue(ProfileState.Loading);
 
-        var result = await this.apiClient.PutAsync<List<NotificationPreferenceDto>, bool>(ApiEndpoints.NotificationPreferences, preferences);
+        ErrorOr<Success> result = await this.apiClient.PutAsync<List<NotificationPreferenceDto>>(ApiEndpoints.NotificationPreferences, preferences);
 
         return result.Match(
-            updated =>
+            _ =>
             {
-                if (!updated)
-                {
-                    this.State.SetValue(ProfileState.Error);
-                    return false;
-                }
-
                 this.NotificationPreferences = preferences;
                 this.State.SetValue(ProfileState.UpdateSuccess);
                 return true;

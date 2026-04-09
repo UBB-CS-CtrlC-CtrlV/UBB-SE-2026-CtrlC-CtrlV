@@ -87,9 +87,9 @@ public sealed partial class ProfileView : IStateObserver<ProfileState>
         this.TwoFactorPhoneDisplay.Text = user.PhoneNumber ?? string.Empty;
         this.TwoFactorEmailDisplay.Text = user.Email ?? string.Empty;
 
-        this.viewModel.IsPopulating = true;
+        this.viewModel.IsInitializingView = true;
         this.TwoFactorToggle.IsOn = user.Is2FAEnabled;
-        this.viewModel.IsPopulating = false;
+        this.viewModel.IsInitializingView = false;
 
         this.PopulateOAuthLinks(this.viewModel.OAuth.OAuthLinks);
         this.PopulateNotificationPreferences(this.viewModel.Notifications.NotificationPreferences);
@@ -282,7 +282,7 @@ public sealed partial class ProfileView : IStateObserver<ProfileState>
 
     private async void TwoFactorToggle_Toggled(object sender, RoutedEventArgs e)
     {
-        if (this.viewModel.IsPopulating)
+        if (this.viewModel.IsInitializingView)
         {
             return;
         }
@@ -291,9 +291,9 @@ public sealed partial class ProfileView : IStateObserver<ProfileState>
 
         if (!success)
         {
-            this.viewModel.IsPopulating = true;
+            this.viewModel.IsInitializingView = true;
             this.TwoFactorToggle.IsOn = !this.TwoFactorToggle.IsOn;
-            this.viewModel.IsPopulating = false;
+            this.viewModel.IsInitializingView = false;
             this.ShowError("Failed to update 2FA settings");
         }
         else
@@ -335,7 +335,7 @@ public sealed partial class ProfileView : IStateObserver<ProfileState>
 
     private async void NotificationToggle_Toggled(object sender, RoutedEventArgs e)
     {
-        if (this.viewModel.IsPopulating)
+        if (this.viewModel.IsInitializingView)
         {
             return;
         }
@@ -346,9 +346,9 @@ public sealed partial class ProfileView : IStateObserver<ProfileState>
             await this.viewModel.Notifications.ToggleNotificationPreference(preference, toggle.IsOn);
             this.isUpdatingToggle = false;
 
-            this.viewModel.IsPopulating = true;
+            this.viewModel.IsInitializingView = true;
             toggle.IsOn = preference.EmailEnabled;
-            this.viewModel.IsPopulating = false;
+            this.viewModel.IsInitializingView = false;
         }
     }
 
@@ -366,7 +366,7 @@ public sealed partial class ProfileView : IStateObserver<ProfileState>
     {
         this.TwoFactorPhoneDisplay.Text = this.viewModel.PersonalInfo.TwoFactorPhoneDisplay;
 
-        if (string.IsNullOrEmpty(this.viewModel.ProfileInfo.PhoneNumber))
+        if (!this.viewModel.PersonalInfo.HasPhoneNumber)
         {
             this.ConfigureActionButton(this.ActionPhoneBtn, PhoneStatusBadge, PhoneStatusText, "Add", "#F1F5F9",
                 "#64748B", "Disabled");
@@ -504,13 +504,13 @@ public sealed partial class ProfileView : IStateObserver<ProfileState>
 
     private void PopulateNotificationPreferences(List<NotificationPreferenceDto>? preferences)
     {
-        this.viewModel.IsPopulating = true;
+        this.viewModel.IsInitializingView = true;
 
         this.NotificationPreferencesPanel.Children.Clear();
 
         if (preferences == null)
         {
-            this.viewModel.IsPopulating = false;
+            this.viewModel.IsInitializingView = false;
             return;
         }
 
@@ -550,6 +550,6 @@ public sealed partial class ProfileView : IStateObserver<ProfileState>
             this.NotificationPreferencesPanel.Children.Add(row);
         }
 
-        this.viewModel.IsPopulating = false;
+        this.viewModel.IsInitializingView = false;
     }
 }

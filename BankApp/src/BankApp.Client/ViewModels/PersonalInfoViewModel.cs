@@ -44,11 +44,16 @@ public class PersonalInfoViewModel
     public ProfileInfo ProfileInfo { get; private set; }
 
     /// <summary>
+    /// Gets a value indicating whether the user has a phone number on file.
+    /// </summary>
+    public bool HasPhoneNumber => !string.IsNullOrEmpty(this.ProfileInfo.PhoneNumber);
+
+    /// <summary>
     /// Gets the display text for the two-factor phone field.
     /// Returns a placeholder when no phone number has been set.
     /// </summary>
     public string TwoFactorPhoneDisplay =>
-        string.IsNullOrEmpty(this.ProfileInfo.PhoneNumber) ? "No phone number set" : this.ProfileInfo.PhoneNumber;
+        this.HasPhoneNumber ? this.ProfileInfo.PhoneNumber! : "No phone number set";
 
     /// <summary>
     /// Loads the current user's profile information from the server.
