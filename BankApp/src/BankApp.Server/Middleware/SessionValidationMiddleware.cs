@@ -1,5 +1,8 @@
+using BankApp.Contracts.Entities;
 using BankApp.Server.Repositories.Interfaces;
 using BankApp.Server.Services.Security;
+using ErrorOr;
+using Microsoft.Extensions.Logging;
 
 namespace BankApp.Server.Middleware;
 
@@ -29,9 +32,9 @@ public class SessionValidationMiddleware
     /// <param name="authRepository">The authentication repository used to verify sessions.</param>
     /// <param name="jwtService">The JWT service used to extract and validate tokens.</param>
     /// <returns>A <see cref="Task"/> representing the asynchronous operation.</returns>
-    public async Task Invoke(HttpContext context, IAuthRepository authRepository, IJwtService jwtService)
+    public async Task Invoke(HttpContext context, IAuthRepository authRepository, IJwtService jwtService, ILogger<SessionValidationMiddleware> logger)
     {
-        var path = context.Request.Path.Value?.ToLower();
+        string? path = context.Request.Path.Value?.ToLower();
 
         // Public endpoints, no token needed
         if (IsPublicEndpoint(path))
@@ -40,7 +43,7 @@ public class SessionValidationMiddleware
             return;
         }
 
-        var authHeader = context.Request.Headers["Authorization"].FirstOrDefault();
+        string? authHeader = context.Request.Headers.Authorization.FirstOrDefault();
 
         // No token provided
         if (authHeader == null || !authHeader.StartsWith(BearerPrefix))
@@ -49,26 +52,28 @@ public class SessionValidationMiddleware
             return;
         }
 
-        var token = authHeader.Substring(BearerPrefix.Length);
+        string token = authHeader[BearerPrefix.Length..];
 
         // Check if JWT valid
-        var userId = jwtService.ExtractUserId(token);
-        if (userId == null)
+        ErrorOr<int> userIdResult = jwtService.ExtractUserId(token);
+        if (userIdResult.IsError)
         {
+            logger.LogWarning("Token validation failed [{Code}]: {Description}", userIdResult.FirstError.Code, userIdResult.FirstError.Description);
             await RejectRequest(context, "Invalid or expired token.");
             return;
         }
 
-        // check if session still active in the DB
-        var session = authRepository.FindSessionByToken(token);
-        if (session == null)
+        // Check if session still active in the DB
+        ErrorOr<Session> sessionResult = authRepository.FindSessionByToken(token);
+        if (sessionResult.IsError)
         {
-            await RejectRequest(context, "Session expired or revoked.");
+            logger.LogWarning("Session lookup failed [{Code}]: {Description}", sessionResult.FirstError.Code, sessionResult.FirstError.Description);
+            await RejectRequest(context, "Invalid or expired token.");
             return;
         }
 
         // Store userId so controllers can use it
-        context.Items["UserId"] = userId;
+        context.Items["UserId"] = userIdResult.Value;
 
         await next(context);
     }
