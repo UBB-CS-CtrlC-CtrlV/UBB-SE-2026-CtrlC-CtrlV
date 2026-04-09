@@ -1,5 +1,8 @@
 using BankApp.Contracts.DTOs.Dashboard;
+using BankApp.Contracts.Entities;
 using BankApp.Server.Repositories.Interfaces;
+using ErrorOr;
+using Microsoft.Extensions.Logging;
 
 namespace BankApp.Server.Services.Dashboard;
 
@@ -10,6 +13,7 @@ public class DashboardService : IDashboardService
 {
     private readonly IDashboardRepository dashboardRepository;
     private readonly IUserRepository userRepository;
+    private readonly ILogger<DashboardService> logger;
     private const int DefaultRecentTransactionLimit = 10;
 
     /// <summary>
@@ -17,24 +21,42 @@ public class DashboardService : IDashboardService
     /// </summary>
     /// <param name="dashboardRepository">The dashboard repository.</param>
     /// <param name="userRepository">The user repository.</param>
-    public DashboardService(IDashboardRepository dashboardRepository, IUserRepository userRepository)
+    /// <param name="logger">The logger.</param>
+    public DashboardService(IDashboardRepository dashboardRepository, IUserRepository userRepository, ILogger<DashboardService> logger)
     {
         this.dashboardRepository = dashboardRepository;
         this.userRepository = userRepository;
+        this.logger = logger;
     }
 
     /// <inheritdoc />
     public DashboardResponse? GetDashboardData(int userId)
     {
-        var userResult = userRepository.FindById(userId);
+        ErrorOr<User> userResult = userRepository.FindById(userId);
         if (userResult.IsError)
         {
+            logger.LogWarning("Dashboard fetch failed: user {UserId} not found.", userId);
             return null;
         }
 
-        var cardsResult = dashboardRepository.GetCardsByUser(userId);
-        var transactionsResult = dashboardRepository.GetRecentTransactions(userId, DefaultRecentTransactionLimit);
-        var notifCountResult = dashboardRepository.GetUnreadNotificationCount(userId);
+        ErrorOr<List<Card>> cardsResult = dashboardRepository.GetCardsByUser(userId);
+        ErrorOr<List<Transaction>> transactionsResult = dashboardRepository.GetRecentTransactions(userId, DefaultRecentTransactionLimit);
+        ErrorOr<int> notifCountResult = dashboardRepository.GetUnreadNotificationCount(userId);
+
+        if (cardsResult.IsError)
+        {
+            logger.LogError("Failed to fetch cards for user {UserId}: {Error}", userId, cardsResult.FirstError.Description);
+        }
+
+        if (transactionsResult.IsError)
+        {
+            logger.LogError("Failed to fetch transactions for user {UserId}: {Error}", userId, transactionsResult.FirstError.Description);
+        }
+
+        if (notifCountResult.IsError)
+        {
+            logger.LogError("Failed to fetch notification count for user {UserId}: {Error}", userId, notifCountResult.FirstError.Description);
+        }
 
         return new DashboardResponse
         {
