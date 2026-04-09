@@ -1,4 +1,5 @@
 using BankApp.Contracts.Entities;
+using ErrorOr;
 
 namespace BankApp.Server.DataAccess.Interfaces;
 
@@ -15,8 +16,8 @@ public interface ISessionDataAccess
     /// <param name="deviceInfo">Optional device information.</param>
     /// <param name="browser">Optional browser name.</param>
     /// <param name="ipAddress">Optional IP address.</param>
-    /// <returns>The newly created <see cref="Session"/>.</returns>
-    Session Create(int userId, string token, string? deviceInfo, string? browser, string? ipAddress);
+    /// <returns>The newly created <see cref="Session"/>, or an error if the operation failed.</returns>
+    ErrorOr<Session> Create(int userId, string token, string? deviceInfo, string? browser, string? ipAddress);
 
     /// <summary>
     /// Finds an active session by its token.

@@ -21,11 +21,8 @@ public class AppDbContext : IDbContext
         this.connectionString = connectionString;
     }
 
-    /// <summary>
-    /// Gets an open <see cref="SqlConnection"/>, creating one if necessary.
-    /// </summary>
-    /// <returns>An open <see cref="SqlConnection"/> instance.</returns>
-    private SqlConnection GetConnection()
+    /// <inheritdoc />
+    public IDbConnection GetConnection()
     {
         if (connection is not null && connection.State is not ConnectionState.Closed)
         {
@@ -41,13 +38,14 @@ public class AppDbContext : IDbContext
         {
             throw new Exception($"Failed to connect to the database: {sqlException.Message}", sqlException);
         }
+
         return connection;
     }
 
     /// <inheritdoc />
     public SqlTransaction BeginTransaction()
     {
-        SqlConnection activeConnection = GetConnection();
+        SqlConnection activeConnection = (SqlConnection)GetConnection();
         try
         {
             currentTransaction = activeConnection.BeginTransaction();
@@ -56,6 +54,7 @@ public class AppDbContext : IDbContext
         {
             throw new Exception($"Failed to begin transaction: {sqlException.Message}", sqlException);
         }
+
         return currentTransaction;
     }
 
@@ -81,42 +80,6 @@ public class AppDbContext : IDbContext
 
         currentTransaction.Rollback();
         currentTransaction = null;
-    }
-
-    /// <summary>
-    /// Gets the currently active transaction, or <see langword="null"/> if none exists.
-    /// </summary>
-    /// <returns>The current <see cref="SqlTransaction"/>, or <see langword="null"/>.</returns>
-    private SqlTransaction? GetCurrentTransaction()
-    {
-        return currentTransaction;
-    }
-
-    private static void AddParameters(SqlCommand command, object[] parameters)
-    {
-        for (var parameterIndex = 0; parameterIndex < parameters.Length; parameterIndex++)
-        {
-            command.Parameters.AddWithValue($"@p{parameterIndex}", parameters[parameterIndex]);
-        }
-    }
-
-    /// <inheritdoc />
-    public T ExecuteQuery<T>(string sqlStatement, object[] parameters, Func<IDataReader, T> map)
-    {
-        var activeConnection = this.GetConnection();
-        using var command = new SqlCommand(sqlStatement, activeConnection, this.currentTransaction);
-        AppDbContext.AddParameters(command, parameters);
-        using var reader = command.ExecuteReader();
-        return map(reader);
-    }
-
-    /// <inheritdoc />
-    public int ExecuteNonQuery(string sqlStatement, object[] parameters)
-    {
-        var activeConnection = GetConnection();
-        using var command = new SqlCommand(sqlStatement, activeConnection, currentTransaction);
-        AddParameters(command, parameters);
-        return command.ExecuteNonQuery();
     }
 
     /// <inheritdoc />

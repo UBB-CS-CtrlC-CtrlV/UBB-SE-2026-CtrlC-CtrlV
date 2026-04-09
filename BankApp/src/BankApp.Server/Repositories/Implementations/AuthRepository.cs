@@ -44,22 +44,20 @@ public class AuthRepository : IAuthRepository
     /// <inheritdoc />
     public bool CreateUser(User user)
     {
-        bool success = userDataAccess.Create(user);
-        if (!success)
+        if (userDataAccess.Create(user).IsError)
         {
             return false;
         }
 
         User? createdUser = userDataAccess.FindByEmail(user.Email);
-        if (createdUser == null)
+        if (createdUser is null)
         {
             return false;
         }
 
         foreach (NotificationType type in Enum.GetValues(typeof(NotificationType)))
         {
-            success = notificationPreferenceDataAccess.Create(createdUser.Id, NotificationTypeExtensions.ToDisplayName(type));
-            if (!success)
+            if (notificationPreferenceDataAccess.Create(createdUser.Id, type.ToDisplayName()).IsError)
             {
                 return false;
             }
@@ -77,13 +75,19 @@ public class AuthRepository : IAuthRepository
     /// <inheritdoc />
     public bool CreateOAuthLink(OAuthLink link)
     {
-        return oAuthLinkDataAccess.Create(link.UserId, link.Provider, link.ProviderUserId, link.ProviderEmail);
+        return !oAuthLinkDataAccess.Create(link.UserId, link.Provider, link.ProviderUserId, link.ProviderEmail).IsError;
     }
 
     /// <inheritdoc />
     public Session CreateSession(int userId, string token, string? deviceInfo, string? browser, string? ipAddress)
     {
-        return sessionDataAccess.Create(userId, token, deviceInfo, browser, ipAddress);
+        var result = sessionDataAccess.Create(userId, token, deviceInfo, browser, ipAddress);
+        if (result.IsError)
+        {
+            throw new InvalidOperationException(result.FirstError.Description);
+        }
+
+        return result.Value;
     }
 
     /// <inheritdoc />
@@ -107,8 +111,7 @@ public class AuthRepository : IAuthRepository
     /// <inheritdoc />
     public bool UpdateSessionToken(int sessionId)
     {
-        // Revoke the old session
-        // the service layer will create a new one
+        // Revoke the old session — the service layer will create a new one
         sessionDataAccess.Revoke(sessionId);
         return true;
     }
@@ -164,6 +167,6 @@ public class AuthRepository : IAuthRepository
     /// <inheritdoc />
     public bool UpdatePassword(int userId, string newPasswordHash)
     {
-        return userDataAccess.UpdatePassword(userId, newPasswordHash);
+        return !userDataAccess.UpdatePassword(userId, newPasswordHash).IsError;
     }
 }

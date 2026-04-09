@@ -51,8 +51,8 @@ public static class ApiEndpoints
     /// <summary>PUT api/profile/2fa/disable — disable two-factor authentication.</summary>
     public const string Disable2Fa = "api/profile/2fa/disable";
 
-    /// <summary>GET api/profile/oauthlinks — list linked OAuth providers.</summary>
-    public const string OAuthLinks = "api/profile/oauthlinks";
+    /// <summary>GET api/profile/oauth-links — list linked OAuth providers.</summary>
+    public const string OAuthLinks = "api/profile/oauth-links";
 
     /// <summary>POST api/profile/oauth/link — link a new OAuth provider.</summary>
     public const string LinkOAuth = "api/profile/oauth/link";

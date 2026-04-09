@@ -1,5 +1,6 @@
 using BankApp.Contracts.Entities;
 using BankApp.Server.DataAccess.Interfaces;
+using Dapper;
 
 namespace BankApp.Server.DataAccess.Implementations;
 
@@ -8,6 +9,15 @@ namespace BankApp.Server.DataAccess.Implementations;
 /// </summary>
 public class CardDataAccess : ICardDataAccess
 {
+    private const string SelectAllColumns = """                                                                                                                             
+      SELECT                                                                                                                                                            
+          Id, AccountId, UserId, CardNumber, CardholderName,
+          ExpiryDate, CVV, CardType, CardBrand, Status,
+          DailyTransactionLimit, MonthlySpendingCap, AtmWithdrawalLimit,
+          ContactlessLimit, IsContactlessEnabled, IsOnlineEnabled,
+          SortOrder, CancelledAt, CreatedAt
+      FROM Card
+      """;
     private readonly AppDbContext dbContext;
 
     /// <summary>
@@ -22,51 +32,16 @@ public class CardDataAccess : ICardDataAccess
     /// <inheritdoc />
     public Card? FindById(int id)
     {
-        var sql = @"SELECT * FROM Card WHERE Id = @p0";
+        const string query = $"{SelectAllColumns} WHERE Id = @Id";
 
-        return this.dbContext.ExecuteQuery(sql, new object[] { id }, reader =>
-            reader.Read() ? this.MapToCard(reader) : null);
+        return this.dbContext.GetConnection().QueryFirstOrDefault<Card>(query, new { Id = id });
     }
 
     /// <inheritdoc/>
     public List<Card> FindByUserId(int userId)
     {
-        var sql = @"SELECT * FROM Card WHERE UserId = @p0";
+        const string query = $"{SelectAllColumns} WHERE UserId = @UserId";
 
-        return this.dbContext.ExecuteQuery(sql, new object[] { userId }, reader =>
-        {
-            var cards = new List<Card>();
-            while (reader.Read())
-            {
-                cards.Add(this.MapToCard(reader));
-            }
-
-            return cards;
-        });
-    }
-    private Card MapToCard(System.Data.IDataReader reader)
-    {
-        return new Card
-        {
-            Id = reader.GetInt32(reader.GetOrdinal("Id")),
-            AccountId = reader.GetInt32(reader.GetOrdinal("AccountId")),
-            UserId = reader.GetInt32(reader.GetOrdinal("UserId")),
-            CardNumber = reader.GetString(reader.GetOrdinal("CardNumber")),
-            CardholderName = reader.GetString(reader.GetOrdinal("CardholderName")),
-            ExpiryDate = reader.GetDateTime(reader.GetOrdinal("ExpiryDate")),
-            CVV = reader.GetString(reader.GetOrdinal("CVV")),
-            CardType = reader.GetString(reader.GetOrdinal("CardType")),
-            CardBrand = reader.IsDBNull(reader.GetOrdinal("CardBrand")) ? null : reader.GetString(reader.GetOrdinal("CardBrand")),
-            Status = reader.GetString(reader.GetOrdinal("Status")),
-            DailyTransactionLimit = reader.IsDBNull(reader.GetOrdinal("DailyTransactionLimit")) ? null : reader.GetDecimal(reader.GetOrdinal("DailyTransactionLimit")),
-            MonthlySpendingCap = reader.IsDBNull(reader.GetOrdinal("MonthlySpendingCap")) ? null : reader.GetDecimal(reader.GetOrdinal("MonthlySpendingCap")),
-            AtmWithdrawalLimit = reader.IsDBNull(reader.GetOrdinal("AtmWithdrawalLimit")) ? null : reader.GetDecimal(reader.GetOrdinal("AtmWithdrawalLimit")),
-            ContactlessLimit = reader.IsDBNull(reader.GetOrdinal("ContactlessLimit")) ? null : reader.GetDecimal(reader.GetOrdinal("ContactlessLimit")),
-            IsContactlessEnabled = reader.GetBoolean(reader.GetOrdinal("IsContactlessEnabled")),
-            IsOnlineEnabled = reader.GetBoolean(reader.GetOrdinal("IsOnlineEnabled")),
-            SortOrder = reader.GetInt32(reader.GetOrdinal("SortOrder")),
-            CancelledAt = reader.IsDBNull(reader.GetOrdinal("CancelledAt")) ? null : reader.GetDateTime(reader.GetOrdinal("CancelledAt")),
-            CreatedAt = reader.GetDateTime(reader.GetOrdinal("CreatedAt"))
-        };
+        return this.dbContext.GetConnection().Query<Card>(query, new { UserId = userId }).AsList();
     }
 }

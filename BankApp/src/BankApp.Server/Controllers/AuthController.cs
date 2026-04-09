@@ -132,7 +132,7 @@ public class AuthController : ControllerBase
             return this.BadRequest(new { error = "Token and new password are required." });
         }
 
-        if (!BankApp.Server.Utilities.ValidationUtilities.IsStrongPassword(request.NewPassword))
+        if (!Utilities.ValidationUtilities.IsStrongPassword(request.NewPassword))
         {
             return this.BadRequest(new { error = "Password must be at least 8 characters with uppercase, lowercase, a digit, and a special character." });
         }

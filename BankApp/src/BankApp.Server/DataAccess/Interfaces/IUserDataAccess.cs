@@ -1,4 +1,5 @@
 using BankApp.Contracts.Entities;
+using ErrorOr;
 
 namespace BankApp.Server.DataAccess.Interfaces;
 
@@ -25,23 +26,23 @@ public interface IUserDataAccess
     /// Creates a new user record.
     /// </summary>
     /// <param name="user">The user entity to create.</param>
-    /// <returns><see langword="true"/> if the user was created successfully; otherwise, <see langword="false"/>.</returns>
-    bool Create(User user);
+    /// <returns>Success, or an error if the operation failed.</returns>
+    ErrorOr<Success> Create(User user);
 
     /// <summary>
     /// Updates an existing user record.
     /// </summary>
     /// <param name="user">The user entity with updated values.</param>
-    /// <returns><see langword="true"/> if the user was updated successfully; otherwise, <see langword="false"/>.</returns>
-    bool Update(User user);
+    /// <returns>Success, or an error if the operation failed.</returns>
+    ErrorOr<Success> Update(User user);
 
     /// <summary>
     /// Updates the password hash for the specified user.
     /// </summary>
     /// <param name="userId">The identifier of the user.</param>
     /// <param name="newPasswordHash">The new hashed password.</param>
-    /// <returns><see langword="true"/> if the password was updated; otherwise, <see langword="false"/>.</returns>
-    bool UpdatePassword(int userId, string newPasswordHash);
+    /// <returns>Success, or an error if the operation failed.</returns>
+    ErrorOr<Success> UpdatePassword(int userId, string newPasswordHash);
 
     /// <summary>
     /// Increments the failed login attempt counter for the specified user.

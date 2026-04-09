@@ -1,6 +1,8 @@
 using System.Data;
 using BankApp.Contracts.Entities;
 using BankApp.Server.DataAccess.Interfaces;
+using Dapper;
+using ErrorOr;
 
 namespace BankApp.Server.DataAccess.Implementations;
 
@@ -21,47 +23,34 @@ public class AccountDataAccess : IAccountDataAccess
     }
 
     /// <inheritdoc />
-    /// <inheritdoc />
-    public Account? FindById(int id)
+    public ErrorOr<Account> FindById(int id)
     {
-        var query =
-            @"SELECT Id, UserId, AccountName, IBAN, Currency, Balance, AccountType, Status, CreatedAt FROM Account WHERE Id = @p0";
+        const string query = """
+            SELECT Id, UserId, AccountName, IBAN, Currency, Balance,
+                   AccountType, Status, CreatedAt
+            FROM Account
+            WHERE Id = @Id
+            """;
 
-        return this.dbContext.ExecuteQuery(query, new object[] { id }, reader =>
-            reader.Read() ? this.MapToAccount(reader) : null);
+        var account = this.dbContext.GetConnection()
+          .QueryFirstOrDefault<Account>(query, new { Id = id });
+
+        return account is null
+          ? Error.NotFound(description: "Account not found.")
+          : account;
     }
 
     /// <inheritdoc />
     public List<Account> FindByUserId(int userId)
     {
-        var query =
-            @"SELECT Id, UserId, AccountName, IBAN, Currency, Balance, AccountType, Status, CreatedAt FROM Account WHERE UserId = @p0";
+        const string query = """
+            SELECT 
+                Id, UserId, AccountName, 
+                IBAN, Currency, Balance, 
+                AccountType, Status, CreatedAt 
+            FROM Account WHERE UserId = @UserId
+            """;
 
-        return this.dbContext.ExecuteQuery(query, new object[] { userId }, reader =>
-        {
-            var accounts = new List<Account>();
-            while (reader.Read())
-            {
-                accounts.Add(this.MapToAccount(reader));
-            }
-
-            return accounts;
-        });
-    }
-
-    private Account MapToAccount(IDataReader reader)
-    {
-        return new Account
-        {
-            Id = reader.GetInt32(reader.GetOrdinal("Id")),
-            UserId = reader.GetInt32(reader.GetOrdinal("UserId")),
-            AccountName = reader.IsDBNull(reader.GetOrdinal("AccountName")) ? null : reader.GetString(reader.GetOrdinal("AccountName")),
-            IBAN = reader.GetString(reader.GetOrdinal("IBAN")),
-            Currency = reader.GetString(reader.GetOrdinal("Currency")),
-            Balance = reader.GetDecimal(reader.GetOrdinal("Balance")),
-            AccountType = reader.GetString(reader.GetOrdinal("AccountType")),
-            Status = reader.GetString(reader.GetOrdinal("Status")),
-            CreatedAt = reader.GetDateTime(reader.GetOrdinal("CreatedAt"))
-        };
+        return this.dbContext.GetConnection().Query<Account>(query, new { UserId = userId }).AsList();
     }
 }

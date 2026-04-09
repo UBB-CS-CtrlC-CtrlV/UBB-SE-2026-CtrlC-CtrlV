@@ -1,6 +1,8 @@
 using BankApp.Contracts.Entities;
 using BankApp.Server.DataAccess.Interfaces;
 using BankApp.Contracts.Extensions;
+using Dapper;
+using ErrorOr;
 
 namespace BankApp.Server.DataAccess.Implementations;
 
@@ -9,7 +11,7 @@ namespace BankApp.Server.DataAccess.Implementations;
 /// </summary>
 internal class NotificationPreferenceDataAccess : INotificationPreferenceDataAccess
 {
-    private AppDbContext appDbContext;
+    private readonly AppDbContext appDbContext;
 
     /// <summary>
     /// Initializes a new instance of the <see cref="NotificationPreferenceDataAccess"/> class.
@@ -21,83 +23,67 @@ internal class NotificationPreferenceDataAccess : INotificationPreferenceDataAcc
     }
 
     /// <inheritdoc />
-    public bool Create(int userId, string category)
+    public ErrorOr<Success> Create(int userId, string category)
     {
         try
         {
-            string insertQuery = @"INSERT INTO NotificationPreference (UserId, Category, PushEnabled, EmailEnabled, SmsEnabled)
-                                        VALUES
-                                        (@p0, @p1, 0, 0, 0);
-                                    ";
+            const string query = """
+                                 INSERT INTO NotificationPreference (UserId, Category, PushEnabled, EmailEnabled, SmsEnabled) VALUES
+                                   (@UserId, @Category, 0, 0, 0);
+                                                                    
+                                 """;
 
-            int rows = this.appDbContext.ExecuteNonQuery(insertQuery, new object[] { userId, category });
+            var rows = this.appDbContext.GetConnection()
+                .Execute(query, new { UserId = userId, Category = category });
 
-            return rows > 0;
+            return rows > 0 ? Result.Success : Error.Failure(description: "Didn't manage to insert any rows");
         }
-        catch (Exception)
+        catch (Exception ex)
         {
-            return false;
+            return Error.Failure(description: $"Insertion failed: {ex.Message}");
         }
     }
 
-    /// <inheritdoc />
     /// <inheritdoc />
     public List<NotificationPreference> FindByUserId(int userId)
     {
-        string selectQuery = @"SELECT * FROM NotificationPreference WHERE UserId = @p0";
-
-        return this.appDbContext.ExecuteQuery(selectQuery, new object[] { userId }, reader =>
-        {
-            var notificationPreferences = new List<NotificationPreference>();
-            while (reader.Read())
-            {
-                notificationPreferences.Add(new NotificationPreference
-                {
-                    Id = Convert.ToInt32(reader["Id"]),
-                    UserId = Convert.ToInt32(reader["UserId"]),
-                    Category = NotificationTypeExtensions.FromString(Convert.ToString(reader["Category"]) ?? string.Empty),
-                    PushEnabled = Convert.ToBoolean(reader["PushEnabled"]),
-                    EmailEnabled = Convert.ToBoolean(reader["EmailEnabled"]),
-                    SmsEnabled = Convert.ToBoolean(reader["SmsEnabled"]),
-                    MinAmountThreshold = reader["MinAmountThreshold"] == DBNull.Value ? null : Convert.ToDecimal(reader["MinAmountThreshold"]),
-                });
-            }
-
-            return notificationPreferences;
-        });
+        const string query = """
+                             SELECT 
+                                 Id, UserId, Category, PushEnabled,
+                                 EmailEnabled, SmsEnabled, MinAmountThreshold
+                             FROM NotificationPreference WHERE UserId = @UserId
+                             """;
+        return this.appDbContext.GetConnection().Query<NotificationPreference>(query, new { UserId = userId }).AsList();
     }
 
     /// <inheritdoc />
-    public bool Update(int userId, List<NotificationPreference> preferences)
+    public ErrorOr<Success> Update(int userId, List<NotificationPreference> preferences)
     {
+        const string query = """
+                             UPDATE NotificationPreference
+                             SET PushEnabled = @PushEnabled, 
+                                 EmailEnabled = @EmailEnabled, 
+                                 SmsEnabled = @SmsEnabled,
+                                 MinAmountThreshold = @MinAmountThreshold
+                             WHERE UserId = @UserId
+                             AND Category = @Category
+                             """;
         try
         {
-            string deleteQuery = @"DELETE FROM NotificationPreference WHERE userId = @p0";
-            this.appDbContext.ExecuteNonQuery(deleteQuery, new object[] { userId });
-
-            string insertQuery = @"INSERT INTO NotificationPreference (UserId, Category, PushEnabled, EmailEnabled, SmsEnabled, MinAmountThreshold)
-                                        VALUES
-                                    (@p0, @p1, @p2, @p3, @p4, @p5);
-                                ";
-
-            foreach (NotificationPreference preference in preferences)
+            this.appDbContext.GetConnection().Execute(query, preferences.Select(p => new
             {
-                this.appDbContext.ExecuteNonQuery(insertQuery, new object[]
-                {
-                    preference.UserId,
-                    NotificationTypeExtensions.ToDisplayName(preference.Category),
-                    preference.PushEnabled,
-                    preference.EmailEnabled,
-                    preference.SmsEnabled,
-                    preference.MinAmountThreshold!
-                });
-            }
-
-            return true;
+                p.UserId,
+                Category = p.Category.ToDisplayName(),
+                p.PushEnabled,
+                p.EmailEnabled,
+                p.SmsEnabled,
+                p.MinAmountThreshold,
+            }));
+            return Result.Success;
         }
-        catch (Exception)
+        catch (Exception ex)
         {
-            return false;
+            return Error.Failure(description: $"Update failed: {ex.Message}");
         }
     }
 }

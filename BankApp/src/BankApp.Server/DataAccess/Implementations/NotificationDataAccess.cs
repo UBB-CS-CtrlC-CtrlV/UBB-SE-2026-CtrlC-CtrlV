@@ -1,5 +1,6 @@
 using BankApp.Contracts.Entities;
 using BankApp.Server.DataAccess.Interfaces;
+using Dapper;
 
 namespace BankApp.Server.DataAccess.Implementations;
 
@@ -9,6 +10,13 @@ namespace BankApp.Server.DataAccess.Implementations;
 public class NotificationDataAccess : INotificationDataAccess
 {
     private readonly AppDbContext dbContext;
+
+    private const string SelectAllColumns = """
+                                                SELECT
+                                                    Id, UserId, Title, [Message], [Type], Channel, 
+                                                    IsRead, RelatedEntityType, RelatedEntityId, CreatedAt
+                                                FROM Notification
+                                            """;
 
     /// <summary>
     /// Initializes a new instance of the <see cref="NotificationDataAccess"/> class.
@@ -20,47 +28,18 @@ public class NotificationDataAccess : INotificationDataAccess
     }
 
     /// <inheritdoc />
-    /// <inheritdoc />
     public int CountUnreadByUserId(int userId)
     {
-        var query = @"SELECT COUNT(*) FROM Notification WHERE UserId = @p0 AND IsRead = 0";
+        const string query = "SELECT COUNT(*) FROM Notification WHERE UserId = @UserId AND IsRead = 0";
 
-        return this.dbContext.ExecuteQuery(query, new object[] { userId }, reader =>
-            reader.Read() ? reader.GetInt32(0) : 0);
+        return this.dbContext.GetConnection().QueryFirst<int>(query, new { UserId = userId });
     }
 
     /// <inheritdoc />
     public List<Notification> FindByUserId(int userId)
     {
-        var query = @"SELECT * FROM Notification WHERE UserId = @p0";
+        var query = $"{SelectAllColumns} WHERE UserId = @UserId";
 
-        return this.dbContext.ExecuteQuery(query, new object[] { userId }, reader =>
-        {
-            var notifications = new List<Notification>();
-            while (reader.Read())
-            {
-                notifications.Add(this.MapToNotification(reader));
-            }
-
-            return notifications;
-        });
-    }
-    private Notification MapToNotification(System.Data.IDataReader reader)
-    {
-        return new Notification
-        {
-            Id = reader.GetInt32(reader.GetOrdinal("Id")),
-            UserId = reader.GetInt32(reader.GetOrdinal("UserId")),
-            Title = reader.GetString(reader.GetOrdinal("Title")),
-            Message = reader.GetString(reader.GetOrdinal("Message")),
-            Type = reader.GetString(reader.GetOrdinal("Type")),
-            Channel = reader.GetString(reader.GetOrdinal("Channel")),
-            IsRead = reader.GetBoolean(reader.GetOrdinal("IsRead")),
-            RelatedEntityType = reader.IsDBNull(reader.GetOrdinal("RelatedEntityType"))
-                ? null : reader.GetString(reader.GetOrdinal("RelatedEntityType")),
-            RelatedEntityId = reader.IsDBNull(reader.GetOrdinal("RelatedEntityId"))
-                ? null : reader.GetInt32(reader.GetOrdinal("RelatedEntityId")),
-            CreatedAt = reader.GetDateTime(reader.GetOrdinal("CreatedAt"))
-        };
+        return this.dbContext.GetConnection().Query<Notification>(query, new { UserId = userId }).AsList();
     }
 }

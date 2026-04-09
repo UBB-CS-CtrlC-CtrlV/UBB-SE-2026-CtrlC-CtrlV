@@ -1,4 +1,5 @@
 using BankApp.Contracts.Entities;
+using ErrorOr;
 
 namespace BankApp.Server.DataAccess.Interfaces;
 
@@ -29,8 +30,8 @@ public interface IOAuthLinkDataAccess
     /// <param name="provider">The OAuth provider name.</param>
     /// <param name="providerUserId">The user identifier issued by the provider.</param>
     /// <param name="providerEmail">The email address from the provider, or <see langword="null"/>.</param>
-    /// <returns><see langword="true"/> if the link was created successfully; otherwise, <see langword="false"/>.</returns>
-    bool Create(int userId, string provider, string providerUserId, string? providerEmail);
+    /// <returns>Success, or an error if the operation failed.</returns>
+    ErrorOr<Success> Create(int userId, string provider, string providerUserId, string? providerEmail);
 
     /// <summary>
     /// Deletes an OAuth link by its identifier.

@@ -64,8 +64,6 @@ public sealed partial class DashboardView : IStateObserver<DashboardState>
         this.DetachObserver();
     }
 
-    // ─── State Handling ────────────────────────────────────────────────────────
-
     /// <summary>
     /// Reacts to dashboard state updates from the view model.
     /// </summary>
@@ -127,8 +125,6 @@ public sealed partial class DashboardView : IStateObserver<DashboardState>
         this.ShowCard();
         NavView.Current?.UpdateNotificationBadge(this.viewModel.UnreadNotificationCount);
     }
-
-    // ─── Card Display ──────────────────────────────────────────────────────────
 
     /// <summary>
     /// Renders the card at the current index stored in the ViewModel.
@@ -254,8 +250,6 @@ public sealed partial class DashboardView : IStateObserver<DashboardState>
     {
         _ = this.RunUiTaskAsync(this.ShowCurrentCardDetailsAsync);
     }
-
-    // ─── Dialog Helpers ────────────────────────────────────────────────────────
 
     /// <summary>
     /// Shows a ContentDialog with the details of the currently selected card.

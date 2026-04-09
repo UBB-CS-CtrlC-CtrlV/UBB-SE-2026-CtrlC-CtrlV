@@ -1,4 +1,5 @@
 using BankApp.Contracts.Entities;
+using ErrorOr;
 
 namespace BankApp.Server.DataAccess.Interfaces;
 
@@ -13,8 +14,8 @@ public interface IPasswordResetTokenDataAccess
     /// <param name="userId">The identifier of the user.</param>
     /// <param name="tokenHash">The hashed token value.</param>
     /// <param name="expiresAt">The UTC expiration time of the token.</param>
-    /// <returns>The newly created <see cref="PasswordResetToken"/>.</returns>
-    PasswordResetToken Create(int userId, string tokenHash, DateTime expiresAt);
+    /// <returns>The newly created <see cref="PasswordResetToken"/>, or an error if the operation failed.</returns>
+    ErrorOr<PasswordResetToken> Create(int userId, string tokenHash, DateTime expiresAt);
 
     /// <summary>
     /// Finds a password reset token by its hash.

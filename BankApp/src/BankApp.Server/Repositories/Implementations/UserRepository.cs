@@ -1,10 +1,9 @@
-using BankApp.Contracts.Enums;
-
-namespace BankApp.Server.Repositories.Implementations;
-
 using BankApp.Contracts.Entities;
+using BankApp.Contracts.Enums;
 using BankApp.Server.DataAccess.Interfaces;
 using BankApp.Server.Repositories.Interfaces;
+
+namespace BankApp.Server.Repositories.Implementations;
 
 /// <summary>
 /// Provides repository operations for user profile management, sessions, OAuth links, and notification preferences.
@@ -41,13 +40,13 @@ public class UserRepository : IUserRepository
     /// <inheritdoc />
     public bool UpdateUser(User user)
     {
-        return userDataAccess.Update(user);
+        return !userDataAccess.Update(user).IsError;
     }
 
     /// <inheritdoc />
     public bool UpdatePassword(int userId, string newPasswordHash)
     {
-        return userDataAccess.UpdatePassword(userId, newPasswordHash);
+        return !userDataAccess.UpdatePassword(userId, newPasswordHash).IsError;
     }
 
     /// <inheritdoc />
@@ -71,7 +70,7 @@ public class UserRepository : IUserRepository
     /// <inheritdoc />
     public bool SaveOAuthLink(int userId, string provider, string providerUserId, string? email)
     {
-        return oAuthLinkDataAccess.Create(userId, provider, providerUserId, email);
+        return !oAuthLinkDataAccess.Create(userId, provider, providerUserId, email).IsError;
     }
 
     /// <inheritdoc />
@@ -89,8 +88,6 @@ public class UserRepository : IUserRepository
     /// <inheritdoc />
     public bool UpdateNotificationPreferences(int userId, List<NotificationPreference> preferences)
     {
-        return notificationPreferenceDataAccess.Update(userId, preferences);
+        return !notificationPreferenceDataAccess.Update(userId, preferences).IsError;
     }
 }
-
-

@@ -1,7 +1,6 @@
 // <copyright file="ProfileController.cs" company="CtrlC CtrlV">
 // Copyright (c) CtrlC CtrlV. All rights reserved.
 // </copyright>
-using System.Collections.Generic;
 using BankApp.Contracts.DTOs.Profile;
 using BankApp.Server.Services.Profile;
 using Microsoft.AspNetCore.Mvc;
@@ -105,7 +104,7 @@ public class ProfileController : ControllerBase
     /// 200 OK with a list of <see cref="OAuthLinkDto"/> on success,
     /// or 404 Not Found if no OAuth links exist for the user.
     /// </returns>
-    [HttpGet("oauthlinks")]
+    [HttpGet("oauth-links")]
     public IActionResult GetOAuthLinks()
     {
         int userId = this.GetAuthenticatedUserId();

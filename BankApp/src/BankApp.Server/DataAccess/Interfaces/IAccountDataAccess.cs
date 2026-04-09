@@ -1,4 +1,5 @@
 using BankApp.Contracts.Entities;
+using ErrorOr;
 
 namespace BankApp.Server.DataAccess.Interfaces;
 
@@ -19,5 +20,5 @@ public interface IAccountDataAccess
     /// </summary>
     /// <param name="id">The account identifier.</param>
     /// <returns>The matching <see cref="Account"/>, or <see langword="null"/> if not found.</returns>
-    Account? FindById(int id);
+    ErrorOr<Account> FindById(int id);
 }
