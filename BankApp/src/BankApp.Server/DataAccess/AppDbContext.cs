@@ -34,7 +34,7 @@ public class AppDbContext : IDbContext
     }
 
     /// <inheritdoc />
-    public ErrorOr<T> Query<T>(Func<IDbConnection, T> operation)
+    public virtual ErrorOr<T> Query<T>(Func<IDbConnection, T> operation)
     {
         try
         {
