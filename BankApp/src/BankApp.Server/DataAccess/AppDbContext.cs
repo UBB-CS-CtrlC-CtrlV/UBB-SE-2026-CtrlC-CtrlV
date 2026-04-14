@@ -10,8 +10,8 @@ namespace BankApp.Server.DataAccess;
 public class AppDbContext : IDbContext
 {
     private readonly string connectionString;
-    private SqlConnection? connection;
-    private SqlTransaction? currentTransaction;
+    private IDbConnection? connection;
+    private IDbTransaction? currentTransaction;
 
     /// <summary>
     /// Initializes a new instance of the <see cref="AppDbContext"/> class.
@@ -22,8 +22,19 @@ public class AppDbContext : IDbContext
         this.connectionString = connectionString;
     }
 
+    /// <summary>
+    /// Initializes a new instance of the <see cref="AppDbContext"/> class using an existing open connection.
+    /// Intended for use in integration tests with in-memory databases (e.g. SQLite).
+    /// </summary>
+    /// <param name="existingConnection">An already-open database connection to use.</param>
+    internal AppDbContext(IDbConnection existingConnection)
+    {
+        this.connectionString = string.Empty;
+        this.connection = existingConnection;
+    }
+
     /// <inheritdoc />
-    public ErrorOr<T> Query<T>(Func<SqlConnection, T> operation)
+    public ErrorOr<T> Query<T>(Func<IDbConnection, T> operation)
     {
         try
         {
@@ -43,20 +54,22 @@ public class AppDbContext : IDbContext
     }
 
     /// <inheritdoc />
-    public ErrorOr<SqlTransaction> BeginTransaction()
+    public ErrorOr<IDbTransaction> BeginTransaction()
     {
-        SqlConnection activeConnection = this.GetConnection();
+        IDbConnection activeConnection = this.GetConnection();
         try
         {
             currentTransaction = activeConnection.BeginTransaction();
         }
-        catch (Exception ex) when (ex is SqlException or InvalidOperationException)
+        catch (Exception ex) when (ex is InvalidOperationException)
         {
             return Error.Failure(description: $"Failed to begin transaction: {ex.Message}");
         }
 
-        return currentTransaction;
+        return WrapValue<IDbTransaction>(currentTransaction);
     }
+
+    private static ErrorOr<T> WrapValue<T>(T value) => value!;
 
     /// <inheritdoc />
     public ErrorOr<Success> CommitTransaction()
@@ -105,15 +118,16 @@ public class AppDbContext : IDbContext
         connection = null;
     }
 
-    private SqlConnection GetConnection()
+    private IDbConnection GetConnection()
     {
         if (connection is not null && connection.State is not ConnectionState.Closed)
         {
             return connection;
         }
 
-        connection = new SqlConnection(connectionString);
-        connection.Open();
+        var sqlConnection = new SqlConnection(connectionString);
+        sqlConnection.Open();
+        connection = sqlConnection;
         return connection;
     }
 }
