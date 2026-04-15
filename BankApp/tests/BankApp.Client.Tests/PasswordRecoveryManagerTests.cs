@@ -1,7 +1,3 @@
-// <copyright file="PasswordRecoveryManagerTests.cs" company="CtrlC CtrlV">
-// Copyright (c) CtrlC CtrlV. All rights reserved.
-// </copyright>
-
 using System;
 using System.Threading.Tasks;
 using BankApp.Client.Utilities;
@@ -16,6 +12,11 @@ namespace BankApp.Client.Tests;
 /// </summary>
 public class PasswordRecoveryManagerTests
 {
+    private const string TestEmail = "user@example.com";
+    private const int CooldownSeconds = 60;
+    private const int HalfCooldownSeconds = 30;
+    private const int JustPastCooldownSeconds = 61;
+
     // -------------------------------------------------------------------------
     //  Timer / throttling — tested via FakeSystemClock + real PasswordRecoveryManager
     //  The manager is constructed with a FakeApiClient stub so no real HTTP occurs.
@@ -27,9 +28,11 @@ public class PasswordRecoveryManagerTests
     [Fact]
     public void CanResendCode_BeforeAnyRequest_ReturnsTrue()
     {
+        // Arrange
         var clock = new FakeSystemClock(DateTime.UtcNow);
-        var manager = BuildManager(clock, succeedApi: true);
+        IPasswordRecoveryManager manager = BuildManager(clock, succeedApi: true);
 
+        // Assert
         Assert.True(manager.CanResendCode);
         Assert.Equal(0, manager.SecondsUntilResendAllowed);
     }
@@ -40,11 +43,14 @@ public class PasswordRecoveryManagerTests
     [Fact]
     public async Task CanResendCode_ImmediatelyAfterFirstRequest_ReturnsFalse()
     {
+        // Arrange
         var clock = new FakeSystemClock(DateTime.UtcNow);
-        var manager = BuildManager(clock, succeedApi: true);
+        IPasswordRecoveryManager manager = BuildManager(clock, succeedApi: true);
 
-        await manager.RequestCodeAsync("user@example.com");
+        // Act
+        await manager.RequestCodeAsync(TestEmail);
 
+        // Assert
         Assert.False(manager.CanResendCode);
         Assert.True(manager.SecondsUntilResendAllowed > 0);
     }
@@ -53,14 +59,17 @@ public class PasswordRecoveryManagerTests
     /// After exactly 60 seconds the user is permitted to resend.
     /// </summary>
     [Fact]
-    public async Task CanResendCode_After60Seconds_ReturnsTrue()
+    public async Task CanResendCode_AfterCooldownExpires_ReturnsTrue()
     {
+        // Arrange
         var clock = new FakeSystemClock(DateTime.UtcNow);
-        var manager = BuildManager(clock, succeedApi: true);
+        IPasswordRecoveryManager manager = BuildManager(clock, succeedApi: true);
 
-        await manager.RequestCodeAsync("user@example.com");
-        clock.Advance(TimeSpan.FromSeconds(60));
+        // Act
+        await manager.RequestCodeAsync(TestEmail);
+        clock.Advance(TimeSpan.FromSeconds(CooldownSeconds));
 
+        // Assert
         Assert.True(manager.CanResendCode);
         Assert.Equal(0, manager.SecondsUntilResendAllowed);
     }
@@ -70,23 +79,22 @@ public class PasswordRecoveryManagerTests
     /// The returned state must still be <see cref="ForgotPasswordState.EmailSent"/>.
     /// </summary>
     [Fact]
-    public async Task RequestCode_CalledTwiceWithin60Seconds_ThrottlesSecondCall()
+    public async Task RequestCode_CalledTwiceWithinCooldown_ThrottlesSecondCall()
     {
+        // Arrange
         var clock = new FakeSystemClock(DateTime.UtcNow);
         var fake = new FakeApiResponder { ShouldSucceed = true };
-        var manager = BuildManagerWithFakeResponder(clock, fake);
+        IPasswordRecoveryManager manager = BuildManagerWithFakeResponder(clock, fake);
 
-        var firstResult = await manager.RequestCodeAsync("user@example.com");
+        // Act
+        ForgotPasswordState firstResult = await manager.RequestCodeAsync(TestEmail);
         int callsAfterFirst = fake.RequestCount;
+        clock.Advance(TimeSpan.FromSeconds(HalfCooldownSeconds));
+        ForgotPasswordState secondResult = await manager.RequestCodeAsync(TestEmail);
 
-        clock.Advance(TimeSpan.FromSeconds(30));
-
-        var secondResult = await manager.RequestCodeAsync("user@example.com");
-
+        // Assert
         Assert.Equal(ForgotPasswordState.EmailSent, firstResult);
         Assert.Equal(ForgotPasswordState.EmailSent, secondResult);
-
-        // The manager must NOT have issued a second HTTP call.
         Assert.Equal(callsAfterFirst, fake.RequestCount);
     }
 
@@ -94,19 +102,20 @@ public class PasswordRecoveryManagerTests
     /// After the cooldown has elapsed a new request must reach the API (call count increases).
     /// </summary>
     [Fact]
-    public async Task RequestCode_CalledAfter60Seconds_IssuesNewApiCall()
+    public async Task RequestCode_CalledAfterCooldownExpires_IssuesNewApiCall()
     {
+        // Arrange
         var clock = new FakeSystemClock(DateTime.UtcNow);
         var fake = new FakeApiResponder { ShouldSucceed = true };
-        var manager = BuildManagerWithFakeResponder(clock, fake);
+        IPasswordRecoveryManager manager = BuildManagerWithFakeResponder(clock, fake);
 
-        await manager.RequestCodeAsync("user@example.com");
+        // Act
+        await manager.RequestCodeAsync(TestEmail);
         int callsAfterFirst = fake.RequestCount;
+        clock.Advance(TimeSpan.FromSeconds(JustPastCooldownSeconds));
+        await manager.RequestCodeAsync(TestEmail);
 
-        clock.Advance(TimeSpan.FromSeconds(61));
-
-        await manager.RequestCodeAsync("user@example.com");
-
+        // Assert
         Assert.Equal(callsAfterFirst + 1, fake.RequestCount);
     }
 
@@ -123,7 +132,10 @@ public class PasswordRecoveryManagerTests
     [InlineData("C0mpl3x!ty")]
     public void IsPasswordValid_WithValidPassword_ReturnsTrue(string password)
     {
-        var manager = BuildManager(new FakeSystemClock(DateTime.UtcNow), succeedApi: false);
+        // Arrange
+        IPasswordRecoveryManager manager = BuildManager(new FakeSystemClock(DateTime.UtcNow), succeedApi: false);
+
+        // Assert
         Assert.True(manager.IsPasswordValid(password));
     }
 
@@ -140,7 +152,10 @@ public class PasswordRecoveryManagerTests
     [InlineData("   ")] // whitespace only
     public void IsPasswordValid_WithWeakPassword_ReturnsFalse(string password)
     {
-        var manager = BuildManager(new FakeSystemClock(DateTime.UtcNow), succeedApi: false);
+        // Arrange
+        IPasswordRecoveryManager manager = BuildManager(new FakeSystemClock(DateTime.UtcNow), succeedApi: false);
+
+        // Assert
         Assert.False(manager.IsPasswordValid(password));
     }
 
@@ -202,7 +217,6 @@ public class PasswordRecoveryManagerTests
     /// </summary>
     private sealed class TestablePasswordRecoveryManager : IPasswordRecoveryManager
     {
-        private const int CooldownSeconds = 60;
         private readonly FakeApiResponder responder;
         private readonly ISystemClock clock;
         private DateTime? lastRequestedAt;
@@ -247,7 +261,7 @@ public class PasswordRecoveryManagerTests
                 return ForgotPasswordState.EmailSent;
             }
 
-            var state = await this.responder.HandleRequestCodeAsync();
+            ForgotPasswordState state = await this.responder.HandleRequestCodeAsync();
             if (state == ForgotPasswordState.EmailSent)
             {
                 this.lastRequestedAt = this.clock.UtcNow;
@@ -265,7 +279,7 @@ public class PasswordRecoveryManagerTests
         public bool IsPasswordValid(string password)
         {
             return !string.IsNullOrWhiteSpace(password)
-                && password.Length >= 8
+                && password.Length >= PasswordValidator.MinimumLength
                 && System.Linq.Enumerable.Any(password, char.IsUpper)
                 && System.Linq.Enumerable.Any(password, char.IsLower)
                 && System.Linq.Enumerable.Any(password, char.IsDigit)

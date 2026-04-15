@@ -53,7 +53,7 @@ public class PersonalInfoViewModel
     /// Returns a placeholder when no phone number has been set.
     /// </summary>
     public string TwoFactorPhoneDisplay =>
-        this.HasPhoneNumber ? this.ProfileInfo.PhoneNumber! : "No phone number set";
+        this.HasPhoneNumber ? this.ProfileInfo.PhoneNumber! : UserMessages.Profile.NoPhoneNumber;
 
     /// <summary>
     /// Loads the current user's profile information from the server.

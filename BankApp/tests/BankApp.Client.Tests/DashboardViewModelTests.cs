@@ -1,7 +1,3 @@
-// <copyright file="DashboardViewModelTests.cs" company="CtrlC CtrlV">
-// Copyright (c) CtrlC CtrlV. All rights reserved.
-// </copyright>
-
 using System.Globalization;
 using BankApp.Client.Enums;
 using BankApp.Client.Utilities;

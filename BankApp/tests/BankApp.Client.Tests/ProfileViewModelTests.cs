@@ -1,10 +1,3 @@
-// <copyright file="ProfileViewModelTests.cs" company="CtrlC CtrlV">
-// Copyright (c) CtrlC CtrlV. All rights reserved.
-// </copyright>
-
-using System.Collections.Generic;
-using System.Threading;
-using System.Threading.Tasks;
 using BankApp.Client.Utilities;
 using BankApp.Client.ViewModels;
 using BankApp.Client.Enums;
@@ -12,6 +5,7 @@ using BankApp.Contracts.DTOs.Profile;
 using ErrorOr;
 using Microsoft.Extensions.Configuration;
 using Microsoft.Extensions.Logging.Abstractions;
+using NSubstitute;
 
 namespace BankApp.Client.Tests;
 
@@ -22,6 +16,17 @@ namespace BankApp.Client.Tests;
 /// </summary>
 public class ProfileViewModelTests
 {
+    private readonly ApiClient apiClient;
+
+    /// <summary>
+    /// Initializes a new instance of the <see cref="ProfileViewModelTests"/> class.
+    /// Creates a fresh substitute for each test.
+    /// </summary>
+    public ProfileViewModelTests()
+    {
+        this.apiClient = Substitute.For<ApiClient>(new ConfigurationBuilder().Build(), NullLogger<ApiClient>.Instance);
+    }
+
     // ── PersonalInfoViewModel ──────────────────────────────────────
 
     /// <summary>
@@ -31,24 +36,30 @@ public class ProfileViewModelTests
     [Fact]
     public async Task LoadProfile_WhenApiReturnsProfile_PopulatesProfileInfo()
     {
-        var client = new FakeProfileApiClient
-        {
-            GetResponse = new ProfileInfo
-            {
-                UserId = 1,
-                Email = "test@bank.com",
-                FullName = "Test User",
-                PhoneNumber = "0712345678",
-            },
-        };
-        var vm = new PersonalInfoViewModel(client, NullLogger<PersonalInfoViewModel>.Instance);
+        // Arrange
+        const int userId = 1;
+        const string email = "test@bank.com";
+        const string fullName = "Test User";
+        const string phoneNumber = "0712345678";
+        var vm = new PersonalInfoViewModel(this.apiClient, NullLogger<PersonalInfoViewModel>.Instance);
 
+        this.apiClient.GetAsync<ProfileInfo>(Arg.Any<string>(), Arg.Any<CancellationToken>())
+            .Returns(Task.FromResult<ErrorOr<ProfileInfo>>(new ProfileInfo
+            {
+                UserId = userId,
+                Email = email,
+                FullName = fullName,
+                PhoneNumber = phoneNumber,
+            }));
+
+        // Act
         bool success = await vm.LoadProfile();
 
+        // Assert
         Assert.True(success);
         Assert.Equal(ProfileState.UpdateSuccess, vm.State.Value);
-        Assert.Equal("Test User", vm.ProfileInfo.FullName);
-        Assert.Equal("test@bank.com", vm.ProfileInfo.Email);
+        Assert.Equal(fullName, vm.ProfileInfo.FullName);
+        Assert.Equal(email, vm.ProfileInfo.Email);
     }
 
     /// <summary>
@@ -58,11 +69,16 @@ public class ProfileViewModelTests
     [Fact]
     public async Task LoadProfile_WhenApiFails_SetsErrorState()
     {
-        var client = new FakeProfileApiClient { GetErrorToReturn = Error.Failure(description: "server down") };
-        var vm = new PersonalInfoViewModel(client, NullLogger<PersonalInfoViewModel>.Instance);
+        // Arrange
+        var vm = new PersonalInfoViewModel(this.apiClient, NullLogger<PersonalInfoViewModel>.Instance);
 
+        this.apiClient.GetAsync<ProfileInfo>(Arg.Any<string>(), Arg.Any<CancellationToken>())
+            .Returns(Task.FromResult<ErrorOr<ProfileInfo>>(Error.Failure(description: "server down")));
+
+        // Act
         bool success = await vm.LoadProfile();
 
+        // Assert
         Assert.False(success);
         Assert.Equal(ProfileState.Error, vm.State.Value);
     }
@@ -71,13 +87,14 @@ public class ProfileViewModelTests
     /// The HasPhoneNumber property should return true when a phone number is set.
     /// </summary>
     [Fact]
-    public void HasPhoneNumber_WhenPhoneNumberIsSet_ReturnsTrue()
+    public void HasPhoneNumber_WhenPhoneNumberIsNotSet_ReturnsFalseAndShowsPlaceholder()
     {
-        var client = new FakeProfileApiClient();
-        var vm = new PersonalInfoViewModel(client, NullLogger<PersonalInfoViewModel>.Instance);
+        // Arrange
+        var vm = new PersonalInfoViewModel(this.apiClient, NullLogger<PersonalInfoViewModel>.Instance);
 
+        // Assert
         Assert.False(vm.HasPhoneNumber);
-        Assert.Equal("No phone number set", vm.TwoFactorPhoneDisplay);
+        Assert.Equal(UserMessages.Profile.NoPhoneNumber, vm.TwoFactorPhoneDisplay);
     }
 
     /// <summary>
@@ -87,11 +104,19 @@ public class ProfileViewModelTests
     [Fact]
     public async Task UpdatePersonalInfo_WhenUserIdIsNull_SetsErrorState()
     {
-        var client = new FakeProfileApiClient { PutSucceeds = true };
-        var vm = new PersonalInfoViewModel(client, NullLogger<PersonalInfoViewModel>.Instance);
+        // Arrange
+        const string phoneNumber = "0712345678";
+        const string address = "123 Main St";
+        const string password = "password";
+        var vm = new PersonalInfoViewModel(this.apiClient, NullLogger<PersonalInfoViewModel>.Instance);
 
-        bool success = await vm.UpdatePersonalInfo("0712345678", "123 Main St", "password");
+        this.apiClient.PutAsync<UpdateProfileRequest>(Arg.Any<string>(), Arg.Any<UpdateProfileRequest>())
+            .Returns(Task.FromResult<ErrorOr<Success>>(Result.Success));
 
+        // Act
+        bool success = await vm.UpdatePersonalInfo(phoneNumber, address, password);
+
+        // Assert
         Assert.False(success);
         Assert.Equal(ProfileState.Error, vm.State.Value);
     }
@@ -105,13 +130,18 @@ public class ProfileViewModelTests
     [Fact]
     public async Task ChangePassword_WhenPasswordTooShort_ReturnsError()
     {
-        var client = new FakeProfileApiClient();
-        var vm = new SecurityViewModel(client, NullLogger<SecurityViewModel>.Instance);
+        // Arrange
+        const int userId = 1;
+        const string currentPassword = "old";
+        const string shortPassword = "short";
+        var vm = new SecurityViewModel(this.apiClient, NullLogger<SecurityViewModel>.Instance);
 
-        var (success, error) = await vm.ChangePassword(1, "old", "short", "short");
+        // Act
+        var (success, error) = await vm.ChangePassword(userId, currentPassword, shortPassword, shortPassword);
 
+        // Assert
         Assert.False(success);
-        Assert.Equal("Minimum 8 characters required.", error);
+        Assert.Equal(UserMessages.Security.MinimumLengthRequired, error);
         Assert.Equal(ProfileState.Idle, vm.State.Value);
     }
 
@@ -122,13 +152,19 @@ public class ProfileViewModelTests
     [Fact]
     public async Task ChangePassword_WhenPasswordsDoNotMatch_ReturnsError()
     {
-        var client = new FakeProfileApiClient();
-        var vm = new SecurityViewModel(client, NullLogger<SecurityViewModel>.Instance);
+        // Arrange
+        const int userId = 1;
+        const string currentPassword = "old";
+        const string newPassword = "LongEnough1!";
+        const string confirmPassword = "Different1!";
+        var vm = new SecurityViewModel(this.apiClient, NullLogger<SecurityViewModel>.Instance);
 
-        var (success, error) = await vm.ChangePassword(1, "old", "LongEnough1!", "Different1!");
+        // Act
+        var (success, error) = await vm.ChangePassword(userId, currentPassword, newPassword, confirmPassword);
 
+        // Assert
         Assert.False(success);
-        Assert.Equal("Passwords do not match.", error);
+        Assert.Equal(UserMessages.Security.PasswordMismatch, error);
         Assert.Equal(ProfileState.Idle, vm.State.Value);
     }
 
@@ -139,11 +175,19 @@ public class ProfileViewModelTests
     [Fact]
     public async Task ChangePassword_WhenValid_SetsUpdateSuccessState()
     {
-        var client = new FakeProfileApiClient { PutSucceeds = true };
-        var vm = new SecurityViewModel(client, NullLogger<SecurityViewModel>.Instance);
+        // Arrange
+        const int userId = 1;
+        const string currentPassword = "old";
+        const string validPassword = "ValidPass1!";
+        var vm = new SecurityViewModel(this.apiClient, NullLogger<SecurityViewModel>.Instance);
 
-        var (success, error) = await vm.ChangePassword(1, "old", "ValidPass1!", "ValidPass1!");
+        this.apiClient.PutAsync<ChangePasswordRequest>(Arg.Any<string>(), Arg.Any<ChangePasswordRequest>())
+            .Returns(Task.FromResult<ErrorOr<Success>>(Result.Success));
 
+        // Act
+        var (success, error) = await vm.ChangePassword(userId, currentPassword, validPassword, validPassword);
+
+        // Assert
         Assert.True(success);
         Assert.Equal(string.Empty, error);
         Assert.Equal(ProfileState.UpdateSuccess, vm.State.Value);
@@ -156,16 +200,21 @@ public class ProfileViewModelTests
     [Fact]
     public async Task ChangePassword_WhenApiReturnsIncorrectPassword_ReturnsSpecificMessage()
     {
-        var client = new FakeProfileApiClient
-        {
-            PutErrorToReturn = Error.Validation(code: "incorrect_password", description: "Wrong password"),
-        };
-        var vm = new SecurityViewModel(client, NullLogger<SecurityViewModel>.Instance);
+        // Arrange
+        const int userId = 1;
+        const string wrongPassword = "wrong";
+        const string validPassword = "ValidPass1!";
+        var vm = new SecurityViewModel(this.apiClient, NullLogger<SecurityViewModel>.Instance);
 
-        var (success, error) = await vm.ChangePassword(1, "wrong", "ValidPass1!", "ValidPass1!");
+        this.apiClient.PutAsync<ChangePasswordRequest>(Arg.Any<string>(), Arg.Any<ChangePasswordRequest>())
+            .Returns(Task.FromResult<ErrorOr<Success>>(Error.Validation(code: "incorrect_password", description: "Wrong password")));
 
+        // Act
+        var (success, error) = await vm.ChangePassword(userId, wrongPassword, validPassword, validPassword);
+
+        // Assert
         Assert.False(success);
-        Assert.Equal("Current password is incorrect.", error);
+        Assert.Equal(UserMessages.Security.IncorrectPassword, error);
         Assert.Equal(ProfileState.Error, vm.State.Value);
     }
 
@@ -176,11 +225,16 @@ public class ProfileViewModelTests
     [Fact]
     public async Task SetTwoFactorEnabled_WhenApiSucceeds_ReturnsTrue()
     {
-        var client = new FakeProfileApiClient { PutSucceeds = true };
-        var vm = new SecurityViewModel(client, NullLogger<SecurityViewModel>.Instance);
+        // Arrange
+        var vm = new SecurityViewModel(this.apiClient, NullLogger<SecurityViewModel>.Instance);
 
+        this.apiClient.PutAsync<object>(Arg.Any<string>(), Arg.Any<object>())
+            .Returns(Task.FromResult<ErrorOr<Success>>(Result.Success));
+
+        // Act
         bool result = await vm.SetTwoFactorEnabled(true);
 
+        // Assert
         Assert.True(result);
         Assert.Equal(ProfileState.UpdateSuccess, vm.State.Value);
     }
@@ -192,11 +246,16 @@ public class ProfileViewModelTests
     [Fact]
     public async Task DisableTwoFactor_WhenApiSucceeds_ReturnsTrue()
     {
-        var client = new FakeProfileApiClient { PutSucceeds = true };
-        var vm = new SecurityViewModel(client, NullLogger<SecurityViewModel>.Instance);
+        // Arrange
+        var vm = new SecurityViewModel(this.apiClient, NullLogger<SecurityViewModel>.Instance);
 
+        this.apiClient.PutAsync<object>(Arg.Any<string>(), Arg.Any<object>())
+            .Returns(Task.FromResult<ErrorOr<Success>>(Result.Success));
+
+        // Act
         bool result = await vm.SetTwoFactorEnabled(false);
 
+        // Assert
         Assert.True(result);
         Assert.Equal(ProfileState.UpdateSuccess, vm.State.Value);
     }
@@ -208,14 +267,16 @@ public class ProfileViewModelTests
     [Fact]
     public async Task SetTwoFactorEnabled_WhenApiFails_ReturnsFalse()
     {
-        var client = new FakeProfileApiClient
-        {
-            PutErrorToReturn = Error.Failure(description: "server error"),
-        };
-        var vm = new SecurityViewModel(client, NullLogger<SecurityViewModel>.Instance);
+        // Arrange
+        var vm = new SecurityViewModel(this.apiClient, NullLogger<SecurityViewModel>.Instance);
 
+        this.apiClient.PutAsync<object>(Arg.Any<string>(), Arg.Any<object>())
+            .Returns(Task.FromResult<ErrorOr<Success>>(Error.Failure(description: "server error")));
+
+        // Act
         bool result = await vm.SetTwoFactorEnabled(true);
 
+        // Assert
         Assert.False(result);
         Assert.Equal(ProfileState.Error, vm.State.Value);
     }
@@ -229,13 +290,19 @@ public class ProfileViewModelTests
     [Fact]
     public async Task ToggleNotificationPreference_WhenApiSucceeds_UpdatesPreference()
     {
-        var client = new FakeProfileApiClient { PutSucceeds = true };
-        var vm = new NotificationsViewModel(client, NullLogger<NotificationsViewModel>.Instance);
-        var pref = new NotificationPreferenceDto { Id = 1, EmailEnabled = false };
+        // Arrange
+        const int preferenceId = 1;
+        var vm = new NotificationsViewModel(this.apiClient, NullLogger<NotificationsViewModel>.Instance);
+        var pref = new NotificationPreferenceDto { Id = preferenceId, EmailEnabled = false };
         vm.NotificationPreferences.Add(pref);
 
+        this.apiClient.PutAsync<List<NotificationPreferenceDto>>(Arg.Any<string>(), Arg.Any<List<NotificationPreferenceDto>>())
+            .Returns(Task.FromResult<ErrorOr<Success>>(Result.Success));
+
+        // Act
         bool success = await vm.ToggleNotificationPreference(pref, true);
 
+        // Assert
         Assert.True(success);
         Assert.True(pref.EmailEnabled);
         Assert.Equal(ProfileState.UpdateSuccess, vm.State.Value);
@@ -248,16 +315,19 @@ public class ProfileViewModelTests
     [Fact]
     public async Task ToggleNotificationPreference_WhenApiFails_RollsBackPreference()
     {
-        var client = new FakeProfileApiClient
-        {
-            PutErrorToReturn = Error.Failure(description: "server error"),
-        };
-        var vm = new NotificationsViewModel(client, NullLogger<NotificationsViewModel>.Instance);
-        var pref = new NotificationPreferenceDto { Id = 1, EmailEnabled = true };
+        // Arrange
+        const int preferenceId = 1;
+        var vm = new NotificationsViewModel(this.apiClient, NullLogger<NotificationsViewModel>.Instance);
+        var pref = new NotificationPreferenceDto { Id = preferenceId, EmailEnabled = true };
         vm.NotificationPreferences.Add(pref);
 
+        this.apiClient.PutAsync<List<NotificationPreferenceDto>>(Arg.Any<string>(), Arg.Any<List<NotificationPreferenceDto>>())
+            .Returns(Task.FromResult<ErrorOr<Success>>(Error.Failure(description: "server error")));
+
+        // Act
         bool success = await vm.ToggleNotificationPreference(pref, false);
 
+        // Assert
         Assert.False(success);
         Assert.True(pref.EmailEnabled);
     }
@@ -269,11 +339,13 @@ public class ProfileViewModelTests
     [Fact]
     public async Task UpdateNotificationPreferences_WhenListIsEmpty_ReturnsFalse()
     {
-        var client = new FakeProfileApiClient { PutSucceeds = true };
-        var vm = new NotificationsViewModel(client, NullLogger<NotificationsViewModel>.Instance);
+        // Arrange
+        var vm = new NotificationsViewModel(this.apiClient, NullLogger<NotificationsViewModel>.Instance);
 
+        // Act
         bool result = await vm.UpdateNotificationPreferences(new List<NotificationPreferenceDto>());
 
+        // Assert
         Assert.False(result);
     }
 
@@ -286,12 +358,16 @@ public class ProfileViewModelTests
     [Fact]
     public async Task UnlinkOAuth_WhenProviderExists_RemovesAndReturnsTrue()
     {
-        var client = new FakeProfileApiClient();
-        var vm = new OAuthViewModel(client, NullLogger<OAuthViewModel>.Instance);
-        vm.OAuthLinks.Add(new OAuthLinkDto { Provider = "Google", ProviderEmail = "user@gmail.com" });
+        // Arrange
+        const string provider = "Google";
+        const string providerEmail = "user@gmail.com";
+        var vm = new OAuthViewModel(this.apiClient, NullLogger<OAuthViewModel>.Instance);
+        vm.OAuthLinks.Add(new OAuthLinkDto { Provider = provider, ProviderEmail = providerEmail });
 
-        bool result = await vm.UnlinkOAuth("Google");
+        // Act
+        bool result = await vm.UnlinkOAuth(provider);
 
+        // Assert
         Assert.True(result);
         Assert.Empty(vm.OAuthLinks);
         Assert.Equal(ProfileState.UpdateSuccess, vm.State.Value);
@@ -304,11 +380,14 @@ public class ProfileViewModelTests
     [Fact]
     public async Task UnlinkOAuth_WhenProviderDoesNotExist_ReturnsFalse()
     {
-        var client = new FakeProfileApiClient();
-        var vm = new OAuthViewModel(client, NullLogger<OAuthViewModel>.Instance);
+        // Arrange
+        const string provider = "GitHub";
+        var vm = new OAuthViewModel(this.apiClient, NullLogger<OAuthViewModel>.Instance);
 
-        bool result = await vm.UnlinkOAuth("GitHub");
+        // Act
+        bool result = await vm.UnlinkOAuth(provider);
 
+        // Assert
         Assert.False(result);
     }
 
@@ -319,9 +398,10 @@ public class ProfileViewModelTests
     [Fact]
     public async Task UnlinkOAuth_WhenProviderIsNullOrWhitespace_ReturnsFalse()
     {
-        var client = new FakeProfileApiClient();
-        var vm = new OAuthViewModel(client, NullLogger<OAuthViewModel>.Instance);
+        // Arrange
+        var vm = new OAuthViewModel(this.apiClient, NullLogger<OAuthViewModel>.Instance);
 
+        // Assert
         Assert.False(await vm.UnlinkOAuth(string.Empty));
         Assert.False(await vm.UnlinkOAuth("  "));
     }
@@ -333,12 +413,15 @@ public class ProfileViewModelTests
     [Fact]
     public async Task LinkOAuth_WhenAlreadyLinked_ReturnsFalse()
     {
-        var client = new FakeProfileApiClient();
-        var vm = new OAuthViewModel(client, NullLogger<OAuthViewModel>.Instance);
-        vm.OAuthLinks.Add(new OAuthLinkDto { Provider = "Google" });
+        // Arrange
+        const string provider = "Google";
+        var vm = new OAuthViewModel(this.apiClient, NullLogger<OAuthViewModel>.Instance);
+        vm.OAuthLinks.Add(new OAuthLinkDto { Provider = provider });
 
-        bool result = await vm.LinkOAuth("Google");
+        // Act
+        bool result = await vm.LinkOAuth(provider);
 
+        // Assert
         Assert.False(result);
     }
 
@@ -351,23 +434,22 @@ public class ProfileViewModelTests
     [Fact]
     public async Task LoadProfile_WhenPersonalInfoFails_SetsErrorState()
     {
-        var failClient = new FakeProfileApiClient { GetErrorToReturn = Error.Failure(description: "fail") };
-        var successClient = new FakeProfileApiClient
-        {
-            GetResponse = new ProfileInfo { UserId = 1 },
-            PutSucceeds = true,
-        };
+        // Arrange
+        this.apiClient.GetAsync<ProfileInfo>(Arg.Any<string>(), Arg.Any<CancellationToken>())
+            .Returns(Task.FromResult<ErrorOr<ProfileInfo>>(Error.Failure(description: "fail")));
 
         var profileVm = new ProfileViewModel(
-            new PersonalInfoViewModel(failClient, NullLogger<PersonalInfoViewModel>.Instance),
-            new SecurityViewModel(successClient, NullLogger<SecurityViewModel>.Instance),
-            new OAuthViewModel(successClient, NullLogger<OAuthViewModel>.Instance),
-            new NotificationsViewModel(successClient, NullLogger<NotificationsViewModel>.Instance),
-            new SessionsViewModel(successClient, NullLogger<SessionsViewModel>.Instance),
+            new PersonalInfoViewModel(this.apiClient, NullLogger<PersonalInfoViewModel>.Instance),
+            new SecurityViewModel(this.apiClient, NullLogger<SecurityViewModel>.Instance),
+            new OAuthViewModel(this.apiClient, NullLogger<OAuthViewModel>.Instance),
+            new NotificationsViewModel(this.apiClient, NullLogger<NotificationsViewModel>.Instance),
+            new SessionsViewModel(this.apiClient, NullLogger<SessionsViewModel>.Instance),
             NullLogger<ProfileViewModel>.Instance);
 
+        // Act
         bool success = await profileVm.LoadProfile();
 
+        // Assert
         Assert.False(success);
         Assert.Equal(ProfileState.Error, profileVm.State.Value);
     }
@@ -378,101 +460,22 @@ public class ProfileViewModelTests
     [Fact]
     public void IsInitializingView_DefaultsFalse_CanBeToggled()
     {
-        var client = new FakeProfileApiClient();
+        // Arrange
         var profileVm = new ProfileViewModel(
-            new PersonalInfoViewModel(client, NullLogger<PersonalInfoViewModel>.Instance),
-            new SecurityViewModel(client, NullLogger<SecurityViewModel>.Instance),
-            new OAuthViewModel(client, NullLogger<OAuthViewModel>.Instance),
-            new NotificationsViewModel(client, NullLogger<NotificationsViewModel>.Instance),
-            new SessionsViewModel(client, NullLogger<SessionsViewModel>.Instance),
+            new PersonalInfoViewModel(this.apiClient, NullLogger<PersonalInfoViewModel>.Instance),
+            new SecurityViewModel(this.apiClient, NullLogger<SecurityViewModel>.Instance),
+            new OAuthViewModel(this.apiClient, NullLogger<OAuthViewModel>.Instance),
+            new NotificationsViewModel(this.apiClient, NullLogger<NotificationsViewModel>.Instance),
+            new SessionsViewModel(this.apiClient, NullLogger<SessionsViewModel>.Instance),
             NullLogger<ProfileViewModel>.Instance);
 
+        // Assert
         Assert.False(profileVm.IsInitializingView);
 
+        // Act
         profileVm.IsInitializingView = true;
 
+        // Assert
         Assert.True(profileVm.IsInitializingView);
-    }
-
-    // ── Shared fake ────────────────────────────────────────────────
-
-    /// <summary>
-    /// Provides a configurable API client test double for profile view model tests.
-    /// Supports GET, PUT (Success), and POST (with response) overrides.
-    /// </summary>
-    private sealed class FakeProfileApiClient : ApiClient
-    {
-        /// <summary>
-        /// Initializes a new instance of the <see cref="FakeProfileApiClient"/> class.
-        /// </summary>
-        public FakeProfileApiClient()
-            : base(new ConfigurationBuilder().Build(), NullLogger<ApiClient>.Instance)
-        {
-        }
-
-        /// <summary>
-        /// Gets the GET response returned by the fake client.
-        /// </summary>
-        public object? GetResponse { get; init; }
-
-        /// <summary>
-        /// Gets the GET error returned by the fake client, if any.
-        /// </summary>
-        public Error? GetErrorToReturn { get; init; }
-
-        /// <summary>
-        /// Gets or sets a value indicating whether PUT calls should succeed.
-        /// </summary>
-        public bool PutSucceeds { get; init; }
-
-        /// <summary>
-        /// Gets the PUT error returned by the fake client, if any.
-        /// </summary>
-        public Error? PutErrorToReturn { get; init; }
-
-        /// <summary>
-        /// Gets the POST response returned by the fake client for two-type-param overloads.
-        /// </summary>
-        public object? PostResponse { get; init; }
-
-        /// <summary>
-        /// Gets the POST error returned by the fake client, if any.
-        /// </summary>
-        public Error? PostErrorToReturn { get; init; }
-
-        /// <inheritdoc/>
-        public override Task<ErrorOr<TResponse>> GetAsync<TResponse>(string endpoint, CancellationToken cancellationToken = default)
-        {
-            if (this.GetErrorToReturn.HasValue)
-            {
-                return Task.FromResult<ErrorOr<TResponse>>(this.GetErrorToReturn.Value);
-            }
-
-            return Task.FromResult<ErrorOr<TResponse>>((TResponse)this.GetResponse!);
-        }
-
-        /// <inheritdoc/>
-        public override Task<ErrorOr<Success>> PutAsync<TRequest>(string endpoint, TRequest data)
-        {
-            if (this.PutErrorToReturn.HasValue)
-            {
-                return Task.FromResult<ErrorOr<Success>>(this.PutErrorToReturn.Value);
-            }
-
-            return this.PutSucceeds
-                ? Task.FromResult<ErrorOr<Success>>(Result.Success)
-                : Task.FromResult<ErrorOr<Success>>(Error.Failure(description: "PUT failed"));
-        }
-
-        /// <inheritdoc/>
-        public override Task<ErrorOr<TResponse>> PostAsync<TRequest, TResponse>(string endpoint, TRequest data)
-        {
-            if (this.PostErrorToReturn.HasValue)
-            {
-                return Task.FromResult<ErrorOr<TResponse>>(this.PostErrorToReturn.Value);
-            }
-
-            return Task.FromResult<ErrorOr<TResponse>>((TResponse)this.PostResponse!);
-        }
     }
 }

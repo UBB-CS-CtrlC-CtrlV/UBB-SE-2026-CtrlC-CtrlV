@@ -56,6 +56,29 @@ internal static class UserMessages
         internal const string AllFieldsRequired = "Please fill in all fields.";
     }
 
+    /// <summary>Messages shown in the profile view.</summary>
+    internal static class Profile
+    {
+        /// <summary>Shown when no phone number has been set for the user.</summary>
+        internal const string NoPhoneNumber = "No phone number set";
+    }
+
+    /// <summary>Messages shown for security-related operations.</summary>
+    internal static class Security
+    {
+        /// <summary>Shown when the new password does not meet the minimum length requirement.</summary>
+        internal const string MinimumLengthRequired = "Minimum 8 characters required.";
+
+        /// <summary>Shown when the new password and confirmation do not match.</summary>
+        internal const string PasswordMismatch = "Passwords do not match.";
+
+        /// <summary>Shown when the current password verification fails.</summary>
+        internal const string IncorrectPassword = "Current password is incorrect.";
+
+        /// <summary>Shown when an unexpected error occurs during a security operation.</summary>
+        internal const string UnexpectedError = "An unexpected error occurred.";
+    }
+
     /// <summary>Messages shown in the forgot-password view.</summary>
     internal static class ForgotPassword
     {
