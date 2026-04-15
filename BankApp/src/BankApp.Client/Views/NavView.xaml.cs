@@ -148,9 +148,16 @@ public sealed partial class NavView
         _ = this.ShowAlertAsync("Notifications", message);
     }
 
-    private void LogoutButton_Click(object sender, RoutedEventArgs e)
+    private async void LogoutButton_Click(object sender, RoutedEventArgs e)
     {
-        // await App.ApiClient.PostAsync("/api/auth/logout", null);
+        try
+        {
+            await this.apiClient.PostAsync<object>("/api/auth/logout", new { });
+        }
+        catch
+        {
+        }
+
         this.apiClient.ClearToken();
         this.navigationService.NavigateTo<LoginView>();
     }
