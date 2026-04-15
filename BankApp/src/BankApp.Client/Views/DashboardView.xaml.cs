@@ -40,6 +40,13 @@ public sealed partial class DashboardView : IStateObserver<DashboardState>
     {
         this.InitializeComponent();
         this.viewModel = viewModel;
+        this.Loaded += this.OnPageLoaded;
+    }
+
+    private void OnPageLoaded(object sender, RoutedEventArgs e)
+    {
+        this.AttachObserver();
+        _ = this.RunUiTaskAsync(this.LoadDashboardAsync);
     }
 
     /// <inheritdoc/>
@@ -52,8 +59,6 @@ public sealed partial class DashboardView : IStateObserver<DashboardState>
     protected override void OnNavigatedTo(NavigationEventArgs e)
     {
         base.OnNavigatedTo(e);
-        this.AttachObserver();
-        _ = this.RunUiTaskAsync(this.LoadDashboardAsync);
     }
 
     /// <inheritdoc/>
