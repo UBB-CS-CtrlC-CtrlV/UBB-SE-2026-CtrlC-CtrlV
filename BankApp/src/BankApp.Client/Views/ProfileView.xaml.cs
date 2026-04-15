@@ -6,17 +6,20 @@ using System;
 using System.Collections.Generic;
 using System.Linq;
 using System.Threading.Tasks;
-using BankApp.Client.Master;
-using BankApp.Client.Utilities;
-using BankApp.Client.ViewModels;
-using BankApp.Contracts.DTOs.Profile;
-using BankApp.Client.Enums;
-using BankApp.Contracts.Enums;
-using BankApp.Contracts.Extensions;
+
 using Microsoft.UI.Xaml;
 using Microsoft.UI.Xaml.Controls;
 using Microsoft.UI.Xaml.Media;
 using Microsoft.UI.Xaml.Navigation;
+
+using BankApp.Client.Enums;
+using BankApp.Client.Master;
+using BankApp.Client.Utilities;
+using BankApp.Client.ViewModels;
+using BankApp.Contracts.DTOs.Profile;
+using BankApp.Contracts.Entities;
+using BankApp.Contracts.Enums;
+using BankApp.Contracts.Extensions;
 
 namespace BankApp.Client.Views;
 
@@ -492,10 +495,12 @@ public sealed partial class ProfileView : IStateObserver<ProfileState>
         this.PanelPersonal.Visibility = Visibility.Visible;
         this.PanelSecurity.Visibility = Visibility.Collapsed;
         this.PanelNotifications.Visibility = Visibility.Collapsed;
+        this.PanelSessions.Visibility = Visibility.Collapsed;
 
         this.TabPersonalBtn.Style = (Style)this.Resources["TabButtonActiveStyle"];
         this.TabSecurityBtn.Style = (Style)this.Resources["TabButtonStyle"];
         this.TabNotificationsBtn.Style = (Style)this.Resources["TabButtonStyle"];
+        this.TabSessionsBtn.Style = (Style)this.Resources["TabButtonStyle"];
     }
 
     private void TabSecurityBtn_Click(object sender, RoutedEventArgs e)
@@ -503,10 +508,12 @@ public sealed partial class ProfileView : IStateObserver<ProfileState>
         this.PanelPersonal.Visibility = Visibility.Collapsed;
         this.PanelSecurity.Visibility = Visibility.Visible;
         this.PanelNotifications.Visibility = Visibility.Collapsed;
+        this.PanelSessions.Visibility = Visibility.Collapsed;
 
         this.TabPersonalBtn.Style = (Style)this.Resources["TabButtonStyle"];
         this.TabSecurityBtn.Style = (Style)this.Resources["TabButtonActiveStyle"];
         this.TabNotificationsBtn.Style = (Style)this.Resources["TabButtonStyle"];
+        this.TabSessionsBtn.Style = (Style)this.Resources["TabButtonStyle"];
     }
 
     private void TabNotificationsBtn_Click(object sender, RoutedEventArgs e)
@@ -514,10 +521,12 @@ public sealed partial class ProfileView : IStateObserver<ProfileState>
         this.PanelPersonal.Visibility = Visibility.Collapsed;
         this.PanelSecurity.Visibility = Visibility.Collapsed;
         this.PanelNotifications.Visibility = Visibility.Visible;
+        this.PanelSessions.Visibility = Visibility.Collapsed;
 
         this.TabPersonalBtn.Style = (Style)this.Resources["TabButtonStyle"];
         this.TabSecurityBtn.Style = (Style)this.Resources["TabButtonStyle"];
         this.TabNotificationsBtn.Style = (Style)this.Resources["TabButtonActiveStyle"];
+        this.TabSessionsBtn.Style = (Style)this.Resources["TabButtonStyle"];
     }
 
     private void PopulateOAuthLinks(List<OAuthLinkDto>? links)
@@ -588,5 +597,142 @@ public sealed partial class ProfileView : IStateObserver<ProfileState>
         }
 
         this.viewModel.IsInitializingView = false;
+    }
+
+    private async void TabSessionsBtn_Click(object sender, RoutedEventArgs e)
+    {
+        this.PanelPersonal.Visibility = Visibility.Collapsed;
+        this.PanelSecurity.Visibility = Visibility.Collapsed;
+        this.PanelNotifications.Visibility = Visibility.Collapsed;
+        this.PanelSessions.Visibility = Visibility.Visible;
+
+        this.TabPersonalBtn.Style = (Style)this.Resources["TabButtonStyle"];
+        this.TabSecurityBtn.Style = (Style)this.Resources["TabButtonStyle"];
+        this.TabNotificationsBtn.Style = (Style)this.Resources["TabButtonStyle"];
+        this.TabSessionsBtn.Style = (Style)this.Resources["TabButtonActiveStyle"];
+
+        await this.LoadSessionsAsync();
+    }
+
+    private async Task LoadSessionsAsync()
+    {
+        this.SessionsErrorBar.IsOpen = false;
+        this.SessionsSuccessBar.IsOpen = false;
+        this.SessionsListPanel.Children.Clear();
+        this.NoSessionsText.Visibility = Visibility.Collapsed;
+
+        int? userId = this.viewModel.ProfileInfo.UserId;
+        if (userId == null)
+        {
+            this.SessionsErrorBar.Message = "User not loaded.";
+            this.SessionsErrorBar.IsOpen = true;
+            return;
+        }
+
+        await this.viewModel.Sessions.LoadSessionsAsync(userId.Value);
+
+        if (this.viewModel.Sessions.ActiveSessions.Count == 0)
+        {
+            this.NoSessionsText.Visibility = Visibility.Visible;
+            return;
+        }
+
+        foreach (Session session in this.viewModel.Sessions.ActiveSessions)
+        {
+            this.SessionsListPanel.Children.Add(this.BuildSessionCard(session));
+        }
+    }
+
+    private Border BuildSessionCard(Session session)
+    {
+        var card = new Border
+        {
+            Background = new SolidColorBrush(Microsoft.UI.Colors.White),
+            CornerRadius = new CornerRadius(10),
+            BorderBrush = new SolidColorBrush(Microsoft.UI.ColorHelper.FromArgb(255, 226, 232, 240)),
+            BorderThickness = new Thickness(1),
+            Padding = new Thickness(16, 12, 16, 12),
+        };
+
+        var grid = new Grid();
+        grid.ColumnDefinitions.Add(new ColumnDefinition { Width = new GridLength(1, GridUnitType.Star) });
+        grid.ColumnDefinitions.Add(new ColumnDefinition { Width = GridLength.Auto });
+
+        var infoStack = new StackPanel { Spacing = 2 };
+
+        var deviceText = new TextBlock
+        {
+            Text = session.DeviceInfo ?? "Unknown Device",
+            FontSize = 13,
+            Foreground = new SolidColorBrush(Microsoft.UI.ColorHelper.FromArgb(255, 30, 41, 59)),
+        };
+
+        var browserText = new TextBlock
+        {
+            Text = session.Browser ?? "Unknown Browser",
+            FontSize = 12,
+            Foreground = new SolidColorBrush(Microsoft.UI.ColorHelper.FromArgb(255, 100, 116, 139)),
+        };
+
+        var ipText = new TextBlock
+        {
+            Text = $"IP: {session.IpAddress ?? "Unknown"}",
+            FontSize = 12,
+            Foreground = new SolidColorBrush(Microsoft.UI.ColorHelper.FromArgb(255, 100, 116, 139)),
+        };
+
+        var lastActiveText = new TextBlock
+        {
+            Text = session.LastActiveAt.HasValue
+                ? $"Last active: {session.LastActiveAt.Value:g}"
+                : "Last active: Unknown",
+            FontSize = 11,
+            Foreground = new SolidColorBrush(Microsoft.UI.ColorHelper.FromArgb(255, 148, 163, 184)),
+        };
+
+        infoStack.Children.Add(deviceText);
+        infoStack.Children.Add(browserText);
+        infoStack.Children.Add(ipText);
+        infoStack.Children.Add(lastActiveText);
+
+        var revokeButton = new Button
+        {
+            Content = "Revoke",
+            Tag = session.Id,
+            VerticalAlignment = VerticalAlignment.Center,
+        };
+        revokeButton.Style = (Style)this.Resources["DangerButtonStyle"];
+        revokeButton.Click += this.RevokeSessionButton_Click;
+
+        Grid.SetColumn(infoStack, 0);
+        Grid.SetColumn(revokeButton, 1);
+
+        grid.Children.Add(infoStack);
+        grid.Children.Add(revokeButton);
+
+        card.Child = grid;
+        return card;
+    }
+
+    private async void RevokeSessionButton_Click(object sender, RoutedEventArgs e)
+    {
+        if (sender is not Button { Tag: int sessionId })
+        {
+            return;
+        }
+
+        bool success = await this.viewModel.Sessions.RevokeSessionAsync(sessionId);
+
+        if (success)
+        {
+            this.SessionsSuccessBar.Message = "Session revoked successfully.";
+            this.SessionsSuccessBar.IsOpen = true;
+            await this.LoadSessionsAsync();
+        }
+        else
+        {
+            this.SessionsErrorBar.Message = "Failed to revoke session.";
+            this.SessionsErrorBar.IsOpen = true;
+        }
     }
 }
