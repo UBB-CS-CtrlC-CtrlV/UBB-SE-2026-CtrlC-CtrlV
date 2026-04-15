@@ -85,7 +85,6 @@ public class DashboardService : IDashboardService
                 .Select(transaction => new TransactionDto
                 {
                     Id = transaction.Id,
-                    Type = transaction.Type,
                     Direction = transaction.Direction,
                     Amount = transaction.Amount,
                     Currency = transaction.Currency,

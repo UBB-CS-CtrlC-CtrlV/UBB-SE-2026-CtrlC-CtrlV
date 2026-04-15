@@ -22,6 +22,9 @@ internal static class UserMessages
 
         /// <summary>Shown for any other load failure.</summary>
         internal const string LoadFailed = "We couldn't load your dashboard. Please try again.";
+
+        /// <summary>Shown when the dashboard response is missing required data.</summary>
+        internal const string IncompleteResponse = "The dashboard response was incomplete.";
     }
 
     /// <summary>Messages shown in the two-factor authentication view.</summary>
@@ -51,6 +54,29 @@ internal static class UserMessages
 
         /// <summary>Shown when one or more required fields are left blank.</summary>
         internal const string AllFieldsRequired = "Please fill in all fields.";
+    }
+
+    /// <summary>Messages shown in the profile view.</summary>
+    internal static class Profile
+    {
+        /// <summary>Shown when no phone number has been set for the user.</summary>
+        internal const string NoPhoneNumber = "No phone number set";
+    }
+
+    /// <summary>Messages shown for security-related operations.</summary>
+    internal static class Security
+    {
+        /// <summary>Shown when the new password does not meet the minimum length requirement.</summary>
+        internal const string MinimumLengthRequired = "Minimum 8 characters required.";
+
+        /// <summary>Shown when the new password and confirmation do not match.</summary>
+        internal const string PasswordMismatch = "Passwords do not match.";
+
+        /// <summary>Shown when the current password verification fails.</summary>
+        internal const string IncorrectPassword = "Current password is incorrect.";
+
+        /// <summary>Shown when an unexpected error occurs during a security operation.</summary>
+        internal const string UnexpectedError = "An unexpected error occurred.";
     }
 
     /// <summary>Messages shown in the forgot-password view.</summary>

@@ -26,11 +26,6 @@ public class DashboardTransactionItem
     public string MerchantDisplayName { get; set; } = string.Empty;
 
     /// <summary>
-    /// Gets or sets the transaction type.
-    /// </summary>
-    public string Type { get; set; } = string.Empty;
-
-    /// <summary>
     /// Gets or sets the formatted amount string.
     /// </summary>
     public string AmountDisplay { get; set; } = string.Empty;

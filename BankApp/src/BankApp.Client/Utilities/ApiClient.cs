@@ -121,7 +121,7 @@ public class ApiClient
     /// <param name="endpoint">The relative endpoint to call.</param>
     /// <param name="data">The request body to serialize.</param>
     /// <returns>The deserialized response body, or an <see cref="Error"/> if the request fails.</returns>
-    public async Task<ErrorOr<TResponse>> PostAsync<TRequest, TResponse>(string endpoint, TRequest data)
+    public virtual async Task<ErrorOr<TResponse>> PostAsync<TRequest, TResponse>(string endpoint, TRequest data)
     {
         try
         {
@@ -158,7 +158,7 @@ public class ApiClient
     /// <param name="endpoint">The relative endpoint to call.</param>
     /// <param name="data">The request body to serialize.</param>
     /// <returns><see cref="Result.Success"/> on a 2xx response, or an <see cref="Error"/> otherwise.</returns>
-    public async Task<ErrorOr<Success>> PostAsync<TRequest>(string endpoint, TRequest data)
+    public virtual async Task<ErrorOr<Success>> PostAsync<TRequest>(string endpoint, TRequest data)
     {
         try
         {
@@ -262,7 +262,7 @@ public class ApiClient
     /// <param name="endpoint">The relative endpoint to call.</param>
     /// <param name="data">The request body to serialize.</param>
     /// <returns><see cref="Result.Success"/> on a 2xx response, or an <see cref="Error"/> otherwise.</returns>
-    public async Task<ErrorOr<Success>> PutAsync<TRequest>(string endpoint, TRequest data)
+    public virtual async Task<ErrorOr<Success>> PutAsync<TRequest>(string endpoint, TRequest data)
     {
         try
         {

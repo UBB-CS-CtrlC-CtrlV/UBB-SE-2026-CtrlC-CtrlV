@@ -65,12 +65,12 @@ public class SecurityViewModel
     {
         if (!PasswordValidator.MeetsMinimumLength(newPassword))
         {
-            return (false, "Minimum 8 characters required.");
+            return (false, UserMessages.Security.MinimumLengthRequired);
         }
 
         if (newPassword != confirmPassword)
         {
-            return (false, "Passwords do not match.");
+            return (false, UserMessages.Security.PasswordMismatch);
         }
 
         this.State.SetValue(ProfileState.Loading);
@@ -89,8 +89,8 @@ public class SecurityViewModel
                 this.logger.LogError("ChangePassword failed: {Errors}", errors);
                 this.State.SetValue(ProfileState.Error);
                 string message = errors[0].Code == "incorrect_password"
-                    ? "Current password is incorrect."
-                    : "An unexpected error occurred.";
+                    ? UserMessages.Security.IncorrectPassword
+                    : UserMessages.Security.UnexpectedError;
                 return (false, message);
             });
     }

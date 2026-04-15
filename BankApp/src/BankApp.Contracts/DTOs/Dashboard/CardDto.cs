@@ -2,6 +2,9 @@
 // Copyright (c) CtrlC CtrlV. All rights reserved.
 // </copyright>
 
+using System.Text.Json.Serialization;
+using BankApp.Contracts.Enums;
+
 namespace BankApp.Contracts.DTOs.Dashboard;
 
 /// <summary>
@@ -25,9 +28,10 @@ public class CardDto
     public string CardholderName { get; set; } = string.Empty;
 
     /// <summary>
-    /// Gets or sets the type of the card (e.g. debit, credit).
+    /// Gets or sets the type of the card.
     /// </summary>
-    public string CardType { get; set; } = string.Empty;
+    [JsonConverter(typeof(JsonStringEnumConverter))]
+    public CardType CardType { get; set; }
 
     /// <summary>
     /// Gets or sets the brand of the card (e.g. Visa, Mastercard).
@@ -42,7 +46,8 @@ public class CardDto
     /// <summary>
     /// Gets or sets the status of the card.
     /// </summary>
-    public string Status { get; set; } = "Active";
+    [JsonConverter(typeof(JsonStringEnumConverter))]
+    public CardStatus Status { get; set; }
 
     /// <summary>
     /// Gets or sets a value indicating whether contactless payments are enabled.
