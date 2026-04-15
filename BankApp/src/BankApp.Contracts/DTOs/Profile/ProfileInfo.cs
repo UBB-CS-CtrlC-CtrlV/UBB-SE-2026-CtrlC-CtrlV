@@ -43,6 +43,11 @@ public class ProfileInfo
     public bool Is2FAEnabled { get; set; }
 
     /// <summary>
+    /// Gets or sets the preferred two-factor authentication method.
+    /// </summary>
+    public string? Preferred2FAMethod { get; set; }
+
+    /// <summary>
     /// Initializes a new instance of the <see cref="ProfileInfo"/> class.
     /// </summary>
     public ProfileInfo()
@@ -65,6 +70,7 @@ public class ProfileInfo
             Address = user.Address;
             Nationality = user.Nationality;
             Is2FAEnabled = user.Is2FAEnabled;
+            Preferred2FAMethod = user.Preferred2FAMethod;
         }
     }
 }
