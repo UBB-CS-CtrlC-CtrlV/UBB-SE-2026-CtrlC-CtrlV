@@ -27,7 +27,14 @@ public class AppDbContext : IDbContext
     {
         try
         {
-            return operation(this.GetConnection());
+            T result = operation(this.GetConnection());
+
+            if (result is null)
+            {
+                return Error.NotFound(description: "No record found.");
+            }
+
+            return result;
         }
         catch (Exception ex)
         {
