@@ -10,6 +10,8 @@ const string DefaultLogFilePath = "logs/bankapp-server-.log";
 
 SqlMapper.AddTypeHandler(new EnumTypeHandler<TransactionDirection>());
 SqlMapper.AddTypeHandler(new EnumTypeHandler<TransactionStatus>());
+SqlMapper.AddTypeHandler(new EnumTypeHandler<CardType>());
+SqlMapper.AddTypeHandler(new EnumTypeHandler<CardStatus>());
 
 // Configure Serilog before building the host so that startup errors are also captured.
 Log.Logger = new LoggerConfiguration()

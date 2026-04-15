@@ -28,11 +28,6 @@ public class Transaction
     public string TransactionRef { get; set; } = string.Empty;
 
     /// <summary>
-    /// Gets or sets the type of the transaction.
-    /// </summary>
-    public string Type { get; set; } = string.Empty;
-
-    /// <summary>
     /// Gets or sets the direction of the transaction as a <see cref="TransactionDirection"/>.
     /// </summary>
     public TransactionDirection Direction { get; set; }

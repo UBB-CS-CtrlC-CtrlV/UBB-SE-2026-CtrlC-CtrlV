@@ -1,3 +1,5 @@
+using BankApp.Contracts.Enums;
+
 namespace BankApp.Contracts.Entities;
 
 /// <summary>
@@ -41,9 +43,9 @@ public class Card
     public string CVV { get; set; } = string.Empty;
 
     /// <summary>
-    /// Gets or sets the type of the card (e.g. debit, credit).
+    /// Gets or sets the type of the card.
     /// </summary>
-    public string CardType { get; set; } = string.Empty;
+    public CardType CardType { get; set; }
 
     /// <summary>
     /// Gets or sets the brand of the card (e.g. Visa, Mastercard).
@@ -53,7 +55,7 @@ public class Card
     /// <summary>
     /// Gets or sets the status of the card.
     /// </summary>
-    public string Status { get; set; } = "Active";
+    public CardStatus Status { get; set; }
 
     /// <summary>
     /// Gets or sets the daily transaction limit.

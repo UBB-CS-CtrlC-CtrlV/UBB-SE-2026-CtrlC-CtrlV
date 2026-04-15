@@ -18,11 +18,6 @@ public class TransactionDto
     public int Id { get; set; }
 
     /// <summary>
-    /// Gets or sets the type of the transaction.
-    /// </summary>
-    public string Type { get; set; } = string.Empty;
-
-    /// <summary>
     /// Gets or sets the direction of the transaction (In or Out).
     /// </summary>
     [JsonConverter(typeof(JsonStringEnumConverter))]

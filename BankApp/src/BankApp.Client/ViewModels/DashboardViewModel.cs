@@ -122,7 +122,7 @@ public class DashboardViewModel
     /// </summary>
     public string SelectedCardBrandDisplay =>
         this.SelectedCard is { } card
-            ? string.IsNullOrWhiteSpace(card.CardBrand) ? card.CardType : card.CardBrand
+            ? string.IsNullOrWhiteSpace(card.CardBrand) ? card.CardType.ToString() : card.CardBrand
             : string.Empty;
 
     /// <summary>
@@ -269,7 +269,6 @@ public class DashboardViewModel
             .Select(transaction => new DashboardTransactionItem
             {
                 MerchantDisplayName = GetMerchantDisplayName(transaction),
-                Type = GetValueOrFallback(transaction.Type, "Unknown"),
                 Currency = GetValueOrFallback(transaction.Currency, "N/A"),
                 AmountDisplay = FormatAmountDisplay(transaction)
             })
