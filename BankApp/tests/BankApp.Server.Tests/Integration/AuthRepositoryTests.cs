@@ -47,8 +47,12 @@ public sealed class AuthRepositoryTests : IClassFixture<DatabaseFixture>, IAsync
     {
         var userDa = new UserDataAccess(db);
         var user = this.userFaker.Generate();
-        userDa.Create(user);
-        return userDa.FindByEmail(user.Email).Value;
+        var createResult = userDa.Create(user);
+        createResult.IsError.Should().BeFalse(createResult.IsError ? createResult.FirstError.Description : string.Empty);
+        
+        var findResult = userDa.FindByEmail(user.Email);
+        findResult.IsError.Should().BeFalse(findResult.IsError ? findResult.FirstError.Description : string.Empty);
+        return findResult.Value;
     }
 
     private AuthRepository MakeAuthRepo(AppDbContext db)
@@ -70,7 +74,7 @@ public sealed class AuthRepositoryTests : IClassFixture<DatabaseFixture>, IAsync
     [Fact]
     public void CreateUser_AutomaticallyCreatesNotificationPreferences()
     {
-        var db = MakeDb();
+        using var db = MakeDb();
         var userDa = new UserDataAccess(db);
         var repo = MakeAuthRepo(db);
 
@@ -98,7 +102,7 @@ public sealed class AuthRepositoryTests : IClassFixture<DatabaseFixture>, IAsync
     [Fact]
     public void CreateSession_ReturnsSessionWithPositiveId()
     {
-        var db = MakeDb();
+        using var db = MakeDb();
         var user = SeedUser(db);
         var repo = MakeAuthRepo(db);
 
@@ -116,7 +120,7 @@ public sealed class AuthRepositoryTests : IClassFixture<DatabaseFixture>, IAsync
     [Fact]
     public void FindSessionByToken_ActiveToken_ReturnsSession()
     {
-        var db = MakeDb();
+        using var db = MakeDb();
         var user = SeedUser(db);
         var repo = MakeAuthRepo(db);
 
@@ -134,7 +138,7 @@ public sealed class AuthRepositoryTests : IClassFixture<DatabaseFixture>, IAsync
     [Fact]
     public void FindSessionByToken_RevokedToken_ReturnsNotFound()
     {
-        var db = MakeDb();
+        using var db = MakeDb();
         var user = SeedUser(db);
         var repo = MakeAuthRepo(db);
 
@@ -154,7 +158,7 @@ public sealed class AuthRepositoryTests : IClassFixture<DatabaseFixture>, IAsync
     [Fact]
     public void SavePasswordResetToken_ThenFindByHash_ReturnsToken()
     {
-        var db = MakeDb();
+        using var db = MakeDb();
         var user = SeedUser(db);
         var repo = MakeAuthRepo(db);
 
@@ -181,7 +185,7 @@ public sealed class AuthRepositoryTests : IClassFixture<DatabaseFixture>, IAsync
     [Fact]
     public void MarkPasswordResetTokenAsUsed_SetsUsedAt()
     {
-        var db = MakeDb();
+        using var db = MakeDb();
         var user = SeedUser(db);
         var repo = MakeAuthRepo(db);
 

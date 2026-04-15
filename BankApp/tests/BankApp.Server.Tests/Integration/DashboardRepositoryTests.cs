@@ -144,7 +144,7 @@ public sealed class DashboardRepositoryTests : IClassFixture<DatabaseFixture>, I
     [Fact]
     public void GetAccountsByUser_ReturnsAllAccountsForUser()
     {
-        var db = MakeDb();
+        using var db = MakeDb();
         var user = SeedUser(db);
         SeedAccount(db, user.Id);
 
@@ -164,7 +164,7 @@ public sealed class DashboardRepositoryTests : IClassFixture<DatabaseFixture>, I
     [Fact]
     public void GetRecentTransactions_ReturnsAtMostLimitResults()
     {
-        var db = MakeDb();
+        using var db = MakeDb();
         var user = SeedUser(db);
         var account = SeedAccount(db, user.Id);
         SeedTransactions(db, account.Id, 5);
@@ -182,7 +182,7 @@ public sealed class DashboardRepositoryTests : IClassFixture<DatabaseFixture>, I
     [Fact]
     public void GetUnreadNotificationCount_ReturnsCorrectCount()
     {
-        var db = MakeDb();
+        using var db = MakeDb();
         var user = SeedUser(db);
         SeedNotifications(db, user.Id, 4);
 
@@ -199,7 +199,7 @@ public sealed class DashboardRepositoryTests : IClassFixture<DatabaseFixture>, I
     [Fact]
     public void GetCardsByUser_ReturnsCardsForGivenUser()
     {
-        var db = MakeDb();
+        using var db = MakeDb();
         var user = SeedUser(db);
         var account = SeedAccount(db, user.Id);
         SeedCard(db, account.Id, user.Id);

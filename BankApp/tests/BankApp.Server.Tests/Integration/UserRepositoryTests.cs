@@ -59,7 +59,7 @@ public sealed class UserRepositoryTests : IClassFixture<DatabaseFixture>, IAsync
     [Fact]
     public void CreateUser_ThenFindByEmail_ReturnsCorrectUser()
     {
-        var db = this.fixture.CreateDbContext();
+        using var db = this.fixture.CreateDbContext();
         var userDa = new UserDataAccess(db);
 
         var user = this.userFaker.Generate();
@@ -80,7 +80,7 @@ public sealed class UserRepositoryTests : IClassFixture<DatabaseFixture>, IAsync
     [Fact]
     public void FindById_ExistingUser_ReturnsUser()
     {
-        var db = this.fixture.CreateDbContext();
+        using var db = this.fixture.CreateDbContext();
         var userDa = new UserDataAccess(db);
 
         var user = this.userFaker.Generate();
@@ -100,7 +100,7 @@ public sealed class UserRepositoryTests : IClassFixture<DatabaseFixture>, IAsync
     [Fact]
     public void FindById_NonExistentUser_ReturnsNotFoundError()
     {
-        var db = this.fixture.CreateDbContext();
+        using var db = this.fixture.CreateDbContext();
         var userDa = new UserDataAccess(db);
 
         var result = userDa.FindById(99999);
@@ -113,7 +113,7 @@ public sealed class UserRepositoryTests : IClassFixture<DatabaseFixture>, IAsync
     [Fact]
     public void UpdateUser_ChangesArePersisted()
     {
-        var db = this.fixture.CreateDbContext();
+        using var db = this.fixture.CreateDbContext();
         var userDa = new UserDataAccess(db);
 
         var user = this.userFaker.Generate();
@@ -136,7 +136,7 @@ public sealed class UserRepositoryTests : IClassFixture<DatabaseFixture>, IAsync
     [Fact]
     public void IncrementFailedAttempts_CounterIncreasesCorrectly()
     {
-        var db = this.fixture.CreateDbContext();
+        using var db = this.fixture.CreateDbContext();
         var userDa = new UserDataAccess(db);
 
         var user = this.userFaker.Generate();
@@ -156,7 +156,7 @@ public sealed class UserRepositoryTests : IClassFixture<DatabaseFixture>, IAsync
     [Fact]
     public void LockAccount_SetsIsLockedAndLockoutEnd()
     {
-        var db = this.fixture.CreateDbContext();
+        using var db = this.fixture.CreateDbContext();
         var userDa = new UserDataAccess(db);
 
         var user = this.userFaker.Generate();
