@@ -81,17 +81,18 @@ public sealed class DashboardRepositoryTests : IClassFixture<DatabaseFixture>, I
     /// <summary>Inserts a card linked to a user and account.</summary>
     private void SeedCard(AppDbContext db, int accountId, int userId)
     {
-        var faker = new Faker();
-        db.Query<int>(conn =>
+        // Use a fixed card number to avoid Bogus generating numbers > VARCHAR(19)
+        var seedResult = db.Query<int>(conn =>
         {
-            conn.Execute(
+            return conn.Execute(
                 """
                 INSERT INTO Card (AccountId, UserId, CardNumber, CardholderName, ExpiryDate, CVV, CardType, Status)
-                VALUES (@AccountId, @UserId, @CardNumber, 'Dashboard User', '2027-12-31', '123', 'Debit', 'Active')
+                VALUES (@AccountId, @UserId, '4111111111111111', 'Test User', '2027-12-31', '123', 'Debit', 'Active')
                 """,
-                new { AccountId = accountId, UserId = userId, CardNumber = faker.Finance.CreditCardNumber() });
-            return 0;
+                new { AccountId = accountId, UserId = userId });
         });
+
+        seedResult.IsError.Should().BeFalse(seedResult.IsError ? seedResult.FirstError.Description : "SeedCard INSERT failed.");
     }
 
     /// <summary>Inserts N transactions for a given account.</summary>
