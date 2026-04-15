@@ -23,8 +23,5 @@
     <ProjectReference Include="..\..\src\BankApp.Server\BankApp.Server.csproj" />
   </ItemGroup>
 
-  <ItemGroup>
-    <None Include="..\..\scripts\db\schema\*.sql" CopyToOutputDirectory="PreserveNewest" />
-  </ItemGroup>
 
 </Project>
