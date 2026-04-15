@@ -55,7 +55,7 @@ public class LoginService : ILoginService
     }
 
     /// <inheritdoc />
-    public ErrorOr<LoginSuccess> Login(LoginRequest request)
+    public ErrorOr<LoginSuccess> Login(LoginRequest request, SessionMetadata? metadata = null)
     {
         if (!ValidationUtilities.IsValidEmail(request.Email))
         {
@@ -89,11 +89,11 @@ public class LoginService : ILoginService
             return HandleFailedPassword(user);
         }
 
-        return user.Is2FAEnabled ? Handle2FA(user) : CompleteLogin(user);
+        return user.Is2FAEnabled ? Handle2FA(user) : CompleteLogin(user, metadata);
     }
 
     /// <inheritdoc />
-    public async Task<ErrorOr<LoginSuccess>> OAuthLoginAsync(OAuthLoginRequest request)
+    public async Task<ErrorOr<LoginSuccess>> OAuthLoginAsync(OAuthLoginRequest request, SessionMetadata? metadata = null)
     {
         if (!request.Provider.Equals(GoogleOAuthProvider, StringComparison.OrdinalIgnoreCase))
         {
@@ -192,11 +192,11 @@ public class LoginService : ILoginService
             return lockError.Value;
         }
 
-        return user.Is2FAEnabled ? Handle2FA(user) : CompleteLogin(user);
+        return user.Is2FAEnabled ? Handle2FA(user) : CompleteLogin(user, metadata);
     }
 
     /// <inheritdoc />
-    public ErrorOr<LoginSuccess> VerifyOTP(VerifyOTPRequest request)
+    public ErrorOr<LoginSuccess> VerifyOTP(VerifyOTPRequest request, SessionMetadata? metadata = null)
     {
         ErrorOr<User> userResult = authRepository.FindUserById(request.UserId);
         if (userResult.IsError)
@@ -221,7 +221,7 @@ public class LoginService : ILoginService
         }
 
         otpService.InvalidateOTP(user.Id);
-        return CompleteLogin(user);
+        return CompleteLogin(user, metadata);
     }
 
     /// <inheritdoc />
@@ -323,7 +323,7 @@ public class LoginService : ILoginService
         return new RequiresTwoFactor(user.Id);
     }
 
-    private ErrorOr<LoginSuccess> CompleteLogin(User user)
+    private ErrorOr<LoginSuccess> CompleteLogin(User user, SessionMetadata? metadata)
     {
         _ = authRepository.ResetFailedAttempts(user.Id);
 
@@ -336,7 +336,7 @@ public class LoginService : ILoginService
 
         string token = tokenResult.Value;
 
-        if (authRepository.CreateSession(user.Id, token, null, null, null).IsError)
+        if (authRepository.CreateSession(user.Id, token, metadata?.DeviceInfo, metadata?.Browser, metadata?.IpAddress).IsError)
         {
             logger.LogError("Session creation failed for user {UserId}.", user.Id);
             return Error.Failure(code: "session_failed", description: "Failed to create session.");
