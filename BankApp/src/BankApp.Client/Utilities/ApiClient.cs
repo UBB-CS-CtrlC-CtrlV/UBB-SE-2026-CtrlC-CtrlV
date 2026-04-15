@@ -321,4 +321,39 @@ public class ApiClient
             _ => Error.Failure(code: errorCode, description: description),
         };
     }
+
+    /// <summary>
+    /// Sends a DELETE request to the provided endpoint and deserializes the response body.
+    /// </summary>
+    /// <typeparam name="TResponse">The response model type.</typeparam>
+    /// <param name="endpoint">The relative endpoint to call.</param>
+    /// <returns>The deserialized response body, or an <see cref="Error"/> if the request fails.</returns>
+    public async Task<ErrorOr<TResponse>> DeleteAsync<TResponse>(string endpoint)
+    {
+        try
+        {
+            HttpResponseMessage response = await this.httpClient.DeleteAsync(endpoint);
+
+            if (!response.IsSuccessStatusCode)
+            {
+                return await MapErrorAsync(response, endpoint, CancellationToken.None);
+            }
+
+            TResponse? result = await response.Content.ReadFromJsonAsync<TResponse>();
+            if (result is null)
+            {
+                return Error.Failure(description: $"DELETE {endpoint} returned an empty response.");
+            }
+
+            return result;
+        }
+        catch (HttpRequestException ex)
+        {
+            return Error.Failure(description: $"DELETE {endpoint} failed: {ex.Message}");
+        }
+        catch (OperationCanceledException)
+        {
+            return Error.Unexpected(description: $"DELETE {endpoint} was cancelled.");
+        }
+    }
 }
