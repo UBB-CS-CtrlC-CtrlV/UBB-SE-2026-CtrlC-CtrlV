@@ -343,7 +343,7 @@ public class ProfileService : IProfileService
             return userResult.FirstError;
         }
 
-        ErrorOr<Success> result = userRepository.RevokeSession(sessionId);
+        ErrorOr<Success> result = userRepository.RevokeSession(userId, sessionId);
         if (result.IsError)
         {
             logger.LogError("Failed to revoke session {SessionId} for user {UserId}.", sessionId, userId);

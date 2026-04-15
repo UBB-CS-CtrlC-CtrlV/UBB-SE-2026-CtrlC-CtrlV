@@ -32,6 +32,12 @@ public interface ISessionDataAccess
     /// <returns>Success, or an error if the operation failed.</returns>
     ErrorOr<Success> Revoke(int sessionId);
 
+    /// <summary>Revokes a single active session belonging to the specified user.</summary>
+    /// <param name="userId">The identifier of the user who owns the session.</param>
+    /// <param name="sessionId">The session identifier.</param>
+    /// <returns>Success, or a not-found error if no active matching session exists.</returns>
+    ErrorOr<Success> RevokeForUser(int userId, int sessionId);
+
     /// <summary>Revokes all active sessions for the specified user.</summary>
     /// <param name="userId">The identifier of the user.</param>
     /// <returns>Success, or an error if the operation failed.</returns>
