@@ -1,3 +1,4 @@
+using System.Linq;
 using BankApp.Contracts.DTOs.Dashboard;
 using BankApp.Contracts.Entities;
 using BankApp.Server.Repositories.Interfaces;
@@ -40,7 +41,6 @@ public class DashboardService : IDashboardService
         }
 
         ErrorOr<List<Card>> cardsResult = dashboardRepository.GetCardsByUser(userId);
-        ErrorOr<List<Transaction>> transactionsResult = dashboardRepository.GetRecentTransactions(userId, DefaultRecentTransactionLimit);
         ErrorOr<int> notifCountResult = dashboardRepository.GetUnreadNotificationCount(userId);
 
         if (cardsResult.IsError)
@@ -48,14 +48,37 @@ public class DashboardService : IDashboardService
             logger.LogError("Failed to fetch cards for user {UserId}: {Error}", userId, cardsResult.FirstError.Description);
         }
 
-        if (transactionsResult.IsError)
-        {
-            logger.LogError("Failed to fetch transactions for user {UserId}: {Error}", userId, transactionsResult.FirstError.Description);
-        }
-
         if (notifCountResult.IsError)
         {
             logger.LogError("Failed to fetch notification count for user {UserId}: {Error}", userId, notifCountResult.FirstError.Description);
+        }
+
+        // Fetch accounts first, then get transactions per account
+        List<Transaction> allTransactions = new List<Transaction>();
+        ErrorOr<List<Account>> accountsResult = dashboardRepository.GetAccountsByUser(userId);
+
+        if (accountsResult.IsError)
+        {
+            logger.LogError("Failed to fetch accounts for user {UserId}: {Error}", userId, accountsResult.FirstError.Description);
+        }
+        else
+        {
+            foreach (Account account in accountsResult.Value)
+            {
+                ErrorOr<List<Transaction>> transactionsResult = dashboardRepository.GetRecentTransactions(account.Id, DefaultRecentTransactionLimit);
+                if (transactionsResult.IsError)
+                {
+                    logger.LogError("Failed to fetch transactions for account {AccountId}: {Error}", account.Id, transactionsResult.FirstError.Description);
+                    continue;
+                }
+
+                allTransactions.AddRange(transactionsResult.Value);
+            }
+
+            allTransactions = allTransactions
+                .OrderByDescending(transaction => transaction.CreatedAt)
+                .Take(DefaultRecentTransactionLimit)
+                .ToList();
         }
 
         return new DashboardResponse
@@ -81,7 +104,7 @@ public class DashboardService : IDashboardService
                     IsOnlineEnabled = card.IsOnlineEnabled,
                 })
                 .ToList(),
-            RecentTransactions = transactionsResult.IsError ? new List<TransactionDto>() : transactionsResult.Value
+            RecentTransactions = allTransactions
                 .Select(transaction => new TransactionDto
                 {
                     Id = transaction.Id,
