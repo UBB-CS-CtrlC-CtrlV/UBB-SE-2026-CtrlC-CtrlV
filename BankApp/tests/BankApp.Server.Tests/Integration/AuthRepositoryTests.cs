@@ -18,8 +18,7 @@ namespace BankApp.Server.Tests.Integration;
 /// and password-reset token lifecycle are persisted correctly.
 /// </summary>
 [Trait("Category", "Integration")]
-[Collection("Integration")]
-public sealed class AuthRepositoryTests : IAsyncLifetime
+public sealed class AuthRepositoryTests : IClassFixture<DatabaseFixture>, IAsyncLifetime
 {
     private readonly DatabaseFixture fixture;
     private readonly Faker<User> userFaker;
