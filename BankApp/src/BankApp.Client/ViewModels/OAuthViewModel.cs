@@ -2,13 +2,14 @@
 // Copyright (c) CtrlC CtrlV. All rights reserved.
 // </copyright>
 
+using BankApp.Client.Enums;
+using BankApp.Client.Utilities;
+using BankApp.Contracts.DTOs.Profile;
+using ErrorOr;
+using Microsoft.Extensions.Logging;
 using System;
 using System.Collections.Generic;
 using System.Threading.Tasks;
-using BankApp.Client.Utilities;
-using BankApp.Contracts.DTOs.Profile;
-using BankApp.Client.Enums;
-using Microsoft.Extensions.Logging;
 
 namespace BankApp.Client.ViewModels;
 
@@ -49,11 +50,12 @@ public class OAuthViewModel
     /// <returns><see langword="true"/> if loaded successfully; otherwise, <see langword="false"/>.</returns>
     public async Task<bool> LoadOAuthLinks()
     {
-        var oauthResult = await this.apiClient.GetAsync<List<OAuthLinkDto>>(ApiEndpoints.OAuthLinks);
+        ErrorOr<List<OAuthLinkDto>> oauthResult = await this.apiClient.GetAsync<List<OAuthLinkDto>>(ApiEndpoints.OAuthLinks);
         if (oauthResult.IsError)
         {
-            this.logger.LogError("LoadOAuthLinks: request failed: {Errors}", oauthResult.Errors);
-            return false;
+            // 404 means no OAuth links exist — treat as success with empty list
+            this.OAuthLinks = new List<OAuthLinkDto>();
+            return true;
         }
 
         this.OAuthLinks = oauthResult.Value;
