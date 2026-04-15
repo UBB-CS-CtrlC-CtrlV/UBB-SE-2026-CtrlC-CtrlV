@@ -321,4 +321,29 @@ public class ApiClient
             _ => Error.Failure(code: errorCode, description: description),
         };
     }
+
+    /// <summary>
+    /// Sends a DELETE request and returns <see cref="Success"/> when the server responds with a 2xx status.
+    /// Use this overload for endpoints that return no body (204 No Content).
+    /// </summary>
+    /// <param name="endpoint">The relative endpoint to call.</param>
+    /// <returns><see cref="Result.Success"/> on a 2xx response, or an <see cref="Error"/> otherwise.</returns>
+    public async Task<ErrorOr<Success>> DeleteAsync(string endpoint)
+    {
+        try
+        {
+            HttpResponseMessage response = await this.httpClient.DeleteAsync(endpoint);
+            return response.IsSuccessStatusCode
+                ? Result.Success
+                : await MapErrorAsync(response, endpoint, CancellationToken.None);
+        }
+        catch (HttpRequestException ex)
+        {
+            return Error.Failure(description: $"DELETE {endpoint} failed: {ex.Message}");
+        }
+        catch (OperationCanceledException)
+        {
+            return Error.Unexpected(description: $"DELETE {endpoint} was cancelled.");
+        }
+    }
 }

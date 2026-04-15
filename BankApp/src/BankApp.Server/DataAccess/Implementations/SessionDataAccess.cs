@@ -76,6 +76,24 @@ public class SessionDataAccess : ISessionDataAccess
     }
 
     /// <inheritdoc />
+    public ErrorOr<Success> RevokeForUser(int userId, int sessionId)
+    {
+        const string sql = """
+            UPDATE [Session]
+            SET IsRevoked = 1
+            WHERE Id = @SessionId
+              AND UserId = @UserId
+              AND IsRevoked = 0
+              AND ExpiresAt > GETUTCDATE()
+            """;
+
+        return this.db.Query(conn => conn.Execute(sql, new { UserId = userId, SessionId = sessionId }))
+            .Then(rowsAffected => rowsAffected > 0
+                ? Result.Success
+                : (ErrorOr<Success>)Error.NotFound(description: "Session not found."));
+    }
+
+    /// <inheritdoc />
     public ErrorOr<Success> RevokeAll(int userId)
     {
         const string sql = "UPDATE [Session] SET IsRevoked = 1 WHERE UserId = @UserId AND IsRevoked = 0";

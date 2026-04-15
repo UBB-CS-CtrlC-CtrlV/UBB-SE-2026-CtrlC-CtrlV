@@ -20,8 +20,8 @@ public interface IUserRepository
     /// <summary>Gets all active sessions for the specified user.</summary>
     ErrorOr<List<Session>> GetActiveSessions(int userId);
 
-    /// <summary>Revokes a single session by its identifier.</summary>
-    ErrorOr<Success> RevokeSession(int sessionId);
+    /// <summary>Revokes a single active session owned by the specified user.</summary>
+    ErrorOr<Success> RevokeSession(int userId, int sessionId);
 
     /// <summary>Gets all OAuth provider links for the specified user.</summary>
     ErrorOr<List<OAuthLink>> GetLinkedProviders(int userId);

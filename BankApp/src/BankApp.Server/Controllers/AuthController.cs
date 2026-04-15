@@ -22,6 +22,9 @@ namespace BankApp.Server.Controllers;
 public class AuthController : ApiControllerBase
 {
     private const string BearerPrefix = "Bearer ";
+    private const int DeviceInfoMaxLength = 255;
+    private const int BrowserMaxLength = 100;
+    private const int IpAddressMaxLength = 45;
 
     private readonly ILoginService loginService;
     private readonly IRegistrationService registrationService;
@@ -55,7 +58,7 @@ public class AuthController : ApiControllerBase
     [HttpPost("login")]
     public IActionResult Login([FromBody] LoginRequest request)
     {
-        ErrorOr<LoginSuccess> result = this.loginService.Login(request);
+        ErrorOr<LoginSuccess> result = this.loginService.Login(request, this.GetSessionMetadata());
         return this.ToActionResult(result, this.MapLoginSuccess);
     }
 
@@ -87,7 +90,7 @@ public class AuthController : ApiControllerBase
     [HttpPost("verify-otp")]
     public IActionResult VerifyOTP([FromBody] VerifyOTPRequest request)
     {
-        ErrorOr<LoginSuccess> result = this.loginService.VerifyOTP(request);
+        ErrorOr<LoginSuccess> result = this.loginService.VerifyOTP(request, this.GetSessionMetadata());
         return this.ToActionResult(result, this.MapLoginSuccess);
     }
 
@@ -195,7 +198,7 @@ public class AuthController : ApiControllerBase
             return this.BadRequest(new ApiErrorResponse { Error = "Provider and ProviderToken are required." });
         }
 
-        ErrorOr<LoginSuccess> result = await this.loginService.OAuthLoginAsync(request);
+        ErrorOr<LoginSuccess> result = await this.loginService.OAuthLoginAsync(request, this.GetSessionMetadata());
         return this.ToActionResult(result, this.MapLoginSuccess);
     }
 
@@ -224,4 +227,67 @@ public class AuthController : ApiControllerBase
         RequiresTwoFactor tfa => this.Ok(new LoginSuccessResponse { UserId = tfa.UserId, Requires2FA = true }),
         _ => this.StatusCode(StatusCodes.Status500InternalServerError, new ApiErrorResponse { Error = "Unexpected login result type." }),
     };
+
+    private SessionMetadata GetSessionMetadata()
+    {
+        string? userAgent = TrimToMaxLength(this.Request.Headers["User-Agent"].ToString(), DeviceInfoMaxLength);
+
+        return new SessionMetadata
+        {
+            DeviceInfo = userAgent,
+            Browser = TrimToMaxLength(GetBrowserName(userAgent), BrowserMaxLength),
+            IpAddress = TrimToMaxLength(GetClientIpAddress(this.HttpContext), IpAddressMaxLength),
+        };
+    }
+
+    private static string? GetClientIpAddress(HttpContext context)
+    {
+        string forwardedFor = context.Request.Headers["X-Forwarded-For"].ToString();
+        if (!string.IsNullOrWhiteSpace(forwardedFor))
+        {
+            return forwardedFor.Split(',')[0].Trim();
+        }
+
+        return context.Connection.RemoteIpAddress?.ToString();
+    }
+
+    private static string? GetBrowserName(string? userAgent)
+    {
+        if (string.IsNullOrWhiteSpace(userAgent))
+        {
+            return null;
+        }
+
+        if (userAgent.Contains("Edg/", StringComparison.OrdinalIgnoreCase))
+        {
+            return "Microsoft Edge";
+        }
+
+        if (userAgent.Contains("Chrome/", StringComparison.OrdinalIgnoreCase))
+        {
+            return "Chrome";
+        }
+
+        if (userAgent.Contains("Firefox/", StringComparison.OrdinalIgnoreCase))
+        {
+            return "Firefox";
+        }
+
+        if (userAgent.Contains("Safari/", StringComparison.OrdinalIgnoreCase))
+        {
+            return "Safari";
+        }
+
+        return "Unknown Browser";
+    }
+
+    private static string? TrimToMaxLength(string? value, int maxLength)
+    {
+        if (string.IsNullOrWhiteSpace(value))
+        {
+            return null;
+        }
+
+        return value.Length <= maxLength ? value : value[..maxLength];
+    }
 }

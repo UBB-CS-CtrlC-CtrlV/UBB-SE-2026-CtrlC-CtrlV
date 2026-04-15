@@ -45,7 +45,7 @@ public class UserRepository : IUserRepository
     public ErrorOr<List<Session>> GetActiveSessions(int userId) => sessionDataAccess.FindByUserId(userId);
 
     /// <inheritdoc />
-    public ErrorOr<Success> RevokeSession(int sessionId) => sessionDataAccess.Revoke(sessionId);
+    public ErrorOr<Success> RevokeSession(int userId, int sessionId) => sessionDataAccess.RevokeForUser(userId, sessionId);
 
     /// <inheritdoc />
     public ErrorOr<List<OAuthLink>> GetLinkedProviders(int userId) => oAuthLinkDataAccess.FindByUserId(userId);

@@ -59,4 +59,7 @@ public static class ApiEndpoints
 
     /// <summary>GET/PUT api/profile/notifications/preferences — load or update notification preferences.</summary>
     public const string NotificationPreferences = "api/profile/notifications/preferences";
+
+    /// <summary>GET api/profile/sessions — list active sessions. DELETE api/profile/sessions/{id} — revoke a session.</summary>
+    public const string Sessions = "api/profile/sessions";
 }

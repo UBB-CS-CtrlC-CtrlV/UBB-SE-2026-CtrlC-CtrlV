@@ -301,4 +301,56 @@ public class ProfileService : IProfileService
 
         return hashService.Verify(password, userResult.Value.PasswordHash);
     }
+
+    /// <inheritdoc />
+    public ErrorOr<List<SessionDto>> GetActiveSessions(int userId)
+    {
+        ErrorOr<User> userResult = userRepository.FindById(userId);
+        if (userResult.IsError)
+        {
+            logger.LogWarning("Get sessions failed: user {UserId} not found.", userId);
+            return userResult.FirstError;
+        }
+
+        ErrorOr<List<Session>> sessionsResult = userRepository.GetActiveSessions(userId);
+        if (sessionsResult.IsError)
+        {
+            logger.LogError("Failed to fetch sessions for user {UserId}: {Error}", userId, sessionsResult.FirstError.Description);
+            return sessionsResult.FirstError;
+        }
+
+        return sessionsResult.Value
+            .Select(session => new SessionDto
+            {
+                Id = session.Id,
+                DeviceInfo = session.DeviceInfo,
+                Browser = session.Browser,
+                IpAddress = session.IpAddress,
+                LastActiveAt = session.LastActiveAt,
+                ExpiresAt = session.ExpiresAt,
+                CreatedAt = session.CreatedAt,
+            })
+            .ToList();
+    }
+
+    /// <inheritdoc />
+    public ErrorOr<Success> RevokeSession(int userId, int sessionId)
+    {
+        ErrorOr<User> userResult = userRepository.FindById(userId);
+        if (userResult.IsError)
+        {
+            logger.LogWarning("Revoke session failed: user {UserId} not found.", userId);
+            return userResult.FirstError;
+        }
+
+        ErrorOr<Success> result = userRepository.RevokeSession(userId, sessionId);
+        if (result.IsError)
+        {
+            logger.LogError("Failed to revoke session {SessionId} for user {UserId}.", sessionId, userId);
+            return result.FirstError;
+        }
+
+        logger.LogInformation("Session {SessionId} revoked for user {UserId}.", sessionId, userId);
+        return Result.Success;
+    }
 }
