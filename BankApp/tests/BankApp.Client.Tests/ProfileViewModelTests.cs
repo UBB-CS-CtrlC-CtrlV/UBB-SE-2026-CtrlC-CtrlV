@@ -3,6 +3,7 @@ using BankApp.Client.ViewModels;
 using BankApp.Client.Enums;
 using BankApp.Contracts.DTOs.Profile;
 using ErrorOr;
+using FluentAssertions;
 using Microsoft.Extensions.Configuration;
 using Microsoft.Extensions.Logging.Abstractions;
 using NSubstitute;
@@ -16,23 +17,9 @@ namespace BankApp.Client.Tests;
 /// </summary>
 public class ProfileViewModelTests
 {
-    private readonly ApiClient apiClient;
+    private readonly ApiClient apiClient =
+        Substitute.For<ApiClient>(new ConfigurationBuilder().Build(), NullLogger<ApiClient>.Instance);
 
-    /// <summary>
-    /// Initializes a new instance of the <see cref="ProfileViewModelTests"/> class.
-    /// Creates a fresh substitute for each test.
-    /// </summary>
-    public ProfileViewModelTests()
-    {
-        this.apiClient = Substitute.For<ApiClient>(new ConfigurationBuilder().Build(), NullLogger<ApiClient>.Instance);
-    }
-
-    // ── PersonalInfoViewModel ──────────────────────────────────────
-
-    /// <summary>
-    /// When the API returns a valid profile the ViewModel should populate ProfileInfo.
-    /// </summary>
-    /// <returns>A <see cref="Task"/> representing the result of the asynchronous operation.</returns>
     [Fact]
     public async Task LoadProfile_WhenApiReturnsProfile_PopulatesProfileInfo()
     {
@@ -56,16 +43,12 @@ public class ProfileViewModelTests
         bool success = await vm.LoadProfile();
 
         // Assert
-        Assert.True(success);
-        Assert.Equal(ProfileState.UpdateSuccess, vm.State.Value);
-        Assert.Equal(fullName, vm.ProfileInfo.FullName);
-        Assert.Equal(email, vm.ProfileInfo.Email);
+        success.Should().BeTrue();
+        vm.State.Value.Should().Be(ProfileState.UpdateSuccess);
+        vm.ProfileInfo.FullName.Should().Be(fullName);
+        vm.ProfileInfo.Email.Should().Be(email);
     }
 
-    /// <summary>
-    /// When the API request fails the ViewModel should enter the error state.
-    /// </summary>
-    /// <returns>A <see cref="Task"/> representing the result of the asynchronous operation.</returns>
     [Fact]
     public async Task LoadProfile_WhenApiFails_SetsErrorState()
     {
@@ -79,13 +62,10 @@ public class ProfileViewModelTests
         bool success = await vm.LoadProfile();
 
         // Assert
-        Assert.False(success);
-        Assert.Equal(ProfileState.Error, vm.State.Value);
+        success.Should().BeFalse();
+        vm.State.Value.Should().Be(ProfileState.Error);
     }
 
-    /// <summary>
-    /// The HasPhoneNumber property should return true when a phone number is set.
-    /// </summary>
     [Fact]
     public void HasPhoneNumber_WhenPhoneNumberIsNotSet_ReturnsFalseAndShowsPlaceholder()
     {
@@ -93,14 +73,10 @@ public class ProfileViewModelTests
         var vm = new PersonalInfoViewModel(this.apiClient, NullLogger<PersonalInfoViewModel>.Instance);
 
         // Assert
-        Assert.False(vm.HasPhoneNumber);
-        Assert.Equal(UserMessages.Profile.NoPhoneNumber, vm.TwoFactorPhoneDisplay);
+        vm.HasPhoneNumber.Should().BeFalse();
+        vm.TwoFactorPhoneDisplay.Should().Be(UserMessages.Profile.NoPhoneNumber);
     }
 
-    /// <summary>
-    /// UpdatePersonalInfo should fail when the UserId is missing from ProfileInfo.
-    /// </summary>
-    /// <returns>A <see cref="Task"/> representing the result of the asynchronous operation.</returns>
     [Fact]
     public async Task UpdatePersonalInfo_WhenUserIdIsNull_SetsErrorState()
     {
@@ -110,23 +86,17 @@ public class ProfileViewModelTests
         const string password = "password";
         var vm = new PersonalInfoViewModel(this.apiClient, NullLogger<PersonalInfoViewModel>.Instance);
 
-        this.apiClient.PutAsync<UpdateProfileRequest>(Arg.Any<string>(), Arg.Any<UpdateProfileRequest>())
+        this.apiClient.PutAsync(Arg.Any<string>(), Arg.Any<UpdateProfileRequest>())
             .Returns(Task.FromResult<ErrorOr<Success>>(Result.Success));
 
         // Act
         bool success = await vm.UpdatePersonalInfo(phoneNumber, address, password);
 
         // Assert
-        Assert.False(success);
-        Assert.Equal(ProfileState.Error, vm.State.Value);
+        success.Should().BeFalse();
+        vm.State.Value.Should().Be(ProfileState.Error);
     }
 
-    // ── SecurityViewModel ──────────────────────────────────────────
-
-    /// <summary>
-    /// ChangePassword should fail when the new password is too short.
-    /// </summary>
-    /// <returns>A <see cref="Task"/> representing the result of the asynchronous operation.</returns>
     [Fact]
     public async Task ChangePassword_WhenPasswordTooShort_ReturnsError()
     {
@@ -137,18 +107,14 @@ public class ProfileViewModelTests
         var vm = new SecurityViewModel(this.apiClient, NullLogger<SecurityViewModel>.Instance);
 
         // Act
-        var (success, error) = await vm.ChangePassword(userId, currentPassword, shortPassword, shortPassword);
+        (bool success, string error) = await vm.ChangePassword(userId, currentPassword, shortPassword, shortPassword);
 
         // Assert
-        Assert.False(success);
-        Assert.Equal(UserMessages.Security.MinimumLengthRequired, error);
-        Assert.Equal(ProfileState.Idle, vm.State.Value);
+        success.Should().BeFalse();
+        error.Should().Be(UserMessages.Security.MinimumLengthRequired);
+        vm.State.Value.Should().Be(ProfileState.Idle);
     }
 
-    /// <summary>
-    /// ChangePassword should fail when the new and confirm passwords do not match.
-    /// </summary>
-    /// <returns>A <see cref="Task"/> representing the result of the asynchronous operation.</returns>
     [Fact]
     public async Task ChangePassword_WhenPasswordsDoNotMatch_ReturnsError()
     {
@@ -160,18 +126,14 @@ public class ProfileViewModelTests
         var vm = new SecurityViewModel(this.apiClient, NullLogger<SecurityViewModel>.Instance);
 
         // Act
-        var (success, error) = await vm.ChangePassword(userId, currentPassword, newPassword, confirmPassword);
+        (bool success, string error) = await vm.ChangePassword(userId, currentPassword, newPassword, confirmPassword);
 
         // Assert
-        Assert.False(success);
-        Assert.Equal(UserMessages.Security.PasswordMismatch, error);
-        Assert.Equal(ProfileState.Idle, vm.State.Value);
+        success.Should().BeFalse();
+        error.Should().Be(UserMessages.Security.PasswordMismatch);
+        vm.State.Value.Should().Be(ProfileState.Idle);
     }
 
-    /// <summary>
-    /// ChangePassword should succeed when validation passes and the API accepts the request.
-    /// </summary>
-    /// <returns>A <see cref="Task"/> representing the result of the asynchronous operation.</returns>
     [Fact]
     public async Task ChangePassword_WhenValid_SetsUpdateSuccessState()
     {
@@ -181,22 +143,18 @@ public class ProfileViewModelTests
         const string validPassword = "ValidPass1!";
         var vm = new SecurityViewModel(this.apiClient, NullLogger<SecurityViewModel>.Instance);
 
-        this.apiClient.PutAsync<ChangePasswordRequest>(Arg.Any<string>(), Arg.Any<ChangePasswordRequest>())
+        this.apiClient.PutAsync(Arg.Any<string>(), Arg.Any<ChangePasswordRequest>())
             .Returns(Task.FromResult<ErrorOr<Success>>(Result.Success));
 
         // Act
-        var (success, error) = await vm.ChangePassword(userId, currentPassword, validPassword, validPassword);
+        (bool success, string error) = await vm.ChangePassword(userId, currentPassword, validPassword, validPassword);
 
         // Assert
-        Assert.True(success);
-        Assert.Equal(string.Empty, error);
-        Assert.Equal(ProfileState.UpdateSuccess, vm.State.Value);
+        success.Should().BeTrue();
+        error.Should().BeEmpty();
+        vm.State.Value.Should().Be(ProfileState.UpdateSuccess);
     }
 
-    /// <summary>
-    /// ChangePassword should surface an incorrect-password error from the API.
-    /// </summary>
-    /// <returns>A <see cref="Task"/> representing the result of the asynchronous operation.</returns>
     [Fact]
     public async Task ChangePassword_WhenApiReturnsIncorrectPassword_ReturnsSpecificMessage()
     {
@@ -206,87 +164,70 @@ public class ProfileViewModelTests
         const string validPassword = "ValidPass1!";
         var vm = new SecurityViewModel(this.apiClient, NullLogger<SecurityViewModel>.Instance);
 
-        this.apiClient.PutAsync<ChangePasswordRequest>(Arg.Any<string>(), Arg.Any<ChangePasswordRequest>())
-            .Returns(Task.FromResult<ErrorOr<Success>>(Error.Validation(code: "incorrect_password", description: "Wrong password")));
+        this.apiClient.PutAsync(Arg.Any<string>(), Arg.Any<ChangePasswordRequest>())
+            .Returns(Task.FromResult<ErrorOr<Success>>(Error.Validation(code: "incorrect_password",
+                description: "Wrong password")));
 
         // Act
-        var (success, error) = await vm.ChangePassword(userId, wrongPassword, validPassword, validPassword);
+        (bool success, string error) = await vm.ChangePassword(userId, wrongPassword, validPassword, validPassword);
 
         // Assert
-        Assert.False(success);
-        Assert.Equal(UserMessages.Security.IncorrectPassword, error);
-        Assert.Equal(ProfileState.Error, vm.State.Value);
+        success.Should().BeFalse();
+        error.Should().Be(UserMessages.Security.IncorrectPassword);
+        vm.State.Value.Should().Be(ProfileState.Error);
     }
 
-    /// <summary>
-    /// SetTwoFactorEnabled(true) should succeed when the API accepts the request.
-    /// </summary>
-    /// <returns>A <see cref="Task"/> representing the result of the asynchronous operation.</returns>
     [Fact]
     public async Task SetTwoFactorEnabled_WhenApiSucceeds_ReturnsTrue()
     {
         // Arrange
         var vm = new SecurityViewModel(this.apiClient, NullLogger<SecurityViewModel>.Instance);
 
-        this.apiClient.PutAsync<object>(Arg.Any<string>(), Arg.Any<object>())
+        this.apiClient.PutAsync(Arg.Any<string>(), Arg.Any<object>())
             .Returns(Task.FromResult<ErrorOr<Success>>(Result.Success));
 
         // Act
         bool result = await vm.SetTwoFactorEnabled(true);
 
         // Assert
-        Assert.True(result);
-        Assert.Equal(ProfileState.UpdateSuccess, vm.State.Value);
+        result.Should().BeTrue();
+        vm.State.Value.Should().Be(ProfileState.UpdateSuccess);
     }
 
-    /// <summary>
-    /// SetTwoFactorEnabled(false) should succeed when the API accepts the request.
-    /// </summary>
-    /// <returns>A <see cref="Task"/> representing the result of the asynchronous operation.</returns>
     [Fact]
     public async Task DisableTwoFactor_WhenApiSucceeds_ReturnsTrue()
     {
         // Arrange
         var vm = new SecurityViewModel(this.apiClient, NullLogger<SecurityViewModel>.Instance);
 
-        this.apiClient.PutAsync<object>(Arg.Any<string>(), Arg.Any<object>())
+        this.apiClient.PutAsync(Arg.Any<string>(), Arg.Any<object>())
             .Returns(Task.FromResult<ErrorOr<Success>>(Result.Success));
 
         // Act
         bool result = await vm.SetTwoFactorEnabled(false);
 
         // Assert
-        Assert.True(result);
-        Assert.Equal(ProfileState.UpdateSuccess, vm.State.Value);
+        result.Should().BeTrue();
+        vm.State.Value.Should().Be(ProfileState.UpdateSuccess);
     }
 
-    /// <summary>
-    /// SetTwoFactorEnabled should return false and set error state when the API fails.
-    /// </summary>
-    /// <returns>A <see cref="Task"/> representing the result of the asynchronous operation.</returns>
     [Fact]
     public async Task SetTwoFactorEnabled_WhenApiFails_ReturnsFalse()
     {
         // Arrange
         var vm = new SecurityViewModel(this.apiClient, NullLogger<SecurityViewModel>.Instance);
 
-        this.apiClient.PutAsync<object>(Arg.Any<string>(), Arg.Any<object>())
+        this.apiClient.PutAsync(Arg.Any<string>(), Arg.Any<object>())
             .Returns(Task.FromResult<ErrorOr<Success>>(Error.Failure(description: "server error")));
 
         // Act
         bool result = await vm.SetTwoFactorEnabled(true);
 
         // Assert
-        Assert.False(result);
-        Assert.Equal(ProfileState.Error, vm.State.Value);
+        result.Should().BeFalse();
+        vm.State.Value.Should().Be(ProfileState.Error);
     }
 
-    // ── NotificationsViewModel ─────────────────────────────────────
-
-    /// <summary>
-    /// ToggleNotificationPreference should update the preference when the API succeeds.
-    /// </summary>
-    /// <returns>A <see cref="Task"/> representing the result of the asynchronous operation.</returns>
     [Fact]
     public async Task ToggleNotificationPreference_WhenApiSucceeds_UpdatesPreference()
     {
@@ -296,22 +237,18 @@ public class ProfileViewModelTests
         var pref = new NotificationPreferenceDto { Id = preferenceId, EmailEnabled = false };
         vm.NotificationPreferences.Add(pref);
 
-        this.apiClient.PutAsync<List<NotificationPreferenceDto>>(Arg.Any<string>(), Arg.Any<List<NotificationPreferenceDto>>())
+        this.apiClient.PutAsync(Arg.Any<string>(), Arg.Any<List<NotificationPreferenceDto>>())
             .Returns(Task.FromResult<ErrorOr<Success>>(Result.Success));
 
         // Act
         bool success = await vm.ToggleNotificationPreference(pref, true);
 
         // Assert
-        Assert.True(success);
-        Assert.True(pref.EmailEnabled);
-        Assert.Equal(ProfileState.UpdateSuccess, vm.State.Value);
+        success.Should().BeTrue();
+        pref.EmailEnabled.Should().BeTrue();
+        vm.State.Value.Should().Be(ProfileState.UpdateSuccess);
     }
 
-    /// <summary>
-    /// ToggleNotificationPreference should roll back the preference when the API fails.
-    /// </summary>
-    /// <returns>A <see cref="Task"/> representing the result of the asynchronous operation.</returns>
     [Fact]
     public async Task ToggleNotificationPreference_WhenApiFails_RollsBackPreference()
     {
@@ -321,21 +258,17 @@ public class ProfileViewModelTests
         var pref = new NotificationPreferenceDto { Id = preferenceId, EmailEnabled = true };
         vm.NotificationPreferences.Add(pref);
 
-        this.apiClient.PutAsync<List<NotificationPreferenceDto>>(Arg.Any<string>(), Arg.Any<List<NotificationPreferenceDto>>())
+        this.apiClient.PutAsync(Arg.Any<string>(), Arg.Any<List<NotificationPreferenceDto>>())
             .Returns(Task.FromResult<ErrorOr<Success>>(Error.Failure(description: "server error")));
 
         // Act
         bool success = await vm.ToggleNotificationPreference(pref, false);
 
         // Assert
-        Assert.False(success);
-        Assert.True(pref.EmailEnabled);
+        success.Should().BeFalse();
+        pref.EmailEnabled.Should().BeTrue();
     }
 
-    /// <summary>
-    /// UpdateNotificationPreferences should return false when the preferences list is empty.
-    /// </summary>
-    /// <returns>A <see cref="Task"/> representing the result of the asynchronous operation.</returns>
     [Fact]
     public async Task UpdateNotificationPreferences_WhenListIsEmpty_ReturnsFalse()
     {
@@ -346,15 +279,9 @@ public class ProfileViewModelTests
         bool result = await vm.UpdateNotificationPreferences(new List<NotificationPreferenceDto>());
 
         // Assert
-        Assert.False(result);
+        result.Should().BeFalse();
     }
 
-    // ── OAuthViewModel ─────────────────────────────────────────────
-
-    /// <summary>
-    /// UnlinkOAuth should remove the provider from the links list.
-    /// </summary>
-    /// <returns>A <see cref="Task"/> representing the result of the asynchronous operation.</returns>
     [Fact]
     public async Task UnlinkOAuth_WhenProviderExists_RemovesAndReturnsTrue()
     {
@@ -368,15 +295,11 @@ public class ProfileViewModelTests
         bool result = await vm.UnlinkOAuth(provider);
 
         // Assert
-        Assert.True(result);
-        Assert.Empty(vm.OAuthLinks);
-        Assert.Equal(ProfileState.UpdateSuccess, vm.State.Value);
+        result.Should().BeTrue();
+        vm.OAuthLinks.Should().BeEmpty();
+        vm.State.Value.Should().Be(ProfileState.UpdateSuccess);
     }
 
-    /// <summary>
-    /// UnlinkOAuth should return false when the provider is not linked.
-    /// </summary>
-    /// <returns>A <see cref="Task"/> representing the result of the asynchronous operation.</returns>
     [Fact]
     public async Task UnlinkOAuth_WhenProviderDoesNotExist_ReturnsFalse()
     {
@@ -388,13 +311,9 @@ public class ProfileViewModelTests
         bool result = await vm.UnlinkOAuth(provider);
 
         // Assert
-        Assert.False(result);
+        result.Should().BeFalse();
     }
 
-    /// <summary>
-    /// UnlinkOAuth should return false when provider name is null or whitespace.
-    /// </summary>
-    /// <returns>A <see cref="Task"/> representing the result of the asynchronous operation.</returns>
     [Fact]
     public async Task UnlinkOAuth_WhenProviderIsNullOrWhitespace_ReturnsFalse()
     {
@@ -402,14 +321,10 @@ public class ProfileViewModelTests
         var vm = new OAuthViewModel(this.apiClient, NullLogger<OAuthViewModel>.Instance);
 
         // Assert
-        Assert.False(await vm.UnlinkOAuth(string.Empty));
-        Assert.False(await vm.UnlinkOAuth("  "));
+        (await vm.UnlinkOAuth(string.Empty)).Should().BeFalse();
+        (await vm.UnlinkOAuth("  ")).Should().BeFalse();
     }
 
-    /// <summary>
-    /// LinkOAuth should return false when the provider is already linked.
-    /// </summary>
-    /// <returns>A <see cref="Task"/> representing the result of the asynchronous operation.</returns>
     [Fact]
     public async Task LinkOAuth_WhenAlreadyLinked_ReturnsFalse()
     {
@@ -422,15 +337,9 @@ public class ProfileViewModelTests
         bool result = await vm.LinkOAuth(provider);
 
         // Assert
-        Assert.False(result);
+        result.Should().BeFalse();
     }
 
-    // ── ProfileViewModel (coordinator) ─────────────────────────────
-
-    /// <summary>
-    /// LoadProfile should set error state when the personal info load fails.
-    /// </summary>
-    /// <returns>A <see cref="Task"/> representing the result of the asynchronous operation.</returns>
     [Fact]
     public async Task LoadProfile_WhenPersonalInfoFails_SetsErrorState()
     {
@@ -450,13 +359,10 @@ public class ProfileViewModelTests
         bool success = await profileVm.LoadProfile();
 
         // Assert
-        Assert.False(success);
-        Assert.Equal(ProfileState.Error, profileVm.State.Value);
+        success.Should().BeFalse();
+        profileVm.State.Value.Should().Be(ProfileState.Error);
     }
 
-    /// <summary>
-    /// The IsInitializingView flag should default to false and be settable.
-    /// </summary>
     [Fact]
     public void IsInitializingView_DefaultsFalse_CanBeToggled()
     {
@@ -469,13 +375,13 @@ public class ProfileViewModelTests
             new SessionsViewModel(this.apiClient, NullLogger<SessionsViewModel>.Instance),
             NullLogger<ProfileViewModel>.Instance);
 
-        // Assert
-        Assert.False(profileVm.IsInitializingView);
+        // Assert initial state
+        profileVm.IsInitializingView.Should().BeFalse();
 
         // Act
         profileVm.IsInitializingView = true;
 
-        // Assert
-        Assert.True(profileVm.IsInitializingView);
+        // Assert toggled state
+        profileVm.IsInitializingView.Should().BeTrue();
     }
 }
