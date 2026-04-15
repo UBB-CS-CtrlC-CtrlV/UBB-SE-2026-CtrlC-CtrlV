@@ -4,7 +4,9 @@
 
 using BankApp.Contracts.DTOs;
 using BankApp.Contracts.DTOs.Auth;
-using BankApp.Server.Services.Auth;
+using BankApp.Server.Services.Login;
+using BankApp.Server.Services.PasswordRecovery;
+using BankApp.Server.Services.Registration;
 using ErrorOr;
 using Microsoft.AspNetCore.Mvc;
 
@@ -21,15 +23,22 @@ public class AuthController : ApiControllerBase
 {
     private const string BearerPrefix = "Bearer ";
 
-    private readonly IAuthService authService;
+    private readonly ILoginService loginService;
+    private readonly IRegistrationService registrationService;
+    private readonly IPasswordRecoveryService passwordRecoveryService;
 
     /// <summary>
     /// Initializes a new instance of the <see cref="AuthController"/> class.
     /// </summary>
-    /// <param name="authService">The authentication service used to handle business logic.</param>
-    public AuthController(IAuthService authService)
+    /// <param name="loginService">The login service used to handle login, logout, and 2FA operations.</param>
+    /// <param name="registrationService">The registration service used to handle user registration.</param>
+    /// <param name="passwordRecoveryService">The password recovery service used to handle password reset operations.</param>
+    public AuthController(ILoginService loginService, IRegistrationService registrationService,
+        IPasswordRecoveryService passwordRecoveryService)
     {
-        this.authService = authService;
+        this.loginService = loginService;
+        this.registrationService = registrationService;
+        this.passwordRecoveryService = passwordRecoveryService;
     }
 
     /// <summary>
@@ -46,7 +55,7 @@ public class AuthController : ApiControllerBase
     [HttpPost("login")]
     public IActionResult Login([FromBody] LoginRequest request)
     {
-        ErrorOr<LoginSuccess> result = this.authService.Login(request);
+        ErrorOr<LoginSuccess> result = this.loginService.Login(request);
         return this.ToActionResult(result, this.MapLoginSuccess);
     }
 
@@ -62,7 +71,7 @@ public class AuthController : ApiControllerBase
     [HttpPost("register")]
     public IActionResult Register([FromBody] RegisterRequest request)
     {
-        return this.ToActionResult(this.authService.Register(request));
+        return this.ToActionResult(this.registrationService.Register(request));
     }
 
     /// <summary>
@@ -78,7 +87,7 @@ public class AuthController : ApiControllerBase
     [HttpPost("verify-otp")]
     public IActionResult VerifyOTP([FromBody] VerifyOTPRequest request)
     {
-        ErrorOr<LoginSuccess> result = this.authService.VerifyOTP(request);
+        ErrorOr<LoginSuccess> result = this.loginService.VerifyOTP(request);
         return this.ToActionResult(result, this.MapLoginSuccess);
     }
 
@@ -100,7 +109,7 @@ public class AuthController : ApiControllerBase
         }
 
         // Always return a generic response regardless of whether the email exists.
-        _ = this.authService.RequestPasswordReset(request.Email);
+        _ = this.passwordRecoveryService.RequestPasswordReset(request.Email);
         return this.Ok(new { message = "If an account with that email exists, a password reset link has been sent." });
     }
 
@@ -130,7 +139,7 @@ public class AuthController : ApiControllerBase
             });
         }
 
-        return this.ToActionResult(this.authService.ResetPassword(request.Token, request.NewPassword));
+        return this.ToActionResult(this.passwordRecoveryService.ResetPassword(request.Token, request.NewPassword));
     }
 
     /// <summary>
@@ -150,7 +159,7 @@ public class AuthController : ApiControllerBase
         }
 
         string token = authorization.Substring(BearerPrefix.Length);
-        return this.ToActionResult(this.authService.Logout(token));
+        return this.ToActionResult(this.loginService.Logout(token));
     }
 
     /// <summary>
@@ -164,7 +173,7 @@ public class AuthController : ApiControllerBase
     public IActionResult ResendOTP([FromQuery] int userId, [FromQuery] string method = "email")
     {
         // Always return a generic response regardless of outcome.
-        _ = this.authService.ResendOTP(userId, method);
+        _ = this.loginService.ResendOTP(userId, method);
         return this.Ok(new { message = "If the user exists, a new code has been sent." });
     }
 
@@ -186,7 +195,7 @@ public class AuthController : ApiControllerBase
             return this.BadRequest(new ApiErrorResponse { Error = "Provider and ProviderToken are required." });
         }
 
-        ErrorOr<LoginSuccess> result = await this.authService.OAuthLoginAsync(request);
+        ErrorOr<LoginSuccess> result = await this.loginService.OAuthLoginAsync(request);
         return this.ToActionResult(result, this.MapLoginSuccess);
     }
 
@@ -206,7 +215,7 @@ public class AuthController : ApiControllerBase
             return this.BadRequest(new ApiErrorResponse { Error = "Token is required." });
         }
 
-        return this.ToActionResult(this.authService.VerifyResetToken(request.Token));
+        return this.ToActionResult(this.passwordRecoveryService.VerifyResetToken(request.Token));
     }
 
     private IActionResult MapLoginSuccess(LoginSuccess success) => success switch

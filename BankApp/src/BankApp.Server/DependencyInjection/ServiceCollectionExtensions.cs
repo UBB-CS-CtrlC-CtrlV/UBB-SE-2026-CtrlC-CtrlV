@@ -3,8 +3,10 @@ using BankApp.Server.DataAccess.Implementations;
 using BankApp.Server.DataAccess.Interfaces;
 using BankApp.Server.Repositories.Implementations;
 using BankApp.Server.Repositories.Interfaces;
-using BankApp.Server.Services.Auth;
+using BankApp.Server.Services.Login;
 using BankApp.Server.Services.Notifications;
+using BankApp.Server.Services.PasswordRecovery;
+using BankApp.Server.Services.Registration;
 using BankApp.Server.Services.Security;
 using BankApp.Server.Services.Dashboard;
 using BankApp.Server.Services.Profile;
@@ -53,7 +55,9 @@ public static class ServiceCollectionExtensions
         services.AddScoped<IUserRepository, UserRepository>();
         services.AddScoped<IDashboardRepository, DashboardRepository>();
 
-        services.AddScoped<IAuthService, AuthService>();
+        services.AddScoped<ILoginService, LoginService>();
+        services.AddScoped<IRegistrationService, RegistrationService>();
+        services.AddScoped<IPasswordRecoveryService, PasswordRecoveryService>();
         services.AddScoped<IProfileService, ProfileService>();
         services.AddScoped<IDashboardService, DashboardService>();
 
