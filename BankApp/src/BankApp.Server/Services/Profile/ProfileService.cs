@@ -303,7 +303,7 @@ public class ProfileService : IProfileService
     }
 
     /// <inheritdoc />
-    public ErrorOr<List<Session>> GetActiveSessions(int userId)
+    public ErrorOr<List<SessionDto>> GetActiveSessions(int userId)
     {
         ErrorOr<User> userResult = userRepository.FindById(userId);
         if (userResult.IsError)
@@ -312,7 +312,25 @@ public class ProfileService : IProfileService
             return userResult.FirstError;
         }
 
-        return userRepository.GetActiveSessions(userId);
+        ErrorOr<List<Session>> sessionsResult = userRepository.GetActiveSessions(userId);
+        if (sessionsResult.IsError)
+        {
+            logger.LogError("Failed to fetch sessions for user {UserId}: {Error}", userId, sessionsResult.FirstError.Description);
+            return sessionsResult.FirstError;
+        }
+
+        return sessionsResult.Value
+            .Select(session => new SessionDto
+            {
+                Id = session.Id,
+                DeviceInfo = session.DeviceInfo,
+                Browser = session.Browser,
+                IpAddress = session.IpAddress,
+                LastActiveAt = session.LastActiveAt,
+                ExpiresAt = session.ExpiresAt,
+                CreatedAt = session.CreatedAt,
+            })
+            .ToList();
     }
 
     /// <inheritdoc />

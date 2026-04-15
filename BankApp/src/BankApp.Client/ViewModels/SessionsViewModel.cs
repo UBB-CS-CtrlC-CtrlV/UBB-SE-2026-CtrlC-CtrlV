@@ -6,8 +6,8 @@ using System;
 using System.Collections.Generic;
 using System.Threading.Tasks;
 using BankApp.Client.Utilities;
-using BankApp.Contracts.Entities;
 using BankApp.Client.Enums;
+using BankApp.Contracts.DTOs.Profile;
 using ErrorOr;
 using Microsoft.Extensions.Logging;
 
@@ -31,7 +31,7 @@ public class SessionsViewModel
         this.apiClient = apiClient ?? throw new ArgumentNullException(nameof(apiClient));
         this.logger = logger ?? throw new ArgumentNullException(nameof(logger));
         this.State = new ObservableState<ProfileState>(ProfileState.Idle);
-        this.ActiveSessions = new List<Session>();
+        this.ActiveSessions = new List<SessionDto>();
     }
 
     /// <summary>
@@ -42,7 +42,7 @@ public class SessionsViewModel
     /// <summary>
     /// Gets the active sessions for the current user.
     /// </summary>
-    public List<Session> ActiveSessions { get; private set; }
+    public List<SessionDto> ActiveSessions { get; private set; }
 
     /// <summary>
     /// Loads all active sessions for the specified user from the server.
@@ -54,14 +54,14 @@ public class SessionsViewModel
         this.State.SetValue(ProfileState.Loading);
         try
         {
-            ErrorOr<List<Session>> result = await this.apiClient.GetAsync<List<Session>>(ApiEndpoints.Sessions);
-            this.ActiveSessions = result.IsError ? new List<Session>() : result.Value;
+            ErrorOr<List<SessionDto>> result = await this.apiClient.GetAsync<List<SessionDto>>(ApiEndpoints.Sessions);
+            this.ActiveSessions = result.IsError ? new List<SessionDto>() : result.Value;
             this.State.SetValue(result.IsError ? ProfileState.Error : ProfileState.Idle);
         }
         catch (Exception exception)
         {
             this.logger.LogError(exception, "Failed to load sessions for user {UserId}", userId);
-            this.ActiveSessions = new List<Session>();
+            this.ActiveSessions = new List<SessionDto>();
             this.State.SetValue(ProfileState.Error);
         }
     }

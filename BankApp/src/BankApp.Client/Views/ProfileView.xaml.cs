@@ -17,7 +17,6 @@ using BankApp.Client.Master;
 using BankApp.Client.Utilities;
 using BankApp.Client.ViewModels;
 using BankApp.Contracts.DTOs.Profile;
-using BankApp.Contracts.Entities;
 using BankApp.Contracts.Enums;
 using BankApp.Contracts.Extensions;
 
@@ -637,13 +636,13 @@ public sealed partial class ProfileView : IStateObserver<ProfileState>
             return;
         }
 
-        foreach (Session session in this.viewModel.Sessions.ActiveSessions)
+        foreach (SessionDto session in this.viewModel.Sessions.ActiveSessions)
         {
             this.SessionsListPanel.Children.Add(this.BuildSessionCard(session));
         }
     }
 
-    private Border BuildSessionCard(Session session)
+    private Border BuildSessionCard(SessionDto session)
     {
         var card = new Border
         {
