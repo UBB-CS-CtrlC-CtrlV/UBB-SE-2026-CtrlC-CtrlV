@@ -2,6 +2,9 @@
 // Copyright (c) CtrlC CtrlV. All rights reserved.
 // </copyright>
 
+using System.Text.Json.Serialization;
+using BankApp.Contracts.Enums;
+
 namespace BankApp.Contracts.DTOs.Dashboard;
 
 /// <summary>
@@ -22,7 +25,8 @@ public class TransactionDto
     /// <summary>
     /// Gets or sets the direction of the transaction (In or Out).
     /// </summary>
-    public string Direction { get; set; } = string.Empty;
+    [JsonConverter(typeof(JsonStringEnumConverter))]
+    public TransactionDirection Direction { get; set; }
 
     /// <summary>
     /// Gets or sets the amount of the transaction.
@@ -52,7 +56,8 @@ public class TransactionDto
     /// <summary>
     /// Gets or sets the status of the transaction.
     /// </summary>
-    public string Status { get; set; } = string.Empty;
+    [JsonConverter(typeof(JsonStringEnumConverter))]
+    public TransactionStatus Status { get; set; }
 
     /// <summary>
     /// Gets or sets the date and time when the transaction was created.

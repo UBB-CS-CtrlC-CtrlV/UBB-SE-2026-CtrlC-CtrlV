@@ -11,6 +11,7 @@ using System.Threading.Tasks;
 using BankApp.Client.Enums;
 using BankApp.Client.Utilities;
 using BankApp.Contracts.DTOs.Dashboard;
+using BankApp.Contracts.Enums;
 using ErrorOr;
 using Microsoft.Extensions.Logging;
 
@@ -57,7 +58,7 @@ public class DashboardViewModel
     /// <summary>
     /// Gets the cards.
     /// </summary>
-    public List<CardDto> Cards { get; private set; }
+    private List<CardDto> Cards { get; set; }
 
     /// <summary>
     /// Gets the formatted dashboard transaction rows for display.
@@ -231,24 +232,15 @@ public class DashboardViewModel
         this.State.SetValue(DashboardState.Loading);
         this.ErrorMessage = string.Empty;
 
-        var result = await this.apiClient.GetAsync<DashboardResponse>(
-            ApiEndpoints.Dashboard,
+        var result = await this.apiClient.GetAsync<DashboardResponse>(ApiEndpoints.Dashboard,
             cancellationToken);
 
-        return result.Match<ErrorOr<Success>>(
-            dashboard =>
+        return result.Match<ErrorOr<Success>>(dashboard =>
             {
-                if (dashboard.CurrentUser is null)
-                {
-                    this.ErrorMessage = UserMessages.Dashboard.IncompleteResponse;
-                    this.State.SetValue(DashboardState.Error);
-                    return Error.Failure(description: UserMessages.Dashboard.IncompleteResponse);
-                }
-
                 this.CurrentUser = dashboard.CurrentUser;
                 this.Cards = dashboard.Cards;
                 this.RecentTransactions = dashboard.RecentTransactions;
-                this.RecentTransactionItems = this.BuildTransactionItems(this.RecentTransactions);
+                this.RecentTransactionItems = BuildTransactionItems(this.RecentTransactions);
                 this.UnreadNotificationCount = dashboard.UnreadNotificationCount;
 
                 // Reset card navigation to first card after a fresh load.
@@ -271,37 +263,48 @@ public class DashboardViewModel
             });
     }
 
-    private List<DashboardTransactionItem> BuildTransactionItems(IEnumerable<TransactionDto> transactions)
+    private static List<DashboardTransactionItem> BuildTransactionItems(IEnumerable<TransactionDto> transactions)
     {
-        var items = new List<DashboardTransactionItem>();
-
-        foreach (var transaction in transactions)
-        {
-            var merchantDisplayName =
-                !string.IsNullOrWhiteSpace(transaction.MerchantName) ? transaction.MerchantName :
-                !string.IsNullOrWhiteSpace(transaction.Description) ? transaction.Description :
-                !string.IsNullOrWhiteSpace(transaction.CounterpartyName) ? transaction.CounterpartyName :
-                "Transaction";
-
-            var sign = string.Equals(transaction.Direction, "Out", StringComparison.OrdinalIgnoreCase)
-                ? "-"
-                : string.Equals(transaction.Direction, "In", StringComparison.OrdinalIgnoreCase) ? "+" : string.Empty;
-
-            items.Add(
-                new DashboardTransactionItem
+        return transactions
+            .Select(transaction => new DashboardTransactionItem
             {
-                MerchantDisplayName = merchantDisplayName,
-                Type = string.IsNullOrWhiteSpace(transaction.Type) ? "Unknown" : transaction.Type,
-                Currency = string.IsNullOrWhiteSpace(transaction.Currency) ? "N/A" : transaction.Currency,
-                AmountDisplay = $"{sign}{transaction.Amount.ToString("N2", CultureInfo.InvariantCulture)}",
-            });
-        }
-
-        return items;
+                MerchantDisplayName = GetMerchantDisplayName(transaction),
+                Type = GetValueOrFallback(transaction.Type, "Unknown"),
+                Currency = GetValueOrFallback(transaction.Currency, "N/A"),
+                AmountDisplay = FormatAmountDisplay(transaction)
+            })
+            .ToList();
     }
 
-    /// <summary>
-    /// Gets or sets the recent transactions.
-    /// </summary>
+    private static string GetMerchantDisplayName(TransactionDto transaction)
+    {
+        return FirstNonEmpty(transaction.MerchantName,
+            transaction.Description,
+            transaction.CounterpartyName,
+            "Transaction");
+    }
+
+    private static string FormatAmountDisplay(TransactionDto transaction)
+    {
+        string sign = transaction.Direction switch
+        {
+            TransactionDirection.Out => "-",
+            TransactionDirection.In => "+",
+            _ => throw new ArgumentOutOfRangeException(nameof(transaction.Direction), transaction.Direction, null)
+        };
+
+        return $"{sign}{transaction.Amount.ToString("N2", CultureInfo.InvariantCulture)}";
+    }
+
+    private static string GetValueOrFallback(string? value, string fallback)
+    {
+        return string.IsNullOrWhiteSpace(value) ? fallback : value;
+    }
+
+    private static string FirstNonEmpty(params string?[] values)
+    {
+        return values.FirstOrDefault(value => !string.IsNullOrWhiteSpace(value)) ?? string.Empty;
+    }
+
     private List<TransactionDto> RecentTransactions { get; set; }
 }

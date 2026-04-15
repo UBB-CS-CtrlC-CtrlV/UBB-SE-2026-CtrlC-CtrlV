@@ -1,3 +1,5 @@
+using BankApp.Contracts.Enums;
+
 namespace BankApp.Contracts.Entities;
 
 /// <summary>
@@ -31,9 +33,9 @@ public class Transaction
     public string Type { get; set; } = string.Empty;
 
     /// <summary>
-    /// Gets or sets the direction of the transaction (inbound or outbound).
+    /// Gets or sets the direction of the transaction as a <see cref="TransactionDirection"/>.
     /// </summary>
-    public string Direction { get; set; } = string.Empty;
+    public TransactionDirection Direction { get; set; }
 
     /// <summary>
     /// Gets or sets the amount of the transaction.
@@ -86,9 +88,9 @@ public class Transaction
     public decimal? ExchangeRate { get; set; }
 
     /// <summary>
-    /// Gets or sets the status of the transaction.
+    /// Gets or sets the status of the transaction as a <see cref="TransactionStatus"/>.
     /// </summary>
-    public string Status { get; set; } = string.Empty;
+    public TransactionStatus Status { get; set; }
 
     /// <summary>
     /// Gets or sets the type of entity related to this transaction.
