@@ -323,29 +323,19 @@ public class ApiClient
     }
 
     /// <summary>
-    /// Sends a DELETE request to the provided endpoint and deserializes the response body.
+    /// Sends a DELETE request and returns <see cref="Success"/> when the server responds with a 2xx status.
+    /// Use this overload for endpoints that return no body (204 No Content).
     /// </summary>
-    /// <typeparam name="TResponse">The response model type.</typeparam>
     /// <param name="endpoint">The relative endpoint to call.</param>
-    /// <returns>The deserialized response body, or an <see cref="Error"/> if the request fails.</returns>
-    public async Task<ErrorOr<TResponse>> DeleteAsync<TResponse>(string endpoint)
+    /// <returns><see cref="Result.Success"/> on a 2xx response, or an <see cref="Error"/> otherwise.</returns>
+    public async Task<ErrorOr<Success>> DeleteAsync(string endpoint)
     {
         try
         {
             HttpResponseMessage response = await this.httpClient.DeleteAsync(endpoint);
-
-            if (!response.IsSuccessStatusCode)
-            {
-                return await MapErrorAsync(response, endpoint, CancellationToken.None);
-            }
-
-            TResponse? result = await response.Content.ReadFromJsonAsync<TResponse>();
-            if (result is null)
-            {
-                return Error.Failure(description: $"DELETE {endpoint} returned an empty response.");
-            }
-
-            return result;
+            return response.IsSuccessStatusCode
+                ? Result.Success
+                : await MapErrorAsync(response, endpoint, CancellationToken.None);
         }
         catch (HttpRequestException ex)
         {

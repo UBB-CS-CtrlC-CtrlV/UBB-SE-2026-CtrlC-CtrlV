@@ -76,9 +76,9 @@ public class SessionsViewModel
         this.State.SetValue(ProfileState.Loading);
         try
         {
-            ErrorOr<bool> result = await this.apiClient.DeleteAsync<bool>($"{ApiEndpoints.Sessions}/{sessionId}");
+            ErrorOr<Success> result = await this.apiClient.DeleteAsync($"{ApiEndpoints.Sessions}/{sessionId}");
             this.State.SetValue(result.IsError ? ProfileState.Error : ProfileState.Idle);
-            return !result.IsError && result.Value;
+            return !result.IsError;
         }
         catch (Exception exception)
         {
