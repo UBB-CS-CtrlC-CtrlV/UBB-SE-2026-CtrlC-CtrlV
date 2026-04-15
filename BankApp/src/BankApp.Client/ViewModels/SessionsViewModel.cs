@@ -48,21 +48,30 @@ public class SessionsViewModel
     /// Loads all active sessions for the specified user from the server.
     /// </summary>
     /// <param name="userId">The identifier of the current user.</param>
-    /// <returns>A <see cref="Task"/> representing the asynchronous operation.</returns>
-    public async Task LoadSessionsAsync(int userId)
+    /// <returns><see langword="true"/> if sessions loaded successfully; otherwise, <see langword="false"/>.</returns>
+    public async Task<bool> LoadSessionsAsync(int userId)
     {
         this.State.SetValue(ProfileState.Loading);
         try
         {
             ErrorOr<List<SessionDto>> result = await this.apiClient.GetAsync<List<SessionDto>>(ApiEndpoints.Sessions);
-            this.ActiveSessions = result.IsError ? new List<SessionDto>() : result.Value;
-            this.State.SetValue(result.IsError ? ProfileState.Error : ProfileState.Idle);
+            if (result.IsError)
+            {
+                this.ActiveSessions = new List<SessionDto>();
+                this.State.SetValue(ProfileState.Error);
+                return false;
+            }
+
+            this.ActiveSessions = result.Value;
+            this.State.SetValue(ProfileState.Idle);
+            return true;
         }
         catch (Exception exception)
         {
             this.logger.LogError(exception, "Failed to load sessions for user {UserId}", userId);
             this.ActiveSessions = new List<SessionDto>();
             this.State.SetValue(ProfileState.Error);
+            return false;
         }
     }
 

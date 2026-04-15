@@ -613,7 +613,7 @@ public sealed partial class ProfileView : IStateObserver<ProfileState>
         await this.LoadSessionsAsync();
     }
 
-    private async Task LoadSessionsAsync()
+    private async Task<bool> LoadSessionsAsync()
     {
         this.SessionsErrorBar.IsOpen = false;
         this.SessionsSuccessBar.IsOpen = false;
@@ -625,21 +625,29 @@ public sealed partial class ProfileView : IStateObserver<ProfileState>
         {
             this.SessionsErrorBar.Message = "User not loaded.";
             this.SessionsErrorBar.IsOpen = true;
-            return;
+            return false;
         }
 
-        await this.viewModel.Sessions.LoadSessionsAsync(userId.Value);
+        bool loaded = await this.viewModel.Sessions.LoadSessionsAsync(userId.Value);
+        if (!loaded)
+        {
+            this.SessionsErrorBar.Message = "Failed to load active sessions.";
+            this.SessionsErrorBar.IsOpen = true;
+            return false;
+        }
 
         if (this.viewModel.Sessions.ActiveSessions.Count == 0)
         {
             this.NoSessionsText.Visibility = Visibility.Visible;
-            return;
+            return true;
         }
 
         foreach (SessionDto session in this.viewModel.Sessions.ActiveSessions)
         {
             this.SessionsListPanel.Children.Add(this.BuildSessionCard(session));
         }
+
+        return true;
     }
 
     private Border BuildSessionCard(SessionDto session)
@@ -724,9 +732,12 @@ public sealed partial class ProfileView : IStateObserver<ProfileState>
 
         if (success)
         {
-            this.SessionsSuccessBar.Message = "Session revoked successfully.";
-            this.SessionsSuccessBar.IsOpen = true;
-            await this.LoadSessionsAsync();
+            bool reloaded = await this.LoadSessionsAsync();
+            if (reloaded)
+            {
+                this.SessionsSuccessBar.Message = "Session revoked successfully.";
+                this.SessionsSuccessBar.IsOpen = true;
+            }
         }
         else
         {
