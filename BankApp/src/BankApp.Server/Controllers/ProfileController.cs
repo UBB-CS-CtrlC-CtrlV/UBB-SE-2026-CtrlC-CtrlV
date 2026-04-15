@@ -167,4 +167,33 @@ public class ProfileController : ApiControllerBase
         int userId = this.GetAuthenticatedUserId();
         return this.ToActionResult(this.profileService.Disable2FA(userId));
     }
+
+    /// <summary>
+    /// Retrieves all active sessions for the currently authenticated user.
+    /// </summary>
+    /// <returns>
+    /// 200 OK with a list of active sessions on success,
+    /// or 404 Not Found if the user does not exist.
+    /// </returns>
+    [HttpGet("sessions")]
+    public IActionResult GetSessions()
+    {
+        int userId = this.GetAuthenticatedUserId();
+        return this.ToActionResult(this.profileService.GetActiveSessions(userId), sessions => this.Ok(sessions));
+    }
+
+    /// <summary>
+    /// Revokes a specific session for the currently authenticated user.
+    /// </summary>
+    /// <param name="sessionId">The identifier of the session to revoke.</param>
+    /// <returns>
+    /// 204 No Content on success,
+    /// or 404/400 if the revocation fails.
+    /// </returns>
+    [HttpDelete("sessions/{sessionId}")]
+    public IActionResult RevokeSession(int sessionId)
+    {
+        int userId = this.GetAuthenticatedUserId();
+        return this.ToActionResult(this.profileService.RevokeSession(userId, sessionId));
+    }
 }
