@@ -301,4 +301,38 @@ public class ProfileService : IProfileService
 
         return hashService.Verify(password, userResult.Value.PasswordHash);
     }
+
+    /// <inheritdoc />
+    public ErrorOr<List<Session>> GetActiveSessions(int userId)
+    {
+        ErrorOr<User> userResult = userRepository.FindById(userId);
+        if (userResult.IsError)
+        {
+            logger.LogWarning("Get sessions failed: user {UserId} not found.", userId);
+            return userResult.FirstError;
+        }
+
+        return userRepository.GetActiveSessions(userId);
+    }
+
+    /// <inheritdoc />
+    public ErrorOr<Success> RevokeSession(int userId, int sessionId)
+    {
+        ErrorOr<User> userResult = userRepository.FindById(userId);
+        if (userResult.IsError)
+        {
+            logger.LogWarning("Revoke session failed: user {UserId} not found.", userId);
+            return userResult.FirstError;
+        }
+
+        ErrorOr<Success> result = userRepository.RevokeSession(sessionId);
+        if (result.IsError)
+        {
+            logger.LogError("Failed to revoke session {SessionId} for user {UserId}.", sessionId, userId);
+            return result.FirstError;
+        }
+
+        logger.LogInformation("Session {SessionId} revoked for user {UserId}.", sessionId, userId);
+        return Result.Success;
+    }
 }
