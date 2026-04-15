@@ -3,7 +3,9 @@ using BankApp.Client.Enums;
 using BankApp.Client.Utilities;
 using BankApp.Client.ViewModels;
 using BankApp.Contracts.DTOs.Dashboard;
+using BankApp.Contracts.Enums;
 using ErrorOr;
+using FluentAssertions;
 using Microsoft.Extensions.Configuration;
 using Microsoft.Extensions.Logging.Abstractions;
 using NSubstitute;
@@ -33,27 +35,45 @@ public class DashboardViewModelTests
     {
         // Arrange
         const string fullName = "Ada Lovelace";
+        const string email = "ada@lovelace.com";
+        const string cardBrand = "Visa";
+        const CardType cardType = CardType.Debit;
+        const string cardNumber = "1234567812345678";
+        var cardExpiry = new DateTime(2027, 12, 1);
         const string merchantName = "Coffee Shop";
+        const string currency = "USD";
         const decimal transactionAmount = 12.5m;
         const int unreadCount = 4;
-        var expectedAmountDisplay = $"-{transactionAmount.ToString("N2", CultureInfo.InvariantCulture)}";
+
         var response = new DashboardResponse
         {
-            CurrentUser = new UserSummaryDto { FullName = fullName },
+            CurrentUser = new UserSummaryDto
+            {
+                FullName = fullName,
+                Email = email,
+            },
             Cards =
             [
                 new CardDto
                 {
-                    CardBrand = "Visa", CardType = "Debit",
-                    CardholderName = fullName, CardNumber = "1234567812345678",
+                    CardBrand = cardBrand,
+                    CardType = cardType,
+                    CardholderName = fullName,
+                    CardNumber = cardNumber,
+                    ExpiryDate = cardExpiry,
+                    Status = CardStatus.Active,
+                    IsContactlessEnabled = true,
+                    IsOnlineEnabled = true,
                 },
             ],
             RecentTransactions =
             [
                 new TransactionDto
                 {
-                    MerchantName = merchantName, Type = "Card payment",
-                    Direction = "Out", Amount = transactionAmount, Currency = "USD",
+                    MerchantName = merchantName,
+                    Direction = TransactionDirection.Out,
+                    Amount = transactionAmount,
+                    Currency = currency,
                 },
             ],
             UnreadNotificationCount = unreadCount,
@@ -64,15 +84,37 @@ public class DashboardViewModelTests
         // Act
         ErrorOr<Success> result = await this.viewModel.LoadDashboard();
 
-        // Assert
-        Assert.False(result.IsError);
-        Assert.Equal(DashboardState.Success, this.viewModel.State.Value);
-        Assert.Equal(fullName, this.viewModel.CurrentUser?.FullName);
-        Assert.Single(this.viewModel.Cards);
-        Assert.Single(this.viewModel.RecentTransactionItems);
-        Assert.Equal(expectedAmountDisplay, this.viewModel.RecentTransactionItems[0].AmountDisplay);
-        Assert.Equal(unreadCount, this.viewModel.UnreadNotificationCount);
-        Assert.Equal(string.Empty, this.viewModel.ErrorMessage);
+        // Assert — result and state
+        result.IsError.Should().BeFalse();
+        this.viewModel.State.Value.Should().Be(DashboardState.Success);
+        this.viewModel.ErrorMessage.Should().BeEmpty();
+
+        // Assert — current user
+        this.viewModel.CurrentUser.Should().BeEquivalentTo(new UserSummaryDto
+        {
+            FullName = fullName,
+            Email = email,
+        });
+
+        // Assert — selected card display properties
+        this.viewModel.CardDots.Should().ContainSingle();
+        this.viewModel.SelectedCardBrandDisplay.Should().Be(cardBrand);
+        this.viewModel.SelectedCardHolderDisplay.Should().Be(fullName.ToUpperInvariant());
+        this.viewModel.SelectedCardNumberMasked.Should().Be($"**** **** **** {cardNumber[^4..]}");
+        this.viewModel.SelectedCardExpiryDisplay.Should().Be(cardExpiry.ToString("MM/yy"));
+
+        // Assert — transaction item
+        string expectedAmountDisplay = $"-{transactionAmount.ToString("N2", CultureInfo.InvariantCulture)}";
+        this.viewModel.RecentTransactionItems.Should().ContainSingle()
+            .Which.Should().BeEquivalentTo(new DashboardTransactionItem
+            {
+                MerchantDisplayName = merchantName,
+                AmountDisplay = expectedAmountDisplay,
+                Currency = currency,
+            });
+
+        // Assert — notification count
+        this.viewModel.UnreadNotificationCount.Should().Be(unreadCount);
     }
 
     [Fact]
@@ -86,9 +128,9 @@ public class DashboardViewModelTests
         ErrorOr<Success> result = await this.viewModel.LoadDashboard();
 
         // Assert
-        Assert.True(result.IsError);
-        Assert.Equal(DashboardState.Error, this.viewModel.State.Value);
-        Assert.Equal(UserMessages.Dashboard.IncompleteResponse, this.viewModel.ErrorMessage);
+        result.IsError.Should().BeTrue();
+        this.viewModel.State.Value.Should().Be(DashboardState.Error);
+        this.viewModel.ErrorMessage.Should().Be(UserMessages.Dashboard.IncompleteResponse);
     }
 
     [Fact]
@@ -102,9 +144,9 @@ public class DashboardViewModelTests
         ErrorOr<Success> result = await this.viewModel.LoadDashboard();
 
         // Assert
-        Assert.True(result.IsError);
-        Assert.Equal(DashboardState.Error, this.viewModel.State.Value);
-        Assert.Equal(UserMessages.Dashboard.SessionExpired, this.viewModel.ErrorMessage);
+        result.IsError.Should().BeTrue();
+        this.viewModel.State.Value.Should().Be(DashboardState.Error);
+        this.viewModel.ErrorMessage.Should().Be(UserMessages.Dashboard.SessionExpired);
     }
 
     [Fact]
@@ -118,9 +160,9 @@ public class DashboardViewModelTests
         ErrorOr<Success> result = await this.viewModel.LoadDashboard();
 
         // Assert
-        Assert.True(result.IsError);
-        Assert.Equal(DashboardState.Error, this.viewModel.State.Value);
-        Assert.Equal(UserMessages.Dashboard.NotFound, this.viewModel.ErrorMessage);
+        result.IsError.Should().BeTrue();
+        this.viewModel.State.Value.Should().Be(DashboardState.Error);
+        this.viewModel.ErrorMessage.Should().Be(UserMessages.Dashboard.NotFound);
     }
 
     [Fact]
@@ -134,92 +176,92 @@ public class DashboardViewModelTests
         ErrorOr<Success> result = await this.viewModel.LoadDashboard();
 
         // Assert
-        Assert.True(result.IsError);
-        Assert.Equal(DashboardState.Error, this.viewModel.State.Value);
-        Assert.Equal(UserMessages.Dashboard.LoadFailed, this.viewModel.ErrorMessage);
+        result.IsError.Should().BeTrue();
+        this.viewModel.State.Value.Should().Be(DashboardState.Error);
+        this.viewModel.ErrorMessage.Should().Be(UserMessages.Dashboard.LoadFailed);
     }
 
     [Fact]
-    public async Task NavigatePrevious_WhenNoCardsAreLoaded_ReturnsFalse()
+    public async Task NavigatePrevious_WhenNoCardsAreLoaded_ReturnsError()
     {
         // Arrange
         await this.LoadViewModelWithCards(0);
 
         // Act
-        bool result = this.viewModel.NavigatePrevious();
+        ErrorOr<Success> result = this.viewModel.NavigatePrevious();
 
         // Assert
-        Assert.False(result);
+        result.IsError.Should().BeTrue();
     }
 
     [Fact]
-    public async Task NavigatePrevious_WhenAtFirstCard_ReturnsFalse()
+    public async Task NavigatePrevious_WhenAtFirstCard_ReturnsError()
     {
         // Arrange
         await this.LoadViewModelWithCards(2);
 
         // Act
-        bool result = this.viewModel.NavigatePrevious();
+        ErrorOr<Success> result = this.viewModel.NavigatePrevious();
 
         // Assert
-        Assert.False(result);
-        Assert.Equal(0, this.viewModel.CurrentCardIndex);
+        result.IsError.Should().BeTrue();
+        this.viewModel.CurrentCardIndex.Should().Be(0);
     }
 
     [Fact]
-    public async Task NavigatePrevious_WhenNotAtFirstCard_ReturnsTrueAndDecrementsIndex()
+    public async Task NavigatePrevious_WhenNotAtFirstCard_SucceedsAndDecrementsIndex()
     {
         // Arrange
         await this.LoadViewModelWithCards(2);
         this.viewModel.NavigateNext();
 
         // Act
-        bool result = this.viewModel.NavigatePrevious();
+        ErrorOr<Success> result = this.viewModel.NavigatePrevious();
 
         // Assert
-        Assert.True(result);
-        Assert.Equal(0, this.viewModel.CurrentCardIndex);
+        result.IsError.Should().BeFalse();
+        this.viewModel.CurrentCardIndex.Should().Be(0);
     }
 
     [Fact]
-    public async Task NavigateNext_WhenNoCardsAreLoaded_ReturnsFalse()
+    public async Task NavigateNext_WhenNoCardsAreLoaded_ReturnsError()
     {
         // Arrange
         await this.LoadViewModelWithCards(0);
 
         // Act
-        bool result = this.viewModel.NavigateNext();
+        ErrorOr<Success> result = this.viewModel.NavigateNext();
 
         // Assert
-        Assert.False(result);
+        result.IsError.Should().BeTrue();
     }
 
     [Fact]
-    public async Task NavigateNext_WhenAtLastCard_ReturnsFalse()
+    public async Task NavigateNext_WhenAtLastCard_ReturnsError()
     {
         // Arrange
         await this.LoadViewModelWithCards(1);
 
         // Act
-        bool result = this.viewModel.NavigateNext();
+        ErrorOr<Success> result = this.viewModel.NavigateNext();
 
         // Assert
-        Assert.False(result);
-        Assert.Equal(0, this.viewModel.CurrentCardIndex);
+        result.IsError.Should().BeTrue();
+        this.viewModel.CurrentCardIndex.Should().Be(0);
     }
 
     [Fact]
-    public async Task NavigateNext_WhenNotAtLastCard_ReturnsTrueAndIncrementsIndex()
+    public async Task NavigateNext_WhenNotAtLastCard_SucceedsAndIncrementsIndex()
     {
         // Arrange
         await this.LoadViewModelWithCards(2);
 
         // Act
-        bool result = this.viewModel.NavigateNext();
+        ErrorOr<Success> result = this.viewModel.NavigateNext();
 
         // Assert
-        Assert.True(result);
-        Assert.Equal(1, this.viewModel.CurrentCardIndex);
+        result.IsError.Should().BeFalse();
+        this.viewModel.CurrentCardIndex.Should().Be(1);
     }
 
     [Fact]
@@ -227,27 +269,27 @@ public class DashboardViewModelTests
     {
         // Arrange
         const string cardBrand = "Visa";
-        await this.LoadViewModelWithCards(1, cardBrand: cardBrand, cardType: "Debit");
+        await this.LoadViewModelWithCards(1, cardBrand: cardBrand);
 
         // Act
         string display = this.viewModel.SelectedCardBrandDisplay;
 
         // Assert
-        Assert.Equal(cardBrand, display);
+        display.Should().Be(cardBrand);
     }
 
     [Fact]
     public async Task SelectedCardBrandDisplay_WhenBrandIsAbsent_FallsBackToCardType()
     {
         // Arrange
-        const string cardType = "Credit";
+        const CardType cardType = CardType.Credit;
         await this.LoadViewModelWithCards(1, cardBrand: string.Empty, cardType: cardType);
 
         // Act
         string display = this.viewModel.SelectedCardBrandDisplay;
 
         // Assert
-        Assert.Equal(cardType, display);
+        display.Should().Be(cardType.ToString());
     }
 
     [Fact]
@@ -261,20 +303,21 @@ public class DashboardViewModelTests
         string display = this.viewModel.SelectedCardHolderDisplay;
 
         // Assert
-        Assert.Equal(cardholderName.ToUpperInvariant(), display);
+        display.Should().Be(cardholderName.ToUpperInvariant());
     }
 
     [Fact]
     public async Task SelectedCardHolderDisplay_WhenNameIsAbsent_ReturnsPlaceholder()
     {
         // Arrange
+        const string expectedSelectedCardHolderDisplay = "CARD HOLDER";
         await this.LoadViewModelWithCards(1, cardholderName: string.Empty);
 
         // Act
         string display = this.viewModel.SelectedCardHolderDisplay;
 
         // Assert
-        Assert.Equal("CARD HOLDER", display);
+        display.Should().Be(expectedSelectedCardHolderDisplay);
     }
 
     [Fact]
@@ -282,26 +325,28 @@ public class DashboardViewModelTests
     {
         // Arrange
         const string cardNumber = "1234567890123456";
+        string expectedMaskedCardNumber = $"**** **** **** {cardNumber[^4..]}";
         await this.LoadViewModelWithCards(1, cardNumber: cardNumber);
 
         // Act
         string masked = this.viewModel.SelectedCardNumberMasked;
 
         // Assert
-        Assert.Equal($"**** **** **** {cardNumber[^4..]}", masked);
+        masked.Should().Be(expectedMaskedCardNumber);
     }
 
     [Fact]
     public async Task SelectedCardNumberMasked_WhenCardNumberIsTooShort_ReturnsFullyMasked()
     {
         // Arrange
+        const string expectedMaskedCardNumber = "**** **** **** ****";
         await this.LoadViewModelWithCards(1, cardNumber: "123");
 
         // Act
         string masked = this.viewModel.SelectedCardNumberMasked;
 
         // Assert
-        Assert.Equal("**** **** **** ****", masked);
+        masked.Should().Be(expectedMaskedCardNumber);
     }
 
     [Fact]
@@ -313,17 +358,18 @@ public class DashboardViewModelTests
         string details = this.viewModel.GetSelectedCardDetails();
 
         // Assert
-        Assert.Equal(string.Empty, details);
+        details.Should().BeEmpty();
     }
 
     [Fact]
     public async Task GetSelectedCardDetails_WhenCardIsSelected_ReturnsFormattedDetails()
     {
         // Arrange
-        const string cardType = "Debit";
+        const CardType cardType = CardType.Debit;
         const string cardBrand = "Visa";
         const string cardNumber = "1234567890123456";
         const string cardholderName = "Ada Lovelace";
+        string expectedMaskedCardNumber = $"**** **** **** {cardNumber[^4..]}";
         await this.LoadViewModelWithCards(
             cardCount: 1,
             cardType: cardType,
@@ -335,10 +381,10 @@ public class DashboardViewModelTests
         string details = this.viewModel.GetSelectedCardDetails();
 
         // Assert
-        Assert.Contains(cardType, details);
-        Assert.Contains(cardBrand, details);
-        Assert.Contains($"**** **** **** {cardNumber[^4..]}", details);
-        Assert.Contains(cardholderName, details);
+        details.Should().Contain(cardType.ToString())
+               .And.Contain(cardBrand)
+               .And.Contain(expectedMaskedCardNumber)
+               .And.Contain(cardholderName);
     }
 
     [Fact]
@@ -352,15 +398,13 @@ public class DashboardViewModelTests
         IReadOnlyList<CardPageIndicatorViewModel> dots = this.viewModel.CardDots;
 
         // Assert
-        Assert.False(dots[0].IsActive);
-        Assert.True(dots[1].IsActive);
-        Assert.False(dots[2].IsActive);
+        dots.Select(d => d.IsActive).Should().Equal(false, true, false);
     }
 
     private async Task LoadViewModelWithCards(
         int cardCount,
         string cardBrand = "Visa",
-        string cardType = "Debit",
+        CardType cardType = CardType.Debit,
         string cardholderName = "Test User",
         string cardNumber = "1234567812345678")
     {

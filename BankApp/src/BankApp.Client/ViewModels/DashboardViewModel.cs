@@ -246,6 +246,14 @@ public class DashboardViewModel
 
         return result.Match<ErrorOr<Success>>(dashboard =>
             {
+                if (dashboard.CurrentUser is null)
+                {
+                    this.ErrorMessage = UserMessages.Dashboard.IncompleteResponse;
+                    this.logger.LogError("LoadDashboard failed: response is missing CurrentUser.");
+                    this.State.SetValue(DashboardState.Error);
+                    return Error.Failure(description: UserMessages.Dashboard.IncompleteResponse);
+                }
+
                 this.CurrentUser = dashboard.CurrentUser;
                 this.Cards = dashboard.Cards;
                 this.RecentTransactions = dashboard.RecentTransactions;

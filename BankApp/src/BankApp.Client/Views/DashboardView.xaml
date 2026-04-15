@@ -223,18 +223,14 @@
                                     <ColumnDefinition Width="2*"/>
                                     <ColumnDefinition Width="*"/>
                                     <ColumnDefinition Width="*"/>
-                                    <ColumnDefinition Width="*"/>
                                 </Grid.ColumnDefinitions>
                                 <TextBlock Grid.Column="0" Text="Merchant"
                                            FontSize="12" FontWeight="SemiBold"
                                            Foreground="#888"/>
-                                <TextBlock Grid.Column="1" Text="Type"
+                                <TextBlock Grid.Column="1" Text="Amount"
                                            FontSize="12" FontWeight="SemiBold"
                                            Foreground="#888"/>
-                                <TextBlock Grid.Column="2" Text="Amount"
-                                           FontSize="12" FontWeight="SemiBold"
-                                           Foreground="#888"/>
-                                <TextBlock Grid.Column="3" Text="Currency"
+                                <TextBlock Grid.Column="2" Text="Currency"
                                            FontSize="12" FontWeight="SemiBold"
                                            Foreground="#888"/>
                             </Grid>
@@ -248,20 +244,16 @@
                                                 <ColumnDefinition Width="2*"/>
                                                 <ColumnDefinition Width="*"/>
                                                 <ColumnDefinition Width="*"/>
-                                                <ColumnDefinition Width="*"/>
                                             </Grid.ColumnDefinitions>
                                             <TextBlock Grid.Column="0"
                                                        Text="{x:Bind MerchantDisplayName}"
                                                        FontSize="13" Foreground="#1A1A2E"
                                                        FontWeight="Medium"/>
                                             <TextBlock Grid.Column="1"
-                                                       Text="{x:Bind Type}"
-                                                       FontSize="13" Foreground="#555"/>
-                                            <TextBlock Grid.Column="2"
                                                        Text="{x:Bind AmountDisplay}"
                                                        FontSize="13" Foreground="#1A1A2E"
                                                        FontWeight="SemiBold"/>
-                                            <TextBlock Grid.Column="3"
+                                            <TextBlock Grid.Column="2"
                                                        Text="{x:Bind Currency}"
                                                        FontSize="13" Foreground="#4ECDC4"/>
                                         </Grid>
