@@ -5,6 +5,7 @@
 using System;
 using System.Collections.Generic;
 using System.Linq;
+using System.Threading.Tasks;
 using BankApp.Client.Master;
 using BankApp.Client.Utilities;
 using BankApp.Client.ViewModels;
@@ -40,26 +41,25 @@ public sealed partial class ProfileView : IStateObserver<ProfileState>
     public ProfileView(ProfileViewModel viewModel, IAppNavigationService navigationService)
     {
         this.InitializeComponent();
-
         this.viewModel = viewModel;
         this.navigationService = navigationService;
         this.viewModel.State.AddObserver(this);
+        this.Loaded += this.OnPageLoaded;
+    }
+
+    private async void OnPageLoaded(object sender, RoutedEventArgs e)
+    {
+        this.ShowLoading(true);
+        await this.viewModel.LoadProfile();
+        this.ShowLoading(false);
+        this.PopulateUi();
+        this.SetEditingEnabled(false);
     }
 
     /// <inheritdoc/>
-    protected override async void OnNavigatedTo(NavigationEventArgs e)
+    protected override void OnNavigatedTo(NavigationEventArgs e)
     {
         base.OnNavigatedTo(e);
-
-        this.ShowLoading(true);
-
-        await this.viewModel.LoadProfile();
-
-        this.ShowLoading(false);
-
-        this.PopulateUi();
-
-        this.SetEditingEnabled(false);
     }
 
     /// <inheritdoc/>
@@ -119,7 +119,7 @@ public sealed partial class ProfileView : IStateObserver<ProfileState>
 
     private async void UpdateButton_Click(object sender, RoutedEventArgs e)
     {
-        this.isChangingPasswordFlow = false; // Just editing info
+        this.isChangingPasswordFlow = false;
         this.isTwoFactorFlow = false;
         this.VerifyCurrentPasswordBox.Password = string.Empty;
         this.VerifyErrorInfoBar.IsOpen = false;
@@ -151,17 +151,12 @@ public sealed partial class ProfileView : IStateObserver<ProfileState>
             return;
         }
 
-        // Success logic
         this.verifiedPassword = this.VerifyCurrentPasswordBox.Password;
         this.VerifyErrorInfoBar.IsOpen = false;
-
-        // Complete the deferral so the FIRST dialog closes
         deferral.Complete();
 
-        // Now, trigger the NEXT step based on the flow
         if (this.isChangingPasswordFlow)
         {
-            // We MUST use the Dispatcher to wait until the first dialog is gone
             this.DispatcherQueue.TryEnqueue(async void () =>
             {
                 this.NewPasswordBox.Password = string.Empty;
@@ -170,11 +165,41 @@ public sealed partial class ProfileView : IStateObserver<ProfileState>
                 await this.NewPasswordDialog.ShowAsync();
             });
         }
-        else if (!this.isTwoFactorFlow)
+        else if (this.isTwoFactorFlow)
         {
-            // Normal profile edit flow
+            this.DispatcherQueue.TryEnqueue(async void () =>
+            {
+                await this.Handle2FAActionAfterVerifyAsync();
+            });
+        }
+        else
+        {
             this.SetEditingEnabled(true);
             this.ShowSuccess("You can now edit your profile.");
+        }
+    }
+
+    private async Task Handle2FAActionAfterVerifyAsync()
+    {
+        TwoFactorMethod method = this.pendingTwoFactorAuthType == "Phone"
+            ? TwoFactorMethod.Phone
+            : TwoFactorMethod.Email;
+
+        bool success = await this.viewModel.Security.EnableTwoFactor(method);
+
+        if (success)
+        {
+            this.viewModel.ProfileInfo.Is2FAEnabled = true;
+            this.viewModel.ProfileInfo.Preferred2FAMethod = this.pendingTwoFactorAuthType;
+            this.viewModel.IsInitializingView = true;
+            this.TwoFactorToggle.IsOn = true;
+            this.viewModel.IsInitializingView = false;
+            this.Update2FaVisuals();
+            this.ShowSuccess($"Two-factor authentication enabled via {this.pendingTwoFactorAuthType}.");
+        }
+        else
+        {
+            this.ShowError($"Failed to enable 2FA via {this.pendingTwoFactorAuthType}.");
         }
     }
 
@@ -182,7 +207,8 @@ public sealed partial class ProfileView : IStateObserver<ProfileState>
     {
         this.ShowLoading(true);
 
-        var success = await this.viewModel.PersonalInfo.UpdatePersonalInfo(this.PhoneBox.Text,
+        var success = await this.viewModel.PersonalInfo.UpdatePersonalInfo(
+            this.PhoneBox.Text,
             this.AddressBox.Text,
             this.verifiedPassword);
 
@@ -192,10 +218,8 @@ public sealed partial class ProfileView : IStateObserver<ProfileState>
         {
             this.ProfileCardPhone.Text = this.PhoneBox.Text.Trim();
             this.ProfileCardAddress.Text = this.AddressBox.Text.Trim();
-
             this.verifiedPassword = string.Empty;
             this.SetEditingEnabled(false);
-
             this.ShowSuccess("Profile updated successfully.");
         }
         else
@@ -206,7 +230,7 @@ public sealed partial class ProfileView : IStateObserver<ProfileState>
 
     private async void ChangePasswordButton_Click(object sender, RoutedEventArgs e)
     {
-        this.isChangingPasswordFlow = true; // Password change flow
+        this.isChangingPasswordFlow = true;
         this.isTwoFactorFlow = false;
         this.VerifyCurrentPasswordBox.Password = string.Empty;
         this.VerifyErrorInfoBar.IsOpen = false;
@@ -231,13 +255,13 @@ public sealed partial class ProfileView : IStateObserver<ProfileState>
             return;
         }
 
-        var (success, errorMessage) = await this.viewModel.Security.ChangePassword(userId.Value, this.verifiedPassword, newPwd, confirmPwd);
+        var (success, errorMessage) = await this.viewModel.Security.ChangePassword(
+            userId.Value, this.verifiedPassword, newPwd, confirmPwd);
 
         if (success)
         {
-            this.verifiedPassword = string.Empty; // Clear security sensitive data
+            this.verifiedPassword = string.Empty;
             this.NewPasswordErrorInfoBar.IsOpen = false;
-
             deferral.Complete();
             this.ShowSuccess("Your password has been changed successfully.");
         }
@@ -253,31 +277,34 @@ public sealed partial class ProfileView : IStateObserver<ProfileState>
     private async void Handle2FAAction_Click(object sender, RoutedEventArgs e)
     {
         var button = sender as Button;
-        this.pendingTwoFactorAuthType = button?.Tag.ToString() ?? string.Empty; // "Phone" or "Email"
+        this.pendingTwoFactorAuthType = button?.Tag.ToString() ?? string.Empty;
 
         if (button?.Content.ToString() == "Remove")
         {
-            // Logic for removal
+            bool success = await this.viewModel.Security.DisableTwoFactor();
+            if (success)
+            {
+                this.viewModel.ProfileInfo.Is2FAEnabled = false;
+                this.viewModel.ProfileInfo.Preferred2FAMethod = null;
+                this.viewModel.IsInitializingView = true;
+                this.TwoFactorToggle.IsOn = false;
+                this.viewModel.IsInitializingView = false;
+                this.Update2FaVisuals();
+                this.ShowSuccess("Two-factor authentication has been disabled.");
+            }
+            else
+            {
+                this.ShowError("Failed to remove 2FA.");
+            }
         }
         else
         {
-            // Logic for Add/Verify
             this.isTwoFactorFlow = true;
+            this.isChangingPasswordFlow = false;
             this.VerifyCurrentPasswordBox.Password = string.Empty;
+            this.VerifyErrorInfoBar.IsOpen = false;
             await this.VerifyPasswordDialog.ShowAsync();
         }
-    }
-
-    private async void SaveTwoFactorSettings_Click(object sender, RoutedEventArgs e)
-    {
-        // bool success = await _viewModel.UpdateTwoFactorContacts(
-        //    TwoFactorPhoneBox.Text.Trim(),
-        //    TwoFactorEmailBox.Text.Trim());
-
-        // if (success)
-        //    ShowSuccess("2FA settings saved.");
-        // else
-        //    ShowError("Failed to save 2FA settings.");
     }
 
     private async void TwoFactorToggle_Toggled(object sender, RoutedEventArgs e)
@@ -294,22 +321,13 @@ public sealed partial class ProfileView : IStateObserver<ProfileState>
             this.viewModel.IsInitializingView = true;
             this.TwoFactorToggle.IsOn = !this.TwoFactorToggle.IsOn;
             this.viewModel.IsInitializingView = false;
-            this.ShowError("Failed to update 2FA settings");
+            this.ShowError("Failed to update 2FA settings.");
         }
         else
         {
             this.viewModel.ProfileInfo.Is2FAEnabled = this.TwoFactorToggle.IsOn;
+            this.Update2FaVisuals();
         }
-    }
-
-    private async void TwoFactorEmailToggle_Toggled(object sender, RoutedEventArgs e)
-    {
-        // bool success = TwoFactorEmailToggle.IsOn
-        //    ? await _viewModel.EnableTwoFactor(TwoFactorMethod.Email)
-        //    : await _viewModel.DisableTwoFactor(TwoFactorMethod.Email);
-
-        // if (!success)
-        //    ShowError("2FA email update failed.");
     }
 
     private async void RemoveConnectedAccount_Click(object sender, RoutedEventArgs e)
@@ -364,22 +382,44 @@ public sealed partial class ProfileView : IStateObserver<ProfileState>
 
     private void Update2FaVisuals()
     {
+        var user = this.viewModel.ProfileInfo;
         this.TwoFactorPhoneDisplay.Text = this.viewModel.PersonalInfo.TwoFactorPhoneDisplay;
+
+        bool phoneIsActive = user.Is2FAEnabled &&
+            string.Equals(user.Preferred2FAMethod, "Phone", StringComparison.OrdinalIgnoreCase);
+        bool emailIsActive = user.Is2FAEnabled &&
+            string.Equals(user.Preferred2FAMethod, "Email", StringComparison.OrdinalIgnoreCase);
 
         if (!this.viewModel.PersonalInfo.HasPhoneNumber)
         {
-            this.ConfigureActionButton(this.ActionPhoneBtn, PhoneStatusBadge, PhoneStatusText, "Add", "#F1F5F9",
-                "#64748B", "Disabled");
+            this.ConfigureActionButton(this.ActionPhoneBtn, this.PhoneStatusBadge,
+                this.PhoneStatusText, "Add", "#F1F5F9", "#64748B", "Not configured");
+        }
+        else if (phoneIsActive)
+        {
+            this.ConfigureActionButton(this.ActionPhoneBtn, this.PhoneStatusBadge,
+                this.PhoneStatusText, "Remove", "#DCFCE7", "#16A34A", "Active");
         }
         else
         {
-            this.ConfigureActionButton(this.ActionPhoneBtn, PhoneStatusBadge, PhoneStatusText, "Verify", "#FFF7ED",
-                "#C2410C", "Unverified");
+            this.ConfigureActionButton(this.ActionPhoneBtn, this.PhoneStatusBadge,
+                this.PhoneStatusText, "Verify", "#FFF7ED", "#C2410C", "Unverified");
+        }
+
+        if (emailIsActive)
+        {
+            this.ConfigureActionButton(this.ActionEmailBtn, this.EmailStatusBadge,
+                this.EmailStatusText, "Remove", "#DCFCE7", "#16A34A", "Active");
+        }
+        else
+        {
+            this.ConfigureActionButton(this.ActionEmailBtn, this.EmailStatusBadge,
+                this.EmailStatusText, "Verify", "#FFF7ED", "#C2410C", "Unverified");
         }
     }
 
-    private void ConfigureActionButton(Button button, Border badge, TextBlock statusTxt, string action, string badgeBg,
-        string textCol, string status)
+    private void ConfigureActionButton(Button button, Border badge, TextBlock statusTxt,
+        string action, string badgeBg, string textCol, string status)
     {
         button.Content = action;
         statusTxt.Text = status;
@@ -412,7 +452,6 @@ public sealed partial class ProfileView : IStateObserver<ProfileState>
     {
         this.DispatcherQueue.TryEnqueue(() =>
         {
-            // --- INTERCEPTOR: Block full-page reloads if we are just toggling a switch ---
             if (this.isUpdatingToggle)
             {
                 if (state == ProfileState.Error)
@@ -420,7 +459,6 @@ public sealed partial class ProfileView : IStateObserver<ProfileState>
                     this.ShowError("Failed to save notification preferences.");
                 }
 
-                // Ignore Loading and UpdateSuccess so the screen doesn't wipe and redraw!
                 return;
             }
 
@@ -492,10 +530,10 @@ public sealed partial class ProfileView : IStateObserver<ProfileState>
         }
 
         foreach (var button in links.Select(link => new Button
-                 {
-                     Content = link.ProviderEmail ?? link.Provider,
-                     Tag = link,
-                 }))
+        {
+            Content = link.ProviderEmail ?? link.Provider,
+            Tag = link,
+        }))
         {
             button.Click += RemoveConnectedAccount_Click;
             this.OAuthLinksPanel.Children.Add(button);
@@ -505,7 +543,6 @@ public sealed partial class ProfileView : IStateObserver<ProfileState>
     private void PopulateNotificationPreferences(List<NotificationPreferenceDto>? preferences)
     {
         this.viewModel.IsInitializingView = true;
-
         this.NotificationPreferencesPanel.Children.Clear();
 
         if (preferences == null)
