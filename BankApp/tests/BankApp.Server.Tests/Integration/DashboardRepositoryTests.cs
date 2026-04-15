@@ -18,7 +18,8 @@ namespace BankApp.Server.Tests.Integration;
 /// aggregate and collection queries return correct, database-backed results.
 /// </summary>
 [Trait("Category", "Integration")]
-public sealed class DashboardRepositoryTests : IClassFixture<DatabaseFixture>, IAsyncLifetime
+[Collection("Integration")]
+public sealed class DashboardRepositoryTests : IAsyncLifetime
 {
     private readonly DatabaseFixture fixture;
     private readonly Faker<User> userFaker;
@@ -47,8 +48,12 @@ public sealed class DashboardRepositoryTests : IClassFixture<DatabaseFixture>, I
     {
         var da = new UserDataAccess(db);
         var user = this.userFaker.Generate();
-        da.Create(user);
-        return da.FindByEmail(user.Email).Value;
+        var createResult = da.Create(user);
+        createResult.IsError.Should().BeFalse(createResult.IsError ? createResult.FirstError.Description : string.Empty);
+
+        var findResult = da.FindByEmail(user.Email);
+        findResult.IsError.Should().BeFalse(findResult.IsError ? findResult.FirstError.Description : string.Empty);
+        return findResult.Value;
     }
 
     /// <summary>Inserts an account and returns the persisted entity.</summary>

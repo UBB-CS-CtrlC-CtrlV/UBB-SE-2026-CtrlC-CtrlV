@@ -17,7 +17,8 @@ namespace BankApp.Server.Tests.Integration;
 /// persisted to and retrieved from the database.
 /// </summary>
 [Trait("Category", "Integration")]
-public sealed class UserRepositoryTests : IClassFixture<DatabaseFixture>, IAsyncLifetime
+[Collection("Integration")]
+public sealed class UserRepositoryTests : IAsyncLifetime
 {
     private readonly DatabaseFixture fixture;
     private readonly Faker<User> userFaker;
@@ -86,10 +87,10 @@ public sealed class UserRepositoryTests : IClassFixture<DatabaseFixture>, IAsync
         var user = this.userFaker.Generate();
         userDa.Create(user);
         var byEmail = userDa.FindByEmail(user.Email);
-        byEmail.IsError.Should().BeFalse();
+        byEmail.IsError.Should().BeFalse(byEmail.IsError ? byEmail.FirstError.Description : string.Empty);
 
         var byId = userDa.FindById(byEmail.Value.Id);
-        byId.IsError.Should().BeFalse();
+        byId.IsError.Should().BeFalse(byId.IsError ? byId.FirstError.Description : string.Empty);
         byId.Value.Id.Should().Be(byEmail.Value.Id);
         byId.Value.Email.Should().Be(user.Email);
     }
@@ -118,16 +119,19 @@ public sealed class UserRepositoryTests : IClassFixture<DatabaseFixture>, IAsync
 
         var user = this.userFaker.Generate();
         userDa.Create(user);
-        var original = userDa.FindByEmail(user.Email).Value;
+        var original = userDa.FindByEmail(user.Email);
+        original.IsError.Should().BeFalse(original.IsError ? original.FirstError.Description : string.Empty);
 
-        original.FullName = "Diana Updated";
-        original.PhoneNumber = "+40700000000";
-        var updateResult = userDa.Update(original);
-        updateResult.IsError.Should().BeFalse();
+        var originalValue = original.Value;
+        originalValue.FullName = "Diana Updated";
+        originalValue.PhoneNumber = "+40700000000";
+        var updateResult = userDa.Update(originalValue);
+        updateResult.IsError.Should().BeFalse(updateResult.IsError ? updateResult.FirstError.Description : string.Empty);
 
-        var refreshed = userDa.FindById(original.Id).Value;
-        refreshed.FullName.Should().Be("Diana Updated");
-        refreshed.PhoneNumber.Should().Be("+40700000000");
+        var refreshed = userDa.FindById(originalValue.Id);
+        refreshed.IsError.Should().BeFalse(refreshed.IsError ? refreshed.FirstError.Description : string.Empty);
+        refreshed.Value.FullName.Should().Be("Diana Updated");
+        refreshed.Value.PhoneNumber.Should().Be("+40700000000");
     }
 
     /// <summary>
@@ -141,13 +145,16 @@ public sealed class UserRepositoryTests : IClassFixture<DatabaseFixture>, IAsync
 
         var user = this.userFaker.Generate();
         userDa.Create(user);
-        var savedUser = userDa.FindByEmail(user.Email).Value;
+        var savedUserResult = userDa.FindByEmail(user.Email);
+        savedUserResult.IsError.Should().BeFalse(savedUserResult.IsError ? savedUserResult.FirstError.Description : string.Empty);
+        var savedUser = savedUserResult.Value;
 
         userDa.IncrementFailedAttempts(savedUser.Id);
         userDa.IncrementFailedAttempts(savedUser.Id);
 
-        var updated = userDa.FindById(savedUser.Id).Value;
-        updated.FailedLoginAttempts.Should().Be(2);
+        var updated = userDa.FindById(savedUser.Id);
+        updated.IsError.Should().BeFalse(updated.IsError ? updated.FirstError.Description : string.Empty);
+        updated.Value.FailedLoginAttempts.Should().Be(2);
     }
 
     /// <summary>
@@ -161,13 +168,16 @@ public sealed class UserRepositoryTests : IClassFixture<DatabaseFixture>, IAsync
 
         var user = this.userFaker.Generate();
         userDa.Create(user);
-        var savedUser = userDa.FindByEmail(user.Email).Value;
+        var savedUserResult2 = userDa.FindByEmail(user.Email);
+        savedUserResult2.IsError.Should().BeFalse(savedUserResult2.IsError ? savedUserResult2.FirstError.Description : string.Empty);
+        var savedUser2 = savedUserResult2.Value;
 
         var lockoutEnd = DateTime.UtcNow.AddMinutes(30);
-        var lockResult = userDa.LockAccount(savedUser.Id, lockoutEnd);
-        lockResult.IsError.Should().BeFalse();
+        var lockResult = userDa.LockAccount(savedUser2.Id, lockoutEnd);
+        lockResult.IsError.Should().BeFalse(lockResult.IsError ? lockResult.FirstError.Description : string.Empty);
 
-        var locked = userDa.FindById(savedUser.Id).Value;
-        locked.IsLocked.Should().BeTrue();
+        var locked = userDa.FindById(savedUser2.Id);
+        locked.IsError.Should().BeFalse(locked.IsError ? locked.FirstError.Description : string.Empty);
+        locked.Value.IsLocked.Should().BeTrue();
     }
 }
