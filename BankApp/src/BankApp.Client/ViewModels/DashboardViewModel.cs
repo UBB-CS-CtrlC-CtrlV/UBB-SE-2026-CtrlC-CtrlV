@@ -22,6 +22,11 @@ namespace BankApp.Client.ViewModels;
 /// </summary>
 public class DashboardViewModel
 {
+    private const string CardAtStartErrorCode = "dashboard.card_at_start";
+    private const string CardAtStartErrorDescription = "Already at the first card.";
+    private const string CardAtEndErrorCode = "dashboard.card_at_end";
+    private const string CardAtEndErrorDescription = "Already at the last card.";
+
     private readonly ApiClient apiClient;
     private readonly ILogger<DashboardViewModel> logger;
     private int currentCardIndex;
@@ -150,33 +155,37 @@ public class DashboardViewModel
     /// <summary>
     /// Navigates to the previous card if possible.
     /// </summary>
-    /// <returns><see langword="true"/> if navigation occurred; otherwise, <see langword="false"/>.</returns>
-    public bool NavigatePrevious()
+    /// <returns>
+    /// <see cref="Result.Success"/> if navigation occurred;
+    /// otherwise an <see cref="Error"/> when already at the first card.
+    /// </returns>
+    public ErrorOr<Success> NavigatePrevious()
     {
-        // TODO: update this to return ErrorOr<Success>.
         if (!this.CanNavigatePrevious)
         {
-            return false;
+            return Error.Failure(code: CardAtStartErrorCode, description: CardAtStartErrorDescription);
         }
 
         this.CurrentCardIndex--;
-        return true;
+        return Result.Success;
     }
 
     /// <summary>
     /// Navigates to the next card if possible.
     /// </summary>
-    /// <returns><see langword="true"/> if navigation occurred; otherwise, <see langword="false"/>.</returns>
-    public bool NavigateNext()
+    /// <returns>
+    /// <see cref="Result.Success"/> if navigation occurred;
+    /// otherwise an <see cref="Error"/> when already at the last card.
+    /// </returns>
+    public ErrorOr<Success> NavigateNext()
     {
-        // TODO: update this to return ErrorOr<Success>.
         if (!this.CanNavigateNext)
         {
-            return false;
+            return Error.Failure(code: CardAtEndErrorCode, description: CardAtEndErrorDescription);
         }
 
         this.CurrentCardIndex++;
-        return true;
+        return Result.Success;
     }
 
     /// <summary>
@@ -232,7 +241,7 @@ public class DashboardViewModel
         this.State.SetValue(DashboardState.Loading);
         this.ErrorMessage = string.Empty;
 
-        var result = await this.apiClient.GetAsync<DashboardResponse>(ApiEndpoints.Dashboard,
+        ErrorOr<DashboardResponse> result = await this.apiClient.GetAsync<DashboardResponse>(ApiEndpoints.Dashboard,
             cancellationToken);
 
         return result.Match<ErrorOr<Success>>(dashboard =>

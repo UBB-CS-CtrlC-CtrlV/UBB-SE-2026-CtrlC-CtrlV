@@ -207,7 +207,7 @@ public sealed partial class DashboardView : IStateObserver<DashboardState>
 
     private void PrevCardButton_Click(object sender, RoutedEventArgs e)
     {
-        if (this.viewModel.NavigatePrevious())
+        if (!this.viewModel.NavigatePrevious().IsError)
         {
             this.ShowCard();
         }
@@ -215,7 +215,7 @@ public sealed partial class DashboardView : IStateObserver<DashboardState>
 
     private void NextCardButton_Click(object sender, RoutedEventArgs e)
     {
-        if (this.viewModel.NavigateNext())
+        if (!this.viewModel.NavigateNext().IsError)
         {
             this.ShowCard();
         }
