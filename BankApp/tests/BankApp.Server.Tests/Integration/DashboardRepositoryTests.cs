@@ -2,6 +2,7 @@
 // Licensed under the MIT license.
 
 using BankApp.Contracts.Entities;
+using BankApp.Contracts.Enums;
 using BankApp.Server.DataAccess;
 using BankApp.Server.DataAccess.Implementations;
 using BankApp.Server.Repositories.Implementations;
@@ -215,6 +216,6 @@ public sealed class DashboardRepositoryTests : IClassFixture<DatabaseFixture>, I
         result.IsError.Should().BeFalse(result.IsError ? result.FirstError.Description : string.Empty);
         result.Value.Should().ContainSingle();
         result.Value[0].UserId.Should().Be(user.Id);
-        result.Value[0].CardType.Should().Be("Debit");
+        result.Value[0].CardType.Should().Be(CardType.Debit);
     }
 }

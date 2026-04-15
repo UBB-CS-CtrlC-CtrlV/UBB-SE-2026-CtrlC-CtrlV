@@ -49,7 +49,7 @@ public sealed class AuthRepositoryTests : IClassFixture<DatabaseFixture>, IAsync
         var user = this.userFaker.Generate();
         var createResult = userDa.Create(user);
         createResult.IsError.Should().BeFalse(createResult.IsError ? createResult.FirstError.Description : string.Empty);
-        
+
         var findResult = userDa.FindByEmail(user.Email);
         findResult.IsError.Should().BeFalse(findResult.IsError ? findResult.FirstError.Description : string.Empty);
         return findResult.Value;
@@ -80,7 +80,7 @@ public sealed class AuthRepositoryTests : IClassFixture<DatabaseFixture>, IAsync
 
         var newUser = this.userFaker.Generate();
         var result = repo.CreateUser(newUser);
-        
+
         result.IsError.Should().BeFalse(result.IsError ? result.FirstError.Description : string.Empty);
 
         var user = userDa.FindByEmail(newUser.Email).Value;
@@ -91,7 +91,7 @@ public sealed class AuthRepositoryTests : IClassFixture<DatabaseFixture>, IAsync
                 conn,
                 "SELECT COUNT(*) FROM NotificationPreference WHERE UserId = @UserId",
                 new { UserId = user.Id }));
-        
+
         countResult.IsError.Should().BeFalse();
         countResult.Value.Should().BeGreaterThan(0, "Expected at least one notification preference to be created.");
     }
@@ -107,7 +107,7 @@ public sealed class AuthRepositoryTests : IClassFixture<DatabaseFixture>, IAsync
         var repo = MakeAuthRepo(db);
 
         var result = repo.CreateSession(user.Id, "token-abc", "Chrome", "Chrome 120", "127.0.0.1");
-        
+
         result.IsError.Should().BeFalse(result.IsError ? result.FirstError.Description : string.Empty);
         result.Value.Id.Should().BeGreaterThan(0);
         result.Value.Token.Should().Be("token-abc");
@@ -127,7 +127,7 @@ public sealed class AuthRepositoryTests : IClassFixture<DatabaseFixture>, IAsync
         repo.CreateSession(user.Id, "valid-token-123", null, null, null);
 
         var result = repo.FindSessionByToken("valid-token-123");
-        
+
         result.IsError.Should().BeFalse(result.IsError ? result.FirstError.Description : string.Empty);
         result.Value.Token.Should().Be("valid-token-123");
     }

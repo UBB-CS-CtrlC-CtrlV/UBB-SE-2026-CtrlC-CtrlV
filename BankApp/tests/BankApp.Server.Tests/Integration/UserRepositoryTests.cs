@@ -64,7 +64,7 @@ public sealed class UserRepositoryTests : IClassFixture<DatabaseFixture>, IAsync
 
         var user = this.userFaker.Generate();
         var createResult = userDa.Create(user);
-        
+
         createResult.IsError.Should().BeFalse(createResult.IsError ? createResult.FirstError.Description : string.Empty);
 
         var findResult = userDa.FindByEmail(user.Email);
