@@ -6,7 +6,9 @@ using BankApp.Server.DataAccess;
 using BankApp.Server.DataAccess.Implementations;
 using BankApp.Server.Repositories.Implementations;
 using BankApp.Server.Tests.Integration.Infrastructure;
+using Bogus;
 using Dapper;
+using FluentAssertions;
 using Xunit;
 
 namespace BankApp.Server.Tests.Integration;
@@ -16,67 +18,74 @@ namespace BankApp.Server.Tests.Integration;
 /// aggregate and collection queries return correct, database-backed results.
 /// </summary>
 [Trait("Category", "Integration")]
-public sealed class DashboardRepositoryTests : IClassFixture<DatabaseFixture>
+public sealed class DashboardRepositoryTests : IClassFixture<DatabaseFixture>, IAsyncLifetime
 {
     private readonly DatabaseFixture fixture;
+    private readonly Faker<User> userFaker;
 
     public DashboardRepositoryTests(DatabaseFixture fixture)
     {
         this.fixture = fixture;
-        this.fixture.Reset();
+
+        this.userFaker = new Faker<User>()
+            .RuleFor(u => u.Email, f => f.Internet.Email())
+            .RuleFor(u => u.PasswordHash, f => f.Internet.Password())
+            .RuleFor(u => u.FullName, f => f.Person.FullName)
+            .RuleFor(u => u.PreferredLanguage, f => "en");
     }
+
+    public Task InitializeAsync() => this.fixture.ResetAsync();
+
+    public Task DisposeAsync() => Task.CompletedTask;
 
     // ─── Helpers ─────────────────────────────────────────────────────────────
 
     private AppDbContext MakeDb() => this.fixture.CreateDbContext();
 
-    private static User MakeUser(string email) => new()
-    {
-        Email = email,
-        PasswordHash = "pw_hash",
-        FullName = "Dashboard User",
-        PreferredLanguage = "en",
-    };
-
     /// <summary>Inserts a user and returns the persisted entity.</summary>
-    private User SeedUser(AppDbContext db, string email = "dash@test.com")
+    private User SeedUser(AppDbContext db)
     {
         var da = new UserDataAccess(db);
-        da.Create(MakeUser(email));
-        return da.FindByEmail(email).Value;
+        var user = this.userFaker.Generate();
+        da.Create(user);
+        return da.FindByEmail(user.Email).Value;
     }
 
     /// <summary>Inserts an account and returns the persisted entity.</summary>
-    private Account SeedAccount(AppDbContext db, int userId)
+    private Account SeedAccount(AppDbContext db, int userId, string? iban = null)
     {
+        var faker = new Faker();
+        iban ??= faker.Finance.Iban();
+
         db.Query<int>(conn =>
         {
             conn.Execute(
                 """
                 INSERT INTO Account (UserId, AccountName, IBAN, Currency, Balance, AccountType, Status)
-                VALUES (@UserId, 'Main Account', 'RO49AAAA1B31007593840000', 'RON', 5000.00, 'Checking', 'Active')
+                VALUES (@UserId, 'Main Account', @Iban, 'RON', 5000.00, 'Checking', 'Active')
                 """,
-                new { UserId = userId });
+                new { UserId = userId, Iban = iban });
             return 0;
         });
 
         return db.Query<Account>(conn =>
             conn.QueryFirst<Account>(
-                "SELECT * FROM Account WHERE UserId = @UserId",
-                new { UserId = userId })).Value;
+                "SELECT * FROM Account WHERE UserId = @UserId AND IBAN = @Iban",
+                new { UserId = userId, Iban = iban })).Value;
     }
 
     /// <summary>Inserts a card linked to a user and account.</summary>
     private void SeedCard(AppDbContext db, int accountId, int userId)
     {
+        var faker = new Faker();
         db.Query<int>(conn =>
         {
             conn.Execute(
                 """
                 INSERT INTO Card (AccountId, UserId, CardNumber, CardholderName, ExpiryDate, CVV, CardType, Status)
-                VALUES (@AccountId, @UserId, '4111111111111111', 'Dashboard User', '2027-12-31', '123', 'Debit', 'Active')
+                VALUES (@AccountId, @UserId, @CardNumber, 'Dashboard User', '2027-12-31', '123', 'Debit', 'Active')
                 """,
-                new { AccountId = accountId, UserId = userId });
+                new { AccountId = accountId, UserId = userId, CardNumber = faker.Finance.CreditCardNumber() });
             return 0;
         });
     }
@@ -136,16 +145,16 @@ public sealed class DashboardRepositoryTests : IClassFixture<DatabaseFixture>
     public void GetAccountsByUser_ReturnsAllAccountsForUser()
     {
         var db = MakeDb();
-        var user = SeedUser(db, "accounts@test.com");
+        var user = SeedUser(db);
         SeedAccount(db, user.Id);
 
         var repo = MakeDashboardRepo(db);
         var result = repo.GetAccountsByUser(user.Id);
 
-        Assert.False(result.IsError, result.IsError ? result.FirstError.Description : string.Empty);
-        Assert.Single(result.Value);
-        Assert.Equal(user.Id, result.Value[0].UserId);
-        Assert.Equal("RON", result.Value[0].Currency);
+        result.IsError.Should().BeFalse(result.IsError ? result.FirstError.Description : string.Empty);
+        result.Value.Should().ContainSingle();
+        result.Value[0].UserId.Should().Be(user.Id);
+        result.Value[0].Currency.Should().Be("RON");
     }
 
     /// <summary>
@@ -156,15 +165,15 @@ public sealed class DashboardRepositoryTests : IClassFixture<DatabaseFixture>
     public void GetRecentTransactions_ReturnsAtMostLimitResults()
     {
         var db = MakeDb();
-        var user = SeedUser(db, "txlimit@test.com");
+        var user = SeedUser(db);
         var account = SeedAccount(db, user.Id);
         SeedTransactions(db, account.Id, 5);
 
         var repo = MakeDashboardRepo(db);
         var result = repo.GetRecentTransactions(account.Id, limit: 3);
 
-        Assert.False(result.IsError, result.IsError ? result.FirstError.Description : string.Empty);
-        Assert.Equal(3, result.Value.Count);
+        result.IsError.Should().BeFalse(result.IsError ? result.FirstError.Description : string.Empty);
+        result.Value.Should().HaveCount(3);
     }
 
     /// <summary>
@@ -174,14 +183,14 @@ public sealed class DashboardRepositoryTests : IClassFixture<DatabaseFixture>
     public void GetUnreadNotificationCount_ReturnsCorrectCount()
     {
         var db = MakeDb();
-        var user = SeedUser(db, "notifcount@test.com");
+        var user = SeedUser(db);
         SeedNotifications(db, user.Id, 4);
 
         var repo = MakeDashboardRepo(db);
         var result = repo.GetUnreadNotificationCount(user.Id);
 
-        Assert.False(result.IsError, result.IsError ? result.FirstError.Description : string.Empty);
-        Assert.Equal(4, result.Value);
+        result.IsError.Should().BeFalse(result.IsError ? result.FirstError.Description : string.Empty);
+        result.Value.Should().Be(4);
     }
 
     /// <summary>
@@ -191,16 +200,16 @@ public sealed class DashboardRepositoryTests : IClassFixture<DatabaseFixture>
     public void GetCardsByUser_ReturnsCardsForGivenUser()
     {
         var db = MakeDb();
-        var user = SeedUser(db, "cards@test.com");
+        var user = SeedUser(db);
         var account = SeedAccount(db, user.Id);
         SeedCard(db, account.Id, user.Id);
 
         var repo = MakeDashboardRepo(db);
         var result = repo.GetCardsByUser(user.Id);
 
-        Assert.False(result.IsError, result.IsError ? result.FirstError.Description : string.Empty);
-        Assert.Single(result.Value);
-        Assert.Equal(user.Id, result.Value[0].UserId);
-        Assert.Equal("Debit", result.Value[0].CardType);
+        result.IsError.Should().BeFalse(result.IsError ? result.FirstError.Description : string.Empty);
+        result.Value.Should().ContainSingle();
+        result.Value[0].UserId.Should().Be(user.Id);
+        result.Value[0].CardType.Should().Be("Debit");
     }
 }

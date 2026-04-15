@@ -6,7 +6,9 @@ using BankApp.Server.DataAccess;
 using BankApp.Server.DataAccess.Implementations;
 using BankApp.Server.Repositories.Implementations;
 using BankApp.Server.Tests.Integration.Infrastructure;
+using Bogus;
 using Dapper;
+using FluentAssertions;
 using Xunit;
 
 namespace BankApp.Server.Tests.Integration;
@@ -16,34 +18,37 @@ namespace BankApp.Server.Tests.Integration;
 /// and password-reset token lifecycle are persisted correctly.
 /// </summary>
 [Trait("Category", "Integration")]
-public sealed class AuthRepositoryTests : IClassFixture<DatabaseFixture>
+public sealed class AuthRepositoryTests : IClassFixture<DatabaseFixture>, IAsyncLifetime
 {
     private readonly DatabaseFixture fixture;
+    private readonly Faker<User> userFaker;
 
     public AuthRepositoryTests(DatabaseFixture fixture)
     {
         this.fixture = fixture;
-        this.fixture.Reset();
+
+        this.userFaker = new Faker<User>()
+            .RuleFor(u => u.Email, f => f.Internet.Email())
+            .RuleFor(u => u.PasswordHash, f => f.Internet.Password())
+            .RuleFor(u => u.FullName, f => f.Person.FullName)
+            .RuleFor(u => u.PreferredLanguage, f => "en");
     }
+
+    public Task InitializeAsync() => this.fixture.ResetAsync();
+
+    public Task DisposeAsync() => Task.CompletedTask;
 
     // ─── Helpers ─────────────────────────────────────────────────────────────
 
     private AppDbContext MakeDb() => this.fixture.CreateDbContext();
 
-    private static User MakeUser(string email) => new()
-    {
-        Email = email,
-        PasswordHash = "hash_xyz",
-        FullName = "Test User",
-        PreferredLanguage = "en",
-    };
-
     /// <summary>Creates a user and returns the persisted entity (with Id assigned).</summary>
-    private User SeedUser(AppDbContext db, string email = "user@test.com")
+    private User SeedUser(AppDbContext db)
     {
         var userDa = new UserDataAccess(db);
-        userDa.Create(MakeUser(email));
-        return userDa.FindByEmail(email).Value;
+        var user = this.userFaker.Generate();
+        userDa.Create(user);
+        return userDa.FindByEmail(user.Email).Value;
     }
 
     private AuthRepository MakeAuthRepo(AppDbContext db)
@@ -69,10 +74,12 @@ public sealed class AuthRepositoryTests : IClassFixture<DatabaseFixture>
         var userDa = new UserDataAccess(db);
         var repo = MakeAuthRepo(db);
 
-        var result = repo.CreateUser(MakeUser("new@test.com"));
-        Assert.False(result.IsError, result.IsError ? result.FirstError.Description : string.Empty);
+        var newUser = this.userFaker.Generate();
+        var result = repo.CreateUser(newUser);
+        
+        result.IsError.Should().BeFalse(result.IsError ? result.FirstError.Description : string.Empty);
 
-        var user = userDa.FindByEmail("new@test.com").Value;
+        var user = userDa.FindByEmail(newUser.Email).Value;
 
         // Verify directly via SQL count to avoid Dapper enum-mapping issue with NotificationType
         var countResult = db.Query<int>(conn =>
@@ -80,8 +87,9 @@ public sealed class AuthRepositoryTests : IClassFixture<DatabaseFixture>
                 conn,
                 "SELECT COUNT(*) FROM NotificationPreference WHERE UserId = @UserId",
                 new { UserId = user.Id }));
-        Assert.False(countResult.IsError);
-        Assert.True(countResult.Value > 0, "Expected at least one notification preference to be created.");
+        
+        countResult.IsError.Should().BeFalse();
+        countResult.Value.Should().BeGreaterThan(0, "Expected at least one notification preference to be created.");
     }
 
     /// <summary>
@@ -91,14 +99,15 @@ public sealed class AuthRepositoryTests : IClassFixture<DatabaseFixture>
     public void CreateSession_ReturnsSessionWithPositiveId()
     {
         var db = MakeDb();
-        var user = SeedUser(db, "session@test.com");
+        var user = SeedUser(db);
         var repo = MakeAuthRepo(db);
 
         var result = repo.CreateSession(user.Id, "token-abc", "Chrome", "Chrome 120", "127.0.0.1");
-        Assert.False(result.IsError, result.IsError ? result.FirstError.Description : string.Empty);
-        Assert.True(result.Value.Id > 0);
-        Assert.Equal("token-abc", result.Value.Token);
-        Assert.Equal(user.Id, result.Value.UserId);
+        
+        result.IsError.Should().BeFalse(result.IsError ? result.FirstError.Description : string.Empty);
+        result.Value.Id.Should().BeGreaterThan(0);
+        result.Value.Token.Should().Be("token-abc");
+        result.Value.UserId.Should().Be(user.Id);
     }
 
     /// <summary>
@@ -108,14 +117,15 @@ public sealed class AuthRepositoryTests : IClassFixture<DatabaseFixture>
     public void FindSessionByToken_ActiveToken_ReturnsSession()
     {
         var db = MakeDb();
-        var user = SeedUser(db, "findtoken@test.com");
+        var user = SeedUser(db);
         var repo = MakeAuthRepo(db);
 
         repo.CreateSession(user.Id, "valid-token-123", null, null, null);
 
         var result = repo.FindSessionByToken("valid-token-123");
-        Assert.False(result.IsError, result.IsError ? result.FirstError.Description : string.Empty);
-        Assert.Equal("valid-token-123", result.Value.Token);
+        
+        result.IsError.Should().BeFalse(result.IsError ? result.FirstError.Description : string.Empty);
+        result.Value.Token.Should().Be("valid-token-123");
     }
 
     /// <summary>
@@ -125,16 +135,16 @@ public sealed class AuthRepositoryTests : IClassFixture<DatabaseFixture>
     public void FindSessionByToken_RevokedToken_ReturnsNotFound()
     {
         var db = MakeDb();
-        var user = SeedUser(db, "revoked@test.com");
+        var user = SeedUser(db);
         var repo = MakeAuthRepo(db);
 
         var sessionResult = repo.CreateSession(user.Id, "revoke-me", null, null, null);
-        Assert.False(sessionResult.IsError);
+        sessionResult.IsError.Should().BeFalse();
 
         repo.UpdateSessionToken(sessionResult.Value.Id);
 
         var findResult = repo.FindSessionByToken("revoke-me");
-        Assert.True(findResult.IsError, "A revoked session should not be retrievable.");
+        findResult.IsError.Should().BeTrue("A revoked session should not be retrievable.");
     }
 
     /// <summary>
@@ -145,7 +155,7 @@ public sealed class AuthRepositoryTests : IClassFixture<DatabaseFixture>
     public void SavePasswordResetToken_ThenFindByHash_ReturnsToken()
     {
         var db = MakeDb();
-        var user = SeedUser(db, "reset@test.com");
+        var user = SeedUser(db);
         var repo = MakeAuthRepo(db);
 
         var token = new PasswordResetToken
@@ -156,13 +166,13 @@ public sealed class AuthRepositoryTests : IClassFixture<DatabaseFixture>
         };
 
         var saveResult = repo.SavePasswordResetToken(token);
-        Assert.False(saveResult.IsError, saveResult.IsError ? saveResult.FirstError.Description : string.Empty);
+        saveResult.IsError.Should().BeFalse(saveResult.IsError ? saveResult.FirstError.Description : string.Empty);
 
         var findResult = repo.FindPasswordResetToken("sha256-hash-xyz");
-        Assert.False(findResult.IsError);
-        Assert.Equal("sha256-hash-xyz", findResult.Value.TokenHash);
-        Assert.Equal(user.Id, findResult.Value.UserId);
-        Assert.Null(findResult.Value.UsedAt);
+        findResult.IsError.Should().BeFalse();
+        findResult.Value.TokenHash.Should().Be("sha256-hash-xyz");
+        findResult.Value.UserId.Should().Be(user.Id);
+        findResult.Value.UsedAt.Should().BeNull();
     }
 
     /// <summary>
@@ -172,9 +182,7 @@ public sealed class AuthRepositoryTests : IClassFixture<DatabaseFixture>
     public void MarkPasswordResetTokenAsUsed_SetsUsedAt()
     {
         var db = MakeDb();
-        var user = SeedUser(db, "markused@test.com");
-        var sessionDa = new SessionDataAccess(db);
-        var tokenDa = new PasswordResetTokenDataAccess(db);
+        var user = SeedUser(db);
         var repo = MakeAuthRepo(db);
 
         var token = new PasswordResetToken
@@ -187,13 +195,13 @@ public sealed class AuthRepositoryTests : IClassFixture<DatabaseFixture>
         repo.SavePasswordResetToken(token);
 
         var created = repo.FindPasswordResetToken("mark-used-hash");
-        Assert.False(created.IsError);
+        created.IsError.Should().BeFalse();
 
         var markResult = repo.MarkPasswordResetTokenAsUsed(created.Value.Id);
-        Assert.False(markResult.IsError, markResult.IsError ? markResult.FirstError.Description : string.Empty);
+        markResult.IsError.Should().BeFalse(markResult.IsError ? markResult.FirstError.Description : string.Empty);
 
         var afterMark = repo.FindPasswordResetToken("mark-used-hash");
-        Assert.False(afterMark.IsError);
-        Assert.NotNull(afterMark.Value.UsedAt);
+        afterMark.IsError.Should().BeFalse();
+        afterMark.Value.UsedAt.Should().NotBeNull();
     }
 }

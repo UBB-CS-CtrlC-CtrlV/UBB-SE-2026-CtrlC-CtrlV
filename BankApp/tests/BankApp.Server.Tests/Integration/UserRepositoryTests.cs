@@ -6,6 +6,8 @@ using BankApp.Server.DataAccess;
 using BankApp.Server.DataAccess.Implementations;
 using BankApp.Server.Repositories.Implementations;
 using BankApp.Server.Tests.Integration.Infrastructure;
+using Bogus;
+using FluentAssertions;
 using Xunit;
 
 namespace BankApp.Server.Tests.Integration;
@@ -15,25 +17,28 @@ namespace BankApp.Server.Tests.Integration;
 /// persisted to and retrieved from the database.
 /// </summary>
 [Trait("Category", "Integration")]
-public sealed class UserRepositoryTests : IClassFixture<DatabaseFixture>
+public sealed class UserRepositoryTests : IClassFixture<DatabaseFixture>, IAsyncLifetime
 {
     private readonly DatabaseFixture fixture;
+    private readonly Faker<User> userFaker;
 
     public UserRepositoryTests(DatabaseFixture fixture)
     {
         this.fixture = fixture;
-        this.fixture.Reset();
+
+        // Configure Bogus Faker
+        this.userFaker = new Faker<User>()
+            .RuleFor(u => u.Email, f => f.Internet.Email())
+            .RuleFor(u => u.PasswordHash, f => f.Internet.Password())
+            .RuleFor(u => u.FullName, f => f.Person.FullName)
+            .RuleFor(u => u.PreferredLanguage, f => "en");
     }
 
-    // ─── Helper ──────────────────────────────────────────────────────────────
+    public Task InitializeAsync() => this.fixture.ResetAsync();
 
-    private static User MakeUser(string email = "alice@example.com") => new()
-    {
-        Email = email,
-        PasswordHash = "hash_abc",
-        FullName = "Alice Example",
-        PreferredLanguage = "en",
-    };
+    public Task DisposeAsync() => Task.CompletedTask;
+
+    // ─── Helper ──────────────────────────────────────────────────────────────
 
     private (UserRepository repo, AppDbContext db) CreateRepo()
     {
@@ -57,15 +62,16 @@ public sealed class UserRepositoryTests : IClassFixture<DatabaseFixture>
         var db = this.fixture.CreateDbContext();
         var userDa = new UserDataAccess(db);
 
-        var user = MakeUser("bob@example.com");
+        var user = this.userFaker.Generate();
         var createResult = userDa.Create(user);
-        Assert.False(createResult.IsError, createResult.IsError ? createResult.FirstError.Description : string.Empty);
+        
+        createResult.IsError.Should().BeFalse(createResult.IsError ? createResult.FirstError.Description : string.Empty);
 
-        var findResult = userDa.FindByEmail("bob@example.com");
-        Assert.False(findResult.IsError);
-        Assert.Equal("bob@example.com", findResult.Value.Email);
-        Assert.Equal("Alice Example", findResult.Value.FullName);
-        Assert.Equal("hash_abc", findResult.Value.PasswordHash);
+        var findResult = userDa.FindByEmail(user.Email);
+        findResult.IsError.Should().BeFalse();
+        findResult.Value.Email.Should().Be(user.Email);
+        findResult.Value.FullName.Should().Be(user.FullName);
+        findResult.Value.PasswordHash.Should().Be(user.PasswordHash);
     }
 
     /// <summary>
@@ -77,14 +83,15 @@ public sealed class UserRepositoryTests : IClassFixture<DatabaseFixture>
         var db = this.fixture.CreateDbContext();
         var userDa = new UserDataAccess(db);
 
-        userDa.Create(MakeUser("charlie@example.com"));
-        var byEmail = userDa.FindByEmail("charlie@example.com");
-        Assert.False(byEmail.IsError);
+        var user = this.userFaker.Generate();
+        userDa.Create(user);
+        var byEmail = userDa.FindByEmail(user.Email);
+        byEmail.IsError.Should().BeFalse();
 
         var byId = userDa.FindById(byEmail.Value.Id);
-        Assert.False(byId.IsError);
-        Assert.Equal(byEmail.Value.Id, byId.Value.Id);
-        Assert.Equal("charlie@example.com", byId.Value.Email);
+        byId.IsError.Should().BeFalse();
+        byId.Value.Id.Should().Be(byEmail.Value.Id);
+        byId.Value.Email.Should().Be(user.Email);
     }
 
     /// <summary>
@@ -97,7 +104,7 @@ public sealed class UserRepositoryTests : IClassFixture<DatabaseFixture>
         var userDa = new UserDataAccess(db);
 
         var result = userDa.FindById(99999);
-        Assert.True(result.IsError);
+        result.IsError.Should().BeTrue();
     }
 
     /// <summary>
@@ -109,17 +116,18 @@ public sealed class UserRepositoryTests : IClassFixture<DatabaseFixture>
         var db = this.fixture.CreateDbContext();
         var userDa = new UserDataAccess(db);
 
-        userDa.Create(MakeUser("diana@example.com"));
-        var original = userDa.FindByEmail("diana@example.com").Value;
+        var user = this.userFaker.Generate();
+        userDa.Create(user);
+        var original = userDa.FindByEmail(user.Email).Value;
 
         original.FullName = "Diana Updated";
         original.PhoneNumber = "+40700000000";
         var updateResult = userDa.Update(original);
-        Assert.False(updateResult.IsError);
+        updateResult.IsError.Should().BeFalse();
 
         var refreshed = userDa.FindById(original.Id).Value;
-        Assert.Equal("Diana Updated", refreshed.FullName);
-        Assert.Equal("+40700000000", refreshed.PhoneNumber);
+        refreshed.FullName.Should().Be("Diana Updated");
+        refreshed.PhoneNumber.Should().Be("+40700000000");
     }
 
     /// <summary>
@@ -131,14 +139,15 @@ public sealed class UserRepositoryTests : IClassFixture<DatabaseFixture>
         var db = this.fixture.CreateDbContext();
         var userDa = new UserDataAccess(db);
 
-        userDa.Create(MakeUser("eve@example.com"));
-        var user = userDa.FindByEmail("eve@example.com").Value;
+        var user = this.userFaker.Generate();
+        userDa.Create(user);
+        var savedUser = userDa.FindByEmail(user.Email).Value;
 
-        userDa.IncrementFailedAttempts(user.Id);
-        userDa.IncrementFailedAttempts(user.Id);
+        userDa.IncrementFailedAttempts(savedUser.Id);
+        userDa.IncrementFailedAttempts(savedUser.Id);
 
-        var updated = userDa.FindById(user.Id).Value;
-        Assert.Equal(2, updated.FailedLoginAttempts);
+        var updated = userDa.FindById(savedUser.Id).Value;
+        updated.FailedLoginAttempts.Should().Be(2);
     }
 
     /// <summary>
@@ -150,14 +159,15 @@ public sealed class UserRepositoryTests : IClassFixture<DatabaseFixture>
         var db = this.fixture.CreateDbContext();
         var userDa = new UserDataAccess(db);
 
-        userDa.Create(MakeUser("frank@example.com"));
-        var user = userDa.FindByEmail("frank@example.com").Value;
+        var user = this.userFaker.Generate();
+        userDa.Create(user);
+        var savedUser = userDa.FindByEmail(user.Email).Value;
 
         var lockoutEnd = DateTime.UtcNow.AddMinutes(30);
-        var lockResult = userDa.LockAccount(user.Id, lockoutEnd);
-        Assert.False(lockResult.IsError);
+        var lockResult = userDa.LockAccount(savedUser.Id, lockoutEnd);
+        lockResult.IsError.Should().BeFalse();
 
-        var locked = userDa.FindById(user.Id).Value;
-        Assert.True(locked.IsLocked);
+        var locked = userDa.FindById(savedUser.Id).Value;
+        locked.IsLocked.Should().BeTrue();
     }
 }
