@@ -3,6 +3,7 @@
 // </copyright>
 
 using BankApp.Contracts.DTOs.Profile;
+using BankApp.Contracts.Entities;
 using BankApp.Contracts.Enums;
 using ErrorOr;
 
@@ -134,4 +135,27 @@ public interface IProfileService
     /// or a failure error if the hash verification throws.
     /// </returns>
     ErrorOr<bool> VerifyPassword(int userId, string password);
+
+    /// <summary>
+    /// Gets all active sessions for the specified user.
+    /// </summary>
+    /// <param name="userId">The identifier of the user.</param>
+    /// <returns>
+    /// The list of active <see cref="Session"/> on success,
+    /// a not-found error if the user does not exist,
+    /// or a failure error if the repository call fails.
+    /// </returns>
+    ErrorOr<List<Session>> GetActiveSessions(int userId);
+
+    /// <summary>
+    /// Revokes a specific session for the specified user.
+    /// </summary>
+    /// <param name="userId">The identifier of the user.</param>
+    /// <param name="sessionId">The identifier of the session to revoke.</param>
+    /// <returns>
+    /// <see cref="Result.Success"/> on success,
+    /// a not-found error if the user does not exist,
+    /// or a failure error if the revocation fails.
+    /// </returns>
+    ErrorOr<Success> RevokeSession(int userId, int sessionId);
 }

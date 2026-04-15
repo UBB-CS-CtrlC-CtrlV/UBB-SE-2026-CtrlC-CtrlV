@@ -2,14 +2,14 @@
 // Copyright (c) CtrlC CtrlV. All rights reserved.
 // </copyright>
 
+using System;
+using System.Collections.Generic;
+using System.Threading.Tasks;
 using BankApp.Client.Enums;
 using BankApp.Client.Utilities;
 using BankApp.Contracts.DTOs.Profile;
 using ErrorOr;
 using Microsoft.Extensions.Logging;
-using System;
-using System.Collections.Generic;
-using System.Threading.Tasks;
 
 namespace BankApp.Client.ViewModels;
 
