@@ -9,7 +9,7 @@ namespace BankApp.Server.DataAccess.Implementations;
 /// <summary>
 /// Provides SQL Server data access for notification preference records.
 /// </summary>
-public class NotificationPreferenceDataAccess : INotificationPreferenceDataAccess
+internal class NotificationPreferenceDataAccess : INotificationPreferenceDataAccess
 {
     private readonly AppDbContext db;
 
