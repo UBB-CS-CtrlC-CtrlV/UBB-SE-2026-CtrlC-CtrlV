@@ -79,6 +79,11 @@
         <ProjectReference Include="..\BankApp.Contracts\BankApp.Contracts.csproj"/>
     </ItemGroup>
     <ItemGroup>
+        <AssemblyAttribute Include="System.Runtime.CompilerServices.InternalsVisibleToAttribute">
+            <_Parameter1>BankApp.Client.Tests</_Parameter1>
+        </AssemblyAttribute>
+    </ItemGroup>
+    <ItemGroup>
         <Page Update="Views\NavView.xaml">
             <Generator>MSBuild:Compile</Generator>
         </Page>

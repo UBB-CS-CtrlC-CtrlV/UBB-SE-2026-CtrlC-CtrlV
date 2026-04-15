@@ -22,6 +22,9 @@ internal static class UserMessages
 
         /// <summary>Shown for any other load failure.</summary>
         internal const string LoadFailed = "We couldn't load your dashboard. Please try again.";
+
+        /// <summary>Shown when the dashboard response is missing required data.</summary>
+        internal const string IncompleteResponse = "The dashboard response was incomplete.";
     }
 
     /// <summary>Messages shown in the two-factor authentication view.</summary>

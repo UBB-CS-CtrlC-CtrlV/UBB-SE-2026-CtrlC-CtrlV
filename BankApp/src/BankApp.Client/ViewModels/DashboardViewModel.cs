@@ -8,7 +8,6 @@ using System.Globalization;
 using System.Linq;
 using System.Threading;
 using System.Threading.Tasks;
-using System.Collections.ObjectModel;
 using BankApp.Client.Enums;
 using BankApp.Client.Utilities;
 using BankApp.Contracts.DTOs.Dashboard;
@@ -153,6 +152,7 @@ public class DashboardViewModel
     /// <returns><see langword="true"/> if navigation occurred; otherwise, <see langword="false"/>.</returns>
     public bool NavigatePrevious()
     {
+        // TODO: update this to return ErrorOr<Success>.
         if (!this.CanNavigatePrevious)
         {
             return false;
@@ -168,6 +168,7 @@ public class DashboardViewModel
     /// <returns><see langword="true"/> if navigation occurred; otherwise, <see langword="false"/>.</returns>
     public bool NavigateNext()
     {
+        // TODO: update this to return ErrorOr<Success>.
         if (!this.CanNavigateNext)
         {
             return false;
@@ -239,9 +240,9 @@ public class DashboardViewModel
             {
                 if (dashboard.CurrentUser is null)
                 {
-                    this.ErrorMessage = "The dashboard response was incomplete.";
+                    this.ErrorMessage = UserMessages.Dashboard.IncompleteResponse;
                     this.State.SetValue(DashboardState.Error);
-                    return Error.Failure(description: "The dashboard response was incomplete.");
+                    return Error.Failure(description: UserMessages.Dashboard.IncompleteResponse);
                 }
 
                 this.CurrentUser = dashboard.CurrentUser;
