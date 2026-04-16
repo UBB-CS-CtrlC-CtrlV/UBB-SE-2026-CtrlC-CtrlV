@@ -32,15 +32,15 @@ public class ProfileViewModelTests
         const string phoneNumber = "0712345678";
         var vm = new PersonalInfoViewModel(this.apiClient.Object, NullLogger<PersonalInfoViewModel>.Instance);
 
-        this.apiClient.Setup(client =>
-                client.GetAsync<ProfileInfo>(It.IsAny<string>(), It.IsAny<CancellationToken>()))
+        this.apiClient
+            .Setup(client => client.GetAsync<ProfileInfo>(It.IsAny<string>(), It.IsAny<CancellationToken>()))
             .ReturnsAsync(new ProfileInfo
-            {
-                UserId = userId,
-                Email = email,
-                FullName = fullName,
-                PhoneNumber = phoneNumber,
-            });
+                {
+                    UserId = userId,
+                    Email = email,
+                    FullName = fullName,
+                    PhoneNumber = phoneNumber,
+                });
 
         // Act
         bool success = await vm.LoadProfile();
@@ -58,8 +58,8 @@ public class ProfileViewModelTests
         // Arrange
         var vm = new PersonalInfoViewModel(this.apiClient.Object, NullLogger<PersonalInfoViewModel>.Instance);
 
-        this.apiClient.Setup(client =>
-                client.GetAsync<ProfileInfo>(It.IsAny<string>(), It.IsAny<CancellationToken>()))
+        this.apiClient
+            .Setup(client => client.GetAsync<ProfileInfo>(It.IsAny<string>(), It.IsAny<CancellationToken>()))
             .ReturnsAsync(Error.Failure(description: "server down"));
 
         // Act
@@ -90,7 +90,8 @@ public class ProfileViewModelTests
         const string password = "password";
         var vm = new PersonalInfoViewModel(this.apiClient.Object, NullLogger<PersonalInfoViewModel>.Instance);
 
-        this.apiClient.Setup(client => client.PutAsync(It.IsAny<string>(), It.IsAny<UpdateProfileRequest>()))
+        this.apiClient
+            .Setup(client => client.PutAsync(It.IsAny<string>(), It.IsAny<UpdateProfileRequest>()))
             .ReturnsAsync(Result.Success);
 
         // Act
@@ -147,7 +148,8 @@ public class ProfileViewModelTests
         const string validPassword = "ValidPass1!";
         var vm = new SecurityViewModel(this.apiClient.Object, NullLogger<SecurityViewModel>.Instance);
 
-        this.apiClient.Setup(client => client.PutAsync(It.IsAny<string>(), It.IsAny<ChangePasswordRequest>()))
+        this.apiClient
+            .Setup(client => client.PutAsync(It.IsAny<string>(), It.IsAny<ChangePasswordRequest>()))
             .ReturnsAsync(Result.Success);
 
         // Act
@@ -168,7 +170,8 @@ public class ProfileViewModelTests
         const string validPassword = "ValidPass1!";
         var vm = new SecurityViewModel(this.apiClient.Object, NullLogger<SecurityViewModel>.Instance);
 
-        this.apiClient.Setup(client => client.PutAsync(It.IsAny<string>(), It.IsAny<ChangePasswordRequest>()))
+        this.apiClient
+            .Setup(client => client.PutAsync(It.IsAny<string>(), It.IsAny<ChangePasswordRequest>()))
             .ReturnsAsync(Error.Validation(code: "incorrect_password", description: "Wrong password"));
 
         // Act
@@ -186,7 +189,8 @@ public class ProfileViewModelTests
         // Arrange
         var vm = new SecurityViewModel(this.apiClient.Object, NullLogger<SecurityViewModel>.Instance);
 
-        this.apiClient.Setup(client => client.PutAsync(It.IsAny<string>(), It.IsAny<object>()))
+        this.apiClient
+            .Setup(client => client.PutAsync(It.IsAny<string>(), It.IsAny<object>()))
             .ReturnsAsync(Result.Success);
 
         // Act
@@ -203,7 +207,8 @@ public class ProfileViewModelTests
         // Arrange
         var vm = new SecurityViewModel(this.apiClient.Object, NullLogger<SecurityViewModel>.Instance);
 
-        this.apiClient.Setup(client => client.PutAsync(It.IsAny<string>(), It.IsAny<object>()))
+        this.apiClient
+            .Setup(client => client.PutAsync(It.IsAny<string>(), It.IsAny<object>()))
             .ReturnsAsync(Result.Success);
 
         // Act
@@ -220,7 +225,8 @@ public class ProfileViewModelTests
         // Arrange
         var vm = new SecurityViewModel(this.apiClient.Object, NullLogger<SecurityViewModel>.Instance);
 
-        this.apiClient.Setup(client => client.PutAsync(It.IsAny<string>(), It.IsAny<object>()))
+        this.apiClient
+            .Setup(client => client.PutAsync(It.IsAny<string>(), It.IsAny<object>()))
             .ReturnsAsync(Error.Failure(description: "server error"));
 
         // Act
@@ -240,8 +246,8 @@ public class ProfileViewModelTests
         var pref = new NotificationPreferenceDto { Id = preferenceId, EmailEnabled = false };
         vm.NotificationPreferences.Add(pref);
 
-        this.apiClient.Setup(client =>
-                client.PutAsync(It.IsAny<string>(), It.IsAny<List<NotificationPreferenceDto>>()))
+        this.apiClient
+            .Setup(client => client.PutAsync(It.IsAny<string>(), It.IsAny<List<NotificationPreferenceDto>>()))
             .ReturnsAsync(Result.Success);
 
         // Act
@@ -262,8 +268,8 @@ public class ProfileViewModelTests
         var pref = new NotificationPreferenceDto { Id = preferenceId, EmailEnabled = true };
         vm.NotificationPreferences.Add(pref);
 
-        this.apiClient.Setup(client =>
-                client.PutAsync(It.IsAny<string>(), It.IsAny<List<NotificationPreferenceDto>>()))
+        this.apiClient
+            .Setup(client => client.PutAsync(It.IsAny<string>(), It.IsAny<List<NotificationPreferenceDto>>()))
             .ReturnsAsync(Error.Failure(description: "server error"));
 
         // Act
@@ -349,8 +355,8 @@ public class ProfileViewModelTests
     public async Task LoadProfile_WhenPersonalInfoFails_SetsErrorState()
     {
         // Arrange
-        this.apiClient.Setup(client =>
-                client.GetAsync<ProfileInfo>(It.IsAny<string>(), It.IsAny<CancellationToken>()))
+        this.apiClient
+            .Setup(client => client.GetAsync<ProfileInfo>(It.IsAny<string>(), It.IsAny<CancellationToken>()))
             .ReturnsAsync(Error.Failure(description: "fail"));
 
         var profileVm = new ProfileViewModel(

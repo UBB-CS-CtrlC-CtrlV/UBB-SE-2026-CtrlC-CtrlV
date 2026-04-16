@@ -22,7 +22,7 @@ public class DashboardViewModelTests
 
     /// <summary>
     /// Initializes a new instance of the <see cref="DashboardViewModelTests"/> class.
-    /// Creates a fresh substitute and view model for each test.
+    /// Creates a fresh mock and view model for each test.
     /// </summary>
     public DashboardViewModelTests()
     {
@@ -81,8 +81,8 @@ public class DashboardViewModelTests
             ],
             UnreadNotificationCount = unreadCount,
         };
-        this.apiClient.Setup(client =>
-                client.GetAsync<DashboardResponse>(It.IsAny<string>(), It.IsAny<CancellationToken>()))
+        this.apiClient
+            .Setup(client => client.GetAsync<DashboardResponse>(It.IsAny<string>(), It.IsAny<CancellationToken>()))
             .ReturnsAsync(response);
 
         // Act
@@ -125,8 +125,8 @@ public class DashboardViewModelTests
     public async Task LoadDashboard_WhenCurrentUserIsMissing_SetsErrorState()
     {
         // Arrange
-        this.apiClient.Setup(client =>
-                client.GetAsync<DashboardResponse>(It.IsAny<string>(), It.IsAny<CancellationToken>()))
+        this.apiClient
+            .Setup(client => client.GetAsync<DashboardResponse>(It.IsAny<string>(), It.IsAny<CancellationToken>()))
             .ReturnsAsync(new DashboardResponse());
 
         // Act
@@ -142,8 +142,8 @@ public class DashboardViewModelTests
     public async Task LoadDashboard_WhenUnauthorized_SetsSessionExpiredMessage()
     {
         // Arrange
-        this.apiClient.Setup(client =>
-                client.GetAsync<DashboardResponse>(It.IsAny<string>(), It.IsAny<CancellationToken>()))
+        this.apiClient
+            .Setup(client => client.GetAsync<DashboardResponse>(It.IsAny<string>(), It.IsAny<CancellationToken>()))
             .ReturnsAsync(Error.Unauthorized());
 
         // Act
@@ -159,8 +159,8 @@ public class DashboardViewModelTests
     public async Task LoadDashboard_WhenNotFound_SetsNotFoundMessage()
     {
         // Arrange
-        this.apiClient.Setup(client =>
-                client.GetAsync<DashboardResponse>(It.IsAny<string>(), It.IsAny<CancellationToken>()))
+        this.apiClient
+            .Setup(client => client.GetAsync<DashboardResponse>(It.IsAny<string>(), It.IsAny<CancellationToken>()))
             .ReturnsAsync(Error.NotFound());
 
         // Act
@@ -176,8 +176,8 @@ public class DashboardViewModelTests
     public async Task LoadDashboard_WhenApiFailureOccurs_SetsLoadFailedMessage()
     {
         // Arrange
-        this.apiClient.Setup(client =>
-                client.GetAsync<DashboardResponse>(It.IsAny<string>(), It.IsAny<CancellationToken>()))
+        this.apiClient
+            .Setup(client => client.GetAsync<DashboardResponse>(It.IsAny<string>(), It.IsAny<CancellationToken>()))
             .ReturnsAsync(Error.Failure());
 
         // Act
@@ -432,8 +432,8 @@ public class DashboardViewModelTests
             Cards = cards,
         };
 
-        this.apiClient.Setup(client =>
-                client.GetAsync<DashboardResponse>(It.IsAny<string>(), It.IsAny<CancellationToken>()))
+        this.apiClient
+            .Setup(client => client.GetAsync<DashboardResponse>(It.IsAny<string>(), It.IsAny<CancellationToken>()))
             .ReturnsAsync(response);
 
         await this.viewModel.LoadDashboard();
