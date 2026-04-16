@@ -8,7 +8,7 @@ using ErrorOr;
 using FluentAssertions;
 using Microsoft.AspNetCore.Http;
 using Microsoft.AspNetCore.Mvc;
-using Moq;
+using NSubstitute;
 using Xunit;
 
 namespace BankApp.Server.Tests.Unit;
@@ -20,11 +20,11 @@ namespace BankApp.Server.Tests.Unit;
 [Trait("Category", "Unit")]
 public sealed class DashboardControllerTests
 {
-    private readonly Mock<IDashboardService> dashService = new Mock<IDashboardService>();
+    private readonly IDashboardService dashService = SubstituteFactory.CreateDashboardService();
 
     private DashboardController CreateController(int authenticatedUserId)
     {
-        var controller = new DashboardController(this.dashService.Object);
+        var controller = new DashboardController(this.dashService);
         var httpContext = new DefaultHttpContext();
         httpContext.Items["UserId"] = authenticatedUserId;
         controller.ControllerContext = new ControllerContext { HttpContext = httpContext };
@@ -36,7 +36,7 @@ public sealed class DashboardControllerTests
     {
         // Arrange
         var response = new DashboardResponse();
-        this.dashService.Setup(s => s.GetDashboardData(1)).Returns(response);
+        this.dashService.GetDashboardData(1).Returns(response);
         var controller = this.CreateController(1);
 
         // Act
@@ -51,8 +51,7 @@ public sealed class DashboardControllerTests
     public void GetDashboard_WhenUserNotFound_ReturnsNotFound()
     {
         // Arrange
-        this.dashService
-            .Setup(s => s.GetDashboardData(99))
+        this.dashService.GetDashboardData(99)
             .Returns(Error.NotFound("user_not_found", "User not found."));
 
         var controller = this.CreateController(99);

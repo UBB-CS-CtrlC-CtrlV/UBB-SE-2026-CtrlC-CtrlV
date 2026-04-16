@@ -9,7 +9,7 @@ using ErrorOr;
 using FluentAssertions;
 using Microsoft.AspNetCore.Http;
 using Microsoft.AspNetCore.Mvc;
-using Moq;
+using NSubstitute;
 using Xunit;
 
 namespace BankApp.Server.Tests.Unit;
@@ -21,11 +21,11 @@ namespace BankApp.Server.Tests.Unit;
 [Trait("Category", "Unit")]
 public sealed class ProfileControllerTests
 {
-    private readonly Mock<IProfileService> profileService = new Mock<IProfileService>();
+    private readonly IProfileService profileService = SubstituteFactory.CreateProfileService();
 
     private ProfileController CreateController(int authenticatedUserId)
     {
-        var controller = new ProfileController(this.profileService.Object);
+        var controller = new ProfileController(this.profileService);
         var httpContext = new DefaultHttpContext();
         httpContext.Items["UserId"] = authenticatedUserId;
         controller.ControllerContext = new ControllerContext { HttpContext = httpContext };
@@ -37,7 +37,7 @@ public sealed class ProfileControllerTests
     {
         // Arrange
         var info = new ProfileInfo();
-        this.profileService.Setup(s => s.GetProfile(1)).Returns(info);
+        this.profileService.GetProfile(1).Returns(info);
         var controller = this.CreateController(1);
 
         // Act
@@ -52,8 +52,7 @@ public sealed class ProfileControllerTests
     public void GetProfile_WhenUserNotFound_ReturnsNotFound()
     {
         // Arrange
-        this.profileService
-            .Setup(s => s.GetProfile(99))
+        this.profileService.GetProfile(99)
             .Returns(Error.NotFound("not_found", "User not found."));
 
         var controller = this.CreateController(99);
@@ -70,7 +69,7 @@ public sealed class ProfileControllerTests
     {
         // Arrange
         var request = new UpdateProfileRequest();
-        this.profileService.Setup(s => s.UpdatePersonalInfo(request)).Returns(Result.Success);
+        this.profileService.UpdatePersonalInfo(request).Returns(Result.Success);
         var controller = this.CreateController(1);
 
         // Act
@@ -85,7 +84,7 @@ public sealed class ProfileControllerTests
     {
         // Arrange
         var request = new ChangePasswordRequest();
-        this.profileService.Setup(s => s.ChangePassword(request)).Returns(Result.Success);
+        this.profileService.ChangePassword(request).Returns(Result.Success);
         var controller = this.CreateController(1);
 
         // Act
@@ -99,7 +98,7 @@ public sealed class ProfileControllerTests
     public void VerifyPassword_WhenCorrect_ReturnsOkWithTrue()
     {
         // Arrange
-        this.profileService.Setup(s => s.VerifyPassword(1, "correct")).Returns(true);
+        this.profileService.VerifyPassword(1, "correct").Returns(true);
         var controller = this.CreateController(1);
 
         // Act
@@ -115,7 +114,7 @@ public sealed class ProfileControllerTests
     {
         // Arrange
         var sessions = new List<SessionDto>();
-        this.profileService.Setup(s => s.GetActiveSessions(1)).Returns(sessions);
+        this.profileService.GetActiveSessions(1).Returns(sessions);
         var controller = this.CreateController(1);
 
         // Act
@@ -129,7 +128,7 @@ public sealed class ProfileControllerTests
     public void RevokeSession_WhenSuccess_ReturnsNoContent()
     {
         // Arrange
-        this.profileService.Setup(s => s.RevokeSession(1, 5)).Returns(Result.Success);
+        this.profileService.RevokeSession(1, 5).Returns(Result.Success);
         var controller = this.CreateController(1);
 
         // Act
@@ -144,7 +143,7 @@ public sealed class ProfileControllerTests
     {
         // Arrange
         var links = new List<OAuthLinkDto>();
-        this.profileService.Setup(s => s.GetOAuthLinks(1)).Returns(links);
+        this.profileService.GetOAuthLinks(1).Returns(links);
         var controller = this.CreateController(1);
 
         // Act
@@ -159,7 +158,7 @@ public sealed class ProfileControllerTests
     {
         // Arrange
         var prefs = new List<NotificationPreferenceDto>();
-        this.profileService.Setup(s => s.GetNotificationPreferences(1)).Returns(prefs);
+        this.profileService.GetNotificationPreferences(1).Returns(prefs);
         var controller = this.CreateController(1);
 
         // Act
@@ -174,7 +173,7 @@ public sealed class ProfileControllerTests
     {
         // Arrange
         var prefs = new List<NotificationPreferenceDto>();
-        this.profileService.Setup(s => s.UpdateNotificationPreferences(1, prefs)).Returns(Result.Success);
+        this.profileService.UpdateNotificationPreferences(1, prefs).Returns(Result.Success);
         var controller = this.CreateController(1);
 
         // Act
@@ -188,7 +187,7 @@ public sealed class ProfileControllerTests
     public void Enable2FA_WhenSuccess_ReturnsNoContent()
     {
         // Arrange
-        this.profileService.Setup(s => s.Enable2FA(1, TwoFactorMethod.Email)).Returns(Result.Success);
+        this.profileService.Enable2FA(1, TwoFactorMethod.Email).Returns(Result.Success);
         var controller = this.CreateController(1);
 
         // Act
@@ -202,7 +201,7 @@ public sealed class ProfileControllerTests
     public void Disable2FA_WhenSuccess_ReturnsNoContent()
     {
         // Arrange
-        this.profileService.Setup(s => s.Disable2FA(1)).Returns(Result.Success);
+        this.profileService.Disable2FA(1).Returns(Result.Success);
         var controller = this.CreateController(1);
 
         // Act

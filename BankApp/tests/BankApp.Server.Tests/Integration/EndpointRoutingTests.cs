@@ -5,12 +5,11 @@
 using System.Net;
 using System.Net.Http.Headers;
 using System.Net.Http.Json;
-using BankApp.Contracts.DTOs.Auth;
 using BankApp.Contracts.Entities;
 using BankApp.Server.Tests.Integration.Infrastructure;
 using ErrorOr;
 using FluentAssertions;
-using Moq;
+using NSubstitute;
 
 namespace BankApp.Server.Tests.Integration;
 
@@ -35,13 +34,11 @@ public class EndpointRoutingTests : IClassFixture<BankAppWebFactory>
         this.factory = factory;
         this.client = factory.CreateClient();
 
-        // By default, configure the mocks so that a valid token is accepted.
-        factory.JwtServiceMock
-            .Setup(j => j.ExtractUserId(ValidToken))
+        // By default, configure the substitutes so that a valid token is accepted.
+        factory.JwtServiceSub.ExtractUserId(ValidToken)
             .Returns(1);
 
-        factory.AuthRepositoryMock
-            .Setup(r => r.FindSessionByToken(ValidToken))
+        factory.AuthRepositorySub.FindSessionByToken(ValidToken)
             .Returns(new Session { UserId = 1, Token = ValidToken });
     }
 
@@ -158,8 +155,7 @@ public class EndpointRoutingTests : IClassFixture<BankAppWebFactory>
     [Fact]
     public async Task ProtectedEndpoint_WithInvalidToken_Returns401()
     {
-        this.factory.JwtServiceMock
-            .Setup(j => j.ExtractUserId("bad-token"))
+        this.factory.JwtServiceSub.ExtractUserId("bad-token")
             .Returns(Error.Unauthorized("Token.Invalid", "Token is invalid."));
 
         HttpRequestMessage request = new HttpRequestMessage(HttpMethod.Get, "/api/dashboard");
@@ -178,12 +174,10 @@ public class EndpointRoutingTests : IClassFixture<BankAppWebFactory>
     {
         const string orphanToken = "orphan-token";
 
-        this.factory.JwtServiceMock
-            .Setup(j => j.ExtractUserId(orphanToken))
+        this.factory.JwtServiceSub.ExtractUserId(orphanToken)
             .Returns(1);
 
-        this.factory.AuthRepositoryMock
-            .Setup(r => r.FindSessionByToken(orphanToken))
+        this.factory.AuthRepositorySub.FindSessionByToken(orphanToken)
             .Returns(Error.NotFound("Session.NotFound", "Session not found."));
 
         HttpRequestMessage request = new HttpRequestMessage(HttpMethod.Get, "/api/dashboard");
@@ -195,7 +189,7 @@ public class EndpointRoutingTests : IClassFixture<BankAppWebFactory>
     }
 
     // ------------------------------------------------------------------
-    // Unknown routes return 404, not 401
+    // Unknown routes
     // ------------------------------------------------------------------
 
     /// <summary>
