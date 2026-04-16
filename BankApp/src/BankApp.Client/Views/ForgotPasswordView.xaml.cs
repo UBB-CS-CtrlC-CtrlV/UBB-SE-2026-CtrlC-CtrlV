@@ -116,6 +116,13 @@ public sealed partial class ForgotPasswordView : IStateObserver<ForgotPasswordSt
     private async void ResetPasswordButton_Click(object sender, RoutedEventArgs e)
     {
         this.StatusInfoBar.IsOpen = false;
+
+        if (this.NewPasswordBox.Password != this.ConfirmPasswordBox.Password)
+        {
+            this.ShowMessage("Passwords do not match.", InfoBarSeverity.Warning);
+            return;
+        }
+
         this.ShowLoading();
         await this.viewModel.ResetPassword(this.NewPasswordBox.Password, this.TokenBox.Text.Trim());
     }
