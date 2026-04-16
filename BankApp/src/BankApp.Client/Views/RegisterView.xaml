@@ -34,7 +34,20 @@
 
         <!-- Right Panel - Register Form -->
         <Grid Grid.Column="1" Padding="60">
-            <StackPanel VerticalAlignment="Center" MaxWidth="360" 
+
+            <!-- Back to Login - subtle, top-left corner -->
+            <Button x:Name="BackToLoginButton"
+                    Click="BackToLoginButton_Click"
+                    VerticalAlignment="Top" HorizontalAlignment="Left"
+                    Background="Transparent" BorderThickness="0"
+                    Padding="4,4">
+                <StackPanel Orientation="Horizontal" Spacing="6">
+                    <FontIcon Glyph="&#xE76B;" FontSize="12" Foreground="#999"/>
+                    <TextBlock Text="Back to login" FontSize="12" Foreground="#999"/>
+                </StackPanel>
+            </Button>
+
+            <StackPanel VerticalAlignment="Center" MaxWidth="360"
                         HorizontalAlignment="Center">
 
                 <TextBlock Text="Create account" FontSize="28" FontWeight="SemiBold" 
@@ -102,14 +115,6 @@
                 <InfoBar x:Name="SuccessInfoBar" IsOpen="False" Severity="Success"
                          Message="Account created! You can now sign in."
                          Margin="0,16,0,0" IsClosable="True"/>
-
-                <!-- Back to Login (shown after successful registration) -->
-                <Button x:Name="BackToLoginButton" Content="Back to Login"
-                        Click="BackToLoginButton_Click"
-                        HorizontalAlignment="Stretch" Height="42"
-                        Background="Transparent" BorderBrush="#4ECDC4" BorderThickness="1"
-                        Foreground="#4ECDC4" FontWeight="SemiBold"
-                        CornerRadius="6" Margin="0,8,0,0"/>
 
             </StackPanel>
         </Grid>
