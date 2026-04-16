@@ -38,8 +38,6 @@ public sealed class AuthRepositoryTests : IClassFixture<DatabaseFixture>, IAsync
 
     public Task DisposeAsync() => Task.CompletedTask;
 
-    // ─── Helpers ─────────────────────────────────────────────────────────────
-
     private AppDbContext MakeDb() => this.fixture.CreateDbContext();
 
     /// <summary>Creates a user and returns the persisted entity (with Id assigned).</summary>
@@ -64,8 +62,6 @@ public sealed class AuthRepositoryTests : IClassFixture<DatabaseFixture>, IAsync
         var notifDa = new NotificationPreferenceDataAccess(db);
         return new AuthRepository(userDa, sessionDa, oauthDa, tokenDa, notifDa);
     }
-
-    // ─── Tests ────────────────────────────────────────────────────────────────
 
     /// <summary>
     /// CreateUser via AuthRepository should also auto-create notification preferences

@@ -39,8 +39,6 @@ public sealed class DashboardRepositoryTests : IClassFixture<DatabaseFixture>, I
 
     public Task DisposeAsync() => Task.CompletedTask;
 
-    // ─── Helpers ─────────────────────────────────────────────────────────────
-
     private AppDbContext MakeDb() => this.fixture.CreateDbContext();
 
     /// <summary>Inserts a user and returns the persisted entity.</summary>
@@ -141,8 +139,6 @@ public sealed class DashboardRepositoryTests : IClassFixture<DatabaseFixture>, I
             new TransactionDataAccess(db),
             new NotificationDataAccess(db));
     }
-
-    // ─── Tests ────────────────────────────────────────────────────────────────
 
     /// <summary>
     /// GetAccountsByUser should return all accounts belonging to the specified user.

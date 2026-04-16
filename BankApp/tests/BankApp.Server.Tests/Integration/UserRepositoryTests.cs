@@ -38,8 +38,6 @@ public sealed class UserRepositoryTests : IClassFixture<DatabaseFixture>, IAsync
 
     public Task DisposeAsync() => Task.CompletedTask;
 
-    // ─── Helper ──────────────────────────────────────────────────────────────
-
     private (UserRepository repo, AppDbContext db) CreateRepo()
     {
         var db = this.fixture.CreateDbContext();
@@ -50,8 +48,6 @@ public sealed class UserRepositoryTests : IClassFixture<DatabaseFixture>, IAsync
         var repo = new UserRepository(userDa, sessionDa, oauthDa, notifDa);
         return (repo, db);
     }
-
-    // ─── Tests ────────────────────────────────────────────────────────────────
 
     /// <summary>
     /// After creating a user, FindByEmail should return a user with matching fields.
