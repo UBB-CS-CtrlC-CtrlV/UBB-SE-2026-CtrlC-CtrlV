@@ -4,7 +4,6 @@ using BankApp.Client.Enums;
 using BankApp.Contracts.DTOs.Profile;
 using ErrorOr;
 using FluentAssertions;
-using Microsoft.Extensions.Configuration;
 using Microsoft.Extensions.Logging.Abstractions;
 using Moq;
 
@@ -17,10 +16,7 @@ namespace BankApp.Client.Tests;
 /// </summary>
 public class ProfileViewModelTests
 {
-    private readonly Mock<ApiClient> apiClient = new Mock<ApiClient>(
-        MockBehavior.Strict,
-        new ConfigurationBuilder().Build(),
-        NullLogger<ApiClient>.Instance);
+    private readonly Mock<IApiClient> apiClient = new Mock<IApiClient>(MockBehavior.Strict);
 
     [Fact]
     public async Task LoadProfile_WhenApiReturnsProfile_PopulatesProfileInfo()
@@ -30,7 +26,7 @@ public class ProfileViewModelTests
         const string email = "test@bank.com";
         const string fullName = "Test User";
         const string phoneNumber = "0712345678";
-        var vm = new PersonalInfoViewModel(this.apiClient.Object, NullLogger<PersonalInfoViewModel>.Instance);
+        var viewModel = new PersonalInfoViewModel(this.apiClient.Object, NullLogger<PersonalInfoViewModel>.Instance);
 
         this.apiClient
             .Setup(client => client.GetAsync<ProfileInfo>(It.IsAny<string>(), It.IsAny<CancellationToken>()))
@@ -43,42 +39,42 @@ public class ProfileViewModelTests
                 });
 
         // Act
-        bool success = await vm.LoadProfile();
+        bool success = await viewModel.LoadProfile();
 
         // Assert
         success.Should().BeTrue();
-        vm.State.Value.Should().Be(ProfileState.UpdateSuccess);
-        vm.ProfileInfo.FullName.Should().Be(fullName);
-        vm.ProfileInfo.Email.Should().Be(email);
+        viewModel.State.Value.Should().Be(ProfileState.UpdateSuccess);
+        viewModel.ProfileInfo.FullName.Should().Be(fullName);
+        viewModel.ProfileInfo.Email.Should().Be(email);
     }
 
     [Fact]
     public async Task LoadProfile_WhenApiFails_SetsErrorState()
     {
         // Arrange
-        var vm = new PersonalInfoViewModel(this.apiClient.Object, NullLogger<PersonalInfoViewModel>.Instance);
+        var viewModel = new PersonalInfoViewModel(this.apiClient.Object, NullLogger<PersonalInfoViewModel>.Instance);
 
         this.apiClient
             .Setup(client => client.GetAsync<ProfileInfo>(It.IsAny<string>(), It.IsAny<CancellationToken>()))
             .ReturnsAsync(Error.Failure(description: "server down"));
 
         // Act
-        bool success = await vm.LoadProfile();
+        bool success = await viewModel.LoadProfile();
 
         // Assert
         success.Should().BeFalse();
-        vm.State.Value.Should().Be(ProfileState.Error);
+        viewModel.State.Value.Should().Be(ProfileState.Error);
     }
 
     [Fact]
     public void HasPhoneNumber_WhenPhoneNumberIsNotSet_ReturnsFalseAndShowsPlaceholder()
     {
         // Arrange
-        var vm = new PersonalInfoViewModel(this.apiClient.Object, NullLogger<PersonalInfoViewModel>.Instance);
+        var viewModel = new PersonalInfoViewModel(this.apiClient.Object, NullLogger<PersonalInfoViewModel>.Instance);
 
         // Assert
-        vm.HasPhoneNumber.Should().BeFalse();
-        vm.TwoFactorPhoneDisplay.Should().Be(UserMessages.Profile.NoPhoneNumber);
+        viewModel.HasPhoneNumber.Should().BeFalse();
+        viewModel.TwoFactorPhoneDisplay.Should().Be(UserMessages.Profile.NoPhoneNumber);
     }
 
     [Fact]
@@ -88,18 +84,18 @@ public class ProfileViewModelTests
         const string phoneNumber = "0712345678";
         const string address = "123 Main St";
         const string password = "password";
-        var vm = new PersonalInfoViewModel(this.apiClient.Object, NullLogger<PersonalInfoViewModel>.Instance);
+        var viewModel = new PersonalInfoViewModel(this.apiClient.Object, NullLogger<PersonalInfoViewModel>.Instance);
 
         this.apiClient
             .Setup(client => client.PutAsync(It.IsAny<string>(), It.IsAny<UpdateProfileRequest>()))
             .ReturnsAsync(Result.Success);
 
         // Act
-        bool success = await vm.UpdatePersonalInfo(phoneNumber, address, password);
+        bool success = await viewModel.UpdatePersonalInfo(phoneNumber, address, password);
 
         // Assert
         success.Should().BeFalse();
-        vm.State.Value.Should().Be(ProfileState.Error);
+        viewModel.State.Value.Should().Be(ProfileState.Error);
     }
 
     [Fact]
@@ -109,15 +105,15 @@ public class ProfileViewModelTests
         const int userId = 1;
         const string currentPassword = "old";
         const string shortPassword = "short";
-        var vm = new SecurityViewModel(this.apiClient.Object, NullLogger<SecurityViewModel>.Instance);
+        var viewModel = new SecurityViewModel(this.apiClient.Object, NullLogger<SecurityViewModel>.Instance);
 
         // Act
-        (bool success, string error) = await vm.ChangePassword(userId, currentPassword, shortPassword, shortPassword);
+        (bool success, string error) = await viewModel.ChangePassword(userId, currentPassword, shortPassword, shortPassword);
 
         // Assert
         success.Should().BeFalse();
         error.Should().Be(UserMessages.Security.MinimumLengthRequired);
-        vm.State.Value.Should().Be(ProfileState.Idle);
+        viewModel.State.Value.Should().Be(ProfileState.Idle);
     }
 
     [Fact]
@@ -128,15 +124,15 @@ public class ProfileViewModelTests
         const string currentPassword = "old";
         const string newPassword = "LongEnough1!";
         const string confirmPassword = "Different1!";
-        var vm = new SecurityViewModel(this.apiClient.Object, NullLogger<SecurityViewModel>.Instance);
+        var viewModel = new SecurityViewModel(this.apiClient.Object, NullLogger<SecurityViewModel>.Instance);
 
         // Act
-        (bool success, string error) = await vm.ChangePassword(userId, currentPassword, newPassword, confirmPassword);
+        (bool success, string error) = await viewModel.ChangePassword(userId, currentPassword, newPassword, confirmPassword);
 
         // Assert
         success.Should().BeFalse();
         error.Should().Be(UserMessages.Security.PasswordMismatch);
-        vm.State.Value.Should().Be(ProfileState.Idle);
+        viewModel.State.Value.Should().Be(ProfileState.Idle);
     }
 
     [Fact]
@@ -146,19 +142,19 @@ public class ProfileViewModelTests
         const int userId = 1;
         const string currentPassword = "old";
         const string validPassword = "ValidPass1!";
-        var vm = new SecurityViewModel(this.apiClient.Object, NullLogger<SecurityViewModel>.Instance);
+        var viewModel = new SecurityViewModel(this.apiClient.Object, NullLogger<SecurityViewModel>.Instance);
 
         this.apiClient
             .Setup(client => client.PutAsync(It.IsAny<string>(), It.IsAny<ChangePasswordRequest>()))
             .ReturnsAsync(Result.Success);
 
         // Act
-        (bool success, string error) = await vm.ChangePassword(userId, currentPassword, validPassword, validPassword);
+        (bool success, string error) = await viewModel.ChangePassword(userId, currentPassword, validPassword, validPassword);
 
         // Assert
         success.Should().BeTrue();
         error.Should().BeEmpty();
-        vm.State.Value.Should().Be(ProfileState.UpdateSuccess);
+        viewModel.State.Value.Should().Be(ProfileState.UpdateSuccess);
     }
 
     [Fact]
@@ -168,73 +164,73 @@ public class ProfileViewModelTests
         const int userId = 1;
         const string wrongPassword = "wrong";
         const string validPassword = "ValidPass1!";
-        var vm = new SecurityViewModel(this.apiClient.Object, NullLogger<SecurityViewModel>.Instance);
+        var viewModel = new SecurityViewModel(this.apiClient.Object, NullLogger<SecurityViewModel>.Instance);
 
         this.apiClient
             .Setup(client => client.PutAsync(It.IsAny<string>(), It.IsAny<ChangePasswordRequest>()))
             .ReturnsAsync(Error.Validation(code: "incorrect_password", description: "Wrong password"));
 
         // Act
-        (bool success, string error) = await vm.ChangePassword(userId, wrongPassword, validPassword, validPassword);
+        (bool success, string error) = await viewModel.ChangePassword(userId, wrongPassword, validPassword, validPassword);
 
         // Assert
         success.Should().BeFalse();
         error.Should().Be(UserMessages.Security.IncorrectPassword);
-        vm.State.Value.Should().Be(ProfileState.Error);
+        viewModel.State.Value.Should().Be(ProfileState.Error);
     }
 
     [Fact]
     public async Task SetTwoFactorEnabled_WhenApiSucceeds_ReturnsTrue()
     {
         // Arrange
-        var vm = new SecurityViewModel(this.apiClient.Object, NullLogger<SecurityViewModel>.Instance);
+        var viewModel = new SecurityViewModel(this.apiClient.Object, NullLogger<SecurityViewModel>.Instance);
 
         this.apiClient
             .Setup(client => client.PutAsync(It.IsAny<string>(), It.IsAny<object>()))
             .ReturnsAsync(Result.Success);
 
         // Act
-        bool result = await vm.SetTwoFactorEnabled(true);
+        bool result = await viewModel.SetTwoFactorEnabled(true);
 
         // Assert
         result.Should().BeTrue();
-        vm.State.Value.Should().Be(ProfileState.UpdateSuccess);
+        viewModel.State.Value.Should().Be(ProfileState.UpdateSuccess);
     }
 
     [Fact]
     public async Task DisableTwoFactor_WhenApiSucceeds_ReturnsTrue()
     {
         // Arrange
-        var vm = new SecurityViewModel(this.apiClient.Object, NullLogger<SecurityViewModel>.Instance);
+        var viewModel = new SecurityViewModel(this.apiClient.Object, NullLogger<SecurityViewModel>.Instance);
 
         this.apiClient
             .Setup(client => client.PutAsync(It.IsAny<string>(), It.IsAny<object>()))
             .ReturnsAsync(Result.Success);
 
         // Act
-        bool result = await vm.SetTwoFactorEnabled(false);
+        bool result = await viewModel.SetTwoFactorEnabled(false);
 
         // Assert
         result.Should().BeTrue();
-        vm.State.Value.Should().Be(ProfileState.UpdateSuccess);
+        viewModel.State.Value.Should().Be(ProfileState.UpdateSuccess);
     }
 
     [Fact]
     public async Task SetTwoFactorEnabled_WhenApiFails_ReturnsFalse()
     {
         // Arrange
-        var vm = new SecurityViewModel(this.apiClient.Object, NullLogger<SecurityViewModel>.Instance);
+        var viewModel = new SecurityViewModel(this.apiClient.Object, NullLogger<SecurityViewModel>.Instance);
 
         this.apiClient
             .Setup(client => client.PutAsync(It.IsAny<string>(), It.IsAny<object>()))
             .ReturnsAsync(Error.Failure(description: "server error"));
 
         // Act
-        bool result = await vm.SetTwoFactorEnabled(true);
+        bool result = await viewModel.SetTwoFactorEnabled(true);
 
         // Assert
         result.Should().BeFalse();
-        vm.State.Value.Should().Be(ProfileState.Error);
+        viewModel.State.Value.Should().Be(ProfileState.Error);
     }
 
     [Fact]
@@ -242,21 +238,21 @@ public class ProfileViewModelTests
     {
         // Arrange
         const int preferenceId = 1;
-        var vm = new NotificationsViewModel(this.apiClient.Object, NullLogger<NotificationsViewModel>.Instance);
-        var pref = new NotificationPreferenceDto { Id = preferenceId, EmailEnabled = false };
-        vm.NotificationPreferences.Add(pref);
+        var viewModel = new NotificationsViewModel(this.apiClient.Object, NullLogger<NotificationsViewModel>.Instance);
+        var notificationPreference = new NotificationPreferenceDto { Id = preferenceId, EmailEnabled = false };
+        viewModel.NotificationPreferences.Add(notificationPreference);
 
         this.apiClient
             .Setup(client => client.PutAsync(It.IsAny<string>(), It.IsAny<List<NotificationPreferenceDto>>()))
             .ReturnsAsync(Result.Success);
 
         // Act
-        bool success = await vm.ToggleNotificationPreference(pref, true);
+        bool success = await viewModel.ToggleNotificationPreference(notificationPreference, true);
 
         // Assert
         success.Should().BeTrue();
-        pref.EmailEnabled.Should().BeTrue();
-        vm.State.Value.Should().Be(ProfileState.UpdateSuccess);
+        notificationPreference.EmailEnabled.Should().BeTrue();
+        viewModel.State.Value.Should().Be(ProfileState.UpdateSuccess);
     }
 
     [Fact]
@@ -264,30 +260,30 @@ public class ProfileViewModelTests
     {
         // Arrange
         const int preferenceId = 1;
-        var vm = new NotificationsViewModel(this.apiClient.Object, NullLogger<NotificationsViewModel>.Instance);
-        var pref = new NotificationPreferenceDto { Id = preferenceId, EmailEnabled = true };
-        vm.NotificationPreferences.Add(pref);
+        var viewModel = new NotificationsViewModel(this.apiClient.Object, NullLogger<NotificationsViewModel>.Instance);
+        var notificationPreference = new NotificationPreferenceDto { Id = preferenceId, EmailEnabled = true };
+        viewModel.NotificationPreferences.Add(notificationPreference);
 
         this.apiClient
             .Setup(client => client.PutAsync(It.IsAny<string>(), It.IsAny<List<NotificationPreferenceDto>>()))
             .ReturnsAsync(Error.Failure(description: "server error"));
 
         // Act
-        bool success = await vm.ToggleNotificationPreference(pref, false);
+        bool success = await viewModel.ToggleNotificationPreference(notificationPreference, false);
 
         // Assert
         success.Should().BeFalse();
-        pref.EmailEnabled.Should().BeTrue();
+        notificationPreference.EmailEnabled.Should().BeTrue();
     }
 
     [Fact]
     public async Task UpdateNotificationPreferences_WhenListIsEmpty_ReturnsFalse()
     {
         // Arrange
-        var vm = new NotificationsViewModel(this.apiClient.Object, NullLogger<NotificationsViewModel>.Instance);
+        var viewModel = new NotificationsViewModel(this.apiClient.Object, NullLogger<NotificationsViewModel>.Instance);
 
         // Act
-        bool result = await vm.UpdateNotificationPreferences(new List<NotificationPreferenceDto>());
+        bool result = await viewModel.UpdateNotificationPreferences(new List<NotificationPreferenceDto>());
 
         // Assert
         result.Should().BeFalse();
@@ -299,16 +295,16 @@ public class ProfileViewModelTests
         // Arrange
         const string provider = "Google";
         const string providerEmail = "user@gmail.com";
-        var vm = new OAuthViewModel(this.apiClient.Object, NullLogger<OAuthViewModel>.Instance);
-        vm.OAuthLinks.Add(new OAuthLinkDto { Provider = provider, ProviderEmail = providerEmail });
+        var viewModel = new OAuthViewModel(this.apiClient.Object, NullLogger<OAuthViewModel>.Instance);
+        viewModel.OAuthLinks.Add(new OAuthLinkDto { Provider = provider, ProviderEmail = providerEmail });
 
         // Act
-        bool result = await vm.UnlinkOAuth(provider);
+        bool result = await viewModel.UnlinkOAuth(provider);
 
         // Assert
         result.Should().BeTrue();
-        vm.OAuthLinks.Should().BeEmpty();
-        vm.State.Value.Should().Be(ProfileState.UpdateSuccess);
+        viewModel.OAuthLinks.Should().BeEmpty();
+        viewModel.State.Value.Should().Be(ProfileState.UpdateSuccess);
     }
 
     [Fact]
@@ -316,10 +312,10 @@ public class ProfileViewModelTests
     {
         // Arrange
         const string provider = "GitHub";
-        var vm = new OAuthViewModel(this.apiClient.Object, NullLogger<OAuthViewModel>.Instance);
+        var viewModel = new OAuthViewModel(this.apiClient.Object, NullLogger<OAuthViewModel>.Instance);
 
         // Act
-        bool result = await vm.UnlinkOAuth(provider);
+        bool result = await viewModel.UnlinkOAuth(provider);
 
         // Assert
         result.Should().BeFalse();
@@ -329,11 +325,11 @@ public class ProfileViewModelTests
     public async Task UnlinkOAuth_WhenProviderIsNullOrWhitespace_ReturnsFalse()
     {
         // Arrange
-        var vm = new OAuthViewModel(this.apiClient.Object, NullLogger<OAuthViewModel>.Instance);
+        var viewModel = new OAuthViewModel(this.apiClient.Object, NullLogger<OAuthViewModel>.Instance);
 
         // Assert
-        (await vm.UnlinkOAuth(string.Empty)).Should().BeFalse();
-        (await vm.UnlinkOAuth("  ")).Should().BeFalse();
+        (await viewModel.UnlinkOAuth(string.Empty)).Should().BeFalse();
+        (await viewModel.UnlinkOAuth("  ")).Should().BeFalse();
     }
 
     [Fact]
@@ -341,11 +337,11 @@ public class ProfileViewModelTests
     {
         // Arrange
         const string provider = "Google";
-        var vm = new OAuthViewModel(this.apiClient.Object, NullLogger<OAuthViewModel>.Instance);
-        vm.OAuthLinks.Add(new OAuthLinkDto { Provider = provider });
+        var viewModel = new OAuthViewModel(this.apiClient.Object, NullLogger<OAuthViewModel>.Instance);
+        viewModel.OAuthLinks.Add(new OAuthLinkDto { Provider = provider });
 
         // Act
-        bool result = await vm.LinkOAuth(provider);
+        bool result = await viewModel.LinkOAuth(provider);
 
         // Assert
         result.Should().BeFalse();

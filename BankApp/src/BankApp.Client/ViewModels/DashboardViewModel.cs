@@ -27,7 +27,7 @@ public class DashboardViewModel
     private const string CardAtEndErrorCode = "dashboard.card_at_end";
     private const string CardAtEndErrorDescription = "Already at the last card.";
 
-    private readonly ApiClient apiClient;
+    private readonly IApiClient apiClient;
     private readonly ILogger<DashboardViewModel> logger;
     private int currentCardIndex;
 
@@ -36,7 +36,7 @@ public class DashboardViewModel
     /// </summary>
     /// <param name="apiClient">The API client used for dashboard data requests.</param>
     /// <param name="logger">Logger for dashboard load errors.</param>
-    public DashboardViewModel(ApiClient apiClient, ILogger<DashboardViewModel> logger)
+    public DashboardViewModel(IApiClient apiClient, ILogger<DashboardViewModel> logger)
     {
         this.apiClient = apiClient;
         this.logger = logger ?? throw new ArgumentNullException(nameof(logger));

@@ -19,7 +19,7 @@ namespace BankApp.Client.ViewModels;
 /// </summary>
 public class LoginViewModel
 {
-    private readonly ApiClient apiClient;
+    private readonly IApiClient apiClient;
     private readonly IConfiguration configuration;
     private readonly ILogger<LoginViewModel> logger;
 
@@ -33,13 +33,13 @@ public class LoginViewModel
     /// <c>OAuth:Google:RedirectUri</c> when performing an OAuth login.
     /// </param>
     /// <param name="logger">Logger for login flow diagnostics and errors.</param>
-    public LoginViewModel(ApiClient apiClient, IConfiguration configuration, ILogger<LoginViewModel> logger)
+    public LoginViewModel(IApiClient apiClient, IConfiguration configuration, ILogger<LoginViewModel> logger)
     {
         this.apiClient = apiClient ?? throw new ArgumentNullException(nameof(apiClient));
         this.configuration = configuration ?? throw new ArgumentNullException(nameof(configuration));
         this.logger = logger ?? throw new ArgumentNullException(nameof(logger));
 
-        // Determine initial state from configuration. If ApiClient is misconfigured the
+        // Determine initial state from configuration. If the API client is misconfigured the
         // view starts in ServerNotConfigured so the login form is disabled immediately.
         // The view reads State.Value after subscribing to apply this initial state.
         LoginState initialState = apiClient.EnsureConfigured().Match(

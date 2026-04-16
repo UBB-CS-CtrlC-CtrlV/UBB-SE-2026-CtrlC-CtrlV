@@ -19,11 +19,11 @@ public class ForgotPasswordViewModel
 
     /// <summary>
     /// Initializes a new instance of the <see cref="ForgotPasswordViewModel"/> class
-    /// using a real <see cref="ApiClient"/> and the production system clock.
+    /// using a real <see cref="IApiClient"/> and the production system clock.
     /// </summary>
     /// <param name="apiClient">The HTTP client used for API calls.</param>
     /// <exception cref="ArgumentNullException">Thrown when <paramref name="apiClient"/> is null.</exception>
-    public ForgotPasswordViewModel(ApiClient apiClient)
+    public ForgotPasswordViewModel(IApiClient apiClient)
         : this(new PasswordRecoveryManager(
             apiClient ?? throw new ArgumentNullException(nameof(apiClient)),
             new SystemClock()))

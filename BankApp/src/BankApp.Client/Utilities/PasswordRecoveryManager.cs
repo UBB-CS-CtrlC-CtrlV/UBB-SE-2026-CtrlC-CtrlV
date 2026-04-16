@@ -12,13 +12,13 @@ namespace BankApp.Client.Utilities;
 
 /// <summary>
 /// Implements <see cref="IPasswordRecoveryManager"/> by delegating network calls
-/// to <see cref="ApiClient"/> and managing resend-throttling via <see cref="ISystemClock"/>.
+/// to <see cref="IApiClient"/> and managing resend-throttling via <see cref="ISystemClock"/>.
 /// </summary>
 public class PasswordRecoveryManager : IPasswordRecoveryManager
 {
     private const int ResendCooldownSeconds = 60;
 
-    private readonly ApiClient apiClient;
+    private readonly IApiClient apiClient;
     private readonly ISystemClock clock;
 
     private DateTime? lastCodeRequestedAt;
@@ -29,7 +29,7 @@ public class PasswordRecoveryManager : IPasswordRecoveryManager
     /// <param name="apiClient">The HTTP client used to reach the auth API.</param>
     /// <param name="clock">The system clock abstraction used for throttle calculations.</param>
     /// <exception cref="ArgumentNullException">Thrown when any parameter is null.</exception>
-    public PasswordRecoveryManager(ApiClient apiClient, ISystemClock clock)
+    public PasswordRecoveryManager(IApiClient apiClient, ISystemClock clock)
     {
         this.apiClient = apiClient ?? throw new ArgumentNullException(nameof(apiClient));
         this.clock = clock ?? throw new ArgumentNullException(nameof(clock));

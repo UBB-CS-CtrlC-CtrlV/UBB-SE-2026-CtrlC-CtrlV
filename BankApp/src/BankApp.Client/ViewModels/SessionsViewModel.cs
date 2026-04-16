@@ -18,7 +18,7 @@ namespace BankApp.Client.ViewModels;
 /// </summary>
 public class SessionsViewModel
 {
-    private readonly ApiClient apiClient;
+    private readonly IApiClient apiClient;
     private readonly ILogger<SessionsViewModel> logger;
 
     /// <summary>
@@ -26,7 +26,7 @@ public class SessionsViewModel
     /// </summary>
     /// <param name="apiClient">The API client used for session operations.</param>
     /// <param name="logger">Logger for session operation errors.</param>
-    public SessionsViewModel(ApiClient apiClient, ILogger<SessionsViewModel> logger)
+    public SessionsViewModel(IApiClient apiClient, ILogger<SessionsViewModel> logger)
     {
         this.apiClient = apiClient ?? throw new ArgumentNullException(nameof(apiClient));
         this.logger = logger ?? throw new ArgumentNullException(nameof(logger));

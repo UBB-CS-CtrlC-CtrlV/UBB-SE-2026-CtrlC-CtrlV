@@ -19,7 +19,7 @@ namespace BankApp.Client.ViewModels;
 /// </summary>
 public class SecurityViewModel
 {
-    private readonly ApiClient apiClient;
+    private readonly IApiClient apiClient;
     private readonly ILogger<SecurityViewModel> logger;
 
     /// <summary>
@@ -27,7 +27,7 @@ public class SecurityViewModel
     /// </summary>
     /// <param name="apiClient">The API client used for security operations.</param>
     /// <param name="logger">Logger for security operation errors.</param>
-    public SecurityViewModel(ApiClient apiClient, ILogger<SecurityViewModel> logger)
+    public SecurityViewModel(IApiClient apiClient, ILogger<SecurityViewModel> logger)
     {
         this.apiClient = apiClient ?? throw new ArgumentNullException(nameof(apiClient));
         this.logger = logger ?? throw new ArgumentNullException(nameof(logger));

@@ -24,7 +24,7 @@ public sealed partial class TwoFactorView : Page, IStateObserver<TwoFactorState>
 {
     private readonly TwoFactorViewModel viewModel;
     private readonly IAppNavigationService navigationService;
-    private readonly ApiClient apiClient;
+    private readonly IApiClient apiClient;
 
     /// <summary>
     /// Initializes a new instance of the <see cref="TwoFactorView"/> class.
@@ -32,7 +32,7 @@ public sealed partial class TwoFactorView : Page, IStateObserver<TwoFactorState>
     /// <param name="viewModel">The view model that drives OTP verification logic and exposes two-factor state.</param>
     /// <param name="navigationService">Used to navigate to other pages in response to state changes.</param>
     /// <param name="apiClient">Used to clear authentication state when the user cancels and returns to login.</param>
-    public TwoFactorView(TwoFactorViewModel viewModel, IAppNavigationService navigationService, ApiClient apiClient)
+    public TwoFactorView(TwoFactorViewModel viewModel, IAppNavigationService navigationService, IApiClient apiClient)
     {
         this.InitializeComponent();
 

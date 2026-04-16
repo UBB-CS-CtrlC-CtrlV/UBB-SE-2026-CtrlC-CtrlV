@@ -187,12 +187,10 @@ public sealed partial class ProfileView : IStateObserver<ProfileState>
             ? TwoFactorMethod.Phone
             : TwoFactorMethod.Email;
 
-        bool success = await this.viewModel.Security.EnableTwoFactor(method);
+        bool success = await this.viewModel.EnableTwoFactor(method);
 
         if (success)
         {
-            this.viewModel.ProfileInfo.Is2FAEnabled = true;
-            this.viewModel.ProfileInfo.Preferred2FAMethod = this.pendingTwoFactorAuthType;
             this.viewModel.IsInitializingView = true;
             this.TwoFactorToggle.IsOn = true;
             this.viewModel.IsInitializingView = false;
@@ -244,8 +242,8 @@ public sealed partial class ProfileView : IStateObserver<ProfileState>
     {
         var deferral = args.GetDeferral();
 
-        var newPwd = this.NewPasswordBox.Password;
-        var confirmPwd = this.ConfirmPasswordBox.Password;
+        var newPassword = this.NewPasswordBox.Password;
+        var confirmPassword = this.ConfirmPasswordBox.Password;
 
         var userId = this.viewModel.ProfileInfo.UserId;
         if (userId == null)
@@ -258,7 +256,7 @@ public sealed partial class ProfileView : IStateObserver<ProfileState>
         }
 
         var (success, errorMessage) = await this.viewModel.Security.ChangePassword(
-            userId.Value, this.verifiedPassword, newPwd, confirmPwd);
+            userId.Value, this.verifiedPassword, newPassword, confirmPassword);
 
         if (success)
         {
@@ -283,11 +281,9 @@ public sealed partial class ProfileView : IStateObserver<ProfileState>
 
         if (button?.Content.ToString() == "Remove")
         {
-            bool success = await this.viewModel.Security.DisableTwoFactor();
+            bool success = await this.viewModel.DisableTwoFactor();
             if (success)
             {
-                this.viewModel.ProfileInfo.Is2FAEnabled = false;
-                this.viewModel.ProfileInfo.Preferred2FAMethod = null;
                 this.viewModel.IsInitializingView = true;
                 this.TwoFactorToggle.IsOn = false;
                 this.viewModel.IsInitializingView = false;
@@ -316,7 +312,7 @@ public sealed partial class ProfileView : IStateObserver<ProfileState>
             return;
         }
 
-        var success = await this.viewModel.Security.SetTwoFactorEnabled(this.TwoFactorToggle.IsOn);
+        bool success = await this.viewModel.SetEmailTwoFactorEnabled(this.TwoFactorToggle.IsOn);
 
         if (!success)
         {
@@ -327,7 +323,6 @@ public sealed partial class ProfileView : IStateObserver<ProfileState>
         }
         else
         {
-            this.viewModel.ProfileInfo.Is2FAEnabled = this.TwoFactorToggle.IsOn;
             this.Update2FaVisuals();
         }
     }
@@ -363,7 +358,7 @@ public sealed partial class ProfileView : IStateObserver<ProfileState>
         if (sender is ToggleSwitch { Tag: NotificationPreferenceDto preference } toggle)
         {
             this.isUpdatingToggle = true;
-            await this.viewModel.Notifications.ToggleNotificationPreference(preference, toggle.IsOn);
+            await this.viewModel.ToggleNotificationPreference(preference, toggle.IsOn);
             this.isUpdatingToggle = false;
 
             this.viewModel.IsInitializingView = true;
@@ -384,20 +379,14 @@ public sealed partial class ProfileView : IStateObserver<ProfileState>
 
     private void Update2FaVisuals()
     {
-        var user = this.viewModel.ProfileInfo;
         this.TwoFactorPhoneDisplay.Text = this.viewModel.PersonalInfo.TwoFactorPhoneDisplay;
-
-        bool phoneIsActive = user.Is2FAEnabled &&
-            string.Equals(user.Preferred2FAMethod, "Phone", StringComparison.OrdinalIgnoreCase);
-        bool emailIsActive = user.Is2FAEnabled &&
-            string.Equals(user.Preferred2FAMethod, "Email", StringComparison.OrdinalIgnoreCase);
 
         if (!this.viewModel.PersonalInfo.HasPhoneNumber)
         {
             this.ConfigureActionButton(this.ActionPhoneBtn, this.PhoneStatusBadge,
                 this.PhoneStatusText, "Add", "#F1F5F9", "#64748B", "Not configured");
         }
-        else if (phoneIsActive)
+        else if (this.viewModel.IsPhoneTwoFactorActive)
         {
             this.ConfigureActionButton(this.ActionPhoneBtn, this.PhoneStatusBadge,
                 this.PhoneStatusText, "Remove", "#DCFCE7", "#16A34A", "Active");
@@ -408,7 +397,7 @@ public sealed partial class ProfileView : IStateObserver<ProfileState>
                 this.PhoneStatusText, "Verify", "#FFF7ED", "#C2410C", "Unverified");
         }
 
-        if (emailIsActive)
+        if (this.viewModel.IsEmailTwoFactorActive)
         {
             this.ConfigureActionButton(this.ActionEmailBtn, this.EmailStatusBadge,
                 this.EmailStatusText, "Remove", "#DCFCE7", "#16A34A", "Active");
@@ -420,11 +409,11 @@ public sealed partial class ProfileView : IStateObserver<ProfileState>
         }
     }
 
-    private void ConfigureActionButton(Button button, Border badge, TextBlock statusTxt,
+    private void ConfigureActionButton(Button button, Border badge, TextBlock statusText,
         string action, string badgeBg, string textCol, string status)
     {
         button.Content = action;
-        statusTxt.Text = status;
+        statusText.Text = status;
     }
 
     private void ShowLoading(bool visible)
@@ -620,33 +609,15 @@ public sealed partial class ProfileView : IStateObserver<ProfileState>
         this.SessionsListPanel.Children.Clear();
         this.NoSessionsText.Visibility = Visibility.Collapsed;
 
-        int? userId = this.viewModel.ProfileInfo.UserId;
-        if (userId == null)
-        {
-            this.SessionsErrorBar.Message = "User not loaded.";
-            this.SessionsErrorBar.IsOpen = true;
-            return false;
-        }
-
-        bool loaded = await this.viewModel.Sessions.LoadSessionsAsync(userId.Value);
+        (bool loaded, string? errorMessage) = await this.viewModel.LoadSessionsForCurrentUser();
         if (!loaded)
         {
-            this.SessionsErrorBar.Message = "Failed to load active sessions.";
+            this.SessionsErrorBar.Message = errorMessage ?? "Failed to load active sessions.";
             this.SessionsErrorBar.IsOpen = true;
             return false;
         }
 
-        if (this.viewModel.Sessions.ActiveSessions.Count == 0)
-        {
-            this.NoSessionsText.Visibility = Visibility.Visible;
-            return true;
-        }
-
-        foreach (SessionDto session in this.viewModel.Sessions.ActiveSessions)
-        {
-            this.SessionsListPanel.Children.Add(this.BuildSessionCard(session));
-        }
-
+        this.RenderSessions();
         return true;
     }
 
@@ -728,21 +699,35 @@ public sealed partial class ProfileView : IStateObserver<ProfileState>
             return;
         }
 
-        bool success = await this.viewModel.Sessions.RevokeSessionAsync(sessionId);
+        (bool success, string? errorMessage) = await this.viewModel.RevokeSessionAndReload(sessionId);
 
         if (success)
         {
-            bool reloaded = await this.LoadSessionsAsync();
-            if (reloaded)
-            {
-                this.SessionsSuccessBar.Message = "Session revoked successfully.";
-                this.SessionsSuccessBar.IsOpen = true;
-            }
+            this.RenderSessions();
+            this.SessionsSuccessBar.Message = "Session revoked successfully.";
+            this.SessionsSuccessBar.IsOpen = true;
         }
         else
         {
-            this.SessionsErrorBar.Message = "Failed to revoke session.";
+            this.SessionsErrorBar.Message = errorMessage ?? "Failed to revoke session.";
             this.SessionsErrorBar.IsOpen = true;
+        }
+    }
+
+    private void RenderSessions()
+    {
+        this.SessionsListPanel.Children.Clear();
+        this.NoSessionsText.Visibility = Visibility.Collapsed;
+
+        if (this.viewModel.Sessions.ActiveSessions.Count == 0)
+        {
+            this.NoSessionsText.Visibility = Visibility.Visible;
+            return;
+        }
+
+        foreach (SessionDto session in this.viewModel.Sessions.ActiveSessions)
+        {
+            this.SessionsListPanel.Children.Add(this.BuildSessionCard(session));
         }
     }
 }

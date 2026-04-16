@@ -7,6 +7,7 @@ using System.Threading.Tasks;
 using BankApp.Client.Utilities;
 using BankApp.Contracts.DTOs.Profile;
 using BankApp.Client.Enums;
+using BankApp.Contracts.Enums;
 using Microsoft.Extensions.Logging;
 
 namespace BankApp.Client.ViewModels;
@@ -88,6 +89,20 @@ public class ProfileViewModel
     public ProfileInfo ProfileInfo => this.PersonalInfo.ProfileInfo;
 
     /// <summary>
+    /// Gets a value indicating whether phone-based two-factor authentication is active.
+    /// </summary>
+    public bool IsPhoneTwoFactorActive =>
+        this.ProfileInfo.Is2FAEnabled &&
+        string.Equals(this.ProfileInfo.Preferred2FAMethod, nameof(TwoFactorMethod.Phone), StringComparison.OrdinalIgnoreCase);
+
+    /// <summary>
+    /// Gets a value indicating whether email-based two-factor authentication is active.
+    /// </summary>
+    public bool IsEmailTwoFactorActive =>
+        this.ProfileInfo.Is2FAEnabled &&
+        string.Equals(this.ProfileInfo.Preferred2FAMethod, nameof(TwoFactorMethod.Email), StringComparison.OrdinalIgnoreCase);
+
+    /// <summary>
     /// Loads the current user's profile, OAuth links, and notification preferences.
     /// Each request is issued sequentially; the load stops at the first failure.
     /// </summary>
@@ -116,6 +131,103 @@ public class ProfileViewModel
 
         this.State.SetValue(ProfileState.UpdateSuccess);
         return true;
+    }
+
+    /// <summary>
+    /// Enables two-factor authentication and updates the local profile state when successful.
+    /// </summary>
+    /// <param name="method">The two-factor delivery method to enable.</param>
+    /// <returns><see langword="true"/> if two-factor authentication was enabled; otherwise, <see langword="false"/>.</returns>
+    public async Task<bool> EnableTwoFactor(TwoFactorMethod method)
+    {
+        bool success = await this.Security.EnableTwoFactor(method);
+        if (!success)
+        {
+            return false;
+        }
+
+        this.ProfileInfo.Is2FAEnabled = true;
+        this.ProfileInfo.Preferred2FAMethod = method.ToString();
+        return true;
+    }
+
+    /// <summary>
+    /// Disables two-factor authentication and updates the local profile state when successful.
+    /// </summary>
+    /// <returns><see langword="true"/> if two-factor authentication was disabled; otherwise, <see langword="false"/>.</returns>
+    public async Task<bool> DisableTwoFactor()
+    {
+        bool success = await this.Security.DisableTwoFactor();
+        if (!success)
+        {
+            return false;
+        }
+
+        this.ProfileInfo.Is2FAEnabled = false;
+        this.ProfileInfo.Preferred2FAMethod = null;
+        return true;
+    }
+
+    /// <summary>
+    /// Sets email two-factor authentication from the profile toggle and updates local state.
+    /// </summary>
+    /// <param name="enabled"><see langword="true"/> to enable email two-factor authentication; otherwise, disable it.</param>
+    /// <returns><see langword="true"/> if the setting was updated; otherwise, <see langword="false"/>.</returns>
+    public async Task<bool> SetEmailTwoFactorEnabled(bool enabled)
+    {
+        bool success = await this.Security.SetTwoFactorEnabled(enabled);
+        if (!success)
+        {
+            return false;
+        }
+
+        this.ProfileInfo.Is2FAEnabled = enabled;
+        this.ProfileInfo.Preferred2FAMethod = enabled ? nameof(TwoFactorMethod.Email) : null;
+        return true;
+    }
+
+    /// <summary>
+    /// Toggles a notification preference and lets the notification model roll back on failure.
+    /// </summary>
+    /// <param name="preference">The preference to toggle.</param>
+    /// <param name="enabled">The new enabled value.</param>
+    /// <returns><see langword="true"/> if the preference was saved; otherwise, <see langword="false"/>.</returns>
+    public Task<bool> ToggleNotificationPreference(NotificationPreferenceDto preference, bool enabled)
+    {
+        return this.Notifications.ToggleNotificationPreference(preference, enabled);
+    }
+
+    /// <summary>
+    /// Loads sessions for the currently loaded user.
+    /// </summary>
+    /// <returns>A result indicating whether sessions were loaded and why loading may have failed.</returns>
+    public async Task<(bool Success, string? ErrorMessage)> LoadSessionsForCurrentUser()
+    {
+        int? userId = this.ProfileInfo.UserId;
+        if (userId == null)
+        {
+            return (false, "User not loaded.");
+        }
+
+        bool loaded = await this.Sessions.LoadSessionsAsync(userId.Value);
+        return loaded ? (true, null) : (false, "Failed to load active sessions.");
+    }
+
+    /// <summary>
+    /// Revokes a session and reloads the current user's active sessions.
+    /// </summary>
+    /// <param name="sessionId">The identifier of the session to revoke.</param>
+    /// <returns>A result indicating whether the revoke and reload flow completed.</returns>
+    public async Task<(bool Success, string? ErrorMessage)> RevokeSessionAndReload(int sessionId)
+    {
+        bool revoked = await this.Sessions.RevokeSessionAsync(sessionId);
+        if (!revoked)
+        {
+            return (false, "Failed to revoke session.");
+        }
+
+        (bool loaded, string? errorMessage) = await this.LoadSessionsForCurrentUser();
+        return loaded ? (true, null) : (false, errorMessage);
     }
 
     /// <summary>

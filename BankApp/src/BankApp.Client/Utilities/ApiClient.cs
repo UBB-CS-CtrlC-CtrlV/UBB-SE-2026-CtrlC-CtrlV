@@ -18,7 +18,7 @@ namespace BankApp.Client.Utilities;
 /// <summary>
 /// Provides a thin wrapper around <see cref="HttpClient"/> for the application's API calls.
 /// </summary>
-public class ApiClient
+public class ApiClient : IApiClient
 {
     private readonly HttpClient httpClient;
     private readonly ILogger<ApiClient> logger;

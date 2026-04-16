@@ -29,13 +29,13 @@ public static class ServiceCollectionExtensions
     /// <returns>The same <see cref="IServiceCollection"/> instance for chaining.</returns>
     public static IServiceCollection AddClientServices(this IServiceCollection services, IConfiguration configuration)
     {
-        // IConfiguration is registered as a singleton so ApiClient and ViewModels can
+        // IConfiguration is registered as a singleton so IApiClient and ViewModels can
         // receive it via constructor injection without reaching back into the composition root.
         services.AddSingleton<IConfiguration>(configuration);
 
         // One HttpClient instance must be shared for the entire
         // application lifetime to avoid socket exhaustion.
-        services.AddSingleton<ApiClient>();
+        services.AddSingleton<IApiClient, ApiClient>();
 
         // Navigation state must be the same
         // object throughout the app.

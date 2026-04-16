@@ -17,7 +17,7 @@ namespace BankApp.Client.ViewModels;
 /// </summary>
 public class PersonalInfoViewModel
 {
-    private readonly ApiClient apiClient;
+    private readonly IApiClient apiClient;
     private readonly ILogger<PersonalInfoViewModel> logger;
 
     /// <summary>
@@ -25,7 +25,7 @@ public class PersonalInfoViewModel
     /// </summary>
     /// <param name="apiClient">The API client used for profile operations.</param>
     /// <param name="logger">Logger for personal info operation errors.</param>
-    public PersonalInfoViewModel(ApiClient apiClient, ILogger<PersonalInfoViewModel> logger)
+    public PersonalInfoViewModel(IApiClient apiClient, ILogger<PersonalInfoViewModel> logger)
     {
         this.apiClient = apiClient ?? throw new ArgumentNullException(nameof(apiClient));
         this.logger = logger ?? throw new ArgumentNullException(nameof(logger));

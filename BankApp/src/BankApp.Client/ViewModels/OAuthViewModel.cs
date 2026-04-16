@@ -18,7 +18,7 @@ namespace BankApp.Client.ViewModels;
 /// </summary>
 public class OAuthViewModel
 {
-    private readonly ApiClient apiClient;
+    private readonly IApiClient apiClient;
     private readonly ILogger<OAuthViewModel> logger;
 
     /// <summary>
@@ -26,7 +26,7 @@ public class OAuthViewModel
     /// </summary>
     /// <param name="apiClient">The API client used for OAuth operations.</param>
     /// <param name="logger">Logger for OAuth operation errors.</param>
-    public OAuthViewModel(ApiClient apiClient, ILogger<OAuthViewModel> logger)
+    public OAuthViewModel(IApiClient apiClient, ILogger<OAuthViewModel> logger)
     {
         this.apiClient = apiClient ?? throw new ArgumentNullException(nameof(apiClient));
         this.logger = logger ?? throw new ArgumentNullException(nameof(logger));

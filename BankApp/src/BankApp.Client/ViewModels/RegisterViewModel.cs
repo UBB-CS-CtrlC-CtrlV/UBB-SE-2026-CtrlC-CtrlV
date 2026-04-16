@@ -18,7 +18,7 @@ namespace BankApp.Client.ViewModels;
 /// </summary>
 public class RegisterViewModel
 {
-    private readonly ApiClient apiClient;
+    private readonly IApiClient apiClient;
     private readonly IConfiguration configuration;
     private readonly ILogger<RegisterViewModel> logger;
 
@@ -32,7 +32,7 @@ public class RegisterViewModel
     /// <c>OAuth:Google:RedirectUri</c> when performing an OAuth registration.
     /// </param>
     /// <param name="logger">Logger for registration flow errors.</param>
-    public RegisterViewModel(ApiClient apiClient, IConfiguration configuration, ILogger<RegisterViewModel> logger)
+    public RegisterViewModel(IApiClient apiClient, IConfiguration configuration, ILogger<RegisterViewModel> logger)
     {
         this.apiClient = apiClient ?? throw new ArgumentNullException(nameof(apiClient));
         this.configuration = configuration ?? throw new ArgumentNullException(nameof(configuration));

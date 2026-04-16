@@ -26,7 +26,7 @@ public partial class TwoFactorViewModel : INotifyPropertyChanged
     private const int ResendCooldownSeconds = 30;
     private const int OtpRequiredLength = 6;
 
-    private readonly ApiClient apiClient;
+    private readonly IApiClient apiClient;
     private readonly ICountdownTimer countdownTimer;
     private readonly ILogger<TwoFactorViewModel> logger;
 
@@ -46,7 +46,7 @@ public partial class TwoFactorViewModel : INotifyPropertyChanged
     /// in production or a test double in unit tests.
     /// </param>
     /// <param name="logger">Logger for OTP verification and resend errors.</param>
-    public TwoFactorViewModel(ApiClient apiClient, ICountdownTimer countdownTimer, ILogger<TwoFactorViewModel> logger)
+    public TwoFactorViewModel(IApiClient apiClient, ICountdownTimer countdownTimer, ILogger<TwoFactorViewModel> logger)
     {
         this.apiClient = apiClient ?? throw new ArgumentNullException(nameof(apiClient));
         this.countdownTimer = countdownTimer ?? throw new ArgumentNullException(nameof(countdownTimer));

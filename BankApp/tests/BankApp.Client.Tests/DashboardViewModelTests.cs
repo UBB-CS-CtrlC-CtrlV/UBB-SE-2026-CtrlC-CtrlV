@@ -6,7 +6,6 @@ using BankApp.Contracts.DTOs.Dashboard;
 using BankApp.Contracts.Enums;
 using ErrorOr;
 using FluentAssertions;
-using Microsoft.Extensions.Configuration;
 using Microsoft.Extensions.Logging.Abstractions;
 using Moq;
 
@@ -17,7 +16,7 @@ namespace BankApp.Client.Tests;
 /// </summary>
 public class DashboardViewModelTests
 {
-    private readonly Mock<ApiClient> apiClient;
+    private readonly Mock<IApiClient> apiClient;
     private readonly DashboardViewModel viewModel;
 
     /// <summary>
@@ -26,10 +25,7 @@ public class DashboardViewModelTests
     /// </summary>
     public DashboardViewModelTests()
     {
-        this.apiClient = new Mock<ApiClient>(
-            MockBehavior.Strict,
-            new ConfigurationBuilder().Build(),
-            NullLogger<ApiClient>.Instance);
+        this.apiClient = new Mock<IApiClient>(MockBehavior.Strict);
         this.viewModel = new DashboardViewModel(this.apiClient.Object, NullLogger<DashboardViewModel>.Instance);
     }
 

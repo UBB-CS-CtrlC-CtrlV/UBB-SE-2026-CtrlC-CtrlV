@@ -18,7 +18,7 @@ namespace BankApp.Client.ViewModels;
 /// </summary>
 public class NotificationsViewModel
 {
-    private readonly ApiClient apiClient;
+    private readonly IApiClient apiClient;
     private readonly ILogger<NotificationsViewModel> logger;
 
     /// <summary>
@@ -45,7 +45,7 @@ public class NotificationsViewModel
     /// </summary>
     /// <param name="apiClient">The API client used for notification operations.</param>
     /// <param name="logger">Logger for notification operation errors.</param>
-    public NotificationsViewModel(ApiClient apiClient, ILogger<NotificationsViewModel> logger)
+    public NotificationsViewModel(IApiClient apiClient, ILogger<NotificationsViewModel> logger)
     {
         this.apiClient = apiClient ?? throw new ArgumentNullException(nameof(apiClient));
         this.logger = logger ?? throw new ArgumentNullException(nameof(logger));

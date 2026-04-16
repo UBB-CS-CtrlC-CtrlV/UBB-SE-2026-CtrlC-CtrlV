@@ -24,14 +24,14 @@ public sealed partial class NavView
     private Button? activeNavButton;
 
     private readonly IAppNavigationService navigationService;
-    private readonly ApiClient apiClient;
+    private readonly IApiClient apiClient;
 
     /// <summary>
     /// Initializes a new instance of the <see cref="NavView"/> class.
     /// </summary>
     /// <param name="apiClient">Used to clear authentication state when the user logs out.</param>
     /// <param name="navigationService">Bound to the inner content frame to drive feature-page navigation.</param>
-    public NavView(ApiClient apiClient, IAppNavigationService navigationService)
+    public NavView(IApiClient apiClient, IAppNavigationService navigationService)
     {
         this.InitializeComponent();
         Current = this;
@@ -90,9 +90,9 @@ public sealed partial class NavView
 
     private void SetActiveNav(Button selected)
     {
-        foreach (var btn in this.navButtons)
+        foreach (var button in this.navButtons)
         {
-            btn.Style = (Style)this.Resources["NavItemStyle"];
+            button.Style = (Style)this.Resources["NavItemStyle"];
         }
 
         selected.Style = (Style)this.Resources["NavItemActiveStyle"];
