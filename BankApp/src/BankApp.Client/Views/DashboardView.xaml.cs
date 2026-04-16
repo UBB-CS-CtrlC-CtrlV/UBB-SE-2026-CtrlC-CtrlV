@@ -5,9 +5,9 @@
 using System;
 using System.Threading;
 using System.Threading.Tasks;
+using BankApp.Client.Enums;
 using BankApp.Client.Utilities;
 using BankApp.Client.ViewModels;
-using BankApp.Client.Enums;
 using Microsoft.UI.Xaml;
 using Microsoft.UI.Xaml.Controls;
 using Microsoft.UI.Xaml.Input;
@@ -53,12 +53,6 @@ public sealed partial class DashboardView : IStateObserver<DashboardState>
     public void Update(DashboardState state)
     {
         this.OnStateChanged(state);
-    }
-
-    /// <inheritdoc/>
-    protected override void OnNavigatedTo(NavigationEventArgs e)
-    {
-        base.OnNavigatedTo(e);
     }
 
     /// <inheritdoc/>
@@ -241,7 +235,7 @@ public sealed partial class DashboardView : IStateObserver<DashboardState>
         _ = this.RunUiTaskAsync(() => this.ShowComingSoonAsync("Currency Exchange"));
     }
 
-    private void TxHistoryButton_Click(object sender, RoutedEventArgs e)
+    private void TransactionHistoryButton_Click(object sender, RoutedEventArgs e)
     {
         _ = this.RunUiTaskAsync(() => this.ShowComingSoonAsync("Transaction History"));
     }
@@ -336,7 +330,7 @@ public sealed partial class DashboardView : IStateObserver<DashboardState>
 
     private void CancelPendingLoad()
     {
-        if (this.loadCancellationTokenSource == null)
+        if (this.loadCancellationTokenSource is null)
         {
             return;
         }
