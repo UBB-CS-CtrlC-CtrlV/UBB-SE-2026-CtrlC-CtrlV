@@ -18,7 +18,8 @@ namespace BankApp.Server.Tests.Integration;
 /// aggregate and collection queries return correct, database-backed results.
 /// </summary>
 [Trait("Category", "Integration")]
-public sealed class DashboardRepositoryTests : IClassFixture<DatabaseFixture>, IAsyncLifetime
+[Collection("Integration")]
+public sealed class DashboardRepositoryTests : IAsyncLifetime
 {
     private readonly DatabaseFixture fixture;
     private readonly Faker<User> userFaker;

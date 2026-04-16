@@ -17,7 +17,8 @@ namespace BankApp.Server.Tests.Integration;
 /// persisted to and retrieved from the database.
 /// </summary>
 [Trait("Category", "Integration")]
-public sealed class UserRepositoryTests : IClassFixture<DatabaseFixture>, IAsyncLifetime
+[Collection("Integration")]
+public sealed class UserRepositoryTests : IAsyncLifetime
 {
     private readonly DatabaseFixture fixture;
     private readonly Faker<User> userFaker;
