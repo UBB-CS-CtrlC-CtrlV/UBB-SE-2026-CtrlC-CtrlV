@@ -45,6 +45,50 @@ public class ValidationUtilitiesTests
     }
 
     [Theory]
+    [InlineData("0712345678")]
+    [InlineData("+40712345678")]
+    [InlineData("0040712345678")]
+    public void IsValidPhoneNumber_WhenPhoneNumberIsValid_ShouldReturnTrue(string phone)
+    {
+        // Act & Assert
+        ValidationUtilities.IsValidPhoneNumber(phone).Should().BeTrue();
+    }
+
+    [Theory]
+    [InlineData("")]
+    [InlineData(" ")]
+    [InlineData("abc")]
+    [InlineData("123")]
+    [InlineData("+40")]
+    public void IsValidPhoneNumber_WhenPhoneNumberIsInvalid_ShouldReturnFalse(string phone)
+    {
+        // Act & Assert
+        ValidationUtilities.IsValidPhoneNumber(phone).Should().BeFalse();
+    }
+
+    [Theory]
+    [InlineData("0712345678", "+40712345678")]
+    [InlineData("+40712345678", "+40712345678")]
+    [InlineData("0040712345678", "+40712345678")]
+    public void NormalizePhoneNumber_WhenPhoneNumberIsValid_ShouldReturnE164Format(string phone, string expected)
+    {
+        // Act & Assert
+        ValidationUtilities.NormalizePhoneNumber(phone).Should().Be(expected);
+    }
+
+    [Theory]
+    [InlineData("")]
+    [InlineData(" ")]
+    [InlineData("abc")]
+    [InlineData("123")]
+    [InlineData("+40")]
+    public void NormalizePhoneNumber_WhenPhoneNumberIsInvalid_ShouldReturnNull(string phone)
+    {
+        // Act & Assert
+        ValidationUtilities.NormalizePhoneNumber(phone).Should().BeNull();
+    }
+
+    [Theory]
     [InlineData("abc", "abc", true)]
     [InlineData("abc", "def", false)]
     [InlineData("", "", true)]

@@ -1,5 +1,4 @@
-using System.Text.RegularExpressions;
-using System.Net.Mail;
+using PhoneNumbers;
 using EmailValidation;
 
 namespace BankApp.Server.Utilities;
@@ -11,8 +10,6 @@ public static class ValidationUtilities
 {
     private const int MinPasswordLength = 8;
     private const int OtpCodeLength = 6;
-    private const int MinPhoneNumberLength = 7;
-    private const int MaxPhoneNumberLength = 15;
 
     /// <summary>
     /// Determines whether the specified string is a valid email address.
@@ -71,17 +68,45 @@ public static class ValidationUtilities
     }
 
     /// <summary>
-    /// Determines whether the specified string is a valid phone number (7–15 characters, optional leading +).
+    /// Determines whether the specified string is a valid phone number.
     /// </summary>
     /// <param name="phone">The phone number string to validate.</param>
+    /// <param name="defaultRegion">
+    /// The default country code to fall back to. (set to RO for the time being, TODO: change based on user data)
+    /// </param>
     /// <returns><see langword="true"/> if the phone number is valid; otherwise, <see langword="false"/>.</returns>
-    public static bool IsValidPhoneNumber(string phone)
+    public static bool IsValidPhoneNumber(string phone, string defaultRegion = "RO")
+    {
+        return NormalizePhoneNumber(phone, defaultRegion) is not null;
+    }
+
+    /// <summary>
+    /// Normalizes the specified phone number to E.164 format.
+    /// </summary>
+    /// <param name="phone">The phone number string to normalize.</param>
+    /// <param name="defaultRegion">
+    /// The default country code to fall back to. (set to RO for the time being, TODO: change based on user data)
+    /// </param>
+    /// <returns>The normalized E.164 phone number if valid; otherwise, <see langword="null"/>.</returns>
+    public static string? NormalizePhoneNumber(string phone, string defaultRegion = "RO")
     {
         if (string.IsNullOrWhiteSpace(phone))
         {
-            return false;
+            return null;
         }
 
-        return Regex.IsMatch(phone, $@"^\+?[\d\s\-().]{{{MinPhoneNumberLength},{MaxPhoneNumberLength}}}$");
+        var phoneUtil = PhoneNumberUtil.GetInstance();
+
+        try
+        {
+            PhoneNumber parsedNumber = phoneUtil.Parse(phone.Trim(), defaultRegion);
+            return phoneUtil.IsValidNumber(parsedNumber)
+                ? phoneUtil.Format(parsedNumber, PhoneNumberFormat.E164)
+                : null;
+        }
+        catch (NumberParseException)
+        {
+            return null;
+        }
     }
 }
