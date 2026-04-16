@@ -24,13 +24,20 @@ public sealed partial class LoginView : IStateObserver<LoginState>
     /// </summary>
     /// <param name="viewModel">The view model that drives authentication logic and exposes login state.</param>
     /// <param name="navigationService">Used to navigate to other pages in response to state changes.</param>
-    public LoginView(LoginViewModel viewModel, IAppNavigationService navigationService)
+    /// <param name="registrationContext">Carries the just-registered flag set by the register page.</param>
+    public LoginView(LoginViewModel viewModel, IAppNavigationService navigationService, IRegistrationContext registrationContext)
     {
         this.navigationService = navigationService;
         this.InitializeComponent();
 
         this.viewModel = viewModel;
         this.viewModel.State.AddObserver(this);
+
+        if (registrationContext.JustRegistered)
+        {
+            registrationContext.JustRegistered = false;
+            this.RegistrationSuccessBar.IsOpen = true;
+        }
 
         // Apply the ViewModel's current state immediately. The ViewModel is constructed
         // before the view subscribes, so any state set in the constructor (e.g.

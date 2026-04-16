@@ -17,18 +17,21 @@ public sealed partial class RegisterView : IStateObserver<RegisterState>
 {
     private readonly RegisterViewModel viewModel;
     private readonly IAppNavigationService navigationService;
+    private readonly IRegistrationContext registrationContext;
 
     /// <summary>
     /// Initializes a new instance of the <see cref="RegisterView"/> class.
     /// </summary>
     /// <param name="viewModel">The view model that drives registration logic and exposes registration state.</param>
     /// <param name="navigationService">Used to navigate to other pages in response to state changes.</param>
-    public RegisterView(RegisterViewModel viewModel, IAppNavigationService navigationService)
+    /// <param name="registrationContext">Carries the just-registered flag to the login page.</param>
+    public RegisterView(RegisterViewModel viewModel, IAppNavigationService navigationService, IRegistrationContext registrationContext)
     {
         this.InitializeComponent();
 
         this.viewModel = viewModel;
         this.navigationService = navigationService;
+        this.registrationContext = registrationContext;
         this.viewModel.State.AddObserver(this);
     }
 
@@ -44,7 +47,6 @@ public sealed partial class RegisterView : IStateObserver<RegisterState>
         {
             this.HideLoading();
             this.ErrorInfoBar.IsOpen = false;
-            this.SuccessInfoBar.IsOpen = false;
 
             switch (state)
             {
@@ -56,8 +58,8 @@ public sealed partial class RegisterView : IStateObserver<RegisterState>
                     break;
 
                 case RegisterState.Success:
-                    this.SuccessInfoBar.IsOpen = true;
-                    this.ClearForm();
+                    this.registrationContext.JustRegistered = true;
+                    this.navigationService.NavigateTo<LoginView>();
                     break;
 
                 case RegisterState.AutoLoggedIn:

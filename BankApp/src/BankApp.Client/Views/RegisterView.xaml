@@ -111,11 +111,6 @@
                 <InfoBar x:Name="ErrorInfoBar" IsOpen="False" Severity="Error"
                          Margin="0,16,0,0" IsClosable="True"/>
 
-                <!-- Success Message -->
-                <InfoBar x:Name="SuccessInfoBar" IsOpen="False" Severity="Success"
-                         Message="Account created! You can now sign in."
-                         Margin="0,16,0,0" IsClosable="True"/>
-
             </StackPanel>
         </Grid>
     </Grid>
