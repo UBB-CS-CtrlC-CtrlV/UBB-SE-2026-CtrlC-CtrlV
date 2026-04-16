@@ -17,6 +17,8 @@ GO
 :r schema/10_PasswordResetToken.sql
 :r schema/11_TransactionCategoryOverride.sql
 
+:r migrations/01_notification_preference_category_constraint.sql
+
 :r seed/01_Categories.sql
 :r seed/02_Users.sql
 :r seed/03_Accounts.sql
