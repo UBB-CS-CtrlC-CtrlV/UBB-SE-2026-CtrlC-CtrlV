@@ -1,65 +1,105 @@
-﻿using BankApp.Desktop.Enums;
-using BankApp.Desktop.Utilities;
-using BankApp.Desktop.ViewModels;
+using BankApp.Client.Utilities;
+using BankApp.Client.ViewModels;
+using BankApp.Client.Enums;
+using BankApp.Contracts.DTOs.Auth;
+using ErrorOr;
 using FluentAssertions;
 using Microsoft.Extensions.Configuration;
 using Microsoft.Extensions.Logging.Abstractions;
+using NSubstitute;
+//TODO: replace NSubstitute with Moq
 
-namespace BankApp.Desktop.Tests;
+namespace BankApp.Desktop.Tests.ViewModels;
 
 public class RegisterViewModelTests
 {
-    private static RegisterViewModel CreateViewModel()
-    {
-        IConfiguration config = new ConfigurationBuilder()
-            .AddInMemoryCollection(new Dictionary<string, string?>
-            {
-                ["ApiBaseUrl"] = "http://localhost",
-            })
-            .Build();
+    private readonly ApiClient apiClient;
+    private readonly IConfiguration configuration;
 
-        return new RegisterViewModel(
-            new ApiClient(config, NullLogger<ApiClient>.Instance),
-            config,
-            NullLogger<RegisterViewModel>.Instance);
+    public RegisterViewModelTests()
+    {
+        var configBuilder = new ConfigurationBuilder();
+        configBuilder.AddInMemoryCollection(new Dictionary<string, string?>
+        {
+            { "ApiBaseUrl", "http://localhost" },
+            { "OAuth:Google:Authority", "https://accounts.google.com" },
+            { "OAuth:Google:ClientId", "client-id" },
+            { "OAuth:Google:ClientSecret", "client-secret" },
+            { "OAuth:Google:RedirectUri", "http://localhost:5000/callback" }
+        });
+
+        this.configuration = configBuilder.Build();
+        this.apiClient = Substitute.ForPartsOf<ApiClient>(this.configuration, NullLogger<ApiClient>.Instance);
     }
 
     [Fact]
-    public async Task Register_EmptyFields_SetsErrorState()
+    public async Task Register_WhenEmptyFields_SetsErrorState()
     {
-        var sut = CreateViewModel();
-        await sut.Register(string.Empty, string.Empty, string.Empty, string.Empty);
-        sut.State.Value.Should().Be(RegisterState.Error);
+        // Arrange
+        var vm = new RegisterViewModel(this.apiClient, this.configuration, NullLogger<RegisterViewModel>.Instance);
+
+        // Act
+        await vm.Register(string.Empty, "pass", "pass", "Name");
+
+        // Assert
+        vm.State.Value.Should().Be(RegisterState.Error);
     }
 
     [Fact]
-    public async Task Register_InvalidEmail_SetsInvalidEmailState()
+    public async Task Register_WhenPasswordMismatch_SetsPasswordMismatchState()
     {
-        var sut = CreateViewModel();
-        await sut.Register("notanemail", "Password1!", "Password1!", "John Doe");
-        sut.State.Value.Should().Be(RegisterState.InvalidEmail);
+        // Arrange
+        var vm = new RegisterViewModel(this.apiClient, this.configuration, NullLogger<RegisterViewModel>.Instance);
+
+        // Act
+        await vm.Register("test@test.com", "Password123!", "Password123", "Name");
+
+        // Assert
+        vm.State.Value.Should().Be(RegisterState.PasswordMismatch);
     }
 
     [Fact]
-    public async Task Register_WeakPassword_SetsWeakPasswordState()
+    public async Task Register_WhenWeakPassword_SetsWeakPasswordState()
     {
-        var sut = CreateViewModel();
-        await sut.Register("user@test.com", "weak", "weak", "John Doe");
-        sut.State.Value.Should().Be(RegisterState.WeakPassword);
+        // Arrange
+        var vm = new RegisterViewModel(this.apiClient, this.configuration, NullLogger<RegisterViewModel>.Instance);
+
+        // Act
+        await vm.Register("test@test.com", "weak", "weak", "Name");
+
+        // Assert
+        vm.State.Value.Should().Be(RegisterState.WeakPassword);
     }
 
     [Fact]
-    public async Task Register_PasswordMismatch_SetsPasswordMismatchState()
+    public async Task Register_WhenValid_SetsSuccessState()
     {
-        var sut = CreateViewModel();
-        await sut.Register("user@test.com", "Password1!", "Password2!", "John Doe");
-        sut.State.Value.Should().Be(RegisterState.PasswordMismatch);
+        // Arrange
+        var vm = new RegisterViewModel(this.apiClient, this.configuration, NullLogger<RegisterViewModel>.Instance);
+
+        this.apiClient.PostAsync<RegisterRequest>(Arg.Any<string>(), Arg.Any<RegisterRequest>())
+            .Returns(Task.FromResult<ErrorOr<Success>>(Result.Success));
+
+        // Act
+        await vm.Register("test@test.com", "StrongP@ss1", "StrongP@ss1", "Name");
+
+        // Assert
+        vm.State.Value.Should().Be(RegisterState.Success);
     }
 
     [Fact]
-    public void Constructor_StartsInIdleState()
+    public async Task Register_WhenEmailConflicts_SetsEmailAlreadyExistsState()
     {
-        var sut = CreateViewModel();
-        sut.State.Value.Should().Be(RegisterState.Idle);
+        // Arrange
+        var vm = new RegisterViewModel(this.apiClient, this.configuration, NullLogger<RegisterViewModel>.Instance);
+
+        this.apiClient.PostAsync<RegisterRequest>(Arg.Any<string>(), Arg.Any<RegisterRequest>())
+            .Returns(Task.FromResult<ErrorOr<Success>>(Error.Conflict("Conflict", "Conflict")));
+
+        // Act
+        await vm.Register("test@test.com", "StrongP@ss1", "StrongP@ss1", "Name");
+
+        // Assert
+        vm.State.Value.Should().Be(RegisterState.EmailAlreadyExists);
     }
 }

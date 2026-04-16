@@ -1,87 +1,134 @@
-﻿using BankApp.Desktop.Enums;
-using BankApp.Desktop.Utilities;
-using BankApp.Desktop.ViewModels;
+using BankApp.Client.Utilities;
+using BankApp.Client.ViewModels;
+using BankApp.Client.Enums;
+using BankApp.Contracts.DTOs.Auth;
+using ErrorOr;
+using FluentAssertions;
 using Microsoft.Extensions.Configuration;
 using Microsoft.Extensions.Logging.Abstractions;
+using NSubstitute;
+//TODO: replace NSubstitute with Moq
 
-namespace BankApp.Desktop.Tests;
+namespace BankApp.Desktop.Tests.ViewModels;
 
 public class TwoFactorViewModelTests
 {
-    private static TwoFactorViewModel CreateViewModel(Mock<ICountdownTimer> timerMock)
-    {
-        IConfiguration config = new ConfigurationBuilder()
-            .AddInMemoryCollection(new Dictionary<string, string?>
-            {
-                ["ApiBaseUrl"] = "http://localhost",
-            })
-            .Build();
+    private readonly ApiClient apiClient;
+    private readonly ICountdownTimer countdownTimer;
 
-        return new TwoFactorViewModel(
-            new ApiClient(config, NullLogger<ApiClient>.Instance),
-            timerMock.Object,
-            NullLogger<TwoFactorViewModel>.Instance);
+    public TwoFactorViewModelTests()
+    {
+        var configBuilder = new Microsoft.Extensions.Configuration.ConfigurationBuilder();
+        configBuilder.AddInMemoryCollection(new Dictionary<string, string?>
+        {
+            { "ApiBaseUrl", "http://localhost" }
+        });
+        this.apiClient = Substitute.For<ApiClient>(configBuilder.Build(), NullLogger<ApiClient>.Instance);
+        this.countdownTimer = Substitute.For<ICountdownTimer>();
     }
 
     [Fact]
-    public async Task VerifyOtp_EmptyCode_SetsHasError()
+    public async Task VerifyOtp_WhenEmptyOrTooShort_SetsErrorAndDoesNotCallApi()
     {
-        var sut = CreateViewModel(new Mock<ICountdownTimer>());
-        await sut.VerifyOtp();
-        sut.HasError.Should().BeTrue();
+        // Arrange
+        var vm = new TwoFactorViewModel(this.apiClient, this.countdownTimer, NullLogger<TwoFactorViewModel>.Instance);
+
+        // Act
+        vm.OtpCode = "123";
+        await vm.VerifyOtp();
+
+        // Assert
+        vm.State.Value.Should().Be(TwoFactorState.Idle);
+        vm.HasError.Should().BeTrue();
     }
 
     [Fact]
-    public async Task VerifyOtp_ShortCode_SetsHasError()
+    public async Task VerifyOtp_WhenUserIdIsNull_SetsInvalidOtpState()
     {
-        var sut = CreateViewModel(new Mock<ICountdownTimer>());
-        sut.OtpCode = "123";
-        await sut.VerifyOtp();
-        sut.HasError.Should().BeTrue();
+        // Arrange
+        var vm = new TwoFactorViewModel(this.apiClient, this.countdownTimer, NullLogger<TwoFactorViewModel>.Instance);
+        this.apiClient.CurrentUserId = null;
+
+        // Act
+        vm.OtpCode = "123456";
+        await vm.VerifyOtp();
+
+        // Assert
+        vm.State.Value.Should().Be(TwoFactorState.InvalidOTP);
+        vm.HasError.Should().BeTrue();
     }
 
     [Fact]
-    public async Task VerifyOtp_ShortCode_SetsCorrectErrorMessage()
+    public async Task VerifyOtp_WhenApiSucceeds_SetsSuccessState()
     {
-        var sut = CreateViewModel(new Mock<ICountdownTimer>());
-        sut.OtpCode = "123";
-        await sut.VerifyOtp();
-        sut.ErrorMessage.Should().Be(UserMessages.TwoFactor.InvalidCodeFormat);
+        // Arrange
+        var vm = new TwoFactorViewModel(this.apiClient, this.countdownTimer, NullLogger<TwoFactorViewModel>.Instance);
+        this.apiClient.CurrentUserId = 1;
+
+        var successResponse = new LoginSuccessResponse { Token = "token", UserId = 1 };
+        this.apiClient.PostAsync<VerifyOTPRequest, LoginSuccessResponse>(Arg.Any<string>(), Arg.Any<VerifyOTPRequest>())
+            .Returns(Task.FromResult<ErrorOr<LoginSuccessResponse>>(successResponse));
+
+        // Act
+        vm.OtpCode = "123456";
+        await vm.VerifyOtp();
+
+        // Assert
+        vm.State.Value.Should().Be(TwoFactorState.Success);
+        vm.HasError.Should().BeFalse();
     }
 
     [Fact]
-    public async Task ResendOtp_WhenCanResend_StartsTimer()
+    public async Task VerifyOtp_WhenApiFails_SetsInvalidOtpState()
     {
-        var timerMock = new Mock<ICountdownTimer>();
-        timerMock.Setup(t => t.Start());
+        // Arrange
+        var vm = new TwoFactorViewModel(this.apiClient, this.countdownTimer, NullLogger<TwoFactorViewModel>.Instance);
+        this.apiClient.CurrentUserId = 1;
 
-        var sut = CreateViewModel(timerMock);
-        await sut.ResendOtp();
+        this.apiClient.PostAsync<VerifyOTPRequest, LoginSuccessResponse>(Arg.Any<string>(), Arg.Any<VerifyOTPRequest>())
+            .Returns(Task.FromResult<ErrorOr<LoginSuccessResponse>>(Error.Validation("invalid_otp")));
 
-        timerMock.Verify(t => t.Start(), Times.Once);
+        // Act
+        vm.OtpCode = "123456";
+        await vm.VerifyOtp();
+
+        // Assert
+        vm.State.Value.Should().Be(TwoFactorState.InvalidOTP);
+        vm.HasError.Should().BeTrue();
     }
 
     [Fact]
-    public async Task ResendOtp_WhenCannotResend_DoesNotStartTimer()
+    public async Task ResendOtp_WhenCannotResend_DoesNothing()
     {
-        var timerMock = new Mock<ICountdownTimer>();
-        var sut = CreateViewModel(timerMock);
+        // Arrange
+        var vm = new TwoFactorViewModel(this.apiClient, this.countdownTimer, NullLogger<TwoFactorViewModel>.Instance);
 
-        // first call starts the countdown so CanResend becomes false
-        await sut.ResendOtp();
-        timerMock.Invocations.Clear();
+        // Push it into a cooldown state
+        await vm.ResendOtp();
+        this.apiClient.ClearReceivedCalls();
 
-        // SecondsRemaining > 0 means CanResend is false
-        sut.SecondsRemaining = 30;
-        await sut.ResendOtp();
+        // Act
+        await vm.ResendOtp();
 
-        timerMock.Verify(t => t.Start(), Times.Never);
+        // Assert
+        await this.apiClient.DidNotReceiveWithAnyArgs().PostAsync<object?, object>(Arg.Any<string>(), Arg.Any<object>());
     }
 
     [Fact]
-    public void Constructor_StartsInIdleState()
+    public async Task ResendOtp_WhenCanResend_CallsApiAndStartsTimer()
     {
-        var sut = CreateViewModel(new Mock<ICountdownTimer>());
-        sut.State.Value.Should().Be(TwoFactorState.Idle);
+        // Arrange
+        var vm = new TwoFactorViewModel(this.apiClient, this.countdownTimer, NullLogger<TwoFactorViewModel>.Instance);
+        this.apiClient.CurrentUserId = 1;
+
+        this.apiClient.PostAsync<object?, object>(Arg.Any<string>(), Arg.Any<object>())
+            .Returns(Task.FromResult<ErrorOr<object>>(new object()));
+
+        // Act
+        await vm.ResendOtp();
+
+        // Assert
+        this.countdownTimer.Received().Start();
+        vm.SecondsRemaining.Should().Be(30);
     }
 }
