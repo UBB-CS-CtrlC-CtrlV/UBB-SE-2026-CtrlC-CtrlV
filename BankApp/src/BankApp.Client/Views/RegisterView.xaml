@@ -105,7 +105,7 @@
 
                 <!-- Back to Login (shown after successful registration) -->
                 <Button x:Name="BackToLoginButton" Content="Back to Login"
-                        Click="SignInButton_Click" Visibility="Collapsed"
+                        Click="SignInButton_Click" 
                         HorizontalAlignment="Stretch" Height="42"
                         Background="Transparent" BorderBrush="#4ECDC4" BorderThickness="1"
                         Foreground="#4ECDC4" FontWeight="SemiBold"
