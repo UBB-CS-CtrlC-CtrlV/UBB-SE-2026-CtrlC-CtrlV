@@ -13,51 +13,51 @@ using Microsoft.AspNetCore.Hosting;
 using Microsoft.AspNetCore.Mvc.Testing;
 using Microsoft.Extensions.Configuration;
 using Microsoft.Extensions.DependencyInjection;
-using NSubstitute;
+using Moq;
 
 namespace BankApp.Server.Tests.Integration.Infrastructure;
 
 /// <summary>
 /// A custom <see cref="WebApplicationFactory{TEntryPoint}"/> that replaces all
-/// infrastructure services with NSubstitute stubs so integration tests can exercise the
+/// infrastructure services with Moq stubs so integration tests can exercise the
 /// full HTTP pipeline without a database or external dependencies.
 /// </summary>
 public class BankAppWebFactory : WebApplicationFactory<Program>
 {
     /// <summary>
-    /// Gets the substitute JWT service that controls token validation behaviour.
+    /// Gets the mock JWT service that controls token validation behaviour.
     /// </summary>
-    public IJwtService JwtServiceSub { get; } = SubstituteFactory.CreateJwtService();
+    public Mock<IJwtService> JwtServiceMock { get; } = MockFactory.CreateJwtService();
 
     /// <summary>
-    /// Gets the substitute auth repository that controls session lookup behaviour.
+    /// Gets the mock auth repository that controls session lookup behaviour.
     /// </summary>
-    public IAuthRepository AuthRepositorySub { get; } = SubstituteFactory.CreateAuthRepository();
+    public Mock<IAuthRepository> AuthRepositoryMock { get; } = MockFactory.CreateAuthRepository();
 
     /// <summary>
-    /// Gets the substitute login service.
+    /// Gets the mock login service.
     /// </summary>
-    public ILoginService LoginServiceSub { get; } = SubstituteFactory.CreateLoginService();
+    public Mock<ILoginService> LoginServiceMock { get; } = MockFactory.CreateLoginService();
 
     /// <summary>
-    /// Gets the substitute registration service.
+    /// Gets the mock registration service.
     /// </summary>
-    public IRegistrationService RegistrationServiceSub { get; } = SubstituteFactory.CreateRegistrationService();
+    public Mock<IRegistrationService> RegistrationServiceMock { get; } = MockFactory.CreateRegistrationService();
 
     /// <summary>
-    /// Gets the substitute password recovery service.
+    /// Gets the mock password recovery service.
     /// </summary>
-    public IPasswordRecoveryService PasswordRecoveryServiceSub { get; } = SubstituteFactory.CreatePasswordRecoveryService();
+    public Mock<IPasswordRecoveryService> PasswordRecoveryServiceMock { get; } = MockFactory.CreatePasswordRecoveryService();
 
     /// <summary>
-    /// Gets the substitute dashboard service.
+    /// Gets the mock dashboard service.
     /// </summary>
-    public IDashboardService DashboardServiceSub { get; } = SubstituteFactory.CreateDashboardService();
+    public Mock<IDashboardService> DashboardServiceMock { get; } = MockFactory.CreateDashboardService();
 
     /// <summary>
-    /// Gets the substitute profile service.
+    /// Gets the mock profile service.
     /// </summary>
-    public IProfileService ProfileServiceSub { get; } = SubstituteFactory.CreateProfileService();
+    public Mock<IProfileService> ProfileServiceMock { get; } = MockFactory.CreateProfileService();
 
     /// <summary>
     /// Configures the test server so the middleware pipeline runs end-to-end
@@ -82,13 +82,13 @@ public class BankAppWebFactory : WebApplicationFactory<Program>
         builder.ConfigureServices(services =>
         {
             // Remove real infrastructure registrations and replace with substitutes.
-            ReplaceService<IJwtService>(services, this.JwtServiceSub);
-            ReplaceService<IAuthRepository>(services, this.AuthRepositorySub);
-            ReplaceService<ILoginService>(services, this.LoginServiceSub);
-            ReplaceService<IRegistrationService>(services, this.RegistrationServiceSub);
-            ReplaceService<IPasswordRecoveryService>(services, this.PasswordRecoveryServiceSub);
-            ReplaceService<IDashboardService>(services, this.DashboardServiceSub);
-            ReplaceService<IProfileService>(services, this.ProfileServiceSub);
+            ReplaceService<IJwtService>(services, this.JwtServiceMock.Object);
+            ReplaceService<IAuthRepository>(services, this.AuthRepositoryMock.Object);
+            ReplaceService<ILoginService>(services, this.LoginServiceMock.Object);
+            ReplaceService<IRegistrationService>(services, this.RegistrationServiceMock.Object);
+            ReplaceService<IPasswordRecoveryService>(services, this.PasswordRecoveryServiceMock.Object);
+            ReplaceService<IDashboardService>(services, this.DashboardServiceMock.Object);
+            ReplaceService<IProfileService>(services, this.ProfileServiceMock.Object);
         });
     }
 

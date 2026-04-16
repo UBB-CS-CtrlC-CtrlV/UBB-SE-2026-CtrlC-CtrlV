@@ -9,7 +9,7 @@ using BankApp.Contracts.Entities;
 using BankApp.Server.Tests.Integration.Infrastructure;
 using ErrorOr;
 using FluentAssertions;
-using NSubstitute;
+using Moq;
 
 namespace BankApp.Server.Tests.Integration;
 
@@ -35,10 +35,12 @@ public class EndpointRoutingTests : IClassFixture<BankAppWebFactory>
         this.client = factory.CreateClient();
 
         // By default, configure the substitutes so that a valid token is accepted.
-        factory.JwtServiceSub.ExtractUserId(ValidToken)
+        factory.JwtServiceMock
+            .Setup(service => service.ExtractUserId(ValidToken))
             .Returns(1);
 
-        factory.AuthRepositorySub.FindSessionByToken(ValidToken)
+        factory.AuthRepositoryMock
+            .Setup(repository => repository.FindSessionByToken(ValidToken))
             .Returns(new Session { UserId = 1, Token = ValidToken });
     }
 
@@ -155,7 +157,8 @@ public class EndpointRoutingTests : IClassFixture<BankAppWebFactory>
     [Fact]
     public async Task ProtectedEndpoint_WithInvalidToken_Returns401()
     {
-        this.factory.JwtServiceSub.ExtractUserId("bad-token")
+        this.factory.JwtServiceMock
+            .Setup(service => service.ExtractUserId("bad-token"))
             .Returns(Error.Unauthorized("Token.Invalid", "Token is invalid."));
 
         HttpRequestMessage request = new HttpRequestMessage(HttpMethod.Get, "/api/dashboard");
@@ -174,10 +177,12 @@ public class EndpointRoutingTests : IClassFixture<BankAppWebFactory>
     {
         const string orphanToken = "orphan-token";
 
-        this.factory.JwtServiceSub.ExtractUserId(orphanToken)
+        this.factory.JwtServiceMock
+            .Setup(service => service.ExtractUserId(orphanToken))
             .Returns(1);
 
-        this.factory.AuthRepositorySub.FindSessionByToken(orphanToken)
+        this.factory.AuthRepositoryMock
+            .Setup(repository => repository.FindSessionByToken(orphanToken))
             .Returns(Error.NotFound("Session.NotFound", "Session not found."));
 
         HttpRequestMessage request = new HttpRequestMessage(HttpMethod.Get, "/api/dashboard");

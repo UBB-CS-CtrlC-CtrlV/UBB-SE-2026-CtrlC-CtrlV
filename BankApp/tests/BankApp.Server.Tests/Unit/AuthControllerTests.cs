@@ -11,8 +11,7 @@ using ErrorOr;
 using FluentAssertions;
 using Microsoft.AspNetCore.Http;
 using Microsoft.AspNetCore.Mvc;
-using NSubstitute;
-using NSubstitute.Extensions;
+using Moq;
 using Xunit;
 
 namespace BankApp.Server.Tests.Unit;
@@ -24,16 +23,16 @@ namespace BankApp.Server.Tests.Unit;
 [Trait("Category", "Unit")]
 public sealed class AuthControllerTests
 {
-    private readonly ILoginService loginService = SubstituteFactory.CreateLoginService();
-    private readonly IRegistrationService registrationService = SubstituteFactory.CreateRegistrationService();
-    private readonly IPasswordRecoveryService passwordRecoveryService = SubstituteFactory.CreatePasswordRecoveryService();
+    private readonly Mock<ILoginService> loginService = MockFactory.CreateLoginService();
+    private readonly Mock<IRegistrationService> registrationService = MockFactory.CreateRegistrationService();
+    private readonly Mock<IPasswordRecoveryService> passwordRecoveryService = MockFactory.CreatePasswordRecoveryService();
 
     private AuthController CreateController()
     {
         var controller = new AuthController(
-            this.loginService,
-            this.registrationService,
-            this.passwordRecoveryService);
+            this.loginService.Object,
+            this.registrationService.Object,
+            this.passwordRecoveryService.Object);
 
         controller.ControllerContext = new ControllerContext
         {
@@ -48,7 +47,9 @@ public sealed class AuthControllerTests
     {
         // Arrange
         var request = new LoginRequest { Email = "user@test.com", Password = "Pass123!" };
-        this.loginService.ReturnsForAll<ErrorOr<LoginSuccess>>((ErrorOr<LoginSuccess>)new FullLogin(1, "jwt-token"));
+        this.loginService
+            .Setup(service => service.Login(request, It.IsAny<SessionMetadata?>()))
+            .Returns((ErrorOr<LoginSuccess>)new FullLogin(1, "jwt-token"));
         var controller = this.CreateController();
 
         // Act
@@ -64,7 +65,9 @@ public sealed class AuthControllerTests
     {
         // Arrange
         var request = new LoginRequest { Email = "user@test.com", Password = "Pass123!" };
-        this.loginService.ReturnsForAll<ErrorOr<LoginSuccess>>((ErrorOr<LoginSuccess>)new RequiresTwoFactor(1));
+        this.loginService
+            .Setup(service => service.Login(request, It.IsAny<SessionMetadata?>()))
+            .Returns((ErrorOr<LoginSuccess>)new RequiresTwoFactor(1));
         var controller = this.CreateController();
 
         // Act
@@ -79,7 +82,9 @@ public sealed class AuthControllerTests
     {
         // Arrange
         var request = new LoginRequest { Email = "user@test.com", Password = "wrong" };
-        this.loginService.ReturnsForAll<ErrorOr<LoginSuccess>>(Error.Unauthorized("invalid_credentials", "Invalid credentials."));
+        this.loginService
+            .Setup(service => service.Login(request, It.IsAny<SessionMetadata?>()))
+            .Returns(Error.Unauthorized("invalid_credentials", "Invalid credentials."));
         var controller = this.CreateController();
 
         // Act
@@ -95,7 +100,9 @@ public sealed class AuthControllerTests
     {
         // Arrange
         var request = new LoginRequest { Email = "user@test.com", Password = "Pass123!" };
-        this.loginService.ReturnsForAll<ErrorOr<LoginSuccess>>(Error.Forbidden("account_locked", "Account is locked."));
+        this.loginService
+            .Setup(service => service.Login(request, It.IsAny<SessionMetadata?>()))
+            .Returns(Error.Forbidden("account_locked", "Account is locked."));
         var controller = this.CreateController();
 
         // Act
@@ -111,7 +118,7 @@ public sealed class AuthControllerTests
     {
         // Arrange
         var request = new RegisterRequest { Email = "new@test.com", Password = "Pass123!", FullName = "Test User" };
-        this.registrationService.Register(request).Returns(Result.Success);
+        this.registrationService.Setup(service => service.Register(request)).Returns(Result.Success);
         var controller = this.CreateController();
 
         // Act
@@ -126,7 +133,8 @@ public sealed class AuthControllerTests
     {
         // Arrange
         var request = new RegisterRequest { Email = "dup@test.com", Password = "Pass123!", FullName = "Test" };
-        this.registrationService.Register(request)
+        this.registrationService
+            .Setup(service => service.Register(request))
             .Returns(Error.Conflict("email_registered", "Email already registered."));
         var controller = this.CreateController();
 
@@ -142,7 +150,9 @@ public sealed class AuthControllerTests
     {
         // Arrange
         var request = new VerifyOTPRequest { UserId = 1, OTPCode = "123456" };
-        this.loginService.ReturnsForAll<ErrorOr<LoginSuccess>>((ErrorOr<LoginSuccess>)new FullLogin(1, "jwt-token"));
+        this.loginService
+            .Setup(service => service.VerifyOTP(request, It.IsAny<SessionMetadata?>()))
+            .Returns((ErrorOr<LoginSuccess>)new FullLogin(1, "jwt-token"));
         var controller = this.CreateController();
 
         // Act
@@ -157,7 +167,9 @@ public sealed class AuthControllerTests
     {
         // Arrange
         var request = new VerifyOTPRequest { UserId = 1, OTPCode = "000000" };
-        this.loginService.ReturnsForAll<ErrorOr<LoginSuccess>>(Error.Unauthorized("invalid_otp", "Invalid OTP."));
+        this.loginService
+            .Setup(service => service.VerifyOTP(request, It.IsAny<SessionMetadata?>()))
+            .Returns(Error.Unauthorized("invalid_otp", "Invalid OTP."));
         var controller = this.CreateController();
 
         // Act
@@ -171,7 +183,8 @@ public sealed class AuthControllerTests
     public void ForgotPassword_WhenEmailProvided_ReturnsOk()
     {
         // Arrange
-        this.passwordRecoveryService.RequestPasswordReset("user@test.com")
+        this.passwordRecoveryService
+            .Setup(service => service.RequestPasswordReset("user@test.com"))
             .Returns(Result.Success);
         var controller = this.CreateController();
 
@@ -199,7 +212,8 @@ public sealed class AuthControllerTests
     public void ResetPassword_WhenSuccess_ReturnsNoContent()
     {
         // Arrange
-        this.passwordRecoveryService.ResetPassword("valid-token", "NewPass123!")
+        this.passwordRecoveryService
+            .Setup(service => service.ResetPassword("valid-token", "NewPass123!"))
             .Returns(Result.Success);
         var controller = this.CreateController();
 
@@ -240,7 +254,8 @@ public sealed class AuthControllerTests
     public void ResetPassword_WhenServiceFails_ReturnsMappedError()
     {
         // Arrange
-        this.passwordRecoveryService.ResetPassword("bad-token", "NewPass123!")
+        this.passwordRecoveryService
+            .Setup(service => service.ResetPassword("bad-token", "NewPass123!"))
             .Returns(Error.Validation("token_expired", "Token has expired."));
         var controller = this.CreateController();
 
@@ -255,7 +270,7 @@ public sealed class AuthControllerTests
     public void Logout_WhenValidToken_ReturnsNoContent()
     {
         // Arrange
-        this.loginService.Logout("jwt-token").Returns(Result.Success);
+        this.loginService.Setup(service => service.Logout("jwt-token")).Returns(Result.Success);
         var controller = this.CreateController();
 
         // Act
@@ -282,7 +297,7 @@ public sealed class AuthControllerTests
     public void ResendOTP_AlwaysReturnsOk()
     {
         // Arrange
-        this.loginService.ResendOTP(1, "email").Returns(Result.Success);
+        this.loginService.Setup(service => service.ResendOTP(1, "email")).Returns(Result.Success);
         var controller = this.CreateController();
 
         // Act
@@ -296,7 +311,8 @@ public sealed class AuthControllerTests
     public void VerifyResetToken_WhenValid_ReturnsNoContent()
     {
         // Arrange
-        this.passwordRecoveryService.VerifyResetToken("valid-token")
+        this.passwordRecoveryService
+            .Setup(service => service.VerifyResetToken("valid-token"))
             .Returns(Result.Success);
         var controller = this.CreateController();
 
@@ -325,8 +341,9 @@ public sealed class AuthControllerTests
     {
         // Arrange
         var request = new OAuthLoginRequest { Provider = "Google", ProviderToken = "google-token" };
-        this.loginService.OAuthLoginAsync(request, Arg.Any<SessionMetadata>())
-            .Returns(Task.FromResult<ErrorOr<LoginSuccess>>(new FullLogin(1, "jwt-token")));
+        this.loginService
+            .Setup(service => service.OAuthLoginAsync(request, It.IsAny<SessionMetadata?>()))
+            .ReturnsAsync((ErrorOr<LoginSuccess>)new FullLogin(1, "jwt-token"));
         var controller = this.CreateController();
 
         // Act
@@ -355,8 +372,9 @@ public sealed class AuthControllerTests
     {
         // Arrange
         var request = new OAuthLoginRequest { Provider = "Google", ProviderToken = "google-token" };
-        this.loginService.OAuthLoginAsync(request, Arg.Any<SessionMetadata>())
-            .Returns(Task.FromResult<ErrorOr<LoginSuccess>>(Error.Forbidden("account_locked", "Account is locked.")));
+        this.loginService
+            .Setup(service => service.OAuthLoginAsync(request, It.IsAny<SessionMetadata?>()))
+            .ReturnsAsync(Error.Forbidden("account_locked", "Account is locked."));
         var controller = this.CreateController();
 
         // Act

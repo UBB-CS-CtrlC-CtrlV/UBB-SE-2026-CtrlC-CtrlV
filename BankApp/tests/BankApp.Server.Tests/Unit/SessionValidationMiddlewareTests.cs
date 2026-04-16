@@ -9,7 +9,7 @@ using ErrorOr;
 using FluentAssertions;
 using Microsoft.AspNetCore.Http;
 using Microsoft.Extensions.Logging;
-using NSubstitute;
+using Moq;
 using Xunit;
 
 namespace BankApp.Server.Tests.Unit;
@@ -21,9 +21,9 @@ namespace BankApp.Server.Tests.Unit;
 [Trait("Category", "Unit")]
 public sealed class SessionValidationMiddlewareTests
 {
-    private readonly IAuthRepository authRepo = SubstituteFactory.CreateAuthRepository();
-    private readonly IJwtService jwtService = SubstituteFactory.CreateJwtService();
-    private readonly ILogger<SessionValidationMiddleware> logger = Substitute.For<ILogger<SessionValidationMiddleware>>();
+    private readonly Mock<IAuthRepository> authRepo = MockFactory.CreateAuthRepository();
+    private readonly Mock<IJwtService> jwtService = MockFactory.CreateJwtService();
+    private readonly Mock<ILogger<SessionValidationMiddleware>> logger = new Mock<ILogger<SessionValidationMiddleware>>();
 
     private bool nextWasCalled;
 
@@ -61,7 +61,7 @@ public sealed class SessionValidationMiddlewareTests
         var context = this.CreateHttpContext(path);
 
         // Act
-        await middleware.Invoke(context, this.authRepo, this.jwtService, this.logger);
+        await middleware.Invoke(context, this.authRepo.Object, this.jwtService.Object, this.logger.Object);
 
         // Assert
         this.nextWasCalled.Should().BeTrue();
@@ -76,7 +76,7 @@ public sealed class SessionValidationMiddlewareTests
         var context = this.CreateHttpContext("/api/dashboard");
 
         // Act
-        await middleware.Invoke(context, this.authRepo, this.jwtService, this.logger);
+        await middleware.Invoke(context, this.authRepo.Object, this.jwtService.Object, this.logger.Object);
 
         // Assert
         context.Response.StatusCode.Should().Be(401);
@@ -87,14 +87,15 @@ public sealed class SessionValidationMiddlewareTests
     public async Task Invoke_ProtectedEndpoint_InvalidToken_Returns401()
     {
         // Arrange
-        this.jwtService.ExtractUserId("bad-token")
+        this.jwtService
+            .Setup(service => service.ExtractUserId("bad-token"))
             .Returns(Error.Validation("token_invalid", "Invalid token."));
 
         var middleware = this.CreateMiddleware();
         var context = this.CreateHttpContext("/api/profile", "Bearer bad-token");
 
         // Act
-        await middleware.Invoke(context, this.authRepo, this.jwtService, this.logger);
+        await middleware.Invoke(context, this.authRepo.Object, this.jwtService.Object, this.logger.Object);
 
         // Assert
         context.Response.StatusCode.Should().Be(401);
@@ -105,15 +106,16 @@ public sealed class SessionValidationMiddlewareTests
     public async Task Invoke_ProtectedEndpoint_ValidTokenButNoSession_Returns401()
     {
         // Arrange
-        this.jwtService.ExtractUserId("good-token").Returns(1);
-        this.authRepo.FindSessionByToken("good-token")
+        this.jwtService.Setup(service => service.ExtractUserId("good-token")).Returns(1);
+        this.authRepo
+            .Setup(repository => repository.FindSessionByToken("good-token"))
             .Returns(Error.NotFound("session_not_found", "Session not found."));
 
         var middleware = this.CreateMiddleware();
         var context = this.CreateHttpContext("/api/dashboard", "Bearer good-token");
 
         // Act
-        await middleware.Invoke(context, this.authRepo, this.jwtService, this.logger);
+        await middleware.Invoke(context, this.authRepo.Object, this.jwtService.Object, this.logger.Object);
 
         // Assert
         context.Response.StatusCode.Should().Be(401);
@@ -124,15 +126,16 @@ public sealed class SessionValidationMiddlewareTests
     public async Task Invoke_ProtectedEndpoint_ValidTokenAndSession_CallsNextAndSetsUserId()
     {
         // Arrange
-        this.jwtService.ExtractUserId("good-token").Returns(42);
-        this.authRepo.FindSessionByToken("good-token")
+        this.jwtService.Setup(service => service.ExtractUserId("good-token")).Returns(42);
+        this.authRepo
+            .Setup(repository => repository.FindSessionByToken("good-token"))
             .Returns(new Session { Id = 1, UserId = 42, Token = "good-token" });
 
         var middleware = this.CreateMiddleware();
         var context = this.CreateHttpContext("/api/profile", "Bearer good-token");
 
         // Act
-        await middleware.Invoke(context, this.authRepo, this.jwtService, this.logger);
+        await middleware.Invoke(context, this.authRepo.Object, this.jwtService.Object, this.logger.Object);
 
         // Assert
         this.nextWasCalled.Should().BeTrue();
@@ -147,7 +150,7 @@ public sealed class SessionValidationMiddlewareTests
         var context = this.CreateHttpContext("/api/dashboard", "Basic some-creds");
 
         // Act
-        await middleware.Invoke(context, this.authRepo, this.jwtService, this.logger);
+        await middleware.Invoke(context, this.authRepo.Object, this.jwtService.Object, this.logger.Object);
 
         // Assert
         context.Response.StatusCode.Should().Be(401);

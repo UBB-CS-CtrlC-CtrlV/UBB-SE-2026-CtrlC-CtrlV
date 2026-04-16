@@ -1,4 +1,4 @@
-﻿// <copyright file="DashboardServiceTests.cs" company="CtrlC CtrlV">
+// <copyright file="DashboardServiceTests.cs" company="CtrlC CtrlV">
 // Copyright (c) CtrlC CtrlV. All rights reserved.
 // </copyright>
 using BankApp.Contracts.DTOs.Dashboard;
@@ -9,7 +9,7 @@ using BankApp.Server.Services.Dashboard;
 using ErrorOr;
 using FluentAssertions;
 using Microsoft.Extensions.Logging.Abstractions;
-using NSubstitute;
+using Moq;
 
 namespace BankApp.Server.Tests.Unit;
 
@@ -18,8 +18,8 @@ namespace BankApp.Server.Tests.Unit;
 /// </summary>
 public class DashboardServiceTests
 {
-    private readonly IDashboardRepository dashboardRepository = Substitute.For<IDashboardRepository>();
-    private readonly IUserRepository userRepository = Substitute.For<IUserRepository>();
+    private readonly Mock<IUserRepository> userRepository = new Mock<IUserRepository>(MockBehavior.Strict);
+    private readonly Mock<IDashboardRepository> dashboardRepository = new Mock<IDashboardRepository>(MockBehavior.Strict);
     private readonly DashboardService service;
 
     /// <summary>
@@ -27,21 +27,23 @@ public class DashboardServiceTests
     /// </summary>
     public DashboardServiceTests()
     {
+        this.userRepository.Setup(repository => repository.FindById(It.IsAny<int>())).Returns(Error.NotFound());
+        this.dashboardRepository.Setup(repository => repository.GetCardsByUser(It.IsAny<int>())).Returns(new List<Card>());
+        this.dashboardRepository.Setup(repository => repository.GetAccountsByUser(It.IsAny<int>())).Returns(new List<Account>());
+        this.dashboardRepository.Setup(repository => repository.GetRecentTransactions(It.IsAny<int>(), It.IsAny<int>())).Returns(new List<Transaction>());
+        this.dashboardRepository.Setup(repository => repository.GetUnreadNotificationCount(It.IsAny<int>())).Returns(0);
+
         this.service = new DashboardService(
-            this.dashboardRepository,
-            this.userRepository,
+            this.dashboardRepository.Object,
+            this.userRepository.Object,
             NullLogger<DashboardService>.Instance);
     }
 
     [Fact]
     public void GetDashboardData_WhenUserDoesNotExist_ReturnsNotFoundError()
     {
-        // Arrange
-        const int userId = 99;
-        this.userRepository.FindById(userId).Returns(Error.NotFound());
-
         // Act
-        ErrorOr<DashboardResponse> result = this.service.GetDashboardData(userId);
+        ErrorOr<DashboardResponse> result = this.service.GetDashboardData(99);
 
         // Assert
         result.IsError.Should().BeTrue();
@@ -55,11 +57,8 @@ public class DashboardServiceTests
         const int userId = 1;
         const string fullName = "Ada Lovelace";
         const string email = "ada@lovelace.com";
-        var user = new User { Id = userId, FullName = fullName, Email = email };
-        this.userRepository.FindById(userId).Returns(user);
-        this.dashboardRepository.GetCardsByUser(userId).Returns(new List<Card>());
-        this.dashboardRepository.GetAccountsByUser(userId).Returns(new List<Account>());
-        this.dashboardRepository.GetUnreadNotificationCount(userId).Returns(0);
+        this.userRepository.Setup(repository => repository.FindById(userId))
+            .Returns(new User { Id = userId, FullName = fullName, Email = email });
 
         // Act
         ErrorOr<DashboardResponse> result = this.service.GetDashboardData(userId);
@@ -75,24 +74,22 @@ public class DashboardServiceTests
     {
         // Arrange
         const int userId = 1;
-        var user = new User { Id = userId, FullName = "Ada", Email = "ada@test.com" };
-        var cards = new List<Card>
-        {
-            new Card
+        this.userRepository.Setup(repository => repository.FindById(userId))
+            .Returns(new User { Id = userId, FullName = "Ada", Email = "ada@test.com" });
+        this.dashboardRepository.Setup(repository => repository.GetCardsByUser(userId))
+            .Returns(new List<Card>
             {
-                Id = 1,
-                UserId = userId,
-                CardNumber = "1234567890123456",
-                CardholderName = "Ada Lovelace",
-                CardType = CardType.Debit,
-                ExpiryDate = new DateTime(2027, 12, 1),
-                Status = CardStatus.Active,
-            },
-        };
-        this.userRepository.FindById(userId).Returns(user);
-        this.dashboardRepository.GetCardsByUser(userId).Returns(cards);
-        this.dashboardRepository.GetAccountsByUser(userId).Returns(new List<Account>());
-        this.dashboardRepository.GetUnreadNotificationCount(userId).Returns(0);
+                new Card
+                {
+                    Id = 1,
+                    UserId = userId,
+                    CardNumber = "1234567890123456",
+                    CardholderName = "Ada Lovelace",
+                    CardType = CardType.Debit,
+                    ExpiryDate = new DateTime(2027, 12, 1),
+                    Status = CardStatus.Active,
+                },
+            });
 
         // Act
         ErrorOr<DashboardResponse> result = this.service.GetDashboardData(userId);
@@ -109,11 +106,9 @@ public class DashboardServiceTests
     {
         // Arrange
         const int userId = 1;
-        var user = new User { Id = userId, FullName = "Ada", Email = "ada@test.com" };
-        this.userRepository.FindById(userId).Returns(user);
-        this.dashboardRepository.GetCardsByUser(userId).Returns(Error.Failure());
-        this.dashboardRepository.GetAccountsByUser(userId).Returns(new List<Account>());
-        this.dashboardRepository.GetUnreadNotificationCount(userId).Returns(0);
+        this.userRepository.Setup(repository => repository.FindById(userId))
+            .Returns(new User { Id = userId, FullName = "Ada", Email = "ada@test.com" });
+        this.dashboardRepository.Setup(repository => repository.GetCardsByUser(userId)).Returns(Error.Failure());
 
         // Act
         ErrorOr<DashboardResponse> result = this.service.GetDashboardData(userId);
@@ -129,30 +124,25 @@ public class DashboardServiceTests
         // Arrange
         const int userId = 1;
         const int accountId = 10;
-        var user = new User { Id = userId, FullName = "Ada", Email = "ada@test.com" };
-        var accounts = new List<Account>
-        {
-            new Account { Id = accountId, UserId = userId },
-        };
-        var transactions = new List<Transaction>
-        {
-            new Transaction
+        this.userRepository.Setup(repository => repository.FindById(userId))
+            .Returns(new User { Id = userId, FullName = "Ada", Email = "ada@test.com" });
+        this.dashboardRepository.Setup(repository => repository.GetAccountsByUser(userId))
+            .Returns(new List<Account> { new Account { Id = accountId, UserId = userId } });
+        this.dashboardRepository.Setup(repository => repository.GetRecentTransactions(accountId, It.IsAny<int>()))
+            .Returns(new List<Transaction>
             {
-                Id = 1,
-                AccountId = accountId,
-                Direction = TransactionDirection.Out,
-                Amount = 100,
-                Currency = "RON",
-                Status = TransactionStatus.Completed,
-                MerchantName = "Shop",
-                CreatedAt = DateTime.UtcNow,
-            },
-        };
-        this.userRepository.FindById(userId).Returns(user);
-        this.dashboardRepository.GetCardsByUser(userId).Returns(new List<Card>());
-        this.dashboardRepository.GetAccountsByUser(userId).Returns(accounts);
-        this.dashboardRepository.GetRecentTransactions(accountId, Arg.Any<int>()).Returns(transactions);
-        this.dashboardRepository.GetUnreadNotificationCount(userId).Returns(0);
+                new Transaction
+                {
+                    Id = 1,
+                    AccountId = accountId,
+                    Direction = TransactionDirection.Out,
+                    Amount = 100,
+                    Currency = "RON",
+                    Status = TransactionStatus.Completed,
+                    MerchantName = "Shop",
+                    CreatedAt = DateTime.UtcNow,
+                },
+            });
 
         // Act
         ErrorOr<DashboardResponse> result = this.service.GetDashboardData(userId);
@@ -169,11 +159,9 @@ public class DashboardServiceTests
     {
         // Arrange
         const int userId = 1;
-        var user = new User { Id = userId, FullName = "Ada", Email = "ada@test.com" };
-        this.userRepository.FindById(userId).Returns(user);
-        this.dashboardRepository.GetCardsByUser(userId).Returns(new List<Card>());
-        this.dashboardRepository.GetAccountsByUser(userId).Returns(Error.Failure());
-        this.dashboardRepository.GetUnreadNotificationCount(userId).Returns(0);
+        this.userRepository.Setup(repository => repository.FindById(userId))
+            .Returns(new User { Id = userId, FullName = "Ada", Email = "ada@test.com" });
+        this.dashboardRepository.Setup(repository => repository.GetAccountsByUser(userId)).Returns(Error.Failure());
 
         // Act
         ErrorOr<DashboardResponse> result = this.service.GetDashboardData(userId);
@@ -188,11 +176,9 @@ public class DashboardServiceTests
     {
         // Arrange
         const int userId = 1;
-        var user = new User { Id = userId, FullName = "Ada", Email = "ada@test.com" };
-        this.userRepository.FindById(userId).Returns(user);
-        this.dashboardRepository.GetCardsByUser(userId).Returns(new List<Card>());
-        this.dashboardRepository.GetAccountsByUser(userId).Returns(new List<Account>());
-        this.dashboardRepository.GetUnreadNotificationCount(userId).Returns(Error.Failure());
+        this.userRepository.Setup(repository => repository.FindById(userId))
+            .Returns(new User { Id = userId, FullName = "Ada", Email = "ada@test.com" });
+        this.dashboardRepository.Setup(repository => repository.GetUnreadNotificationCount(userId)).Returns(Error.Failure());
 
         // Act
         ErrorOr<DashboardResponse> result = this.service.GetDashboardData(userId);
@@ -209,13 +195,16 @@ public class DashboardServiceTests
         const int userId = 1;
         const int accountId1 = 10;
         const int accountId2 = 11;
-        var user = new User { Id = userId, FullName = "Ada", Email = "ada@test.com" };
-        var accounts = new List<Account>
-        {
-            new Account { Id = accountId1, UserId = userId },
-            new Account { Id = accountId2, UserId = userId },
-        };
-        var transactions1 = Enumerable.Range(1, 8).Select(i => new Transaction
+        this.userRepository.Setup(repository => repository.FindById(userId))
+            .Returns(new User { Id = userId, FullName = "Ada", Email = "ada@test.com" });
+        this.dashboardRepository.Setup(repository => repository.GetAccountsByUser(userId))
+            .Returns(new List<Account>
+            {
+                new Account { Id = accountId1, UserId = userId },
+                new Account { Id = accountId2, UserId = userId },
+            });
+
+        List<Transaction> transactions1 = Enumerable.Range(1, 8).Select(i => new Transaction
         {
             Id = i,
             AccountId = accountId1,
@@ -225,7 +214,7 @@ public class DashboardServiceTests
             Status = TransactionStatus.Completed,
             CreatedAt = DateTime.UtcNow.AddMinutes(-i),
         }).ToList();
-        var transactions2 = Enumerable.Range(9, 5).Select(i => new Transaction
+        List<Transaction> transactions2 = Enumerable.Range(9, 5).Select(i => new Transaction
         {
             Id = i,
             AccountId = accountId2,
@@ -235,12 +224,10 @@ public class DashboardServiceTests
             Status = TransactionStatus.Completed,
             CreatedAt = DateTime.UtcNow.AddMinutes(-i),
         }).ToList();
-        this.userRepository.FindById(userId).Returns(user);
-        this.dashboardRepository.GetCardsByUser(userId).Returns(new List<Card>());
-        this.dashboardRepository.GetAccountsByUser(userId).Returns(accounts);
-        this.dashboardRepository.GetRecentTransactions(accountId1, Arg.Any<int>()).Returns(transactions1);
-        this.dashboardRepository.GetRecentTransactions(accountId2, Arg.Any<int>()).Returns(transactions2);
-        this.dashboardRepository.GetUnreadNotificationCount(userId).Returns(0);
+        this.dashboardRepository.Setup(repository => repository.GetRecentTransactions(accountId1, It.IsAny<int>()))
+            .Returns(transactions1);
+        this.dashboardRepository.Setup(repository => repository.GetRecentTransactions(accountId2, It.IsAny<int>()))
+            .Returns(transactions2);
 
         // Act
         ErrorOr<DashboardResponse> result = this.service.GetDashboardData(userId);
@@ -256,11 +243,9 @@ public class DashboardServiceTests
         // Arrange
         const int userId = 1;
         const int unreadCount = 7;
-        var user = new User { Id = userId, FullName = "Ada", Email = "ada@test.com" };
-        this.userRepository.FindById(userId).Returns(user);
-        this.dashboardRepository.GetCardsByUser(userId).Returns(new List<Card>());
-        this.dashboardRepository.GetAccountsByUser(userId).Returns(new List<Account>());
-        this.dashboardRepository.GetUnreadNotificationCount(userId).Returns(unreadCount);
+        this.userRepository.Setup(repository => repository.FindById(userId))
+            .Returns(new User { Id = userId, FullName = "Ada", Email = "ada@test.com" });
+        this.dashboardRepository.Setup(repository => repository.GetUnreadNotificationCount(userId)).Returns(unreadCount);
 
         // Act
         ErrorOr<DashboardResponse> result = this.service.GetDashboardData(userId);
