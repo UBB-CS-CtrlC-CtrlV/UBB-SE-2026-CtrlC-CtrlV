@@ -10,7 +10,6 @@ using BankApp.Server.Tests.Integration.Infrastructure;
 using Bogus;
 using Dapper;
 using FluentAssertions;
-using Xunit;
 
 namespace BankApp.Server.Tests.Integration;
 
@@ -41,20 +40,17 @@ public sealed class DashboardRepositoryTests : IClassFixture<DatabaseFixture>, I
 
     private AppDbContext MakeDb() => this.fixture.CreateDbContext();
 
-    /// <summary>Inserts a user and returns the persisted entity.</summary>
     private User SeedUser(AppDbContext db)
     {
         var da = new UserDataAccess(db);
         var user = this.userFaker.Generate();
-        var createResult = da.Create(user);
-        createResult.IsError.Should().BeFalse(createResult.IsError ? createResult.FirstError.Description : string.Empty);
+        da.Create(user).IsError.Should().BeFalse();
 
         var findResult = da.FindByEmail(user.Email);
         findResult.IsError.Should().BeFalse(findResult.IsError ? findResult.FirstError.Description : string.Empty);
         return findResult.Value;
     }
 
-    /// <summary>Inserts an account and returns the persisted entity.</summary>
     private Account SeedAccount(AppDbContext db, int userId, string? iban = null)
     {
         var faker = new Faker();
@@ -77,7 +73,6 @@ public sealed class DashboardRepositoryTests : IClassFixture<DatabaseFixture>, I
                 new { UserId = userId, Iban = iban })).Value;
     }
 
-    /// <summary>Inserts a card linked to a user and account.</summary>
     private void SeedCard(AppDbContext db, int accountId, int userId)
     {
         // Use a fixed card number to avoid Bogus generating numbers > VARCHAR(19)
@@ -94,7 +89,6 @@ public sealed class DashboardRepositoryTests : IClassFixture<DatabaseFixture>, I
         seedResult.IsError.Should().BeFalse(seedResult.IsError ? seedResult.FirstError.Description : "SeedCard INSERT failed.");
     }
 
-    /// <summary>Inserts N transactions for a given account.</summary>
     private void SeedTransactions(AppDbContext db, int accountId, int count)
     {
         for (int i = 0; i < count; i++)
@@ -113,7 +107,6 @@ public sealed class DashboardRepositoryTests : IClassFixture<DatabaseFixture>, I
         }
     }
 
-    /// <summary>Inserts N unread notifications for a user.</summary>
     private void SeedNotifications(AppDbContext db, int userId, int count)
     {
         for (int i = 0; i < count; i++)
@@ -140,75 +133,74 @@ public sealed class DashboardRepositoryTests : IClassFixture<DatabaseFixture>, I
             new NotificationDataAccess(db));
     }
 
-    /// <summary>
-    /// GetAccountsByUser should return all accounts belonging to the specified user.
-    /// </summary>
     [Fact]
-    public void GetAccountsByUser_ReturnsAllAccountsForUser()
+    public void GetAccountsByUser_WhenUserHasAccounts_ReturnsAllAccounts()
     {
+        // Arrange
         using var db = MakeDb();
         var user = SeedUser(db);
         SeedAccount(db, user.Id);
-
         var repo = MakeDashboardRepo(db);
+
+        // Act
         var result = repo.GetAccountsByUser(user.Id);
 
+        // Assert
         result.IsError.Should().BeFalse(result.IsError ? result.FirstError.Description : string.Empty);
         result.Value.Should().ContainSingle();
         result.Value[0].UserId.Should().Be(user.Id);
         result.Value[0].Currency.Should().Be("RON");
     }
 
-    /// <summary>
-    /// GetRecentTransactions with limit=3 should return at most 3 items
-    /// even if more exist, in descending CreatedAt order.
-    /// </summary>
     [Fact]
-    public void GetRecentTransactions_ReturnsAtMostLimitResults()
+    public void GetRecentTransactions_WhenInsertedMoreThanLimit_ReturnsAtMostLimitItems()
     {
+        // Arrange
         using var db = MakeDb();
         var user = SeedUser(db);
         var account = SeedAccount(db, user.Id);
         SeedTransactions(db, account.Id, 5);
-
         var repo = MakeDashboardRepo(db);
+
+        // Act
         var result = repo.GetRecentTransactions(account.Id, limit: 3);
 
+        // Assert
         result.IsError.Should().BeFalse(result.IsError ? result.FirstError.Description : string.Empty);
         result.Value.Should().HaveCount(3);
     }
 
-    /// <summary>
-    /// GetUnreadNotificationCount should return exactly the number of unread notifications.
-    /// </summary>
     [Fact]
-    public void GetUnreadNotificationCount_ReturnsCorrectCount()
+    public void GetUnreadNotificationCount_WhenNotificationsExist_ReturnsCorrectCount()
     {
+        // Arrange
         using var db = MakeDb();
         var user = SeedUser(db);
         SeedNotifications(db, user.Id, 4);
-
         var repo = MakeDashboardRepo(db);
+
+        // Act
         var result = repo.GetUnreadNotificationCount(user.Id);
 
+        // Assert
         result.IsError.Should().BeFalse(result.IsError ? result.FirstError.Description : string.Empty);
         result.Value.Should().Be(4);
     }
 
-    /// <summary>
-    /// GetCardsByUser should return cards associated with the correct user.
-    /// </summary>
     [Fact]
-    public void GetCardsByUser_ReturnsCardsForGivenUser()
+    public void GetCardsByUser_WhenUserHasCards_ReturnsCardsForThatUser()
     {
+        // Arrange
         using var db = MakeDb();
         var user = SeedUser(db);
         var account = SeedAccount(db, user.Id);
         SeedCard(db, account.Id, user.Id);
-
         var repo = MakeDashboardRepo(db);
+
+        // Act
         var result = repo.GetCardsByUser(user.Id);
 
+        // Assert
         result.IsError.Should().BeFalse(result.IsError ? result.FirstError.Description : string.Empty);
         result.Value.Should().ContainSingle();
         result.Value[0].UserId.Should().Be(user.Id);

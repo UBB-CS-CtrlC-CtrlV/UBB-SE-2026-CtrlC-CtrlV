@@ -15,17 +15,14 @@ namespace BankApp.Server.Tests.Integration.Infrastructure;
 /// shares one MsSqlContainer for the lifetime of that class.
 /// Call <see cref="ResetAsync"/> before each test to wipe all data cleanly.
 /// </summary>
+// ReSharper disable once ClassNeverInstantiated.Global — xUnit instantiates fixtures via reflection.
 public sealed class DatabaseFixture : IAsyncLifetime
 {
-    private readonly MsSqlContainer dbContainer;
+    private readonly MsSqlContainer dbContainer = new MsSqlBuilder("mcr.microsoft.com/mssql/server:2025-latest")
+        .Build();
+
     private DbConnection? connection;
     private Respawner? respawner;
-
-    public DatabaseFixture()
-    {
-        this.dbContainer = new MsSqlBuilder("mcr.microsoft.com/mssql/server:2022-latest")
-            .Build();
-    }
 
     /// <summary>
     /// Creates a fresh <see cref="AppDbContext"/> connected to the Testcontainers SQL Server instance.
@@ -89,7 +86,7 @@ public sealed class DatabaseFixture : IAsyncLifetime
         {
             foreach (string statement in SplitSqlBatches(await File.ReadAllTextAsync(schemaFile)))
             {
-                using var cmd = this.connection!.CreateCommand();
+                await using DbCommand cmd = this.connection!.CreateCommand();
                 cmd.CommandText = statement;
                 await cmd.ExecuteNonQueryAsync();
             }
@@ -98,7 +95,7 @@ public sealed class DatabaseFixture : IAsyncLifetime
 
     private static string FindSchemaDirectory()
     {
-        DirectoryInfo? current = new DirectoryInfo(AppContext.BaseDirectory);
+        var current = new DirectoryInfo(AppContext.BaseDirectory);
         while (current is not null)
         {
             string candidate = Path.Combine(current.FullName, "scripts", "db", "schema");
@@ -119,8 +116,7 @@ public sealed class DatabaseFixture : IAsyncLifetime
         var currentBatch = new List<string>();
 
         using var reader = new StringReader(sql);
-        string? line;
-        while ((line = reader.ReadLine()) is not null)
+        while (reader.ReadLine() is { } line)
         {
             if (string.Equals(line.Trim(), "GO", StringComparison.OrdinalIgnoreCase))
             {

@@ -40,13 +40,11 @@ public sealed class AuthRepositoryTests : IClassFixture<DatabaseFixture>, IAsync
 
     private AppDbContext MakeDb() => this.fixture.CreateDbContext();
 
-    /// <summary>Creates a user and returns the persisted entity (with Id assigned).</summary>
     private User SeedUser(AppDbContext db)
     {
         var userDa = new UserDataAccess(db);
         var user = this.userFaker.Generate();
-        var createResult = userDa.Create(user);
-        createResult.IsError.Should().BeFalse(createResult.IsError ? createResult.FirstError.Description : string.Empty);
+        userDa.Create(user).IsError.Should().BeFalse();
 
         var findResult = userDa.FindByEmail(user.Email);
         findResult.IsError.Should().BeFalse(findResult.IsError ? findResult.FirstError.Description : string.Empty);
@@ -63,143 +61,130 @@ public sealed class AuthRepositoryTests : IClassFixture<DatabaseFixture>, IAsync
         return new AuthRepository(userDa, sessionDa, oauthDa, tokenDa, notifDa);
     }
 
-    /// <summary>
-    /// CreateUser via AuthRepository should also auto-create notification preferences
-    /// for every NotificationType value.
-    /// </summary>
     [Fact]
-    public void CreateUser_AutomaticallyCreatesNotificationPreferences()
+    public void CreateUser_WhenCalled_AutomaticallyCreatesNotificationPreferences()
     {
+        // Arrange
         using var db = MakeDb();
         var userDa = new UserDataAccess(db);
         var repo = MakeAuthRepo(db);
-
         var newUser = this.userFaker.Generate();
+
+        // Act
         var result = repo.CreateUser(newUser);
 
+        // Assert
         result.IsError.Should().BeFalse(result.IsError ? result.FirstError.Description : string.Empty);
-
         var user = userDa.FindByEmail(newUser.Email).Value;
-
-        // Verify directly via SQL count to avoid Dapper enum-mapping issue with NotificationType
         var countResult = db.Query<int>(conn =>
-            Dapper.SqlMapper.QueryFirst<int>(
+            SqlMapper.QueryFirst<int>(
                 conn,
                 "SELECT COUNT(*) FROM NotificationPreference WHERE UserId = @UserId",
                 new { UserId = user.Id }));
-
         countResult.IsError.Should().BeFalse();
         countResult.Value.Should().BeGreaterThan(0, "Expected at least one notification preference to be created.");
     }
 
-    /// <summary>
-    /// CreateSession should return a Session entity with a positive Id assigned by the DB.
-    /// </summary>
     [Fact]
-    public void CreateSession_ReturnsSessionWithPositiveId()
+    public void CreateSession_WhenUserExists_ReturnsSessionWithPositiveId()
     {
+        // Arrange
         using var db = MakeDb();
         var user = SeedUser(db);
         var repo = MakeAuthRepo(db);
 
+        // Act
         var result = repo.CreateSession(user.Id, "token-abc", "Chrome", "Chrome 120", "127.0.0.1");
 
+        // Assert
         result.IsError.Should().BeFalse(result.IsError ? result.FirstError.Description : string.Empty);
         result.Value.Id.Should().BeGreaterThan(0);
         result.Value.Token.Should().Be("token-abc");
         result.Value.UserId.Should().Be(user.Id);
     }
 
-    /// <summary>
-    /// FindSessionByToken should return the correct session for an active, non-revoked token.
-    /// </summary>
     [Fact]
-    public void FindSessionByToken_ActiveToken_ReturnsSession()
+    public void FindSessionByToken_WhenTokenIsActive_ReturnsSession()
     {
+        // Arrange
         using var db = MakeDb();
         var user = SeedUser(db);
         var repo = MakeAuthRepo(db);
-
         repo.CreateSession(user.Id, "valid-token-123", null, null, null);
 
+        // Act
         var result = repo.FindSessionByToken("valid-token-123");
 
+        // Assert
         result.IsError.Should().BeFalse(result.IsError ? result.FirstError.Description : string.Empty);
         result.Value.Token.Should().Be("valid-token-123");
     }
 
-    /// <summary>
-    /// After revoking a session, FindSessionByToken should return NotFound.
-    /// </summary>
     [Fact]
-    public void FindSessionByToken_RevokedToken_ReturnsNotFound()
+    public void FindSessionByToken_WhenTokenIsRevoked_ReturnsNotFound()
     {
+        // Arrange
         using var db = MakeDb();
         var user = SeedUser(db);
         var repo = MakeAuthRepo(db);
-
         var sessionResult = repo.CreateSession(user.Id, "revoke-me", null, null, null);
         sessionResult.IsError.Should().BeFalse();
-
         repo.UpdateSessionToken(sessionResult.Value.Id);
 
-        var findResult = repo.FindSessionByToken("revoke-me");
-        findResult.IsError.Should().BeTrue("A revoked session should not be retrievable.");
+        // Act
+        var result = repo.FindSessionByToken("revoke-me");
+
+        // Assert
+        result.IsError.Should().BeTrue("A revoked session should not be retrievable.");
     }
 
-    /// <summary>
-    /// After saving a password reset token, FindPasswordResetToken should return
-    /// the correct entity with the correct hash and future expiry.
-    /// </summary>
     [Fact]
-    public void SavePasswordResetToken_ThenFindByHash_ReturnsToken()
+    public void FindPasswordResetToken_AfterSavingToken_ReturnsPersistedToken()
     {
+        // Arrange
         using var db = MakeDb();
         var user = SeedUser(db);
         var repo = MakeAuthRepo(db);
-
         var token = new PasswordResetToken
         {
             UserId = user.Id,
             TokenHash = "sha256-hash-xyz",
             ExpiresAt = DateTime.UtcNow.AddHours(1),
         };
+        repo.SavePasswordResetToken(token).IsError.Should().BeFalse();
 
-        var saveResult = repo.SavePasswordResetToken(token);
-        saveResult.IsError.Should().BeFalse(saveResult.IsError ? saveResult.FirstError.Description : string.Empty);
+        // Act
+        var result = repo.FindPasswordResetToken("sha256-hash-xyz");
 
-        var findResult = repo.FindPasswordResetToken("sha256-hash-xyz");
-        findResult.IsError.Should().BeFalse();
-        findResult.Value.TokenHash.Should().Be("sha256-hash-xyz");
-        findResult.Value.UserId.Should().Be(user.Id);
-        findResult.Value.UsedAt.Should().BeNull();
+        // Assert
+        result.IsError.Should().BeFalse();
+        result.Value.TokenHash.Should().Be("sha256-hash-xyz");
+        result.Value.UserId.Should().Be(user.Id);
+        result.Value.UsedAt.Should().BeNull();
     }
 
-    /// <summary>
-    /// After calling MarkPasswordResetTokenAsUsed, UsedAt should be non-null.
-    /// </summary>
     [Fact]
-    public void MarkPasswordResetTokenAsUsed_SetsUsedAt()
+    public void MarkPasswordResetTokenAsUsed_WhenTokenExists_SetsUsedAtTimestamp()
     {
+        // Arrange
         using var db = MakeDb();
         var user = SeedUser(db);
         var repo = MakeAuthRepo(db);
-
         var token = new PasswordResetToken
         {
             UserId = user.Id,
             TokenHash = "mark-used-hash",
             ExpiresAt = DateTime.UtcNow.AddHours(1),
         };
-
-        repo.SavePasswordResetToken(token);
-
+        repo.SavePasswordResetToken(token).IsError.Should().BeFalse();
         var created = repo.FindPasswordResetToken("mark-used-hash");
         created.IsError.Should().BeFalse();
 
+        // Act
         var markResult = repo.MarkPasswordResetTokenAsUsed(created.Value.Id);
-        markResult.IsError.Should().BeFalse(markResult.IsError ? markResult.FirstError.Description : string.Empty);
 
+        // Assert
+        markResult.IsError.Should().BeFalse(markResult.IsError ? markResult.FirstError.Description : string.Empty);
         var afterMark = repo.FindPasswordResetToken("mark-used-hash");
         afterMark.IsError.Should().BeFalse();
         afterMark.Value.UsedAt.Should().NotBeNull();
