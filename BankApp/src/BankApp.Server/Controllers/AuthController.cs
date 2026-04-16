@@ -128,7 +128,7 @@ public class AuthController : ApiControllerBase
     [HttpPost("oauth-register")]
     public IActionResult OAuthRegister([FromBody] OAuthRegisterRequest request)
     {
-        return this.ToActionResult(this.authService.OAuthRegister(request));
+        return this.ToActionResult(this.registrationService.OAuthRegister(request));
     }
 
     /// <summary>
