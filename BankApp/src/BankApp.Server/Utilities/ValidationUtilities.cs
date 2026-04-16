@@ -1,5 +1,6 @@
 using System.Text.RegularExpressions;
 using System.Net.Mail;
+using EmailValidation;
 
 namespace BankApp.Server.Utilities;
 
@@ -20,22 +21,7 @@ public static class ValidationUtilities
     /// <returns><see langword="true"/> if the email is valid; otherwise, <see langword="false"/>.</returns>
     public static bool IsValidEmail(string email)
     {
-        if (string.IsNullOrWhiteSpace(email))
-        {
-            return false;
-        }
-
-        email = email.Trim().ToLower();
-
-        try
-        {
-            MailAddress mailAddress = new MailAddress(email);
-            return mailAddress.Address == email;
-        }
-        catch
-        {
-            return false;
-        }
+        return !string.IsNullOrWhiteSpace(email) && EmailValidator.Validate(email.Trim());
     }
 
     /// <summary>
