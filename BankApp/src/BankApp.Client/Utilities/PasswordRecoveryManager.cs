@@ -104,12 +104,12 @@ public class PasswordRecoveryManager : IPasswordRecoveryManager
             return ForgotPasswordState.Error;
         }
 
-        var result = await this.apiClient.PostAsync<object, ApiResponse>(
+        var result = await this.apiClient.PostAsync(
             ApiEndpoints.VerifyResetToken, new { Token = token });
 
         return result.Match(
-            response => this.MapTokenResponse(response, ForgotPasswordState.TokenValid),
-            _ => ForgotPasswordState.Error);
+            _ => ForgotPasswordState.TokenValid,
+            errors => this.MapError(errors[0]));
     }
 
     /// <inheritdoc/>
@@ -126,12 +126,12 @@ public class PasswordRecoveryManager : IPasswordRecoveryManager
             NewPassword = newPassword,
         };
 
-        var result = await this.apiClient.PostAsync<ResetPasswordRequest, ApiResponse>(
+        var result = await this.apiClient.PostAsync(
             ApiEndpoints.ResetPassword, request);
 
         return result.Match(
-            response => this.MapTokenResponse(response, ForgotPasswordState.PasswordResetSuccess),
-            _ => ForgotPasswordState.Error);
+            _ => ForgotPasswordState.PasswordResetSuccess,
+            errors => this.MapError(errors[0]));
     }
 
     /// <inheritdoc/>
@@ -140,14 +140,9 @@ public class PasswordRecoveryManager : IPasswordRecoveryManager
         return PasswordValidator.IsStrong(password);
     }
 
-    private ForgotPasswordState MapTokenResponse(ApiResponse response, ForgotPasswordState successState)
+    private ForgotPasswordState MapError(Error error)
     {
-        if (response.Error == null)
-        {
-            return successState;
-        }
-
-        return response.ErrorCode switch
+        return error.Code switch
         {
             "token_expired" => ForgotPasswordState.TokenExpired,
             "token_already_used" => ForgotPasswordState.TokenAlreadyUsed,
