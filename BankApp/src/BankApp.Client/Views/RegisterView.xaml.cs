@@ -133,7 +133,7 @@ public sealed partial class RegisterView : IStateObserver<RegisterState>
         await this.viewModel.OAuthRegister("Google");
     }
 
-    private void SignInButton_Click(object sender, RoutedEventArgs e)
+    private void BackToLoginButton_Click(object sender, RoutedEventArgs e)
     {
         this.navigationService.NavigateTo<LoginView>();
     }

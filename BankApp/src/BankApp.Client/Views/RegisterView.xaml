@@ -105,20 +105,11 @@
 
                 <!-- Back to Login (shown after successful registration) -->
                 <Button x:Name="BackToLoginButton" Content="Back to Login"
-                        Click="SignInButton_Click" 
+                        Click="BackToLoginButton_Click"
                         HorizontalAlignment="Stretch" Height="42"
                         Background="Transparent" BorderBrush="#4ECDC4" BorderThickness="1"
                         Foreground="#4ECDC4" FontWeight="SemiBold"
                         CornerRadius="6" Margin="0,8,0,0"/>
-
-                <!-- Login Link -->
-                <StackPanel Orientation="Horizontal" HorizontalAlignment="Center" 
-                            Margin="0,20,0,0">
-                    <TextBlock Text="Already have an account?" Foreground="#888" 
-                               FontSize="13" VerticalAlignment="Center"/>
-                    <HyperlinkButton x:Name="SignInButton" Content="Sign in" 
-                                     Click="SignInButton_Click" FontSize="13"/>
-                </StackPanel>
 
             </StackPanel>
         </Grid>
