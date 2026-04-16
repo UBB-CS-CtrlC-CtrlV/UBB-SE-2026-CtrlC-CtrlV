@@ -41,7 +41,8 @@ public class ProfileServiceTests
         const int userId = 1;
         const string fullName = "Ada Lovelace";
         const string email = "ada@lovelace.com";
-        this.userRepository.Setup(repository => repository.FindById(userId))
+        this.userRepository
+            .Setup(repository => repository.FindById(userId))
             .Returns(new User { Id = userId, FullName = fullName, Email = email });
 
         // Act
@@ -58,7 +59,9 @@ public class ProfileServiceTests
     public void GetProfile_WhenUserDoesNotExist_ReturnsNotFoundError()
     {
         // Arrange
-        this.userRepository.Setup(repository => repository.FindById(99)).Returns(Error.NotFound());
+        this.userRepository
+            .Setup(repository => repository.FindById(99))
+            .Returns(Error.NotFound());
 
         // Act
         ErrorOr<ProfileInfo> result = this.service.GetProfile(99);
@@ -86,7 +89,9 @@ public class ProfileServiceTests
     public void UpdatePersonalInfo_WhenUserDoesNotExist_ReturnsNotFoundError()
     {
         // Arrange
-        this.userRepository.Setup(repository => repository.FindById(99)).Returns(Error.NotFound());
+        this.userRepository
+            .Setup(repository => repository.FindById(99))
+            .Returns(Error.NotFound());
         var request = new UpdateProfileRequest(99, "0712345678", "123 Main St");
 
         // Act
@@ -102,7 +107,8 @@ public class ProfileServiceTests
     {
         // Arrange
         const int userId = 1;
-        this.userRepository.Setup(repository => repository.FindById(userId))
+        this.userRepository
+            .Setup(repository => repository.FindById(userId))
             .Returns(new User { Id = userId, Email = "ada@test.com", FullName = "Ada" });
         var request = new UpdateProfileRequest(userId, "not-a-phone", "123 Main St");
 
@@ -122,9 +128,12 @@ public class ProfileServiceTests
         const int userId = 1;
         const string validPhone = "0712345678";
         const string address = "123 Main St";
-        this.userRepository.Setup(repository => repository.FindById(userId))
+        this.userRepository
+            .Setup(repository => repository.FindById(userId))
             .Returns(new User { Id = userId, Email = "ada@test.com", FullName = "Ada" });
-        this.userRepository.Setup(repository => repository.UpdateUser(It.IsAny<User>())).Returns(Result.Success);
+        this.userRepository
+            .Setup(repository => repository.UpdateUser(It.IsAny<User>()))
+            .Returns(Result.Success);
         var request = new UpdateProfileRequest(userId, validPhone, address);
 
         // Act
@@ -142,7 +151,9 @@ public class ProfileServiceTests
     public void ChangePassword_WhenUserDoesNotExist_ReturnsNotFoundError()
     {
         // Arrange
-        this.userRepository.Setup(repository => repository.FindById(99)).Returns(Error.NotFound());
+        this.userRepository
+            .Setup(repository => repository.FindById(99))
+            .Returns(Error.NotFound());
         var request = new ChangePasswordRequest(99, "old", "NewPass1!");
 
         // Act
@@ -158,7 +169,8 @@ public class ProfileServiceTests
     {
         // Arrange
         const int userId = 1;
-        this.userRepository.Setup(repository => repository.FindById(userId))
+        this.userRepository
+            .Setup(repository => repository.FindById(userId))
             .Returns(new User { Id = userId, Email = "ada@test.com", FullName = "Ada", PasswordHash = "hash" });
         var request = new ChangePasswordRequest(userId, "old", "weak");
 
@@ -175,9 +187,12 @@ public class ProfileServiceTests
     {
         // Arrange
         const int userId = 1;
-        this.userRepository.Setup(repository => repository.FindById(userId))
+        this.userRepository
+            .Setup(repository => repository.FindById(userId))
             .Returns(new User { Id = userId, Email = "ada@test.com", FullName = "Ada", PasswordHash = "hash" });
-        this.hashService.Setup(service => service.Verify("wrongpassword", "hash")).Returns((ErrorOr<bool>)false);
+        this.hashService
+            .Setup(service => service.Verify("wrongpassword", "hash"))
+            .Returns((ErrorOr<bool>)false);
         var request = new ChangePasswordRequest(userId, "wrongpassword", "NewPass1!");
 
         // Act
@@ -195,11 +210,18 @@ public class ProfileServiceTests
         const int userId = 1;
         const string newPassword = "NewPass1!";
         const string newHash = "newhash";
-        this.userRepository.Setup(repository => repository.FindById(userId))
+        this.userRepository
+            .Setup(repository => repository.FindById(userId))
             .Returns(new User { Id = userId, Email = "ada@test.com", FullName = "Ada", PasswordHash = "oldhash" });
-        this.hashService.Setup(service => service.Verify("oldpassword", "oldhash")).Returns((ErrorOr<bool>)true);
-        this.hashService.Setup(service => service.GetHash(newPassword)).Returns((ErrorOr<string>)newHash);
-        this.userRepository.Setup(repository => repository.UpdatePassword(userId, newHash)).Returns(Result.Success);
+        this.hashService
+            .Setup(service => service.Verify("oldpassword", "oldhash"))
+            .Returns((ErrorOr<bool>)true);
+        this.hashService
+            .Setup(service => service.GetHash(newPassword))
+            .Returns((ErrorOr<string>)newHash);
+        this.userRepository
+            .Setup(repository => repository.UpdatePassword(userId, newHash))
+            .Returns(Result.Success);
         var request = new ChangePasswordRequest(userId, "oldpassword", newPassword);
 
         // Act
@@ -214,7 +236,9 @@ public class ProfileServiceTests
     public void Enable2FA_WhenUserDoesNotExist_ReturnsNotFoundError()
     {
         // Arrange
-        this.userRepository.Setup(repository => repository.FindById(99)).Returns(Error.NotFound());
+        this.userRepository
+            .Setup(repository => repository.FindById(99))
+            .Returns(Error.NotFound());
 
         // Act
         ErrorOr<Success> result = this.service.Enable2FA(99, TwoFactorMethod.Email);
@@ -229,9 +253,12 @@ public class ProfileServiceTests
     {
         // Arrange
         const int userId = 1;
-        this.userRepository.Setup(repository => repository.FindById(userId))
+        this.userRepository
+            .Setup(repository => repository.FindById(userId))
             .Returns(new User { Id = userId, Email = "ada@test.com", FullName = "Ada" });
-        this.userRepository.Setup(repository => repository.UpdateUser(It.IsAny<User>())).Returns(Result.Success);
+        this.userRepository
+            .Setup(repository => repository.UpdateUser(It.IsAny<User>()))
+            .Returns(Result.Success);
 
         // Act
         ErrorOr<Success> result = this.service.Enable2FA(userId, TwoFactorMethod.Email);
@@ -249,9 +276,12 @@ public class ProfileServiceTests
     {
         // Arrange
         const int userId = 1;
-        this.userRepository.Setup(repository => repository.FindById(userId))
+        this.userRepository
+            .Setup(repository => repository.FindById(userId))
             .Returns(new User { Id = userId, Email = "ada@test.com", FullName = "Ada", Is2FAEnabled = true });
-        this.userRepository.Setup(repository => repository.UpdateUser(It.IsAny<User>())).Returns(Result.Success);
+        this.userRepository
+            .Setup(repository => repository.UpdateUser(It.IsAny<User>()))
+            .Returns(Result.Success);
 
         // Act
         ErrorOr<Success> result = this.service.Disable2FA(userId);
@@ -268,7 +298,9 @@ public class ProfileServiceTests
     public void VerifyPassword_WhenUserDoesNotExist_ReturnsNotFoundError()
     {
         // Arrange
-        this.userRepository.Setup(repository => repository.FindById(99)).Returns(Error.NotFound());
+        this.userRepository
+            .Setup(repository => repository.FindById(99))
+            .Returns(Error.NotFound());
 
         // Act
         ErrorOr<bool> result = this.service.VerifyPassword(99, "anypassword");
@@ -283,9 +315,12 @@ public class ProfileServiceTests
     {
         // Arrange
         const int userId = 1;
-        this.userRepository.Setup(repository => repository.FindById(userId))
+        this.userRepository
+            .Setup(repository => repository.FindById(userId))
             .Returns(new User { Id = userId, Email = "ada@test.com", FullName = "Ada", PasswordHash = "correcthash" });
-        this.hashService.Setup(service => service.Verify("correctpassword", "correcthash")).Returns((ErrorOr<bool>)true);
+        this.hashService
+            .Setup(service => service.Verify("correctpassword", "correcthash"))
+            .Returns((ErrorOr<bool>)true);
 
         // Act
         ErrorOr<bool> result = this.service.VerifyPassword(userId, "correctpassword");
@@ -300,9 +335,12 @@ public class ProfileServiceTests
     {
         // Arrange
         const int userId = 1;
-        this.userRepository.Setup(repository => repository.FindById(userId))
+        this.userRepository
+            .Setup(repository => repository.FindById(userId))
             .Returns(new User { Id = userId, Email = "ada@test.com", FullName = "Ada", PasswordHash = "correcthash" });
-        this.hashService.Setup(service => service.Verify("wrongpassword", "correcthash")).Returns((ErrorOr<bool>)false);
+        this.hashService
+            .Setup(service => service.Verify("wrongpassword", "correcthash"))
+            .Returns((ErrorOr<bool>)false);
 
         // Act
         ErrorOr<bool> result = this.service.VerifyPassword(userId, "wrongpassword");
@@ -316,7 +354,9 @@ public class ProfileServiceTests
     public void GetNotificationPreferences_WhenUserDoesNotExist_ReturnsNotFoundError()
     {
         // Arrange
-        this.userRepository.Setup(repository => repository.FindById(99)).Returns(Error.NotFound());
+        this.userRepository
+            .Setup(repository => repository.FindById(99))
+            .Returns(Error.NotFound());
 
         // Act
         ErrorOr<List<NotificationPreferenceDto>> result = this.service.GetNotificationPreferences(99);
@@ -331,9 +371,11 @@ public class ProfileServiceTests
     {
         // Arrange
         const int userId = 1;
-        this.userRepository.Setup(repository => repository.FindById(userId))
+        this.userRepository
+            .Setup(repository => repository.FindById(userId))
             .Returns(new User { Id = userId, Email = "ada@test.com", FullName = "Ada" });
-        this.userRepository.Setup(repository => repository.GetNotificationPreferences(userId))
+        this.userRepository
+            .Setup(repository => repository.GetNotificationPreferences(userId))
             .Returns(new List<NotificationPreference>
             {
                 new NotificationPreference { Id = 1, UserId = userId, Category = NotificationType.Payment, EmailEnabled = true },
@@ -352,7 +394,9 @@ public class ProfileServiceTests
     public void GetActiveSessions_WhenUserDoesNotExist_ReturnsNotFoundError()
     {
         // Arrange
-        this.userRepository.Setup(repository => repository.FindById(99)).Returns(Error.NotFound());
+        this.userRepository
+            .Setup(repository => repository.FindById(99))
+            .Returns(Error.NotFound());
 
         // Act
         ErrorOr<List<SessionDto>> result = this.service.GetActiveSessions(99);
@@ -367,9 +411,11 @@ public class ProfileServiceTests
     {
         // Arrange
         const int userId = 1;
-        this.userRepository.Setup(repository => repository.FindById(userId))
+        this.userRepository
+            .Setup(repository => repository.FindById(userId))
             .Returns(new User { Id = userId, Email = "ada@test.com", FullName = "Ada" });
-        this.userRepository.Setup(repository => repository.GetActiveSessions(userId))
+        this.userRepository
+            .Setup(repository => repository.GetActiveSessions(userId))
             .Returns(new List<Session>
             {
                 new Session { Id = 1, UserId = userId, Token = "token1", DeviceInfo = "Chrome/Windows" },
@@ -389,7 +435,9 @@ public class ProfileServiceTests
     public void RevokeSession_WhenUserDoesNotExist_ReturnsNotFoundError()
     {
         // Arrange
-        this.userRepository.Setup(repository => repository.FindById(99)).Returns(Error.NotFound());
+        this.userRepository
+            .Setup(repository => repository.FindById(99))
+            .Returns(Error.NotFound());
 
         // Act
         ErrorOr<Success> result = this.service.RevokeSession(99, 1);
@@ -405,9 +453,12 @@ public class ProfileServiceTests
         // Arrange
         const int userId = 1;
         const int sessionId = 42;
-        this.userRepository.Setup(repository => repository.FindById(userId))
+        this.userRepository
+            .Setup(repository => repository.FindById(userId))
             .Returns(new User { Id = userId, Email = "ada@test.com", FullName = "Ada" });
-        this.userRepository.Setup(repository => repository.RevokeSession(userId, sessionId)).Returns(Result.Success);
+        this.userRepository
+            .Setup(repository => repository.RevokeSession(userId, sessionId))
+            .Returns(Result.Success);
 
         // Act
         ErrorOr<Success> result = this.service.RevokeSession(userId, sessionId);
