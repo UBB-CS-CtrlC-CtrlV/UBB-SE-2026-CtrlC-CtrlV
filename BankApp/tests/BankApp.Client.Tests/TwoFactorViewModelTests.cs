@@ -1,6 +1,7 @@
 ﻿using BankApp.Client.Enums;
 using BankApp.Client.Utilities;
 using BankApp.Client.ViewModels;
+using FluentAssertions;
 using Microsoft.Extensions.Configuration;
 using Microsoft.Extensions.Logging.Abstractions;
 
@@ -31,7 +32,7 @@ public class TwoFactorViewModelTests
     {
         var (sut, _) = CreateViewModel();
         await sut.VerifyOtp();
-        Assert.True(sut.HasError);
+        sut.HasError.Should().BeTrue();
     }
 
     [Fact]
@@ -40,7 +41,7 @@ public class TwoFactorViewModelTests
         var (sut, _) = CreateViewModel();
         sut.OtpCode = "123";
         await sut.VerifyOtp();
-        Assert.True(sut.HasError);
+        sut.HasError.Should().BeTrue();
     }
 
     [Fact]
@@ -49,7 +50,7 @@ public class TwoFactorViewModelTests
         var (sut, _) = CreateViewModel();
         sut.OtpCode = "123";
         await sut.VerifyOtp();
-        Assert.Equal(UserMessages.TwoFactor.InvalidCodeFormat, sut.ErrorMessage);
+        sut.ErrorMessage.Should().Be(UserMessages.TwoFactor.InvalidCodeFormat);
     }
 
     [Fact]
@@ -64,7 +65,7 @@ public class TwoFactorViewModelTests
         bool wasRunning = timer.IsRunning;
 
         await sut.ResendOtp();
-        Assert.False(timer.IsRunning);
+        timer.IsRunning.Should().BeFalse();
     }
 
     [Fact]
@@ -72,7 +73,7 @@ public class TwoFactorViewModelTests
     {
         var (sut, timer) = CreateViewModel();
         await sut.ResendOtp();
-        Assert.True(timer.IsRunning);
+        timer.IsRunning.Should().BeTrue();
     }
 
     [Fact]
@@ -81,13 +82,13 @@ public class TwoFactorViewModelTests
         var (sut, timer) = CreateViewModel();
         sut.SecondsRemaining = 10; // set via internal access (InternalsVisibleTo)
         timer.FireTick();
-        Assert.Equal(9, sut.SecondsRemaining);
+        sut.SecondsRemaining.Should().Be(9);
     }
 
     [Fact]
     public void Constructor_StartsInIdleState()
     {
         var (sut, _) = CreateViewModel();
-        Assert.Equal(TwoFactorState.Idle, sut.State.Value);
+        sut.State.Value.Should().Be(TwoFactorState.Idle);
     }
 }

@@ -1,6 +1,7 @@
 ﻿using BankApp.Client.Enums;
 using BankApp.Client.Utilities;
 using BankApp.Client.ViewModels;
+using FluentAssertions;
 using Microsoft.Extensions.Configuration;
 using Microsoft.Extensions.Logging.Abstractions;
 
@@ -28,7 +29,7 @@ public class RegisterViewModelTests
     {
         var sut = CreateViewModel();
         await sut.Register(string.Empty, string.Empty, string.Empty, string.Empty);
-        Assert.Equal(RegisterState.Error, sut.State.Value);
+        sut.State.Value.Should().Be(RegisterState.Error);
     }
 
     [Fact]
@@ -36,7 +37,7 @@ public class RegisterViewModelTests
     {
         var sut = CreateViewModel();
         await sut.Register("notanemail", "Password1!", "Password1!", "John Doe");
-        Assert.Equal(RegisterState.InvalidEmail, sut.State.Value);
+        sut.State.Value.Should().Be(RegisterState.InvalidEmail);
     }
 
     [Fact]
@@ -44,7 +45,7 @@ public class RegisterViewModelTests
     {
         var sut = CreateViewModel();
         await sut.Register("user@test.com", "weak", "weak", "John Doe");
-        Assert.Equal(RegisterState.WeakPassword, sut.State.Value);
+        sut.State.Value.Should().Be(RegisterState.WeakPassword);
     }
 
     [Fact]
@@ -52,13 +53,13 @@ public class RegisterViewModelTests
     {
         var sut = CreateViewModel();
         await sut.Register("user@test.com", "Password1!", "Password2!", "John Doe");
-        Assert.Equal(RegisterState.PasswordMismatch, sut.State.Value);
+        sut.State.Value.Should().Be(RegisterState.PasswordMismatch);
     }
 
     [Fact]
     public void Constructor_StartsInIdleState()
     {
         var sut = CreateViewModel();
-        Assert.Equal(RegisterState.Idle, sut.State.Value);
+        sut.State.Value.Should().Be(RegisterState.Idle);
     }
 }

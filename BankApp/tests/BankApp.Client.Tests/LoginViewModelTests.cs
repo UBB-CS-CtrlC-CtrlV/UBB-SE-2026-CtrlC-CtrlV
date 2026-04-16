@@ -1,6 +1,7 @@
 ﻿using BankApp.Client.Enums;
 using BankApp.Client.Utilities;
 using BankApp.Client.ViewModels;
+using FluentAssertions;
 using Microsoft.Extensions.Configuration;
 using Microsoft.Extensions.Logging.Abstractions;
 
@@ -27,28 +28,28 @@ public class LoginViewModelTests
     public void CanLogin_BothFieldsEmpty_ReturnsFalse()
     {
         var sut = CreateViewModel();
-        Assert.False(sut.CanLogin(string.Empty, string.Empty));
+        sut.CanLogin(string.Empty, string.Empty).Should().BeFalse();
     }
 
     [Fact]
     public void CanLogin_EmptyEmail_ReturnsFalse()
     {
         var sut = CreateViewModel();
-        Assert.False(sut.CanLogin(string.Empty, "Password1!"));
+        sut.CanLogin(string.Empty, "Password1!").Should().BeFalse();
     }
 
     [Fact]
     public void CanLogin_EmptyPassword_ReturnsFalse()
     {
         var sut = CreateViewModel();
-        Assert.False(sut.CanLogin("user@test.com", string.Empty));
+        sut.CanLogin("user@test.com", string.Empty).Should().BeFalse();
     }
 
     [Fact]
     public void CanLogin_ValidInputs_ReturnsTrue()
     {
         var sut = CreateViewModel();
-        Assert.True(sut.CanLogin("user@test.com", "Password1!"));
+        sut.CanLogin("user@test.com", "Password1!").Should().BeTrue();
     }
 
     [Fact]
@@ -61,13 +62,13 @@ public class LoginViewModelTests
             config,
             NullLogger<LoginViewModel>.Instance);
 
-        Assert.Equal(LoginState.ServerNotConfigured, sut.State.Value);
+        sut.State.Value.Should().Be(LoginState.ServerNotConfigured);
     }
 
     [Fact]
     public void Constructor_ValidConfig_SetsIdleState()
     {
         var sut = CreateViewModel();
-        Assert.Equal(LoginState.Idle, sut.State.Value);
+        sut.State.Value.Should().Be(LoginState.Idle);
     }
 }

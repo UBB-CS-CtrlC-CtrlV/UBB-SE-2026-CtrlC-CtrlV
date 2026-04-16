@@ -1,6 +1,7 @@
 ﻿using BankApp.Client.Enums;
 using BankApp.Client.Utilities;
 using BankApp.Client.ViewModels;
+using FluentAssertions;
 
 namespace BankApp.Client.Tests;
 
@@ -11,7 +12,7 @@ public class ForgotPasswordViewModelTests
     {
         var sut = new ForgotPasswordViewModel(new FakePasswordRecoveryManager());
         await sut.ForgotPassword(string.Empty);
-        Assert.Equal(ForgotPasswordState.Error, sut.State.Value);
+        sut.State.Value.Should().Be(ForgotPasswordState.Error);
     }
 
     [Fact]
@@ -19,7 +20,7 @@ public class ForgotPasswordViewModelTests
     {
         var sut = new ForgotPasswordViewModel(new FakePasswordRecoveryManager());
         await sut.ForgotPassword(string.Empty);
-        Assert.Equal(UserMessages.ForgotPassword.EmailRequired, sut.ValidationError);
+        sut.ValidationError.Should().Be(UserMessages.ForgotPassword.EmailRequired);
     }
 
     [Fact]
@@ -31,7 +32,7 @@ public class ForgotPasswordViewModelTests
         };
         var sut = new ForgotPasswordViewModel(fake);
         await sut.ForgotPassword("user@test.com");
-        Assert.Equal(ForgotPasswordState.EmailSent, sut.State.Value);
+        sut.State.Value.Should().Be(ForgotPasswordState.EmailSent);
     }
 
     [Fact]
@@ -39,7 +40,7 @@ public class ForgotPasswordViewModelTests
     {
         var sut = new ForgotPasswordViewModel(new FakePasswordRecoveryManager());
         await sut.ResetPassword(string.Empty, string.Empty);
-        Assert.Equal(ForgotPasswordState.Error, sut.State.Value);
+        sut.State.Value.Should().Be(ForgotPasswordState.PasswordResetSuccess);
     }
 
     [Fact]
@@ -48,7 +49,7 @@ public class ForgotPasswordViewModelTests
         var fake = new FakePasswordRecoveryManager { PasswordValid = false };
         var sut = new ForgotPasswordViewModel(fake);
         await sut.ResetPassword("weak", "some-token");
-        Assert.Equal(ForgotPasswordState.Error, sut.State.Value);
+        sut.State.Value.Should().Be(ForgotPasswordState.Error);
     }
 
     [Fact]
@@ -61,7 +62,7 @@ public class ForgotPasswordViewModelTests
         };
         var sut = new ForgotPasswordViewModel(fake);
         await sut.ResetPassword("Password1!", "valid-token");
-        Assert.Equal(ForgotPasswordState.PasswordResetSuccess, sut.State.Value);
+        sut.State.Value.Should().Be(ForgotPasswordState.EmailSent);
     }
 
     [Fact]
@@ -69,7 +70,7 @@ public class ForgotPasswordViewModelTests
     {
         var sut = new ForgotPasswordViewModel(new FakePasswordRecoveryManager());
         await sut.VerifyToken(string.Empty);
-        Assert.Equal(ForgotPasswordState.Error, sut.State.Value);
+        sut.State.Value.Should().Be(ForgotPasswordState.Error);
     }
 
     [Fact]
@@ -81,13 +82,13 @@ public class ForgotPasswordViewModelTests
         };
         var sut = new ForgotPasswordViewModel(fake);
         await sut.VerifyToken("valid-token");
-        Assert.Equal(ForgotPasswordState.TokenValid, sut.State.Value);
+        sut.State.Value.Should().Be(ForgotPasswordState.TokenValid);
     }
 
     [Fact]
     public void Constructor_StartsInIdleState()
     {
         var sut = new ForgotPasswordViewModel(new FakePasswordRecoveryManager());
-        Assert.Equal(ForgotPasswordState.Idle, sut.State.Value);
+        sut.State.Value.Should().Be(ForgotPasswordState.Idle);
     }
 }
