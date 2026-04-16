@@ -1,5 +1,5 @@
 #!/usr/bin/env python3
-# Creates src/BankApp.Client/appsettings.Local.json with Google OAuth credentials.
+# Creates src/BankApp.Desktop/appsettings.Local.json with Google OAuth credentials.
 # Run from the repo root: python scripts/client/setup-dev-config.py [options]
 # Re-running is safe — the file is fully overwritten each time.
 #
@@ -15,7 +15,7 @@ import sys
 from pathlib import Path
 
 REPO_ROOT = Path(__file__).resolve().parent.parent.parent
-OUTPUT_PATH = REPO_ROOT / "src" / "BankApp.Client" / "appsettings.Local.json"
+OUTPUT_PATH = REPO_ROOT / "src" / "BankApp.Desktop" / "appsettings.Local.json"
 
 
 def main() -> None:
@@ -38,7 +38,7 @@ def main() -> None:
     parser.add_argument("--client-secret", required=True, metavar="SECRET", help="Google OAuth client secret.")
     args = parser.parse_args()
 
-    print("\nBankApp.Client — dev config setup\n-----------------------------------")
+    print("\nBankApp.Desktop — dev config setup\n------------------------------------")
 
     config = {
         "OAuth": {
