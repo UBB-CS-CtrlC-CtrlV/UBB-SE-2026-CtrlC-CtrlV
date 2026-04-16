@@ -99,6 +99,11 @@
                               Margin="0,16,0,0" Width="30" Height="30"
                               HorizontalAlignment="Center" Visibility="Collapsed"/>
 
+                <!-- Registration Success Message -->
+                <InfoBar x:Name="RegistrationSuccessBar" IsOpen="False" Severity="Success"
+                         Message="Account created! You can now sign in."
+                         Margin="0,16,0,0" IsClosable="True"/>
+
                 <!-- Error Message -->
                 <InfoBar x:Name="ErrorInfoBar" IsOpen="False" Severity="Error"
                          Margin="0,16,0,0" IsClosable="True"/>

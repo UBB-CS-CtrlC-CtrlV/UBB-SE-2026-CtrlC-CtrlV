@@ -17,18 +17,21 @@ public sealed partial class RegisterView : IStateObserver<RegisterState>
 {
     private readonly RegisterViewModel viewModel;
     private readonly IAppNavigationService navigationService;
+    private readonly IRegistrationContext registrationContext;
 
     /// <summary>
     /// Initializes a new instance of the <see cref="RegisterView"/> class.
     /// </summary>
     /// <param name="viewModel">The view model that drives registration logic and exposes registration state.</param>
     /// <param name="navigationService">Used to navigate to other pages in response to state changes.</param>
-    public RegisterView(RegisterViewModel viewModel, IAppNavigationService navigationService)
+    /// <param name="registrationContext">Carries the just-registered flag to the login page.</param>
+    public RegisterView(RegisterViewModel viewModel, IAppNavigationService navigationService, IRegistrationContext registrationContext)
     {
         this.InitializeComponent();
 
         this.viewModel = viewModel;
         this.navigationService = navigationService;
+        this.registrationContext = registrationContext;
         this.viewModel.State.AddObserver(this);
     }
 
@@ -44,22 +47,16 @@ public sealed partial class RegisterView : IStateObserver<RegisterState>
         {
             this.HideLoading();
             this.ErrorInfoBar.IsOpen = false;
-            this.SuccessInfoBar.IsOpen = false;
-            this.BackToLoginButton.Visibility = Visibility.Collapsed;
 
             switch (state)
             {
-                case RegisterState.Idle:
-                    break;
-
                 case RegisterState.Loading:
                     this.ShowLoading();
                     break;
 
                 case RegisterState.Success:
-                    this.SuccessInfoBar.IsOpen = true;
-                    this.BackToLoginButton.Visibility = Visibility.Visible;
-                    this.ClearForm();
+                    this.registrationContext.JustRegistered = true;
+                    this.navigationService.NavigateTo<LoginView>();
                     break;
 
                 case RegisterState.AutoLoggedIn:
@@ -85,9 +82,6 @@ public sealed partial class RegisterView : IStateObserver<RegisterState>
                 case RegisterState.Error:
                     this.ShowError(UserMessages.Register.AllFieldsRequired);
                     break;
-
-                default:
-                    break;
             }
         });
     }
@@ -112,14 +106,6 @@ public sealed partial class RegisterView : IStateObserver<RegisterState>
         this.RegisterButton.IsEnabled = true;
     }
 
-    private void ClearForm()
-    {
-        this.FullNameBox.Text = string.Empty;
-        this.EmailBox.Text = string.Empty;
-        this.PasswordBox.Password = string.Empty;
-        this.ConfirmPasswordBox.Password = string.Empty;
-    }
-
     private async void RegisterButton_Click(object sender, RoutedEventArgs e)
     {
         await this.viewModel.Register(
@@ -134,7 +120,7 @@ public sealed partial class RegisterView : IStateObserver<RegisterState>
         await this.viewModel.OAuthRegister("Google");
     }
 
-    private void SignInButton_Click(object sender, RoutedEventArgs e)
+    private void BackToLoginButton_Click(object sender, RoutedEventArgs e)
     {
         this.navigationService.NavigateTo<LoginView>();
     }

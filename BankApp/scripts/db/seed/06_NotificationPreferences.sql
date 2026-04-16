@@ -3,10 +3,12 @@ IF NOT EXISTS (SELECT 1 FROM NotificationPreference
 BEGIN
     INSERT INTO NotificationPreference (UserId, Category, PushEnabled, EmailEnabled, SmsEnabled)
     VALUES
-    ((SELECT Id FROM [User] WHERE Email = 'john.doe@bankapp.com'), 'Transactions', 1, 1, 0),
-    ((SELECT Id FROM [User] WHERE Email = 'john.doe@bankapp.com'), 'Security', 1, 1, 0),
-    ((SELECT Id FROM [User] WHERE Email = 'john.doe@bankapp.com'), 'Promotions', 0, 1, 0),
-    ((SELECT Id FROM [User] WHERE Email = 'john.doe@bankapp.com'), 'AccountUpdates', 1, 1, 0);
+    ((SELECT Id FROM [User] WHERE Email = 'john.doe@bankapp.com'), 'Payment', 1, 1, 0),
+    ((SELECT Id FROM [User] WHERE Email = 'john.doe@bankapp.com'), 'Inbound Transfer', 1, 1, 0),
+    ((SELECT Id FROM [User] WHERE Email = 'john.doe@bankapp.com'), 'Outbound Transfer', 1, 1, 0),
+    ((SELECT Id FROM [User] WHERE Email = 'john.doe@bankapp.com'), 'Low Balance', 1, 0, 0),
+    ((SELECT Id FROM [User] WHERE Email = 'john.doe@bankapp.com'), 'Due Payment', 1, 1, 0),
+    ((SELECT Id FROM [User] WHERE Email = 'john.doe@bankapp.com'), 'Suspicious Activity', 1, 1, 1);
 END
 GO
 
@@ -15,9 +17,11 @@ IF NOT EXISTS (SELECT 1 FROM NotificationPreference
 BEGIN
     INSERT INTO NotificationPreference (UserId, Category, PushEnabled, EmailEnabled, SmsEnabled)
     VALUES
-    ((SELECT Id FROM [User] WHERE Email = 'jane.smith@bankapp.com'), 'Transactions', 1, 1, 0),
-    ((SELECT Id FROM [User] WHERE Email = 'jane.smith@bankapp.com'), 'Security', 1, 1, 1),
-    ((SELECT Id FROM [User] WHERE Email = 'jane.smith@bankapp.com'), 'Promotions', 0, 0, 0),
-    ((SELECT Id FROM [User] WHERE Email = 'jane.smith@bankapp.com'), 'AccountUpdates', 1, 0, 0);
+    ((SELECT Id FROM [User] WHERE Email = 'jane.smith@bankapp.com'), 'Payment', 1, 1, 0),
+    ((SELECT Id FROM [User] WHERE Email = 'jane.smith@bankapp.com'), 'Inbound Transfer', 1, 1, 0),
+    ((SELECT Id FROM [User] WHERE Email = 'jane.smith@bankapp.com'), 'Outbound Transfer', 1, 1, 0),
+    ((SELECT Id FROM [User] WHERE Email = 'jane.smith@bankapp.com'), 'Low Balance', 1, 0, 0),
+    ((SELECT Id FROM [User] WHERE Email = 'jane.smith@bankapp.com'), 'Due Payment', 1, 1, 0),
+    ((SELECT Id FROM [User] WHERE Email = 'jane.smith@bankapp.com'), 'Suspicious Activity', 1, 1, 1);
 END
 GO

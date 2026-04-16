@@ -156,7 +156,7 @@
                     <StackPanel Orientation="Horizontal" Spacing="16" HorizontalAlignment="Center">
 
                         <!-- Transfer -->
-                        <Button x:Name="TransferButton" Click="TransferButton_Click"
+                        <Button Click="TransferButton_Click"
                                 Width="90" Height="80" CornerRadius="12"
                                 Background="White" BorderThickness="0">
                             <Button.Shadow>
@@ -171,7 +171,7 @@
                         </Button>
 
                         <!-- Pay Bill -->
-                        <Button x:Name="PayBillButton" Click="PayBillButton_Click"
+                        <Button Click="PayBillButton_Click"
                                 Width="90" Height="80" CornerRadius="12"
                                 Background="White" BorderThickness="0">
                             <StackPanel Spacing="6" HorizontalAlignment="Center">
@@ -183,7 +183,7 @@
                         </Button>
 
                         <!-- Exchange Currency -->
-                        <Button x:Name="ExchangeButton" Click="ExchangeButton_Click"
+                        <Button Click="ExchangeButton_Click"
                                 Width="90" Height="80" CornerRadius="12"
                                 Background="White" BorderThickness="0">
                             <StackPanel Spacing="6" HorizontalAlignment="Center">
@@ -195,7 +195,7 @@
                         </Button>
 
                         <!-- Transaction History -->
-                        <Button x:Name="TxHistoryButton" Click="TxHistoryButton_Click"
+                        <Button Click="TransactionHistoryButton_Click"
                                 Width="90" Height="80" CornerRadius="12"
                                 Background="White" BorderThickness="0">
                             <StackPanel Spacing="6" HorizontalAlignment="Center">
@@ -248,7 +248,7 @@
                                             <TextBlock Grid.Column="0"
                                                        Text="{x:Bind MerchantDisplayName}"
                                                        FontSize="13" Foreground="#1A1A2E"
-                                                       FontWeight="Medium"/>
+                                                       FontWeight="Normal"/>
                                             <TextBlock Grid.Column="1"
                                                        Text="{x:Bind AmountDisplay}"
                                                        FontSize="13" Foreground="#1A1A2E"

@@ -41,6 +41,7 @@ public static class ServiceCollectionExtensions
         // object throughout the app.
         // Multiple instances would lose the frame reference.
         services.AddSingleton<IAppNavigationService, AppNavigationService>();
+        services.AddSingleton<IRegistrationContext, RegistrationContext>();
 
         // A fresh timer instance per TwoFactorView so each page visit
         // has its own independent countdown.
