@@ -12,7 +12,7 @@ public class DashboardResponse
     /// <summary>
     /// Gets or sets the current user information.
     /// </summary>
-    public UserSummaryDto CurrentUser { get; set; } = null!;
+    public UserSummaryDto? CurrentUser { get; set; }
 
     /// <summary>
     /// Gets or sets the list of cards belonging to the user.
