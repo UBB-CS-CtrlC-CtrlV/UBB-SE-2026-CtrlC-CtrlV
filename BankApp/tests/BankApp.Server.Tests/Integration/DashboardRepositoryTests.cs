@@ -105,7 +105,7 @@ public sealed class DashboardRepositoryTests : IClassFixture<DatabaseFixture>, I
                 conn.Execute(
                     """
                     INSERT INTO "Transaction" (AccountId, TransactionRef, Type, Direction, Amount, Currency, BalanceAfter, Status)
-                    VALUES (@AccountId, @Ref, 'Transfer', 'Credit', 100.00, 'RON', 5100.00, 'Completed')
+                    VALUES (@AccountId, @Ref, 'Transfer', 'In', 100.00, 'RON', 5100.00, 'Completed')
                     """,
                     new { AccountId = accountId, Ref = $"REF-{localI}-{Guid.NewGuid():N}" });
                 return 0;

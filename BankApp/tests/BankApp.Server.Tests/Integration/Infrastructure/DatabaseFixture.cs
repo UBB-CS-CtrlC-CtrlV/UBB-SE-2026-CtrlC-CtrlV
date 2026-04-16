@@ -115,9 +115,33 @@ public sealed class DatabaseFixture : IAsyncLifetime
 
     private static IEnumerable<string> SplitSqlBatches(string sql)
     {
-        return sql
-            .Split(new[] { "\r\nGO\r\n", "\nGO\n", "\r\nGO\n", "\nGO\r\n" }, StringSplitOptions.RemoveEmptyEntries)
-            .Select(batch => batch.Trim())
-            .Where(batch => !string.IsNullOrWhiteSpace(batch));
+        var batches = new List<string>();
+        var currentBatch = new List<string>();
+
+        using var reader = new StringReader(sql);
+        string? line;
+        while ((line = reader.ReadLine()) is not null)
+        {
+            if (string.Equals(line.Trim(), "GO", StringComparison.OrdinalIgnoreCase))
+            {
+                AddCurrentBatch(batches, currentBatch);
+                currentBatch.Clear();
+                continue;
+            }
+
+            currentBatch.Add(line);
+        }
+
+        AddCurrentBatch(batches, currentBatch);
+        return batches;
+    }
+
+    private static void AddCurrentBatch(List<string> batches, List<string> currentBatch)
+    {
+        string batch = string.Join(Environment.NewLine, currentBatch).Trim();
+        if (!string.IsNullOrWhiteSpace(batch))
+        {
+            batches.Add(batch);
+        }
     }
 }
