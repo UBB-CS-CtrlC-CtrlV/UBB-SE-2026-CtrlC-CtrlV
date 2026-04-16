@@ -50,9 +50,6 @@ public sealed partial class RegisterView : IStateObserver<RegisterState>
 
             switch (state)
             {
-                case RegisterState.Idle:
-                    break;
-
                 case RegisterState.Loading:
                     this.ShowLoading();
                     break;
@@ -85,9 +82,6 @@ public sealed partial class RegisterView : IStateObserver<RegisterState>
                 case RegisterState.Error:
                     this.ShowError(UserMessages.Register.AllFieldsRequired);
                     break;
-
-                default:
-                    break;
             }
         });
     }
@@ -110,14 +104,6 @@ public sealed partial class RegisterView : IStateObserver<RegisterState>
         this.LoadingRing.IsActive = false;
         this.LoadingRing.Visibility = Visibility.Collapsed;
         this.RegisterButton.IsEnabled = true;
-    }
-
-    private void ClearForm()
-    {
-        this.FullNameBox.Text = string.Empty;
-        this.EmailBox.Text = string.Empty;
-        this.PasswordBox.Password = string.Empty;
-        this.ConfirmPasswordBox.Password = string.Empty;
     }
 
     private async void RegisterButton_Click(object sender, RoutedEventArgs e)
