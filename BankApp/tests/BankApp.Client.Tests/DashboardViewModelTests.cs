@@ -8,7 +8,7 @@ using ErrorOr;
 using FluentAssertions;
 using Microsoft.Extensions.Configuration;
 using Microsoft.Extensions.Logging.Abstractions;
-using NSubstitute;
+using Moq;
 
 namespace BankApp.Client.Tests;
 
@@ -17,17 +17,20 @@ namespace BankApp.Client.Tests;
 /// </summary>
 public class DashboardViewModelTests
 {
-    private readonly ApiClient apiClient;
+    private readonly Mock<ApiClient> apiClient;
     private readonly DashboardViewModel viewModel;
 
     /// <summary>
     /// Initializes a new instance of the <see cref="DashboardViewModelTests"/> class.
-    /// Creates a fresh substitute and view model for each test.
+    /// Creates a fresh mock and view model for each test.
     /// </summary>
     public DashboardViewModelTests()
     {
-        this.apiClient = Substitute.For<ApiClient>(new ConfigurationBuilder().Build(), NullLogger<ApiClient>.Instance);
-        this.viewModel = new DashboardViewModel(this.apiClient, NullLogger<DashboardViewModel>.Instance);
+        this.apiClient = new Mock<ApiClient>(
+            MockBehavior.Strict,
+            new ConfigurationBuilder().Build(),
+            NullLogger<ApiClient>.Instance);
+        this.viewModel = new DashboardViewModel(this.apiClient.Object, NullLogger<DashboardViewModel>.Instance);
     }
 
     [Fact]
@@ -78,8 +81,9 @@ public class DashboardViewModelTests
             ],
             UnreadNotificationCount = unreadCount,
         };
-        this.apiClient.GetAsync<DashboardResponse>(Arg.Any<string>(), Arg.Any<CancellationToken>())
-            .Returns(Task.FromResult<ErrorOr<DashboardResponse>>(response));
+        this.apiClient
+            .Setup(client => client.GetAsync<DashboardResponse>(It.IsAny<string>(), It.IsAny<CancellationToken>()))
+            .ReturnsAsync(response);
 
         // Act
         ErrorOr<Success> result = await this.viewModel.LoadDashboard();
@@ -121,8 +125,9 @@ public class DashboardViewModelTests
     public async Task LoadDashboard_WhenCurrentUserIsMissing_SetsErrorState()
     {
         // Arrange
-        this.apiClient.GetAsync<DashboardResponse>(Arg.Any<string>(), Arg.Any<CancellationToken>())
-            .Returns(Task.FromResult<ErrorOr<DashboardResponse>>(new DashboardResponse()));
+        this.apiClient
+            .Setup(client => client.GetAsync<DashboardResponse>(It.IsAny<string>(), It.IsAny<CancellationToken>()))
+            .ReturnsAsync(new DashboardResponse());
 
         // Act
         ErrorOr<Success> result = await this.viewModel.LoadDashboard();
@@ -137,8 +142,9 @@ public class DashboardViewModelTests
     public async Task LoadDashboard_WhenUnauthorized_SetsSessionExpiredMessage()
     {
         // Arrange
-        this.apiClient.GetAsync<DashboardResponse>(Arg.Any<string>(), Arg.Any<CancellationToken>())
-            .Returns(Task.FromResult<ErrorOr<DashboardResponse>>(Error.Unauthorized()));
+        this.apiClient
+            .Setup(client => client.GetAsync<DashboardResponse>(It.IsAny<string>(), It.IsAny<CancellationToken>()))
+            .ReturnsAsync(Error.Unauthorized());
 
         // Act
         ErrorOr<Success> result = await this.viewModel.LoadDashboard();
@@ -153,8 +159,9 @@ public class DashboardViewModelTests
     public async Task LoadDashboard_WhenNotFound_SetsNotFoundMessage()
     {
         // Arrange
-        this.apiClient.GetAsync<DashboardResponse>(Arg.Any<string>(), Arg.Any<CancellationToken>())
-            .Returns(Task.FromResult<ErrorOr<DashboardResponse>>(Error.NotFound()));
+        this.apiClient
+            .Setup(client => client.GetAsync<DashboardResponse>(It.IsAny<string>(), It.IsAny<CancellationToken>()))
+            .ReturnsAsync(Error.NotFound());
 
         // Act
         ErrorOr<Success> result = await this.viewModel.LoadDashboard();
@@ -169,8 +176,9 @@ public class DashboardViewModelTests
     public async Task LoadDashboard_WhenApiFailureOccurs_SetsLoadFailedMessage()
     {
         // Arrange
-        this.apiClient.GetAsync<DashboardResponse>(Arg.Any<string>(), Arg.Any<CancellationToken>())
-            .Returns(Task.FromResult<ErrorOr<DashboardResponse>>(Error.Failure()));
+        this.apiClient
+            .Setup(client => client.GetAsync<DashboardResponse>(It.IsAny<string>(), It.IsAny<CancellationToken>()))
+            .ReturnsAsync(Error.Failure());
 
         // Act
         ErrorOr<Success> result = await this.viewModel.LoadDashboard();
@@ -424,8 +432,9 @@ public class DashboardViewModelTests
             Cards = cards,
         };
 
-        this.apiClient.GetAsync<DashboardResponse>(Arg.Any<string>(), Arg.Any<CancellationToken>())
-            .Returns(Task.FromResult<ErrorOr<DashboardResponse>>(response));
+        this.apiClient
+            .Setup(client => client.GetAsync<DashboardResponse>(It.IsAny<string>(), It.IsAny<CancellationToken>()))
+            .ReturnsAsync(response);
 
         await this.viewModel.LoadDashboard();
     }
