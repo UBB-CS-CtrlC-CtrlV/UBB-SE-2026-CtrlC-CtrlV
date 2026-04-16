@@ -45,6 +45,54 @@ public class ValidationUtilitiesTests
     }
 
     [Theory]
+    [InlineData("Password1!")]
+    [InlineData("P@ssw0rd")]
+    [InlineData("ComplexPassword123#")]
+    public void IsStrongPassword_WhenPasswordIsStrong_ShouldReturnTrue(string password)
+    {
+        // Act & Assert
+        ValidationUtilities.IsStrongPassword(password).Should().BeTrue();
+    }
+
+    [Theory]
+    [InlineData("")]
+    [InlineData(" ")]
+    [InlineData("       ")]
+    [InlineData("Short1!")]
+    [InlineData("password1!")]
+    [InlineData("PASSWORD1!")]
+    [InlineData("Password!")]
+    [InlineData("Password1")]
+    public void IsStrongPassword_WhenPasswordIsWeak_ShouldReturnFalse(string password)
+    {
+        // Act & Assert
+        ValidationUtilities.IsStrongPassword(password).Should().BeFalse();
+    }
+
+    [Theory]
+    [InlineData("000000")]
+    [InlineData("123456")]
+    [InlineData("987654")]
+    public void IsValidOTP_WhenOtpIsValid_ShouldReturnTrue(string otp)
+    {
+        // Act & Assert
+        ValidationUtilities.IsValidOTP(otp).Should().BeTrue();
+    }
+
+    [Theory]
+    [InlineData("")]
+    [InlineData(" ")]
+    [InlineData("12345")]
+    [InlineData("1234567")]
+    [InlineData("12345a")]
+    [InlineData("abcdef")]
+    public void IsValidOTP_WhenOtpIsInvalid_ShouldReturnFalse(string otp)
+    {
+        // Act & Assert
+        ValidationUtilities.IsValidOTP(otp).Should().BeFalse();
+    }
+
+    [Theory]
     [InlineData("0712345678")]
     [InlineData("+40712345678")]
     [InlineData("0040712345678")]
@@ -86,6 +134,13 @@ public class ValidationUtilitiesTests
     {
         // Act & Assert
         ValidationUtilities.NormalizePhoneNumber(phone).Should().BeNull();
+    }
+
+    [Fact]
+    public void NormalizePhoneNumber_WhenDefaultRegionIsProvided_ShouldUseRegion()
+    {
+        // Act & Assert
+        ValidationUtilities.NormalizePhoneNumber("2025550123", "US").Should().Be("+12025550123");
     }
 
     [Theory]
