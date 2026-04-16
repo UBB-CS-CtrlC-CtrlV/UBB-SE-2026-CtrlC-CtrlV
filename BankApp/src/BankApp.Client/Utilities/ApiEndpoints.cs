@@ -15,6 +15,9 @@ public static class ApiEndpoints
     /// <summary>POST api/auth/oauth-login — OAuth provider login or registration.</summary>
     public const string OAuthLogin = "api/auth/oauth-login";
 
+    /// <summary>POST api/auth/oauth-register — OAuth provider registration.</summary>
+    public const string OAuthRegister = "api/auth/oauth-register";
+
     /// <summary>POST api/auth/register — new account registration.</summary>
     public const string Register = "api/auth/register";
 

@@ -101,78 +101,86 @@ public class RegisterViewModel
             });
     }
 
-    /// <summary>
-    /// Registers or signs in a user through the specified OAuth provider.
-    /// </summary>
-    /// <param name="provider">The OAuth provider to use.</param>
-    /// <returns>A <see cref="Task"/> representing the asynchronous operation.</returns>
-    public async Task OAuthRegister(string provider)
+   /// <summary>
+/// Registers a user through the specified OAuth provider.
+/// </summary>
+/// <param name="provider">The OAuth provider to use.</param>
+/// <returns>A <see cref="Task"/> representing the asynchronous operation.</returns>
+public async Task OAuthRegister(string provider)
+{
+    this.State.SetValue(RegisterState.Loading);
+
+    try
     {
-        this.State.SetValue(RegisterState.Loading);
-
-        try
+        if (!provider.Equals("google", StringComparison.OrdinalIgnoreCase))
         {
-            if (!provider.Equals("google", StringComparison.OrdinalIgnoreCase))
+            this.State.SetValue(RegisterState.Error);
+            return;
+        }
+
+        string authority = this.configuration["OAuth:Google:Authority"]
+            ?? throw new InvalidOperationException("OAuth:Google:Authority is missing from configuration.");
+        string clientId = this.configuration["OAuth:Google:ClientId"]
+            ?? throw new InvalidOperationException("OAuth:Google:ClientId is missing from configuration.");
+        string clientSecret = this.configuration["OAuth:Google:ClientSecret"]
+            ?? throw new InvalidOperationException("OAuth:Google:ClientSecret is missing from configuration.");
+        string redirectUri = this.configuration["OAuth:Google:RedirectUri"]
+            ?? throw new InvalidOperationException("OAuth:Google:RedirectUri is missing from configuration.");
+
+        Duende.IdentityModel.OidcClient.OidcClientOptions options = new Duende.IdentityModel.OidcClient.OidcClientOptions
+        {
+            Authority = authority,
+            ClientId = clientId,
+            ClientSecret = clientSecret,
+            Scope = "openid email profile",
+            RedirectUri = redirectUri,
+            Browser = new SystemBrowser(new Uri(redirectUri).Port),
+        };
+        options.Policy.Discovery.ValidateEndpoints = false;
+
+        Duende.IdentityModel.OidcClient.OidcClient oidcClient = new Duende.IdentityModel.OidcClient.OidcClient(options);
+        Duende.IdentityModel.OidcClient.LoginResult loginResult = await oidcClient.LoginAsync(new Duende.IdentityModel.OidcClient.LoginRequest());
+        if (loginResult.IsError)
+        {
+            this.State.SetValue(RegisterState.Error);
+            return;
+        }
+
+        OAuthRegisterRequest apiRequest = new OAuthRegisterRequest
+        {
+            Provider = "Google",
+            ProviderToken = loginResult.IdentityToken,
+            FullName = loginResult.User?.FindFirst("name")?.Value ?? string.Empty,
+            Email = loginResult.User?.FindFirst("email")?.Value ?? string.Empty,
+        };
+
+        ErrorOr<Success> result = await this.apiClient.PostAsync<OAuthRegisterRequest>(ApiEndpoints.OAuthRegister, apiRequest);
+
+        result.Switch(
+            _ =>
             {
-                this.State.SetValue(RegisterState.Error);
-                return;
-            }
-
-            string authority = this.configuration["OAuth:Google:Authority"]
-                ?? throw new InvalidOperationException("OAuth:Google:Authority is missing from configuration.");
-            string clientId = this.configuration["OAuth:Google:ClientId"]
-                ?? throw new InvalidOperationException("OAuth:Google:ClientId is missing from configuration.");
-            string clientSecret = this.configuration["OAuth:Google:ClientSecret"]
-                ?? throw new InvalidOperationException("OAuth:Google:ClientSecret is missing from configuration.");
-            string redirectUri = this.configuration["OAuth:Google:RedirectUri"]
-                ?? throw new InvalidOperationException("OAuth:Google:RedirectUri is missing from configuration.");
-
-            Duende.IdentityModel.OidcClient.OidcClientOptions options = new Duende.IdentityModel.OidcClient.OidcClientOptions
+                this.State.SetValue(RegisterState.Success);
+            },
+            errors =>
             {
-                Authority = authority,
-                ClientId = clientId,
-                ClientSecret = clientSecret,
-                Scope = "openid email profile",
-                RedirectUri = redirectUri,
-                Browser = new SystemBrowser(new Uri(redirectUri).Port),
-            };
-            options.Policy.Discovery.ValidateEndpoints = false;
-
-            Duende.IdentityModel.OidcClient.OidcClient oidcClient = new Duende.IdentityModel.OidcClient.OidcClient(options);
-            Duende.IdentityModel.OidcClient.LoginResult loginResult = await oidcClient.LoginAsync(new Duende.IdentityModel.OidcClient.LoginRequest());
-            if (loginResult.IsError)
-            {
-                this.State.SetValue(RegisterState.Error);
-                return;
-            }
-
-            OAuthLoginRequest apiRequest = new OAuthLoginRequest
-            {
-                Provider = "Google",
-                ProviderToken = loginResult.IdentityToken,
-            };
-
-            ErrorOr<LoginSuccessResponse> result = await this.apiClient.PostAsync<OAuthLoginRequest, LoginSuccessResponse>(ApiEndpoints.OAuthLogin, apiRequest);
-
-            result.Switch(
-                response =>
+                Error error = errors[0];
+                if (error.Type == ErrorType.Conflict)
                 {
-                    this.apiClient.SetToken(response.Token!);
-                    this.apiClient.CurrentUserId = response.UserId;
-                    this.State.SetValue(RegisterState.AutoLoggedIn);
-                },
-                errors =>
+                    this.State.SetValue(RegisterState.EmailAlreadyExists);
+                }
+                else
                 {
                     this.logger.LogError("OAuthRegister failed: {Errors}", errors);
                     this.State.SetValue(RegisterState.Error);
-                });
-        }
-        catch (Exception ex)
-        {
-            this.logger.LogError(ex, "OAuthRegister OIDC flow failed.");
-            this.State.SetValue(RegisterState.Error);
-        }
+                }
+            });
     }
+    catch (Exception ex)
+    {
+        this.logger.LogError(ex, "OAuthRegister OIDC flow failed.");
+        this.State.SetValue(RegisterState.Error);
+    }
+}
 
     private RegisterState? ValidateLocally(string email, string password, string confirmPassword, string fullName)
     {

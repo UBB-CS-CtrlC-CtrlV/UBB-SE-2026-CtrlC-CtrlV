@@ -117,6 +117,21 @@ public class AuthController : ApiControllerBase
     }
 
     /// <summary>
+    /// Registers a new user account via an external OAuth provider (e.g. Google).
+    /// </summary>
+    /// <param name="request">The OAuth registration request.</param>
+    /// <returns>
+    /// 204 No Content on success,
+    /// 400 Bad Request if validation fails,
+    /// or 409 Conflict if the OAuth account is already registered.
+    /// </returns>
+    [HttpPost("oauth-register")]
+    public IActionResult OAuthRegister([FromBody] OAuthRegisterRequest request)
+    {
+        return this.ToActionResult(this.authService.OAuthRegister(request));
+    }
+
+    /// <summary>
     /// Resets the user's password using a valid reset token received via email.
     /// </summary>
     /// <param name="request">The reset password request containing the reset token and new password.</param>
