@@ -8,6 +8,7 @@ using BankApp.Contracts.Entities;
 using BankApp.Server.Repositories.Interfaces;
 using BankApp.Server.Services.Dashboard;
 using BankApp.Server.Services.Login;
+using BankApp.Server.Services.Notifications;
 using BankApp.Server.Services.PasswordRecovery;
 using BankApp.Server.Services.Profile;
 using BankApp.Server.Services.Registration;
@@ -109,6 +110,44 @@ internal static class MockFactory
         var mock = new Mock<IAuthRepository>(MockBehavior.Strict);
         mock.Setup(repository => repository.FindSessionByToken(It.IsAny<string>()))
             .Returns(new Session());
+        return mock;
+    }
+
+    public static Mock<IHashService> CreateHashService()
+    {
+        var mock = new Mock<IHashService>(MockBehavior.Strict);
+
+        mock.Setup(service => service.GetHash(It.IsAny<string>()))
+            .Returns((string input) => ErrorOrFactory.From($"hashed_{input}"));
+
+        mock.Setup(service => service.Verify(It.IsAny<string>(), It.IsAny<string>()))
+            .Returns(true);
+
+        return mock;
+    }
+    public static Mock<IOtpService> CreateOtpService()
+    {
+        var mock = new Mock<IOtpService>(MockBehavior.Strict);
+
+        mock.Setup(service => service.GenerateTOTP(It.IsAny<int>()))
+            .Returns("123456");
+
+        mock.Setup(service => service.VerifyTOTP(It.IsAny<int>(), It.IsAny<string>()))
+            .Returns(true);
+
+        mock.Setup(service => service.InvalidateOTP(It.IsAny<int>()));
+
+        return mock;
+    }
+    public static Mock<IEmailService> CreateEmailService()
+    {
+        var mock = new Mock<IEmailService>(MockBehavior.Strict);
+
+        mock.Setup(service => service.SendOTPCode(It.IsAny<string>(), It.IsAny<string>()));
+        mock.Setup(service => service.SendPasswordResetLink(It.IsAny<string>(), It.IsAny<string>()));
+        mock.Setup(service => service.SendLockNotification(It.IsAny<string>()));
+        mock.Setup(service => service.SendLoginAlert(It.IsAny<string>()));
+
         return mock;
     }
 }

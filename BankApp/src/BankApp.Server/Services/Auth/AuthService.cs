@@ -27,6 +27,7 @@ public class AuthService : IAuthService
     private readonly IEmailService emailService;
     private readonly ILogger<AuthService> logger;
 
+    // TODO: Consider changing or removing default constants
     private const int MaxFailedAttempts = 5;
     private const int LockoutMinutes = 30;
     private const int PasswordResetTokenExpiryMinutes = 5;
