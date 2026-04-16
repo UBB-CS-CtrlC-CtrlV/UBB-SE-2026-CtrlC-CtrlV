@@ -43,4 +43,20 @@ public class ValidationUtilitiesTests
         // Act & Assert
         ValidationUtilities.IsValidEmail(email).Should().BeTrue();
     }
+
+    [Theory]
+    [InlineData("abc", "abc", true)]
+    [InlineData("abc", "def", false)]
+    [InlineData("", "", true)]
+    [InlineData("", "abc", false)]
+    [InlineData(null, null, false)]
+    [InlineData(null, "abc", false)]
+    [InlineData("abc", null, false)]
+    public void PasswordsMatch_ShouldReturnExpectedResult(string? firstPassword,
+        string? secondPassword,
+        bool expected)
+    {
+        // Act & Assert
+        ValidationUtilities.PasswordsMatch(firstPassword, secondPassword).Should().Be(expected);
+    }
 }

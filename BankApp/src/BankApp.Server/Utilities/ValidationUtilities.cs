@@ -60,7 +60,7 @@ public static class ValidationUtilities
     /// <param name="firstPassword">The first password.</param>
     /// <param name="secondPassword">The second password.</param>
     /// <returns><see langword="true"/> if both passwords are non-null and equal; otherwise, <see langword="false"/>.</returns>
-    public static bool PasswordsMatch(string firstPassword, string secondPassword)
+    public static bool PasswordsMatch(string? firstPassword, string? secondPassword)
     {
         if (firstPassword == null || secondPassword == null)
         {
