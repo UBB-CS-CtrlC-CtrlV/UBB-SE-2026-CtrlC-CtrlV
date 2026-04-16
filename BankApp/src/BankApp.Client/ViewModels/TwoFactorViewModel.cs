@@ -145,7 +145,7 @@ public partial class TwoFactorViewModel : INotifyPropertyChanged
     public int SecondsRemaining
     {
         get => this.secondsRemaining;
-        private set
+        internal set
         {
             if (this.SetField(ref this.secondsRemaining, value))
             {
