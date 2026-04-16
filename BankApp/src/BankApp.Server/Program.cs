@@ -116,3 +116,11 @@ finally
     // Flush and close all Serilog sinks before the process exits.
     Log.CloseAndFlush();
 }
+
+/// <summary>
+/// Exposes the auto-generated Program class so integration tests can reference it
+/// via <c>WebApplicationFactory&lt;Program&gt;</c>.
+/// </summary>
+public partial class Program
+{
+}
