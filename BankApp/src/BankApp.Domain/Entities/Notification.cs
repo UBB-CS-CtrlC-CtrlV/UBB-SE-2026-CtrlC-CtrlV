@@ -53,5 +53,5 @@ public class Notification
     /// <summary>
     /// Gets or sets the date and time when the notification was created.
     /// </summary>
-    public DateTime CreatedAt { get; set; }
+    public DateTime CreatedAt { get; set; } = DateTime.UtcNow;
 }
