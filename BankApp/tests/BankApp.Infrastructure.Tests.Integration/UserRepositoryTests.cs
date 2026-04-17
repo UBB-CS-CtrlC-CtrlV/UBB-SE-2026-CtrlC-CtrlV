@@ -29,10 +29,10 @@ public sealed class UserRepositoryTests : IAsyncLifetime
         this.fixture = fixture;
 
         this.userFaker = new Faker<User>()
-            .RuleFor(u => u.Email, f => f.Internet.Email())
-            .RuleFor(u => u.PasswordHash, f => f.Internet.Password())
-            .RuleFor(u => u.FullName, f => f.Person.FullName)
-            .RuleFor(u => u.PreferredLanguage, f => "en");
+            .RuleFor(user => user.Email, faker => faker.Internet.Email())
+            .RuleFor(user => user.PasswordHash, faker => faker.Internet.Password())
+            .RuleFor(user => user.FullName, faker => faker.Person.FullName)
+            .RuleFor(user => user.PreferredLanguage, _ => "en");
     }
 
     public Task InitializeAsync() => this.fixture.ResetAsync();
