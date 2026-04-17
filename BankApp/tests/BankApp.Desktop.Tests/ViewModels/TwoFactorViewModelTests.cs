@@ -19,6 +19,8 @@ namespace BankApp.Desktop.Tests.ViewModels;
 /// </summary>
 public class TwoFactorViewModelTests
 {
+    private const int ExpectedResendCooldownSeconds = 30;
+
     private readonly Mock<IApiClient> apiClient = new Mock<IApiClient>();
     private readonly Mock<ICountdownTimer> countdownTimer = new Mock<ICountdownTimer>();
 
@@ -160,6 +162,6 @@ public class TwoFactorViewModelTests
 
         // Assert
         this.countdownTimer.Verify(timer => timer.Start(), Times.Once);
-        viewModel.SecondsRemaining.Should().Be(30);
+        viewModel.SecondsRemaining.Should().Be(ExpectedResendCooldownSeconds);
     }
 }
