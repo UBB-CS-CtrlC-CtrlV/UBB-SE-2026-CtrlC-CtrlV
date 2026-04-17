@@ -8,9 +8,9 @@ using System.Globalization;
 using System.Linq;
 using System.Threading;
 using System.Threading.Tasks;
+using BankApp.Application.DTOs.Dashboard;
 using BankApp.Desktop.Enums;
 using BankApp.Desktop.Utilities;
-using BankApp.Application.DTOs.Dashboard;
 using BankApp.Domain.Enums;
 using ErrorOr;
 using Microsoft.Extensions.Logging;
@@ -61,11 +61,6 @@ public class DashboardViewModel
     public UserSummaryDto? CurrentUser { get; private set; }
 
     /// <summary>
-    /// Gets the cards.
-    /// </summary>
-    private List<CardDto> Cards { get; set; }
-
-    /// <summary>
     /// Gets the formatted dashboard transaction rows for display.
     /// </summary>
     public List<DashboardTransactionItem> RecentTransactionItems { get; private set; }
@@ -88,11 +83,6 @@ public class DashboardViewModel
         get => this.currentCardIndex;
         private set => this.currentCardIndex = Math.Clamp(value, 0, Math.Max(0, this.Cards.Count - 1));
     }
-
-    /// <summary>
-    /// Gets the currently selected card, or <see langword="null"/> if no cards are available.
-    /// </summary>
-    private CardDto? SelectedCard => this.Cards.Count > 0 ? this.Cards[this.CurrentCardIndex] : null;
 
     /// <summary>
     /// Gets a value indicating whether the user can navigate to the previous card.
@@ -153,6 +143,18 @@ public class DashboardViewModel
         this.SelectedCard is { } card ? MaskCardNumber(card.CardNumber) : "**** **** **** ****";
 
     /// <summary>
+    /// Gets or sets the cards.
+    /// </summary>
+    private List<CardDto> Cards { get; set; }
+
+    /// <summary>
+    /// Gets the currently selected card, or <see langword="null"/> if no cards are available.
+    /// </summary>
+    private CardDto? SelectedCard => this.Cards.Count > 0 ? this.Cards[this.CurrentCardIndex] : null;
+
+    private List<TransactionDto> RecentTransactions { get; set; }
+
+    /// <summary>
     /// Navigates to the previous card if possible.
     /// </summary>
     /// <returns>
@@ -186,23 +188,6 @@ public class DashboardViewModel
 
         this.CurrentCardIndex++;
         return Result.Success;
-    }
-
-    /// <summary>
-    /// Returns a masked representation of a card number, showing only the last four digits.
-    /// </summary>
-    /// <param name="cardNumber">The raw card number.</param>
-    /// <returns>A masked string such as "**** **** **** 1234".</returns>
-    private static string MaskCardNumber(string? cardNumber)
-    {
-        if (string.IsNullOrWhiteSpace(cardNumber))
-        {
-            return "**** **** **** ****";
-        }
-
-        return cardNumber.Length >= 4
-            ? $"**** **** **** {cardNumber[^4..]}"
-            : "**** **** **** ****";
     }
 
     /// <summary>
@@ -241,10 +226,12 @@ public class DashboardViewModel
         this.State.SetValue(DashboardState.Loading);
         this.ErrorMessage = string.Empty;
 
-        ErrorOr<DashboardResponse> result = await this.apiClient.GetAsync<DashboardResponse>(ApiEndpoints.Dashboard,
+        ErrorOr<DashboardResponse> result = await this.apiClient.GetAsync<DashboardResponse>(
+            ApiEndpoints.Dashboard,
             cancellationToken);
 
-        return result.Match<ErrorOr<Success>>(dashboard =>
+        return result.Match<ErrorOr<Success>>(
+            dashboard =>
             {
                 if (dashboard.CurrentUser is null)
                 {
@@ -279,6 +266,23 @@ public class DashboardViewModel
             });
     }
 
+    /// <summary>
+    /// Returns a masked representation of a card number, showing only the last four digits.
+    /// </summary>
+    /// <param name="cardNumber">The raw card number.</param>
+    /// <returns>A masked string such as "**** **** **** 1234".</returns>
+    private static string MaskCardNumber(string? cardNumber)
+    {
+        if (string.IsNullOrWhiteSpace(cardNumber))
+        {
+            return "**** **** **** ****";
+        }
+
+        return cardNumber.Length >= 4
+            ? $"**** **** **** {cardNumber[^4..]}"
+            : "**** **** **** ****";
+    }
+
     private static List<DashboardTransactionItem> BuildTransactionItems(IEnumerable<TransactionDto> transactions)
     {
         return transactions
@@ -286,14 +290,15 @@ public class DashboardViewModel
             {
                 MerchantDisplayName = GetMerchantDisplayName(transaction),
                 Currency = GetValueOrFallback(transaction.Currency, "N/A"),
-                AmountDisplay = FormatAmountDisplay(transaction)
+                AmountDisplay = FormatAmountDisplay(transaction),
             })
             .ToList();
     }
 
     private static string GetMerchantDisplayName(TransactionDto transaction)
     {
-        return FirstNonEmpty(transaction.MerchantName,
+        return FirstNonEmpty(
+            transaction.MerchantName,
             transaction.Description,
             transaction.CounterpartyName,
             "Transaction");
@@ -320,6 +325,4 @@ public class DashboardViewModel
     {
         return values.FirstOrDefault(value => !string.IsNullOrWhiteSpace(value)) ?? string.Empty;
     }
-
-    private List<TransactionDto> RecentTransactions { get; set; }
 }
