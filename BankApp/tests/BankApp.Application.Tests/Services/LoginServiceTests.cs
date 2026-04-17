@@ -2,7 +2,7 @@
 // Copyright (c) CtrlC CtrlV. All rights reserved.
 // </copyright>
 
-using BankApp.Application.DTOs.Auth;
+using BankApp.Application.DataTransferObjects.Auth;
 using BankApp.Application.Repositories.Interfaces;
 using BankApp.Application.Services.Login;
 using BankApp.Application.Services.Notifications;

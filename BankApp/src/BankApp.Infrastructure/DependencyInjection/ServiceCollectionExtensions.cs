@@ -38,7 +38,7 @@ public static class ServiceCollectionExtensions
         string jwtSecret = configuration["Jwt:Secret"]
             ?? throw new InvalidOperationException("Configuration value 'Jwt:Secret' is missing.");
 
-        services.AddScoped<AppDbContext>(_ => new AppDbContext(connectionString));
+        services.AddScoped<AppDatabaseContext>(_ => new AppDatabaseContext(connectionString));
 
         services.AddScoped<IUserDataAccess, UserDataAccess>();
         services.AddScoped<ISessionDataAccess, SessionDataAccess>();
@@ -51,8 +51,8 @@ public static class ServiceCollectionExtensions
         services.AddScoped<INotificationDataAccess, NotificationDataAccess>();
 
         services.AddScoped<IHashService, HashService>();
-        services.AddScoped<IJwtService>(_ => new JwtService(jwtSecret));
-        services.AddScoped<IOtpService, OtpService>();
+        services.AddScoped<IJwtService>(_ => new JsonWebTokenService(jwtSecret));
+        services.AddScoped<IOtpService, OneTimePasswordService>();
         services.AddScoped<IEmailService, EmailService>();
 
         services.AddScoped<IAuthRepository, AuthRepository>();

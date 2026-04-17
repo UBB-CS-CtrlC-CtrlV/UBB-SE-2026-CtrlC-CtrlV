@@ -1,4 +1,4 @@
-﻿// <copyright file="DashboardTransactionItem.cs" company="CtrlC CtrlV">
+// <copyright file="DashboardTransactionItem.cs" company="CtrlC CtrlV">
 // Copyright (c) CtrlC CtrlV. All rights reserved.
 // </copyright>
 
@@ -9,7 +9,7 @@ using System.Net;
 using System.Threading;
 using System.Threading.Tasks;
 using BankApp.Desktop.Utilities;
-using BankApp.Application.DTOs.Dashboard;
+using BankApp.Application.DataTransferObjects.Dashboard;
 using BankApp.Domain.Entities;
 using BankApp.Desktop.Enums;
 

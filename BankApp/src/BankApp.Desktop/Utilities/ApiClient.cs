@@ -8,7 +8,7 @@ using System.Net.Http;
 using System.Net.Http.Json;
 using System.Threading;
 using System.Threading.Tasks;
-using BankApp.Application.DTOs;
+using BankApp.Application.DataTransferObjects;
 using ErrorOr;
 using Microsoft.Extensions.Configuration;
 using Microsoft.Extensions.Logging;
@@ -140,9 +140,9 @@ public class ApiClient : IApiClient
 
             return result;
         }
-        catch (HttpRequestException ex)
+        catch (HttpRequestException exception)
         {
-            return Error.Failure(description: $"POST {endpoint} failed: {ex.Message}");
+            return Error.Failure(description: $"POST {endpoint} failed: {exception.Message}");
         }
         catch (OperationCanceledException)
         {
@@ -167,9 +167,9 @@ public class ApiClient : IApiClient
                 ? Result.Success
                 : await MapErrorAsync(response, endpoint, CancellationToken.None);
         }
-        catch (HttpRequestException ex)
+        catch (HttpRequestException exception)
         {
-            return Error.Failure(description: $"POST {endpoint} failed: {ex.Message}");
+            return Error.Failure(description: $"POST {endpoint} failed: {exception.Message}");
         }
         catch (OperationCanceledException)
         {
@@ -207,9 +207,9 @@ public class ApiClient : IApiClient
 
             return result;
         }
-        catch (HttpRequestException ex)
+        catch (HttpRequestException exception)
         {
-            return Error.Failure(description: $"GET {endpoint} failed: {ex.Message}");
+            return Error.Failure(description: $"GET {endpoint} failed: {exception.Message}");
         }
         catch (OperationCanceledException)
         {
@@ -244,9 +244,9 @@ public class ApiClient : IApiClient
 
             return result;
         }
-        catch (HttpRequestException ex)
+        catch (HttpRequestException exception)
         {
-            return Error.Failure(description: $"PUT {endpoint} failed: {ex.Message}");
+            return Error.Failure(description: $"PUT {endpoint} failed: {exception.Message}");
         }
         catch (OperationCanceledException)
         {
@@ -271,9 +271,9 @@ public class ApiClient : IApiClient
                 ? Result.Success
                 : await MapErrorAsync(response, endpoint, CancellationToken.None);
         }
-        catch (HttpRequestException ex)
+        catch (HttpRequestException exception)
         {
-            return Error.Failure(description: $"PUT {endpoint} failed: {ex.Message}");
+            return Error.Failure(description: $"PUT {endpoint} failed: {exception.Message}");
         }
         catch (OperationCanceledException)
         {
@@ -290,8 +290,8 @@ public class ApiClient : IApiClient
 
         try
         {
-            ApiErrorResponse? errorBody = await response.Content
-                .ReadFromJsonAsync<ApiErrorResponse>(cancellationToken: cancellationToken);
+            ApplicationErrorResponse? errorBody = await response.Content
+                .ReadFromJsonAsync<ApplicationErrorResponse>(cancellationToken: cancellationToken);
 
             if (errorBody is not null && !string.IsNullOrWhiteSpace(errorBody.Error))
             {
@@ -337,9 +337,9 @@ public class ApiClient : IApiClient
                 ? Result.Success
                 : await MapErrorAsync(response, endpoint, CancellationToken.None);
         }
-        catch (HttpRequestException ex)
+        catch (HttpRequestException exception)
         {
-            return Error.Failure(description: $"DELETE {endpoint} failed: {ex.Message}");
+            return Error.Failure(description: $"DELETE {endpoint} failed: {exception.Message}");
         }
         catch (OperationCanceledException)
         {

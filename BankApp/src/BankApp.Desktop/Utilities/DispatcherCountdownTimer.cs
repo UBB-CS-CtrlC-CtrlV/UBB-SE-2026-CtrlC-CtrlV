@@ -16,6 +16,8 @@ namespace BankApp.Desktop.Utilities;
 /// </summary>
 public sealed class DispatcherCountdownTimer : ICountdownTimer
 {
+    private const int TimerIntervalSeconds = 1;
+
     private readonly DispatcherTimer inner;
 
     /// <summary>
@@ -26,7 +28,7 @@ public sealed class DispatcherCountdownTimer : ICountdownTimer
     {
         this.inner = new DispatcherTimer
         {
-            Interval = TimeSpan.FromSeconds(1),
+            Interval = TimeSpan.FromSeconds(TimerIntervalSeconds),
         };
 
         this.inner.Tick += (_, _) => this.Tick?.Invoke(this, EventArgs.Empty);

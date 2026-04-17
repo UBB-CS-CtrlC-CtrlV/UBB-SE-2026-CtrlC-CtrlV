@@ -1,4 +1,4 @@
-namespace BankApp.Application.DTOs.Auth;
+namespace BankApp.Application.DataTransferObjects.Auth;
 
 /// <summary>
 /// Represents a request to reset a password using a reset token.

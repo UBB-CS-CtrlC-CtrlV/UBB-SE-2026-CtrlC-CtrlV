@@ -22,7 +22,7 @@ namespace BankApp.Api.Tests.Middleware;
 [Trait("Category", "Unit")]
 public sealed class SessionValidationMiddlewareTests
 {
-    private readonly Mock<IAuthRepository> authRepo = MockFactory.CreateAuthRepository();
+    private readonly Mock<IAuthRepository> authenticationRepository = MockFactory.CreateAuthRepository();
     private readonly Mock<IJwtService> jwtService = MockFactory.CreateJwtService();
     private readonly Mock<ILogger<SessionValidationMiddleware>> logger = new Mock<ILogger<SessionValidationMiddleware>>();
 
@@ -45,7 +45,7 @@ public sealed class SessionValidationMiddlewareTests
         HttpContext context = CreateHttpContext(path);
 
         // Act
-        await middleware.Invoke(context, this.authRepo.Object, this.jwtService.Object, this.logger.Object);
+        await middleware.Invoke(context, this.authenticationRepository.Object, this.jwtService.Object, this.logger.Object);
 
         // Assert
         this.nextWasCalled.Should().BeTrue();
@@ -64,7 +64,7 @@ public sealed class SessionValidationMiddlewareTests
         HttpContext context = CreateHttpContext("/api/dashboard");
 
         // Act
-        await middleware.Invoke(context, this.authRepo.Object, this.jwtService.Object, this.logger.Object);
+        await middleware.Invoke(context, this.authenticationRepository.Object, this.jwtService.Object, this.logger.Object);
 
         // Assert
         context.Response.StatusCode.Should().Be(401);
@@ -87,7 +87,7 @@ public sealed class SessionValidationMiddlewareTests
         HttpContext context = CreateHttpContext("/api/profile", "Bearer bad-token");
 
         // Act
-        await middleware.Invoke(context, this.authRepo.Object, this.jwtService.Object, this.logger.Object);
+        await middleware.Invoke(context, this.authenticationRepository.Object, this.jwtService.Object, this.logger.Object);
 
         // Assert
         context.Response.StatusCode.Should().Be(401);
@@ -103,7 +103,7 @@ public sealed class SessionValidationMiddlewareTests
     {
         // Arrange
         this.jwtService.Setup(service => service.ExtractUserId("good-token")).Returns(1);
-        this.authRepo
+        this.authenticationRepository
             .Setup(repository => repository.FindSessionByToken("good-token"))
             .Returns(Error.NotFound("session_not_found", "Session not found."));
 
@@ -111,7 +111,7 @@ public sealed class SessionValidationMiddlewareTests
         HttpContext context = CreateHttpContext("/api/dashboard", "Bearer good-token");
 
         // Act
-        await middleware.Invoke(context, this.authRepo.Object, this.jwtService.Object, this.logger.Object);
+        await middleware.Invoke(context, this.authenticationRepository.Object, this.jwtService.Object, this.logger.Object);
 
         // Assert
         context.Response.StatusCode.Should().Be(401);
@@ -127,7 +127,7 @@ public sealed class SessionValidationMiddlewareTests
     {
         // Arrange
         this.jwtService.Setup(service => service.ExtractUserId("good-token")).Returns(42);
-        this.authRepo
+        this.authenticationRepository
             .Setup(repository => repository.FindSessionByToken("good-token"))
             .Returns(new Session { Id = 1, UserId = 42, Token = "good-token" });
 
@@ -135,7 +135,7 @@ public sealed class SessionValidationMiddlewareTests
         HttpContext context = CreateHttpContext("/api/profile", "Bearer good-token");
 
         // Act
-        await middleware.Invoke(context, this.authRepo.Object, this.jwtService.Object, this.logger.Object);
+        await middleware.Invoke(context, this.authenticationRepository.Object, this.jwtService.Object, this.logger.Object);
 
         // Assert
         this.nextWasCalled.Should().BeTrue();
@@ -154,7 +154,7 @@ public sealed class SessionValidationMiddlewareTests
         HttpContext context = CreateHttpContext("/api/dashboard", "Basic some-creds");
 
         // Act
-        await middleware.Invoke(context, this.authRepo.Object, this.jwtService.Object, this.logger.Object);
+        await middleware.Invoke(context, this.authenticationRepository.Object, this.jwtService.Object, this.logger.Object);
 
         // Assert
         context.Response.StatusCode.Should().Be(401);

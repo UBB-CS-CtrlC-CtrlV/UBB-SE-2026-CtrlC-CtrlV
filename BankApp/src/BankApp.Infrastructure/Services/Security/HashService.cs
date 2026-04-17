@@ -19,9 +19,9 @@ public class HashService : IHashService
         {
             return BCrypt.Net.BCrypt.HashPassword(input);
         }
-        catch (Exception ex)
+        catch (Exception exception)
         {
-            return Error.Failure(code: "hash.failed", description: ex.Message);
+            return Error.Failure(code: "hash.failed", description: exception.Message);
         }
     }
 
@@ -32,9 +32,9 @@ public class HashService : IHashService
         {
             return BCrypt.Net.BCrypt.Verify(input, hash);
         }
-        catch (Exception ex)
+        catch (Exception exception)
         {
-            return Error.Failure(code: "hash.verify_failed", description: ex.Message);
+            return Error.Failure(code: "hash.verify_failed", description: exception.Message);
         }
     }
 }

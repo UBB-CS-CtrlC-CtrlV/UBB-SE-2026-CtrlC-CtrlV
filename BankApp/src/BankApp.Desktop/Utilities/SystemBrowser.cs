@@ -49,29 +49,29 @@ public class SystemBrowser : IBrowser
 
             return new BrowserResult { Response = result, ResultType = BrowserResultType.Success };
         }
-        catch (TaskCanceledException ex)
+        catch (TaskCanceledException exception)
         {
-            return new BrowserResult { ResultType = BrowserResultType.Timeout, Error = ex.Message };
+            return new BrowserResult { ResultType = BrowserResultType.Timeout, Error = exception.Message };
         }
-        catch (Exception ex)
+        catch (Exception exception)
         {
-            return new BrowserResult { ResultType = BrowserResultType.UnknownError, Error = ex.Message };
+            return new BrowserResult { ResultType = BrowserResultType.UnknownError, Error = exception.Message };
         }
     }
 
-    private static void OpenBrowser(string url)
+    private static void OpenBrowser(string browserAddress)
     {
         Process.Start(
             new ProcessStartInfo
             {
-                FileName = url,
+                FileName = browserAddress,
                 UseShellExecute = true,
             });
     }
 
     private int GetRandomUnusedPort()
     {
-        var listener = new TcpListener(IPAddress.Loopback, 0);
+        var listener = new TcpListener(IPAddress.Loopback, default(int));
         listener.Start();
         var port = ((IPEndPoint)listener.LocalEndpoint).Port;
         listener.Stop();

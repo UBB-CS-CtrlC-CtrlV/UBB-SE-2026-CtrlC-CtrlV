@@ -7,7 +7,7 @@ using System.Collections.Generic;
 using System.Threading.Tasks;
 using BankApp.Desktop.Enums;
 using BankApp.Desktop.Utilities;
-using BankApp.Application.DTOs.Profile;
+using BankApp.Application.DataTransferObjects.Profile;
 using ErrorOr;
 using Microsoft.Extensions.Logging;
 
@@ -31,7 +31,7 @@ public class OAuthViewModel
         this.apiClient = apiClient ?? throw new ArgumentNullException(nameof(apiClient));
         this.logger = logger ?? throw new ArgumentNullException(nameof(logger));
         this.State = new ObservableState<ProfileState>(ProfileState.Idle);
-        this.OAuthLinks = new List<OAuthLinkDto>();
+        this.OAuthLinks = new List<OAuthLinkDataTransferObject>();
     }
 
     /// <summary>
@@ -42,7 +42,7 @@ public class OAuthViewModel
     /// <summary>
     /// Gets the linked OAuth accounts for the current user.
     /// </summary>
-    public List<OAuthLinkDto> OAuthLinks { get; private set; }
+    public List<OAuthLinkDataTransferObject> OAuthLinks { get; private set; }
 
     /// <summary>
     /// Loads the OAuth links for the current user from the server.
@@ -50,11 +50,11 @@ public class OAuthViewModel
     /// <returns><see langword="true"/> if loaded successfully; otherwise, <see langword="false"/>.</returns>
     public async Task<bool> LoadOAuthLinks()
     {
-        ErrorOr<List<OAuthLinkDto>> oauthResult = await this.apiClient.GetAsync<List<OAuthLinkDto>>(ApiEndpoints.OAuthLinks);
+        ErrorOr<List<OAuthLinkDataTransferObject>> oauthResult = await this.apiClient.GetAsync<List<OAuthLinkDataTransferObject>>(ApiEndpoints.OAuthLinks);
         if (oauthResult.IsError)
         {
             // 404 means no OAuth links exist — treat as success with empty list
-            this.OAuthLinks = new List<OAuthLinkDto>();
+            this.OAuthLinks = new List<OAuthLinkDataTransferObject>();
             return true;
         }
 
@@ -90,7 +90,7 @@ public class OAuthViewModel
         return result.Match(
             _ =>
             {
-                this.OAuthLinks.Add(new OAuthLinkDto { Provider = trimmedProvider });
+                this.OAuthLinks.Add(new OAuthLinkDataTransferObject { Provider = trimmedProvider });
                 this.State.SetValue(ProfileState.UpdateSuccess);
                 return true;
             },
@@ -114,7 +114,7 @@ public class OAuthViewModel
             return false;
         }
 
-        OAuthLinkDto? existing = this.OAuthLinks.Find(o =>
+        OAuthLinkDataTransferObject? existing = this.OAuthLinks.Find(o =>
             string.Equals(o.Provider, provider, StringComparison.OrdinalIgnoreCase));
         if (existing == null)
         {

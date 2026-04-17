@@ -1,6 +1,6 @@
 using BankApp.Domain.Entities;
 
-namespace BankApp.Application.DTOs.Profile;
+namespace BankApp.Application.DataTransferObjects.Profile;
 
 /// <summary>
 /// Represents the profile information of a user.

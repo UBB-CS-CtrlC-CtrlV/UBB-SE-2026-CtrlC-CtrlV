@@ -16,7 +16,7 @@ using BankApp.Desktop.Enums;
 using BankApp.Desktop.Master;
 using BankApp.Desktop.Utilities;
 using BankApp.Desktop.ViewModels;
-using BankApp.Application.DTOs.Profile;
+using BankApp.Application.DataTransferObjects.Profile;
 using BankApp.Domain.Enums;
 using BankApp.Domain.Extensions;
 
@@ -27,6 +27,34 @@ namespace BankApp.Desktop.Views;
 /// </summary>
 public sealed partial class ProfileView : IStateObserver<ProfileState>
 {
+    private const double EnabledFormOpacity = 1.0;
+    private const double DisabledFormOpacity = 0.6;
+    private const int FirstGridColumnIndex = 0;
+    private const int SecondGridColumnIndex = 1;
+    private const int NotificationPreferenceVerticalMargin = 6;
+    private const int NotificationPreferenceFontSize = 13;
+    private const int SessionCardCornerRadius = 10;
+    private const int SessionCardBorderThickness = 1;
+    private const int SessionCardHorizontalPadding = 16;
+    private const int SessionCardVerticalPadding = 12;
+    private const int SessionInfoStackSpacing = 2;
+    private const int SessionPrimaryTextFontSize = 13;
+    private const int SessionSecondaryTextFontSize = 12;
+    private const int SessionMutedTextFontSize = 11;
+    private const byte OpaqueColorAlpha = 255;
+    private const byte SessionCardBorderRed = 226;
+    private const byte SessionCardBorderGreen = 232;
+    private const byte SessionCardBorderBlue = 240;
+    private const byte SessionPrimaryTextRed = 30;
+    private const byte SessionPrimaryTextGreen = 41;
+    private const byte SessionPrimaryTextBlue = 59;
+    private const byte SessionSecondaryTextRed = 100;
+    private const byte SessionSecondaryTextGreen = 116;
+    private const byte SessionSecondaryTextBlue = 139;
+    private const byte SessionMutedTextRed = 148;
+    private const byte SessionMutedTextGreen = 163;
+    private const byte SessionMutedTextBlue = 184;
+
     private readonly ProfileViewModel viewModel;
     private string verifiedPassword = string.Empty;
     private string pendingTwoFactorAuthType = string.Empty;
@@ -109,9 +137,9 @@ public sealed partial class ProfileView : IStateObserver<ProfileState>
         this.PhoneBox.IsReadOnly = !enabled;
         this.AddressBox.IsReadOnly = !enabled;
 
-        this.FullNameBox.Opacity = enabled ? 1.0 : 0.6;
-        this.PhoneBox.Opacity = enabled ? 1.0 : 0.6;
-        this.AddressBox.Opacity = enabled ? 1.0 : 0.6;
+        this.FullNameBox.Opacity = enabled ? EnabledFormOpacity : DisabledFormOpacity;
+        this.PhoneBox.Opacity = enabled ? EnabledFormOpacity : DisabledFormOpacity;
+        this.AddressBox.Opacity = enabled ? EnabledFormOpacity : DisabledFormOpacity;
 
         if (!enabled)
         {
@@ -132,15 +160,15 @@ public sealed partial class ProfileView : IStateObserver<ProfileState>
     }
 
     private async void VerifyPasswordDialog_PrimaryButtonClick(ContentDialog sender,
-        ContentDialogButtonClickEventArgs args)
+        ContentDialogButtonClickEventArgs arguments)
     {
-        var deferral = args.GetDeferral();
+        var deferral = arguments.GetDeferral();
 
         if (string.IsNullOrWhiteSpace(this.VerifyCurrentPasswordBox.Password))
         {
             this.VerifyErrorInfoBar.Message = "Enter your password.";
             this.VerifyErrorInfoBar.IsOpen = true;
-            args.Cancel = true;
+            arguments.Cancel = true;
             deferral.Complete();
             return;
         }
@@ -151,7 +179,7 @@ public sealed partial class ProfileView : IStateObserver<ProfileState>
         {
             this.VerifyErrorInfoBar.Message = "Incorrect password.";
             this.VerifyErrorInfoBar.IsOpen = true;
-            args.Cancel = true;
+            arguments.Cancel = true;
             deferral.Complete();
             return;
         }
@@ -243,9 +271,9 @@ public sealed partial class ProfileView : IStateObserver<ProfileState>
     }
 
     private async void NewPasswordDialog_PrimaryButtonClick(ContentDialog sender,
-        ContentDialogButtonClickEventArgs args)
+        ContentDialogButtonClickEventArgs arguments)
     {
-        var deferral = args.GetDeferral();
+        var deferral = arguments.GetDeferral();
 
         var newPassword = this.NewPasswordBox.Password;
         var confirmPassword = this.ConfirmPasswordBox.Password;
@@ -255,7 +283,7 @@ public sealed partial class ProfileView : IStateObserver<ProfileState>
         {
             this.NewPasswordErrorInfoBar.Message = "User not loaded.";
             this.NewPasswordErrorInfoBar.IsOpen = true;
-            args.Cancel = true;
+            arguments.Cancel = true;
             deferral.Complete();
             return;
         }
@@ -274,7 +302,7 @@ public sealed partial class ProfileView : IStateObserver<ProfileState>
         {
             this.NewPasswordErrorInfoBar.Message = errorMessage;
             this.NewPasswordErrorInfoBar.IsOpen = true;
-            args.Cancel = true;
+            arguments.Cancel = true;
             deferral.Complete();
         }
     }
@@ -334,7 +362,7 @@ public sealed partial class ProfileView : IStateObserver<ProfileState>
 
     private async void RemoveConnectedAccount_Click(object sender, RoutedEventArgs e)
     {
-        if (sender is Button { Tag: OAuthLinkDto link })
+        if (sender is Button { Tag: OAuthLinkDataTransferObject link })
         {
             var success = await this.viewModel.OAuth.UnlinkOAuth(link.Provider);
 
@@ -360,7 +388,7 @@ public sealed partial class ProfileView : IStateObserver<ProfileState>
             return;
         }
 
-        if (sender is ToggleSwitch { Tag: NotificationPreferenceDto preference } toggle)
+        if (sender is ToggleSwitch { Tag: NotificationPreferenceDataTransferObject preference } toggle)
         {
             this.isUpdatingToggle = true;
             await this.viewModel.ToggleNotificationPreference(preference, toggle.IsOn);
@@ -522,7 +550,7 @@ public sealed partial class ProfileView : IStateObserver<ProfileState>
         this.TabSessionsBtn.Style = (Style)this.Resources["TabButtonStyle"];
     }
 
-    private void PopulateOAuthLinks(List<OAuthLinkDto>? links)
+    private void PopulateOAuthLinks(List<OAuthLinkDataTransferObject>? links)
     {
         this.OAuthLinksPanel.Children.Clear();
 
@@ -542,7 +570,7 @@ public sealed partial class ProfileView : IStateObserver<ProfileState>
         }
     }
 
-    private void PopulateNotificationPreferences(List<NotificationPreferenceDto>? preferences)
+    private void PopulateNotificationPreferences(List<NotificationPreferenceDataTransferObject>? preferences)
     {
         this.viewModel.IsInitializingView = true;
         this.NotificationPreferencesPanel.Children.Clear();
@@ -557,17 +585,17 @@ public sealed partial class ProfileView : IStateObserver<ProfileState>
         {
             var row = new Grid
             {
-                Margin = new Thickness(0, 6, 0, 6),
+                Margin = new Thickness(default, NotificationPreferenceVerticalMargin, default, NotificationPreferenceVerticalMargin),
             };
 
-            row.ColumnDefinitions.Add(new ColumnDefinition { Width = new GridLength(1, GridUnitType.Star) });
+            row.ColumnDefinitions.Add(new ColumnDefinition { Width = new GridLength(SecondGridColumnIndex, GridUnitType.Star) });
             row.ColumnDefinitions.Add(new ColumnDefinition { Width = GridLength.Auto });
 
             var text = new TextBlock
             {
                 Text = NotificationTypeExtensions.ToDisplayName(preference.Category),
                 VerticalAlignment = VerticalAlignment.Center,
-                FontSize = 13,
+                FontSize = NotificationPreferenceFontSize,
                 Foreground = (Brush)this.Resources["TextPrimary"],
             };
 
@@ -580,8 +608,8 @@ public sealed partial class ProfileView : IStateObserver<ProfileState>
 
             toggle.Toggled += this.NotificationToggle_Toggled;
 
-            Grid.SetColumn(text, 0);
-            Grid.SetColumn(toggle, 1);
+            Grid.SetColumn(text, FirstGridColumnIndex);
+            Grid.SetColumn(toggle, SecondGridColumnIndex);
 
             row.Children.Add(text);
             row.Children.Add(toggle);
@@ -626,42 +654,42 @@ public sealed partial class ProfileView : IStateObserver<ProfileState>
         return true;
     }
 
-    private Border BuildSessionCard(SessionDto session)
+    private Border BuildSessionCard(SessionDataTransferObject session)
     {
         var card = new Border
         {
             Background = new SolidColorBrush(Microsoft.UI.Colors.White),
-            CornerRadius = new CornerRadius(10),
-            BorderBrush = new SolidColorBrush(Microsoft.UI.ColorHelper.FromArgb(255, 226, 232, 240)),
-            BorderThickness = new Thickness(1),
-            Padding = new Thickness(16, 12, 16, 12),
+            CornerRadius = new CornerRadius(SessionCardCornerRadius),
+            BorderBrush = new SolidColorBrush(Microsoft.UI.ColorHelper.FromArgb(OpaqueColorAlpha, SessionCardBorderRed, SessionCardBorderGreen, SessionCardBorderBlue)),
+            BorderThickness = new Thickness(SessionCardBorderThickness),
+            Padding = new Thickness(SessionCardHorizontalPadding, SessionCardVerticalPadding, SessionCardHorizontalPadding, SessionCardVerticalPadding),
         };
 
         var grid = new Grid();
-        grid.ColumnDefinitions.Add(new ColumnDefinition { Width = new GridLength(1, GridUnitType.Star) });
+        grid.ColumnDefinitions.Add(new ColumnDefinition { Width = new GridLength(SecondGridColumnIndex, GridUnitType.Star) });
         grid.ColumnDefinitions.Add(new ColumnDefinition { Width = GridLength.Auto });
 
-        var infoStack = new StackPanel { Spacing = 2 };
+        var infoStack = new StackPanel { Spacing = SessionInfoStackSpacing };
 
         var deviceText = new TextBlock
         {
             Text = session.DeviceInfo ?? "Unknown Device",
-            FontSize = 13,
-            Foreground = new SolidColorBrush(Microsoft.UI.ColorHelper.FromArgb(255, 30, 41, 59)),
+            FontSize = SessionPrimaryTextFontSize,
+            Foreground = new SolidColorBrush(Microsoft.UI.ColorHelper.FromArgb(OpaqueColorAlpha, SessionPrimaryTextRed, SessionPrimaryTextGreen, SessionPrimaryTextBlue)),
         };
 
         var browserText = new TextBlock
         {
             Text = session.Browser ?? "Unknown Browser",
-            FontSize = 12,
-            Foreground = new SolidColorBrush(Microsoft.UI.ColorHelper.FromArgb(255, 100, 116, 139)),
+            FontSize = SessionSecondaryTextFontSize,
+            Foreground = new SolidColorBrush(Microsoft.UI.ColorHelper.FromArgb(OpaqueColorAlpha, SessionSecondaryTextRed, SessionSecondaryTextGreen, SessionSecondaryTextBlue)),
         };
 
         var ipText = new TextBlock
         {
             Text = $"IP: {session.IpAddress ?? "Unknown"}",
-            FontSize = 12,
-            Foreground = new SolidColorBrush(Microsoft.UI.ColorHelper.FromArgb(255, 100, 116, 139)),
+            FontSize = SessionSecondaryTextFontSize,
+            Foreground = new SolidColorBrush(Microsoft.UI.ColorHelper.FromArgb(OpaqueColorAlpha, SessionSecondaryTextRed, SessionSecondaryTextGreen, SessionSecondaryTextBlue)),
         };
 
         var lastActiveText = new TextBlock
@@ -669,8 +697,8 @@ public sealed partial class ProfileView : IStateObserver<ProfileState>
             Text = session.LastActiveAt.HasValue
                 ? $"Last active: {session.LastActiveAt.Value:g}"
                 : "Last active: Unknown",
-            FontSize = 11,
-            Foreground = new SolidColorBrush(Microsoft.UI.ColorHelper.FromArgb(255, 148, 163, 184)),
+            FontSize = SessionMutedTextFontSize,
+            Foreground = new SolidColorBrush(Microsoft.UI.ColorHelper.FromArgb(OpaqueColorAlpha, SessionMutedTextRed, SessionMutedTextGreen, SessionMutedTextBlue)),
         };
 
         infoStack.Children.Add(deviceText);
@@ -687,8 +715,8 @@ public sealed partial class ProfileView : IStateObserver<ProfileState>
         revokeButton.Style = (Style)this.Resources["DangerButtonStyle"];
         revokeButton.Click += this.RevokeSessionButton_Click;
 
-        Grid.SetColumn(infoStack, 0);
-        Grid.SetColumn(revokeButton, 1);
+        Grid.SetColumn(infoStack, FirstGridColumnIndex);
+        Grid.SetColumn(revokeButton, SecondGridColumnIndex);
 
         grid.Children.Add(infoStack);
         grid.Children.Add(revokeButton);
@@ -724,13 +752,13 @@ public sealed partial class ProfileView : IStateObserver<ProfileState>
         this.SessionsListPanel.Children.Clear();
         this.NoSessionsText.Visibility = Visibility.Collapsed;
 
-        if (this.viewModel.Sessions.ActiveSessions.Count == 0)
+        if (this.viewModel.Sessions.ActiveSessions.Count == default)
         {
             this.NoSessionsText.Visibility = Visibility.Visible;
             return;
         }
 
-        foreach (SessionDto session in this.viewModel.Sessions.ActiveSessions)
+        foreach (SessionDataTransferObject session in this.viewModel.Sessions.ActiveSessions)
         {
             this.SessionsListPanel.Children.Add(this.BuildSessionCard(session));
         }

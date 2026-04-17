@@ -3,12 +3,13 @@
 // </copyright>
 
 using System;
+using System.Linq;
 using System.Collections.Generic;
 using System.ComponentModel;
 using System.Runtime.CompilerServices;
 using System.Threading.Tasks;
 using BankApp.Desktop.Utilities;
-using BankApp.Application.DTOs.Auth;
+using BankApp.Application.DataTransferObjects.Auth;
 using BankApp.Desktop.Enums;
 using ErrorOr;
 using Microsoft.Extensions.Logging;
@@ -160,12 +161,12 @@ public partial class TwoFactorViewModel : INotifyPropertyChanged
     /// Gets a value indicating whether the user is allowed to request a new code.
     /// Becomes <see langword="true"/> once the countdown reaches zero.
     /// </summary>
-    public bool CanResend => this.secondsRemaining <= 0;
+    public bool CanResend => this.secondsRemaining <= default(int);
 
     /// <summary>
     /// Gets a value indicating whether the countdown label should be displayed.
     /// </summary>
-    public bool IsCountdownVisible => this.secondsRemaining > 0;
+    public bool IsCountdownVisible => this.secondsRemaining > default(int);
 
     /// <summary>
     /// Gets the formatted countdown string shown next to the resend button,
@@ -221,7 +222,7 @@ public partial class TwoFactorViewModel : INotifyPropertyChanged
             },
             errors =>
             {
-                if (errors[0].Type != ErrorType.Unauthorized)
+                if (errors.First().Type != ErrorType.Unauthorized)
                 {
                     this.logger.LogError("VerifyOtp failed: {Errors}", errors);
                 }
@@ -246,7 +247,7 @@ public partial class TwoFactorViewModel : INotifyPropertyChanged
         }
 
         this.ClearError();
-        this.SecondsRemaining = ResendCooldownSeconds;
+        this.secondsRemaining = ResendCooldownSeconds;
         this.countdownTimer.Start();
         this.State.SetValue(TwoFactorState.Idle);
 
@@ -267,12 +268,12 @@ public partial class TwoFactorViewModel : INotifyPropertyChanged
     // ─── Internal ─────────────────────────────────────────────────────────────
     private void OnCountdownTick(object? sender, EventArgs e)
     {
-        if (this.secondsRemaining > 0)
+        if (this.secondsRemaining > default(double))
         {
-            this.SecondsRemaining--;
+            this.secondsRemaining--;
         }
 
-        if (this.secondsRemaining <= 0)
+        if (this.secondsRemaining <= default(int))
         {
             this.countdownTimer.Stop();
         }

@@ -2,7 +2,7 @@
 // Copyright (c) CtrlC CtrlV. All rights reserved.
 // </copyright>
 
-namespace BankApp.Application.DTOs.Profile;
+namespace BankApp.Application.DataTransferObjects.Profile;
 
 /// <summary>
 /// Represents a request to link an OAuth provider to the current account.

@@ -1,5 +1,6 @@
-// Copyright (c) BankApp. All rights reserved.
-// Licensed under the MIT license.
+// <copyright file="DashboardRepositoryTests.cs" company="CtrlC CtrlV">
+// Copyright (c) CtrlC CtrlV. All rights reserved.
+// </copyright>
 
 using BankApp.Domain.Entities;
 using BankApp.Domain.Enums;
@@ -9,6 +10,7 @@ using BankApp.Infrastructure.Repositories.Implementations;
 using BankApp.Infrastructure.Tests.Integration.Infrastructure;
 using Bogus;
 using Dapper;
+using ErrorOr;
 using FluentAssertions;
 
 namespace BankApp.Infrastructure.Tests.Integration;
@@ -39,27 +41,27 @@ public sealed class DashboardRepositoryTests : IAsyncLifetime
 
     public Task DisposeAsync() => Task.CompletedTask;
 
-    private AppDbContext MakeDb() => this.fixture.CreateDbContext();
+    private AppDatabaseContext MakeDatabaseContext() => this.fixture.CreateDatabaseContext();
 
-    private User SeedUser(AppDbContext db)
+    private User SeedUser(AppDatabaseContext databaseContext)
     {
-        var da = new UserDataAccess(db);
-        var user = this.userFaker.Generate();
-        da.Create(user).IsError.Should().BeFalse();
+        var dataAccess = new UserDataAccess(databaseContext);
+        User? user = this.userFaker.Generate();
+        dataAccess.Create(user).IsError.Should().BeFalse();
 
-        var findResult = da.FindByEmail(user.Email);
+        ErrorOr<User> findResult = dataAccess.FindByEmail(user.Email);
         findResult.IsError.Should().BeFalse(findResult.IsError ? findResult.FirstError.Description : string.Empty);
         return findResult.Value;
     }
 
-    private Account SeedAccount(AppDbContext db, int userId, string? iban = null)
+    private Account SeedAccount(AppDatabaseContext databaseContext, int userId, string? iban = null)
     {
         var faker = new Faker();
         iban ??= faker.Finance.Iban();
 
-        db.Query<int>(conn =>
+        databaseContext.Query<int>(connection =>
         {
-            conn.Execute(
+            connection.Execute(
                 """
                 INSERT INTO Account (UserId, AccountName, IBAN, Currency, Balance, AccountType, Status)
                 VALUES (@UserId, 'Main Account', @Iban, 'RON', 5000.00, 'Checking', 'Active')
@@ -68,18 +70,18 @@ public sealed class DashboardRepositoryTests : IAsyncLifetime
             return 0;
         });
 
-        return db.Query<Account>(conn =>
-            conn.QueryFirst<Account>(
+        return databaseContext.Query<Account>(connection =>
+            connection.QueryFirst<Account>(
                 "SELECT * FROM Account WHERE UserId = @UserId AND IBAN = @Iban",
                 new { UserId = userId, Iban = iban })).Value;
     }
 
-    private void SeedCard(AppDbContext db, int accountId, int userId)
+    private void SeedCard(AppDatabaseContext databaseContext, int accountId, int userId)
     {
         // Use a fixed card number to avoid Bogus generating numbers > VARCHAR(19)
-        var seedResult = db.Query<int>(conn =>
+        ErrorOr<int> seedResult = databaseContext.Query<int>(connection =>
         {
-            return conn.Execute(
+            return connection.Execute(
                 """
                 INSERT INTO Card (AccountId, UserId, CardNumber, CardholderName, ExpiryDate, CVV, CardType, Status)
                 VALUES (@AccountId, @UserId, '4111111111111111', 'Test User', '2027-12-31', '123', 'Debit', 'Active')
@@ -90,31 +92,31 @@ public sealed class DashboardRepositoryTests : IAsyncLifetime
         seedResult.IsError.Should().BeFalse(seedResult.IsError ? seedResult.FirstError.Description : "SeedCard INSERT failed.");
     }
 
-    private void SeedTransactions(AppDbContext db, int accountId, int count)
+    private void SeedTransactions(AppDatabaseContext databaseContext, int accountId, int count)
     {
-        for (int i = 0; i < count; i++)
+        for (var index = 0; index < count; index++)
         {
-            int localI = i;
-            db.Query<int>(conn =>
+            int localIndex = index;
+            databaseContext.Query<int>(connection =>
             {
-                conn.Execute(
+                connection.Execute(
                     """
                     INSERT INTO "Transaction" (AccountId, TransactionRef, Type, Direction, Amount, Currency, BalanceAfter, Status)
                     VALUES (@AccountId, @Ref, 'Transfer', 'In', 100.00, 'RON', 5100.00, 'Completed')
                     """,
-                    new { AccountId = accountId, Ref = $"REF-{localI}-{Guid.NewGuid():N}" });
+                    new { AccountId = accountId, Ref = $"REF-{localIndex}-{Guid.NewGuid():N}" });
                 return 0;
             });
         }
     }
 
-    private void SeedNotifications(AppDbContext db, int userId, int count)
+    private void SeedNotifications(AppDatabaseContext databaseContext, int userId, int count)
     {
-        for (int i = 0; i < count; i++)
+        for (var index = 0; index < count; index++)
         {
-            db.Query<int>(conn =>
+            databaseContext.Query<int>(connection =>
             {
-                conn.Execute(
+                connection.Execute(
                     """
                     INSERT INTO Notification (UserId, Title, Message, Type, Channel, IsRead)
                     VALUES (@UserId, 'Info', 'You have a new notification.', 'Alert', 'Push', 0)
@@ -125,46 +127,46 @@ public sealed class DashboardRepositoryTests : IAsyncLifetime
         }
     }
 
-    private DashboardRepository MakeDashboardRepo(AppDbContext db)
+    private DashboardRepository MakeDashboardRepository(AppDatabaseContext databaseContext)
     {
         return new DashboardRepository(
-            new AccountDataAccess(db),
-            new CardDataAccess(db),
-            new TransactionDataAccess(db),
-            new NotificationDataAccess(db));
+            new AccountDataAccess(databaseContext),
+            new CardDataAccess(databaseContext),
+            new TransactionDataAccess(databaseContext),
+            new NotificationDataAccess(databaseContext));
     }
 
     [Fact]
     public void GetAccountsByUser_WhenUserHasAccounts_ReturnsAllAccounts()
     {
         // Arrange
-        using var db = MakeDb();
-        var user = SeedUser(db);
-        SeedAccount(db, user.Id);
-        var repo = MakeDashboardRepo(db);
+        using AppDatabaseContext databaseContext = this.MakeDatabaseContext();
+        User user = this.SeedUser(databaseContext);
+        this.SeedAccount(databaseContext, user.Id);
+        var repository = this.MakeDashboardRepository(databaseContext);
 
         // Act
-        var result = repo.GetAccountsByUser(user.Id);
+        var result = repository.GetAccountsByUser(user.Id);
 
         // Assert
         result.IsError.Should().BeFalse(result.IsError ? result.FirstError.Description : string.Empty);
         result.Value.Should().ContainSingle();
-        result.Value[0].UserId.Should().Be(user.Id);
-        result.Value[0].Currency.Should().Be("RON");
+        result.Value.First().UserId.Should().Be(user.Id);
+        result.Value.First().Currency.Should().Be("RON");
     }
 
     [Fact]
     public void GetRecentTransactions_WhenInsertedMoreThanLimit_ReturnsAtMostLimitItems()
     {
         // Arrange
-        using var db = MakeDb();
-        var user = SeedUser(db);
-        var account = SeedAccount(db, user.Id);
-        SeedTransactions(db, account.Id, 5);
-        var repo = MakeDashboardRepo(db);
+        using var databaseContext = MakeDatabaseContext();
+        var user = SeedUser(databaseContext);
+        var account = SeedAccount(databaseContext, user.Id);
+        SeedTransactions(databaseContext, account.Id, 5);
+        var repository = MakeDashboardRepository(databaseContext);
 
         // Act
-        var result = repo.GetRecentTransactions(account.Id, limit: 3);
+        var result = repository.GetRecentTransactions(account.Id, limit: 3);
 
         // Assert
         result.IsError.Should().BeFalse(result.IsError ? result.FirstError.Description : string.Empty);
@@ -175,13 +177,13 @@ public sealed class DashboardRepositoryTests : IAsyncLifetime
     public void GetUnreadNotificationCount_WhenNotificationsExist_ReturnsCorrectCount()
     {
         // Arrange
-        using var db = MakeDb();
-        var user = SeedUser(db);
-        SeedNotifications(db, user.Id, 4);
-        var repo = MakeDashboardRepo(db);
+        using var databaseContext = MakeDatabaseContext();
+        var user = SeedUser(databaseContext);
+        SeedNotifications(databaseContext, user.Id, 4);
+        var repository = MakeDashboardRepository(databaseContext);
 
         // Act
-        var result = repo.GetUnreadNotificationCount(user.Id);
+        var result = repository.GetUnreadNotificationCount(user.Id);
 
         // Assert
         result.IsError.Should().BeFalse(result.IsError ? result.FirstError.Description : string.Empty);
@@ -192,19 +194,19 @@ public sealed class DashboardRepositoryTests : IAsyncLifetime
     public void GetCardsByUser_WhenUserHasCards_ReturnsCardsForThatUser()
     {
         // Arrange
-        using var db = MakeDb();
-        var user = SeedUser(db);
-        var account = SeedAccount(db, user.Id);
-        SeedCard(db, account.Id, user.Id);
-        var repo = MakeDashboardRepo(db);
+        using AppDatabaseContext databaseContext = this.MakeDatabaseContext();
+        User user = this.SeedUser(databaseContext);
+        Account account = this.SeedAccount(databaseContext, user.Id);
+        this.SeedCard(databaseContext, account.Id, user.Id);
+        DashboardRepository repository = this.MakeDashboardRepository(databaseContext);
 
         // Act
-        var result = repo.GetCardsByUser(user.Id);
+        ErrorOr<List<Card>> result = repository.GetCardsByUser(user.Id);
 
         // Assert
         result.IsError.Should().BeFalse(result.IsError ? result.FirstError.Description : string.Empty);
         result.Value.Should().ContainSingle();
-        result.Value[0].UserId.Should().Be(user.Id);
-        result.Value[0].CardType.Should().Be(CardType.Debit);
+        result.Value.First().UserId.Should().Be(user.Id);
+        result.Value.First().CardType.Should().Be(CardType.Debit);
     }
 }

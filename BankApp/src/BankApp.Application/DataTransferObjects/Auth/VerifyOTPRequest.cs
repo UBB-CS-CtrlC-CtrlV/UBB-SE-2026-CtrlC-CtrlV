@@ -1,4 +1,4 @@
-namespace BankApp.Application.DTOs.Auth;
+namespace BankApp.Application.DataTransferObjects.Auth;
 
 /// <summary>
 /// Represents a request to verify a one-time password during two-factor authentication.

@@ -2,8 +2,8 @@
 // Copyright (c) CtrlC CtrlV. All rights reserved.
 // </copyright>
 
-using BankApp.Application.DTOs;
-using BankApp.Application.DTOs.Auth;
+using BankApp.Application.DataTransferObjects;
+using BankApp.Application.DataTransferObjects.Auth;
 using BankApp.Application.Services.Login;
 using BankApp.Application.Services.PasswordRecovery;
 using BankApp.Application.Services.Registration;
@@ -109,7 +109,7 @@ public class AuthController : ApiControllerBase
     {
         if (string.IsNullOrWhiteSpace(request.Email))
         {
-            return this.BadRequest(new ApiErrorResponse { Error = "Email is required." });
+            return this.BadRequest(new ApplicationErrorResponse { Error = "Email is required." });
         }
 
         // Always return a generic response regardless of whether the email exists.
@@ -131,12 +131,12 @@ public class AuthController : ApiControllerBase
     {
         if (string.IsNullOrWhiteSpace(request.Token) || string.IsNullOrWhiteSpace(request.NewPassword))
         {
-            return this.BadRequest(new ApiErrorResponse { Error = "Token and new password are required." });
+            return this.BadRequest(new ApplicationErrorResponse { Error = "Token and new password are required." });
         }
 
         if (!ValidationUtilities.IsStrongPassword(request.NewPassword))
         {
-            return this.BadRequest(new ApiErrorResponse
+            return this.BadRequest(new ApplicationErrorResponse
             {
                 Error = "Password must be at least 8 characters with uppercase, lowercase, a digit, and a special character.",
                 ErrorCode = "weak_password",
@@ -159,7 +159,7 @@ public class AuthController : ApiControllerBase
     {
         if (string.IsNullOrWhiteSpace(authorization) || !authorization.StartsWith(BearerPrefix, StringComparison.Ordinal))
         {
-            return this.BadRequest(new ApiErrorResponse { Error = "No token provided." });
+            return this.BadRequest(new ApplicationErrorResponse { Error = "No token provided." });
         }
 
         string token = authorization.Substring(BearerPrefix.Length);
@@ -196,7 +196,7 @@ public class AuthController : ApiControllerBase
     {
         if (string.IsNullOrWhiteSpace(request.Provider) || string.IsNullOrWhiteSpace(request.ProviderToken))
         {
-            return this.BadRequest(new ApiErrorResponse { Error = "Provider and ProviderToken are required." });
+            return this.BadRequest(new ApplicationErrorResponse { Error = "Provider and ProviderToken are required." });
         }
 
         ErrorOr<LoginSuccess> result = await this.loginService.OAuthLoginAsync(request, this.GetSessionMetadata());
@@ -212,11 +212,11 @@ public class AuthController : ApiControllerBase
     /// or 400 Bad Request with a specific error code if the token is expired, already used, or invalid.
     /// </returns>
     [HttpPost("verify-reset-token")]
-    public IActionResult VerifyResetToken([FromBody] VerifyTokenDto request)
+    public IActionResult VerifyResetToken([FromBody] VerifyTokenDataTransferObject request)
     {
         if (string.IsNullOrWhiteSpace(request.Token))
         {
-            return this.BadRequest(new ApiErrorResponse { Error = "Token is required." });
+            return this.BadRequest(new ApplicationErrorResponse { Error = "Token is required." });
         }
 
         return this.ToActionResult(this.passwordRecoveryService.VerifyResetToken(request.Token));
@@ -226,7 +226,7 @@ public class AuthController : ApiControllerBase
     {
         FullLogin full => this.Ok(new LoginSuccessResponse { UserId = full.UserId, Token = full.Token }),
         RequiresTwoFactor tfa => this.Ok(new LoginSuccessResponse { UserId = tfa.UserId, Requires2FA = true }),
-        _ => this.StatusCode(StatusCodes.Status500InternalServerError, new ApiErrorResponse { Error = "Unexpected login result type." }),
+        _ => this.StatusCode(StatusCodes.Status500InternalServerError, new ApplicationErrorResponse { Error = "Unexpected login result type." }),
     };
 
     private SessionMetadata GetSessionMetadata()
@@ -246,7 +246,7 @@ public class AuthController : ApiControllerBase
         string forwardedFor = context.Request.Headers["X-Forwarded-For"].ToString();
         if (!string.IsNullOrWhiteSpace(forwardedFor))
         {
-            return forwardedFor.Split(',')[0].Trim();
+            return forwardedFor.Split(',').First().Trim();
         }
 
         return context.Connection.RemoteIpAddress?.ToString();

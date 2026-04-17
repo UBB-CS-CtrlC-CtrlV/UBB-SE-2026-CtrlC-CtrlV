@@ -2,7 +2,7 @@
 // Copyright (c) CtrlC CtrlV. All rights reserved.
 // </copyright>
 
-using BankApp.Application.DTOs;
+using BankApp.Application.DataTransferObjects;
 using ErrorOr;
 using Microsoft.AspNetCore.Mvc;
 
@@ -51,13 +51,13 @@ public abstract class ApiControllerBase : ControllerBase
 
     /// <summary>
     /// Maps an <see cref="Error"/> to the appropriate HTTP status code and
-    /// a standardised <see cref="ApiErrorResponse"/> body.
+    /// a standardised <see cref="ApplicationErrorResponse"/> body.
     /// </summary>
     /// <param name="error">The error to map.</param>
     /// <returns>An <see cref="IActionResult"/> with the matching HTTP status code.</returns>
     protected IActionResult MapError(Error error)
     {
-        ApiErrorResponse body = new ApiErrorResponse
+        ApplicationErrorResponse body = new ApplicationErrorResponse
         {
             Error = error.Description,
             ErrorCode = error.Code,

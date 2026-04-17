@@ -38,7 +38,7 @@ public static class ServiceCollectionExtensions
         services.AddSingleton<IApiClient, ApiClient>();
 
         // Navigation state must be the same
-        // object throughout the app.
+        // object throughout the application.
         // Multiple instances would lose the frame reference.
         services.AddSingleton<IAppNavigationService, AppNavigationService>();
         services.AddSingleton<IRegistrationContext, RegistrationContext>();

@@ -3,9 +3,10 @@
 // </copyright>
 
 using System;
+using System.Linq;
 using System.Threading.Tasks;
 using BankApp.Desktop.Utilities;
-using BankApp.Application.DTOs.Auth;
+using BankApp.Application.DataTransferObjects.Auth;
 using BankApp.Desktop.Enums;
 using Duende.IdentityModel.OidcClient;
 using ErrorOr;
@@ -78,13 +79,13 @@ public class LoginViewModel
     {
         this.State.SetValue(LoginState.Loading);
 
-        BankApp.Application.DTOs.Auth.LoginRequest request = new BankApp.Application.DTOs.Auth.LoginRequest
+        BankApp.Application.DataTransferObjects.Auth.LoginRequest request = new BankApp.Application.DataTransferObjects.Auth.LoginRequest
         {
             Email = email.Trim(),
             Password = password,
         };
 
-        ErrorOr<LoginSuccessResponse> result = await this.apiClient.PostAsync<BankApp.Application.DTOs.Auth.LoginRequest, LoginSuccessResponse>(
+        ErrorOr<LoginSuccessResponse> result = await this.apiClient.PostAsync<BankApp.Application.DataTransferObjects.Auth.LoginRequest, LoginSuccessResponse>(
             ApiEndpoints.Login,
             request);
 
@@ -104,11 +105,11 @@ public class LoginViewModel
             },
             errors =>
             {
-                if (errors[0].Type == ErrorType.Forbidden)
+                if (errors.First().Type == ErrorType.Forbidden)
                 {
                     this.State.SetValue(LoginState.AccountLocked);
                 }
-                else if (errors[0].Type == ErrorType.Unauthorized)
+                else if (errors.First().Type == ErrorType.Unauthorized)
                 {
                     this.State.SetValue(LoginState.InvalidCredentials);
                 }
@@ -197,9 +198,9 @@ public class LoginViewModel
                     this.State.SetValue(LoginState.Error);
                 });
         }
-        catch (Exception ex)
+        catch (Exception exception)
         {
-            this.logger.LogError(ex, "OAuthLogin OIDC flow failed.");
+            this.logger.LogError(exception, "OAuthLogin OIDC flow failed.");
             this.State.SetValue(LoginState.Error);
         }
     }

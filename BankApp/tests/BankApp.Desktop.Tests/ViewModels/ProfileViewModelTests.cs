@@ -2,7 +2,7 @@
 // Copyright (c) CtrlC CtrlV. All rights reserved.
 // </copyright>
 
-using BankApp.Application.DTOs.Profile;
+using BankApp.Application.DataTransferObjects.Profile;
 using BankApp.Desktop.Enums;
 using BankApp.Desktop.Utilities;
 using BankApp.Desktop.ViewModels;
@@ -244,11 +244,11 @@ public class ProfileViewModelTests
         // Arrange
         const int preferenceId = 1;
         var viewModel = new NotificationsViewModel(this.apiClient.Object, NullLogger<NotificationsViewModel>.Instance);
-        var notificationPreference = new NotificationPreferenceDto { Id = preferenceId, EmailEnabled = false };
+        var notificationPreference = new NotificationPreferenceDataTransferObject { Id = preferenceId, EmailEnabled = false };
         viewModel.NotificationPreferences.Add(notificationPreference);
 
         this.apiClient
-            .Setup(client => client.PutAsync(It.IsAny<string>(), It.IsAny<List<NotificationPreferenceDto>>()))
+            .Setup(client => client.PutAsync(It.IsAny<string>(), It.IsAny<List<NotificationPreferenceDataTransferObject>>()))
             .ReturnsAsync(Result.Success);
 
         // Act
@@ -266,11 +266,11 @@ public class ProfileViewModelTests
         // Arrange
         const int preferenceId = 1;
         var viewModel = new NotificationsViewModel(this.apiClient.Object, NullLogger<NotificationsViewModel>.Instance);
-        var notificationPreference = new NotificationPreferenceDto { Id = preferenceId, EmailEnabled = true };
+        var notificationPreference = new NotificationPreferenceDataTransferObject { Id = preferenceId, EmailEnabled = true };
         viewModel.NotificationPreferences.Add(notificationPreference);
 
         this.apiClient
-            .Setup(client => client.PutAsync(It.IsAny<string>(), It.IsAny<List<NotificationPreferenceDto>>()))
+            .Setup(client => client.PutAsync(It.IsAny<string>(), It.IsAny<List<NotificationPreferenceDataTransferObject>>()))
             .ReturnsAsync(Error.Failure(description: "server error"));
 
         // Act
@@ -288,7 +288,7 @@ public class ProfileViewModelTests
         var viewModel = new NotificationsViewModel(this.apiClient.Object, NullLogger<NotificationsViewModel>.Instance);
 
         // Act
-        bool result = await viewModel.UpdateNotificationPreferences(new List<NotificationPreferenceDto>());
+        bool result = await viewModel.UpdateNotificationPreferences(new List<NotificationPreferenceDataTransferObject>());
 
         // Assert
         result.Should().BeFalse();
@@ -301,7 +301,7 @@ public class ProfileViewModelTests
         const string provider = "Google";
         const string providerEmail = "user@gmail.com";
         var viewModel = new OAuthViewModel(this.apiClient.Object, NullLogger<OAuthViewModel>.Instance);
-        viewModel.OAuthLinks.Add(new OAuthLinkDto { Provider = provider, ProviderEmail = providerEmail });
+        viewModel.OAuthLinks.Add(new OAuthLinkDataTransferObject { Provider = provider, ProviderEmail = providerEmail });
         this.apiClient
             .Setup(client => client.DeleteAsync($"{ApiEndpoints.UnlinkOAuth}/{provider}"))
             .ReturnsAsync(Result.Success);
@@ -346,7 +346,7 @@ public class ProfileViewModelTests
         // Arrange
         const string provider = "Google";
         var viewModel = new OAuthViewModel(this.apiClient.Object, NullLogger<OAuthViewModel>.Instance);
-        viewModel.OAuthLinks.Add(new OAuthLinkDto { Provider = provider });
+        viewModel.OAuthLinks.Add(new OAuthLinkDataTransferObject { Provider = provider });
 
         // Act
         bool result = await viewModel.LinkOAuth(provider);

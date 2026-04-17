@@ -3,9 +3,10 @@
 // </copyright>
 
 using System;
+using System.Linq;
 using System.Threading.Tasks;
 using BankApp.Desktop.Utilities;
-using BankApp.Application.DTOs.Profile;
+using BankApp.Application.DataTransferObjects.Profile;
 using BankApp.Desktop.Enums;
 using BankApp.Domain.Enums;
 using ErrorOr;
@@ -88,7 +89,7 @@ public class SecurityViewModel
             {
                 this.logger.LogError("ChangePassword failed: {Errors}", errors);
                 this.State.SetValue(ProfileState.Error);
-                string message = errors[0].Code == "incorrect_password"
+                string message = errors.First().Code == "incorrect_password"
                     ? UserMessages.Security.IncorrectPassword
                     : UserMessages.Security.UnexpectedError;
                 return (false, message);

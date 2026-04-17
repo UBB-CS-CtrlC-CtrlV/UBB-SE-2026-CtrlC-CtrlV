@@ -2,7 +2,7 @@
 // Copyright (c) CtrlC CtrlV. All rights reserved.
 // </copyright>
 
-using BankApp.Application.DTOs.Profile;
+using BankApp.Application.DataTransferObjects.Profile;
 using BankApp.Domain.Entities;
 using BankApp.Domain.Enums;
 using BankApp.Application.Repositories.Interfaces;
@@ -219,7 +219,7 @@ public class ProfileService : IProfileService
     }
 
     /// <inheritdoc />
-    public ErrorOr<List<OAuthLinkDto>> GetOAuthLinks(int userId)
+    public ErrorOr<List<OAuthLinkDataTransferObject>> GetOAuthLinks(int userId)
     {
         ErrorOr<User> userResult = userRepository.FindById(userId);
         if (userResult.IsError)
@@ -236,7 +236,7 @@ public class ProfileService : IProfileService
         }
 
         return linksResult.Value
-            .Select(oauthLink => new OAuthLinkDto
+            .Select(oauthLink => new OAuthLinkDataTransferObject
             {
                 Id = oauthLink.Id,
                 Provider = oauthLink.Provider,
@@ -324,7 +324,7 @@ public class ProfileService : IProfileService
     }
 
     /// <inheritdoc />
-    public ErrorOr<List<NotificationPreferenceDto>> GetNotificationPreferences(int userId)
+    public ErrorOr<List<NotificationPreferenceDataTransferObject>> GetNotificationPreferences(int userId)
     {
         ErrorOr<User> userResult = userRepository.FindById(userId);
         if (userResult.IsError)
@@ -341,7 +341,7 @@ public class ProfileService : IProfileService
         }
 
         return prefsResult.Value
-            .Select(preference => new NotificationPreferenceDto
+            .Select(preference => new NotificationPreferenceDataTransferObject
             {
                 Id = preference.Id,
                 UserId = preference.UserId,
@@ -355,7 +355,7 @@ public class ProfileService : IProfileService
     }
 
     /// <inheritdoc />
-    public ErrorOr<Success> UpdateNotificationPreferences(int userId, List<NotificationPreferenceDto> preferences)
+    public ErrorOr<Success> UpdateNotificationPreferences(int userId, List<NotificationPreferenceDataTransferObject> preferences)
     {
         ErrorOr<User> userResult = userRepository.FindById(userId);
         if (userResult.IsError)
@@ -400,7 +400,7 @@ public class ProfileService : IProfileService
     }
 
     /// <inheritdoc />
-    public ErrorOr<List<SessionDto>> GetActiveSessions(int userId)
+    public ErrorOr<List<SessionDataTransferObject>> GetActiveSessions(int userId)
     {
         ErrorOr<User> userResult = userRepository.FindById(userId);
         if (userResult.IsError)
@@ -417,7 +417,7 @@ public class ProfileService : IProfileService
         }
 
         return sessionsResult.Value
-            .Select(session => new SessionDto
+            .Select(session => new SessionDataTransferObject
             {
                 Id = session.Id,
                 DeviceInfo = session.DeviceInfo,

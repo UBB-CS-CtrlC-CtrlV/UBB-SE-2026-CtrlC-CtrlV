@@ -2,8 +2,8 @@
 // Copyright (c) CtrlC CtrlV. All rights reserved.
 // </copyright>
 
-using BankApp.Application.DTOs;
-using BankApp.Application.DTOs.Profile;
+using BankApp.Application.DataTransferObjects;
+using BankApp.Application.DataTransferObjects.Profile;
 using BankApp.Domain.Enums;
 using BankApp.Application.Services.Profile;
 using ErrorOr;
@@ -82,7 +82,7 @@ public class ProfileController : ApiControllerBase
     /// Retrieves all OAuth provider links associated with the currently authenticated user.
     /// </summary>
     /// <returns>
-    /// 200 OK with a list of <see cref="OAuthLinkDto"/> on success (may be empty),
+    /// 200 OK with a list of <see cref="OAuthLinkDataTransferObject"/> on success (may be empty),
     /// or 404 Not Found if the user does not exist.
     /// </returns>
     [HttpGet("oauth-links")]
@@ -120,29 +120,29 @@ public class ProfileController : ApiControllerBase
     /// Retrieves the notification preferences of the currently authenticated user.
     /// </summary>
     /// <returns>
-    /// 200 OK with a list of <see cref="NotificationPreferenceDto"/> on success (may be empty),
+    /// 200 OK with a list of <see cref="NotificationPreferenceDataTransferObject"/> on success (may be empty),
     /// or 404 Not Found if the user does not exist.
     /// </returns>
     [HttpGet("notifications/preferences")]
     public IActionResult GetNotificationPreferences()
     {
         int userId = this.GetAuthenticatedUserId();
-        return this.ToActionResult(this.profileService.GetNotificationPreferences(userId), prefs => this.Ok(prefs));
+        return this.ToActionResult(this.profileService.GetNotificationPreferences(userId), preferences => this.Ok(preferences));
     }
 
     /// <summary>
     /// Updates the notification preferences of the currently authenticated user.
     /// </summary>
-    /// <param name="prefs">The list of updated notification preferences.</param>
+    /// <param name="preferences">The list of updated notification preferences.</param>
     /// <returns>
     /// 204 No Content on success,
     /// or 400/404 if the update fails.
     /// </returns>
     [HttpPut("notifications/preferences")]
-    public IActionResult UpdateNotificationPreferences([FromBody] List<NotificationPreferenceDto> prefs)
+    public IActionResult UpdateNotificationPreferences([FromBody] List<NotificationPreferenceDataTransferObject> preferences)
     {
         int userId = this.GetAuthenticatedUserId();
-        return this.ToActionResult(this.profileService.UpdateNotificationPreferences(userId, prefs));
+        return this.ToActionResult(this.profileService.UpdateNotificationPreferences(userId, preferences));
     }
 
     /// <summary>
@@ -172,7 +172,7 @@ public class ProfileController : ApiControllerBase
     /// or 400/404 if enabling 2FA fails.
     /// </returns>
     [HttpPut("2fa/enable")]
-    public IActionResult Enable2FA([FromBody] Enable2FARequest request)
+    public IActionResult Enable2FA([FromBody] Enable2FactorAuthentificationRequest request)
     {
         int userId = this.GetAuthenticatedUserId();
         return this.ToActionResult(this.profileService.Enable2FA(userId, request.Method));

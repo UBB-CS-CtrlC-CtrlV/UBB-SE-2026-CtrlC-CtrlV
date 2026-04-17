@@ -38,7 +38,7 @@ public class DashboardRepository : IDashboardRepository
     public ErrorOr<List<Card>> GetCardsByUser(int userId) => cardDataAccess.FindByUserId(userId);
 
     /// <inheritdoc />
-    public ErrorOr<List<Transaction>> GetRecentTransactions(int accountId, int limit = 10) =>
+    public ErrorOr<List<Transaction>> GetRecentTransactions(int accountId, int limit = IDashboardRepository.DefaultRecentTransactionLimit) =>
         transactionDataAccess.FindRecentByAccountId(accountId, limit);
 
     /// <inheritdoc />

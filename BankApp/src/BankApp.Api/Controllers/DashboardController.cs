@@ -2,7 +2,7 @@
 // Copyright (c) CtrlC CtrlV. All rights reserved.
 // </copyright>
 
-using BankApp.Application.DTOs.Dashboard;
+using BankApp.Application.DataTransferObjects.Dashboard;
 using BankApp.Application.Services.Dashboard;
 using Microsoft.AspNetCore.Mvc;
 

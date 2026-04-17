@@ -3,8 +3,9 @@
 // </copyright>
 
 using System;
+using System.Linq;
 using System.Threading.Tasks;
-using BankApp.Application.DTOs.Auth;
+using BankApp.Application.DataTransferObjects.Auth;
 using BankApp.Desktop.Enums;
 using ErrorOr;
 
@@ -17,6 +18,7 @@ namespace BankApp.Desktop.Utilities;
 public class PasswordRecoveryManager : IPasswordRecoveryManager
 {
     private const int ResendCooldownSeconds = 60;
+    private const int NoSecondsRemaining = 0;
 
     private readonly IApiClient apiClient;
     private readonly ISystemClock clock;
@@ -56,12 +58,12 @@ public class PasswordRecoveryManager : IPasswordRecoveryManager
         {
             if (this.lastCodeRequestedAt is null)
             {
-                return 0;
+                return NoSecondsRemaining;
             }
 
             var elapsed = (this.clock.UtcNow - this.lastCodeRequestedAt.Value).TotalSeconds;
             var remaining = ResendCooldownSeconds - elapsed;
-            return remaining > 0 ? (int)Math.Ceiling(remaining) : 0;
+            return remaining > default(double) ? (int)Math.Ceiling(remaining) : NoSecondsRemaining;
         }
     }
 
@@ -109,7 +111,7 @@ public class PasswordRecoveryManager : IPasswordRecoveryManager
 
         return result.Match(
             _ => ForgotPasswordState.TokenValid,
-            errors => this.MapError(errors[0]));
+            errors => this.MapError(errors.First()));
     }
 
     /// <inheritdoc/>
@@ -131,7 +133,7 @@ public class PasswordRecoveryManager : IPasswordRecoveryManager
 
         return result.Match(
             _ => ForgotPasswordState.PasswordResetSuccess,
-            errors => this.MapError(errors[0]));
+            errors => this.MapError(errors.First()));
     }
 
     /// <inheritdoc/>

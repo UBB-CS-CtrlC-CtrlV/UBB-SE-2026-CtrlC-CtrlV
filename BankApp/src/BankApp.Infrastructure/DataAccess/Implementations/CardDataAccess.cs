@@ -19,22 +19,22 @@ public class CardDataAccess : ICardDataAccess
         FROM Card
         """;
 
-    private readonly AppDbContext db;
+    private readonly AppDatabaseContext databaseContext;
 
     /// <summary>
     /// Initializes a new instance of the <see cref="CardDataAccess"/> class.
     /// </summary>
-    /// <param name="db">The database context used for executing queries.</param>
-    public CardDataAccess(AppDbContext db)
+    /// <param name="databaseContext">The database context used for executing queries.</param>
+    public CardDataAccess(AppDatabaseContext databaseContext)
     {
-        this.db = db;
+        this.databaseContext = databaseContext;
     }
 
     /// <inheritdoc />
     public ErrorOr<Card> FindById(int id)
     {
         const string query = $"{SelectAllColumns} WHERE Id = @Id";
-        return this.db.Query(conn => conn.QueryFirstOrDefault<Card>(query, new { Id = id }))
+        return this.databaseContext.Query(connection => connection.QueryFirstOrDefault<Card>(query, new { Id = id }))
             .Then(card => card ?? (ErrorOr<Card>)Error.NotFound(description: "Card not found."));
     }
 
@@ -42,6 +42,6 @@ public class CardDataAccess : ICardDataAccess
     public ErrorOr<List<Card>> FindByUserId(int userId)
     {
         const string query = $"{SelectAllColumns} WHERE UserId = @UserId";
-        return this.db.Query(conn => conn.Query<Card>(query, new { UserId = userId }).AsList());
+        return this.databaseContext.Query(connection => connection.Query<Card>(query, new { UserId = userId }).AsList());
     }
 }

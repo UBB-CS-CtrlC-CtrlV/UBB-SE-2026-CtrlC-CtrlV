@@ -5,19 +5,19 @@ using Microsoft.Data.SqlClient;
 namespace BankApp.Infrastructure.DataAccess;
 
 /// <summary>
-/// Provides a concrete implementation of <see cref="IDbContext"/> using SQL Server via <see cref="SqlConnection"/>.
+/// Provides a concrete implementation of <see cref="IDatabaseContext"/> using SQL Server via <see cref="SqlConnection"/>.
 /// </summary>
-public class AppDbContext : IDbContext
+public class AppDatabaseContext : IDatabaseContext
 {
     private readonly string connectionString;
     private SqlConnection? connection;
     private SqlTransaction? currentTransaction;
 
     /// <summary>
-    /// Initializes a new instance of the <see cref="AppDbContext"/> class.
+    /// Initializes a new instance of the <see cref="AppDatabaseContext"/> class.
     /// </summary>
     /// <param name="connectionString">The SQL Server connection string.</param>
-    public AppDbContext(string connectionString)
+    public AppDatabaseContext(string connectionString)
     {
         this.connectionString = connectionString;
     }
@@ -36,9 +36,9 @@ public class AppDbContext : IDbContext
 
             return result;
         }
-        catch (Exception ex)
+        catch (Exception exception)
         {
-            return Error.Failure(description: ex.Message);
+            return Error.Failure(description: exception.Message);
         }
     }
 
@@ -50,9 +50,9 @@ public class AppDbContext : IDbContext
         {
             currentTransaction = activeConnection.BeginTransaction();
         }
-        catch (Exception ex) when (ex is SqlException or InvalidOperationException)
+        catch (Exception exception) when (exception is SqlException or InvalidOperationException)
         {
-            return Error.Failure(description: $"Failed to begin transaction: {ex.Message}");
+            return Error.Failure(description: $"Failed to begin transaction: {exception.Message}");
         }
 
         return currentTransaction;

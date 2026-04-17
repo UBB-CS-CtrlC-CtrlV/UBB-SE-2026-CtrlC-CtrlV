@@ -3,7 +3,7 @@
 // </copyright>
 
 using BankApp.Api.Controllers;
-using BankApp.Application.DTOs.Dashboard;
+using BankApp.Application.DataTransferObjects.Dashboard;
 using BankApp.Application.Services.Dashboard;
 using ErrorOr;
 using FluentAssertions;

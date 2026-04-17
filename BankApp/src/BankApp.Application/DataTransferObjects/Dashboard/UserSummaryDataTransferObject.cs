@@ -1,13 +1,13 @@
-// <copyright file="UserSummaryDto.cs" company="CtrlC CtrlV">
+// <copyright file="UserSummaryDataTransferObject.cs" company="CtrlC CtrlV">
 // Copyright (c) CtrlC CtrlV. All rights reserved.
 // </copyright>
 
-namespace BankApp.Application.DTOs.Dashboard;
+namespace BankApp.Application.DataTransferObjects.Dashboard;
 
 /// <summary>
 /// Data transfer object containing the user information shown on the dashboard.
 /// </summary>
-public class UserSummaryDto
+public class UserSummaryDataTransferObject
 {
     /// <summary>
     /// Gets or sets the full name of the user.

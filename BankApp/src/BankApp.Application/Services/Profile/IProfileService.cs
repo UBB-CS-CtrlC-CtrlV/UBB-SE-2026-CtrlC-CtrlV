@@ -2,7 +2,7 @@
 // Copyright (c) CtrlC CtrlV. All rights reserved.
 // </copyright>
 
-using BankApp.Application.DTOs.Profile;
+using BankApp.Application.DataTransferObjects.Profile;
 using BankApp.Domain.Enums;
 using ErrorOr;
 
@@ -77,11 +77,11 @@ public interface IProfileService
     /// </summary>
     /// <param name="userId">The identifier of the user.</param>
     /// <returns>
-    /// The list of <see cref="OAuthLinkDto"/> on success (may be empty),
+    /// The list of <see cref="OAuthLinkDataTransferObject"/> on success (may be empty),
     /// a not-found error if the user does not exist,
     /// or a failure error if the repository call fails.
     /// </returns>
-    ErrorOr<List<OAuthLinkDto>> GetOAuthLinks(int userId);
+    ErrorOr<List<OAuthLinkDataTransferObject>> GetOAuthLinks(int userId);
 
     /// <summary>
     /// Links an OAuth provider account to the specified user. Not yet implemented.
@@ -104,11 +104,11 @@ public interface IProfileService
     /// </summary>
     /// <param name="userId">The identifier of the user.</param>
     /// <returns>
-    /// The list of <see cref="NotificationPreferenceDto"/> on success (may be empty),
+    /// The list of <see cref="NotificationPreferenceDataTransferObject"/> on success (may be empty),
     /// a not-found error if the user does not exist,
     /// or a failure error if the repository call fails.
     /// </returns>
-    ErrorOr<List<NotificationPreferenceDto>> GetNotificationPreferences(int userId);
+    ErrorOr<List<NotificationPreferenceDataTransferObject>> GetNotificationPreferences(int userId);
 
     /// <summary>
     /// Updates the notification preferences of the specified user.
@@ -120,7 +120,7 @@ public interface IProfileService
     /// a not-found error if the user does not exist,
     /// or a failure error if the database update fails.
     /// </returns>
-    ErrorOr<Success> UpdateNotificationPreferences(int userId, List<NotificationPreferenceDto> preferences);
+    ErrorOr<Success> UpdateNotificationPreferences(int userId, List<NotificationPreferenceDataTransferObject> preferences);
 
     /// <summary>
     /// Verifies whether the supplied plain-text password matches the user's stored hash.
@@ -140,11 +140,11 @@ public interface IProfileService
     /// </summary>
     /// <param name="userId">The identifier of the user.</param>
     /// <returns>
-    /// The list of active <see cref="SessionDto"/> on success,
+    /// The list of active <see cref="SessionDataTransferObject"/> on success,
     /// a not-found error if the user does not exist,
     /// or a failure error if the repository call fails.
     /// </returns>
-    ErrorOr<List<SessionDto>> GetActiveSessions(int userId);
+    ErrorOr<List<SessionDataTransferObject>> GetActiveSessions(int userId);
 
     /// <summary>
     /// Revokes a specific session for the specified user.

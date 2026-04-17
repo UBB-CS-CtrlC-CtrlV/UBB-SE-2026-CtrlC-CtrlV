@@ -46,7 +46,8 @@ public class BankAppWebFactory : WebApplicationFactory<Program>
     /// <summary>
     /// Gets the mock password recovery service.
     /// </summary>
-    public Mock<IPasswordRecoveryService> PasswordRecoveryServiceMock { get; } = MockFactory.CreatePasswordRecoveryService();
+    public Mock<IPasswordRecoveryService> PasswordRecoveryServiceMock { get; } =
+        MockFactory.CreatePasswordRecoveryService();
 
     /// <summary>
     /// Gets the mock dashboard service.
@@ -67,27 +68,28 @@ public class BankAppWebFactory : WebApplicationFactory<Program>
     {
         builder.UseEnvironment("Development");
 
-        builder.ConfigureAppConfiguration((context, config) =>
+        builder.ConfigureAppConfiguration((context, configurationBuilder) =>
         {
-            // Provide the config values that AddInfrastructure requires so it
+            // Provide the configuration values that AddInfrastructure requires so it
             // does not throw during startup. The real services are replaced below.
-            config.AddInMemoryCollection(new Dictionary<string, string?>
-            {
-                ["ConnectionStrings:DefaultConnection"] = "Server=fake;Database=fake;",
-                ["Jwt:Secret"] = "integration-test-secret-that-is-long-enough-for-hmac",
-            });
+            configurationBuilder.AddInMemoryCollection(
+                new Dictionary<string, string?>
+                {
+                    ["ConnectionStrings:DefaultConnection"] = "Server=fake;Database=fake;",
+                    ["Jwt:Secret"] = "integration-test-secret-that-is-long-enough-for-hmac",
+                });
         });
 
         builder.ConfigureServices(services =>
         {
             // Remove real infrastructure registrations and replace with substitutes.
-            ReplaceService<IJwtService>(services, this.JwtServiceMock.Object);
-            ReplaceService<IAuthRepository>(services, this.AuthRepositoryMock.Object);
-            ReplaceService<ILoginService>(services, this.LoginServiceMock.Object);
-            ReplaceService<IRegistrationService>(services, this.RegistrationServiceMock.Object);
-            ReplaceService<IPasswordRecoveryService>(services, this.PasswordRecoveryServiceMock.Object);
-            ReplaceService<IDashboardService>(services, this.DashboardServiceMock.Object);
-            ReplaceService<IProfileService>(services, this.ProfileServiceMock.Object);
+            ReplaceService(services, this.JwtServiceMock.Object);
+            ReplaceService(services, this.AuthRepositoryMock.Object);
+            ReplaceService(services, this.LoginServiceMock.Object);
+            ReplaceService(services, this.RegistrationServiceMock.Object);
+            ReplaceService(services, this.PasswordRecoveryServiceMock.Object);
+            ReplaceService(services, this.DashboardServiceMock.Object);
+            ReplaceService(services, this.ProfileServiceMock.Object);
         });
     }
 

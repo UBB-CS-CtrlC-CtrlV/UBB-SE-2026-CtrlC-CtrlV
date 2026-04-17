@@ -19,6 +19,9 @@ namespace BankApp.Desktop.Views;
 /// </summary>
 public sealed partial class NavView
 {
+    private const int MaximumInlineNotificationBadgeCount = 99;
+    private const string OverflowNotificationBadgeText = "99+";
+
     private readonly List<Button> navButtons;
 
     private Button? activeNavButton;
@@ -60,13 +63,13 @@ public sealed partial class NavView
     /// <param name="count">The number of unread notifications to display.</param>
     public void UpdateNotificationBadge(int count)
     {
-        if (count <= 0)
+        if (count <= default(int))
         {
             this.NotificationBadge.Visibility = Visibility.Collapsed;
             return;
         }
 
-        this.NotificationBadgeText.Text = count > 99 ? "99+" : count.ToString();
+        this.NotificationBadgeText.Text = count > MaximumInlineNotificationBadgeCount ? OverflowNotificationBadgeText : count.ToString();
         this.NotificationBadge.Visibility = Visibility.Visible;
     }
 

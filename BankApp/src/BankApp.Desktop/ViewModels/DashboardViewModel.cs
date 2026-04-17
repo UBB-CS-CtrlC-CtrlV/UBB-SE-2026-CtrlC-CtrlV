@@ -8,7 +8,7 @@ using System.Globalization;
 using System.Linq;
 using System.Threading;
 using System.Threading.Tasks;
-using BankApp.Application.DTOs.Dashboard;
+using BankApp.Application.DataTransferObjects.Dashboard;
 using BankApp.Desktop.Enums;
 using BankApp.Desktop.Utilities;
 using BankApp.Domain.Enums;
@@ -26,6 +26,11 @@ public class DashboardViewModel
     private const string CardAtStartErrorDescription = "Already at the first card.";
     private const string CardAtEndErrorCode = "dashboard.card_at_end";
     private const string CardAtEndErrorDescription = "Already at the last card.";
+    private const int FirstCardIndex = 0;
+    private const int LastCardIndexOffset = 1;
+    private const int CardNumberVisibleSuffixLength = 4;
+    private const string FullyMaskedCardNumber = "**** **** **** ****";
+    private const string CardNumberMaskPrefix = "**** **** ****";
 
     private readonly IApiClient apiClient;
     private readonly ILogger<DashboardViewModel> logger;
@@ -42,12 +47,12 @@ public class DashboardViewModel
         this.logger = logger ?? throw new ArgumentNullException(nameof(logger));
         this.CurrentUser = null;
         this.State = new ObservableState<DashboardState>(DashboardState.Idle);
-        this.Cards = new List<CardDto>();
-        this.RecentTransactions = new List<TransactionDto>();
+        this.Cards = new List<CardDataTransferObject>();
+        this.RecentTransactions = new List<TransactionDataTransferObject>();
         this.RecentTransactionItems = new List<DashboardTransactionItem>();
-        this.UnreadNotificationCount = 0;
+        this.UnreadNotificationCount = default;
         this.ErrorMessage = string.Empty;
-        this.currentCardIndex = 0;
+        this.currentCardIndex = FirstCardIndex;
     }
 
     /// <summary>
@@ -58,7 +63,7 @@ public class DashboardViewModel
     /// <summary>
     /// Gets the current user whose dashboard data has been loaded.
     /// </summary>
-    public UserSummaryDto? CurrentUser { get; private set; }
+    public UserSummaryDataTransferObject? CurrentUser { get; private set; }
 
     /// <summary>
     /// Gets the formatted dashboard transaction rows for display.
@@ -81,23 +86,23 @@ public class DashboardViewModel
     public int CurrentCardIndex
     {
         get => this.currentCardIndex;
-        private set => this.currentCardIndex = Math.Clamp(value, 0, Math.Max(0, this.Cards.Count - 1));
+        private set => this.currentCardIndex = Math.Clamp(value, FirstCardIndex, Math.Max(FirstCardIndex, this.Cards.Count - LastCardIndexOffset));
     }
 
     /// <summary>
     /// Gets a value indicating whether the user can navigate to the previous card.
     /// </summary>
-    public bool CanNavigatePrevious => this.Cards.Count > 0 && this.CurrentCardIndex > 0;
+    public bool CanNavigatePrevious => this.Cards.Count > default(int) && this.CurrentCardIndex > FirstCardIndex;
 
     /// <summary>
     /// Gets a value indicating whether the user can navigate to the next card.
     /// </summary>
-    public bool CanNavigateNext => this.Cards.Count > 0 && this.CurrentCardIndex < this.Cards.Count - 1;
+    public bool CanNavigateNext => this.Cards.Count > default(int) && this.CurrentCardIndex < this.Cards.Count - LastCardIndexOffset;
 
     /// <summary>
     /// Gets a value indicating whether the user has any linked cards.
     /// </summary>
-    public bool HasCards => this.Cards.Count > 0;
+    public bool HasCards => this.Cards.Count > default(int);
 
     /// <summary>
     /// Gets the ordered list of card-dot view models for the carousel indicator.
@@ -110,7 +115,7 @@ public class DashboardViewModel
     /// <summary>
     /// Gets a value indicating whether the user has any recent transactions.
     /// </summary>
-    public bool HasTransactions => this.RecentTransactionItems.Count > 0;
+    public bool HasTransactions => this.RecentTransactionItems.Count > default(int);
 
     /// <summary>
     /// Gets the display name of the selected card's brand (falls back to card type when brand is absent).
@@ -140,19 +145,19 @@ public class DashboardViewModel
     /// Gets the masked card number of the selected card.
     /// </summary>
     public string SelectedCardNumberMasked =>
-        this.SelectedCard is { } card ? MaskCardNumber(card.CardNumber) : "**** **** **** ****";
+        this.SelectedCard is { } card ? MaskCardNumber(card.CardNumber) : FullyMaskedCardNumber;
 
     /// <summary>
     /// Gets or sets the cards.
     /// </summary>
-    private List<CardDto> Cards { get; set; }
+    private List<CardDataTransferObject> Cards { get; set; }
 
     /// <summary>
     /// Gets the currently selected card, or <see langword="null"/> if no cards are available.
     /// </summary>
-    private CardDto? SelectedCard => this.Cards.Count > 0 ? this.Cards[this.CurrentCardIndex] : null;
+    private CardDataTransferObject? SelectedCard => this.Cards.Count > default(int) ? this.Cards.ElementAt(this.CurrentCardIndex) : null;
 
-    private List<TransactionDto> RecentTransactions { get; set; }
+    private List<TransactionDataTransferObject> RecentTransactions { get; set; }
 
     /// <summary>
     /// Navigates to the previous card if possible.
@@ -247,7 +252,7 @@ public class DashboardViewModel
                 this.UnreadNotificationCount = dashboard.UnreadNotificationCount;
 
                 // Reset card navigation to first card after a fresh load.
-                this.currentCardIndex = 0;
+                this.currentCardIndex = FirstCardIndex;
 
                 this.State.SetValue(DashboardState.Success);
                 return Result.Success;
@@ -275,15 +280,15 @@ public class DashboardViewModel
     {
         if (string.IsNullOrWhiteSpace(cardNumber))
         {
-            return "**** **** **** ****";
+            return FullyMaskedCardNumber;
         }
 
-        return cardNumber.Length >= 4
-            ? $"**** **** **** {cardNumber[^4..]}"
-            : "**** **** **** ****";
+        return cardNumber.Length >= CardNumberVisibleSuffixLength
+            ? $"{CardNumberMaskPrefix} {cardNumber[^CardNumberVisibleSuffixLength..]}"
+            : FullyMaskedCardNumber;
     }
 
-    private static List<DashboardTransactionItem> BuildTransactionItems(IEnumerable<TransactionDto> transactions)
+    private static List<DashboardTransactionItem> BuildTransactionItems(IEnumerable<TransactionDataTransferObject> transactions)
     {
         return transactions
             .Select(transaction => new DashboardTransactionItem
@@ -295,7 +300,7 @@ public class DashboardViewModel
             .ToList();
     }
 
-    private static string GetMerchantDisplayName(TransactionDto transaction)
+    private static string GetMerchantDisplayName(TransactionDataTransferObject transaction)
     {
         return FirstNonEmpty(
             transaction.MerchantName,
@@ -304,7 +309,7 @@ public class DashboardViewModel
             "Transaction");
     }
 
-    private static string FormatAmountDisplay(TransactionDto transaction)
+    private static string FormatAmountDisplay(TransactionDataTransferObject transaction)
     {
         string sign = transaction.Direction switch
         {

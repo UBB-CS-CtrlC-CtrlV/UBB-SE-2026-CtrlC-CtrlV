@@ -15,39 +15,39 @@ public class OAuthLinkDataAccess : IOAuthLinkDataAccess
         FROM OAuthLink
         """;
 
-    private readonly AppDbContext db;
+    private readonly AppDatabaseContext databaseContext;
 
     /// <summary>
     /// Initializes a new instance of the <see cref="OAuthLinkDataAccess"/> class.
     /// </summary>
-    /// <param name="db">The database context used for executing queries.</param>
-    public OAuthLinkDataAccess(AppDbContext db)
+    /// <param name="databaseContext">The database context used for executing queries.</param>
+    public OAuthLinkDataAccess(AppDatabaseContext databaseContext)
     {
-        this.db = db;
+        this.databaseContext = databaseContext;
     }
 
     /// <inheritdoc />
     public ErrorOr<Success> Create(int userId, string provider, string providerUserId, string? providerEmail)
     {
-        const string sql = """
+        const string databaseCommandText = """
             INSERT INTO OAuthLink (UserId, Provider, ProviderUserId, ProviderEmail)
             VALUES (@UserId, @Provider, @ProviderUserId, @ProviderEmail)
             """;
 
-        return this.db.Query(conn => conn.Execute(sql, new
+        return this.databaseContext.Query(connection => connection.Execute(databaseCommandText, new
         {
             UserId = userId,
             Provider = provider,
             ProviderUserId = providerUserId,
             ProviderEmail = providerEmail,
-        })).Then(rows => rows > 0 ? Result.Success : (ErrorOr<Success>)Error.Failure(description: "Failed to create OAuth link."));
+        })).Then(rows => rows > default(int) ? Result.Success : (ErrorOr<Success>)Error.Failure(description: "Failed to create OAuth link."));
     }
 
     /// <inheritdoc />
     public ErrorOr<Success> Delete(int id)
     {
-        const string sql = "DELETE FROM OAuthLink WHERE Id = @Id";
-        return this.db.Query(conn => conn.Execute(sql, new { Id = id }))
+        const string databaseCommandText = "DELETE FROM OAuthLink WHERE Id = @Id";
+        return this.databaseContext.Query(connection => connection.Execute(databaseCommandText, new { Id = id }))
             .Then(_ => (ErrorOr<Success>)Result.Success);
     }
 
@@ -55,7 +55,7 @@ public class OAuthLinkDataAccess : IOAuthLinkDataAccess
     public ErrorOr<OAuthLink> FindByProvider(string provider, string providerUserId)
     {
         const string query = $"{SelectAllColumns} WHERE Provider = @Provider AND ProviderUserId = @ProviderUserId";
-        return this.db.Query(conn => conn.QueryFirstOrDefault<OAuthLink>(query, new { Provider = provider, ProviderUserId = providerUserId }))
+        return this.databaseContext.Query(connection => connection.QueryFirstOrDefault<OAuthLink>(query, new { Provider = provider, ProviderUserId = providerUserId }))
             .Then(link => link ?? (ErrorOr<OAuthLink>)Error.NotFound(description: "OAuth link not found."));
     }
 
@@ -63,6 +63,6 @@ public class OAuthLinkDataAccess : IOAuthLinkDataAccess
     public ErrorOr<List<OAuthLink>> FindByUserId(int userId)
     {
         const string query = $"{SelectAllColumns} WHERE UserId = @UserId";
-        return this.db.Query(conn => conn.Query<OAuthLink>(query, new { UserId = userId }).AsList());
+        return this.databaseContext.Query(connection => connection.Query<OAuthLink>(query, new { UserId = userId }).AsList());
     }
 }

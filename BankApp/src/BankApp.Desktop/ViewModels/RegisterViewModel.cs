@@ -3,9 +3,10 @@
 // </copyright>
 
 using System;
+using System.Linq;
 using System.Threading.Tasks;
 using BankApp.Desktop.Utilities;
-using BankApp.Application.DTOs.Auth;
+using BankApp.Application.DataTransferObjects.Auth;
 using BankApp.Desktop.Enums;
 using ErrorOr;
 using Microsoft.Extensions.Configuration;
@@ -80,7 +81,7 @@ public class RegisterViewModel
             _ => { this.State.SetValue(RegisterState.Success); },
             errors =>
             {
-                Error error = errors[0];
+                Error error = errors.First();
                 if (error.Type == ErrorType.Conflict)
                 {
                     this.State.SetValue(RegisterState.EmailAlreadyExists);
@@ -167,9 +168,9 @@ public class RegisterViewModel
                     this.State.SetValue(RegisterState.Error);
                 });
         }
-        catch (Exception ex)
+        catch (Exception exception)
         {
-            this.logger.LogError(ex, "OAuthRegister OIDC flow failed.");
+            this.logger.LogError(exception, "OAuthRegister OIDC flow failed.");
             this.State.SetValue(RegisterState.Error);
         }
     }

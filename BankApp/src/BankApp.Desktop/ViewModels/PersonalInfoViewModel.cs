@@ -5,7 +5,7 @@
 using System;
 using System.Threading.Tasks;
 using BankApp.Desktop.Utilities;
-using BankApp.Application.DTOs.Profile;
+using BankApp.Application.DataTransferObjects.Profile;
 using BankApp.Desktop.Enums;
 using ErrorOr;
 using Microsoft.Extensions.Logging;

@@ -22,6 +22,7 @@ public class PasswordRecoveryService : IPasswordRecoveryService
     private readonly ILogger<PasswordRecoveryService> logger;
 
     private const int PasswordResetTokenExpiryMinutes = 30;
+    private const int PasswordResetTokenByteLength = 32;
 
     /// <summary>
     /// Initializes a new instance of the <see cref="PasswordRecoveryService"/> class.
@@ -52,7 +53,7 @@ public class PasswordRecoveryService : IPasswordRecoveryService
         User user = userResult.Value;
         _ = authRepository.DeleteExpiredPasswordResetTokens();
 
-        byte[] randomBytes = System.Security.Cryptography.RandomNumberGenerator.GetBytes(32);
+        byte[] randomBytes = System.Security.Cryptography.RandomNumberGenerator.GetBytes(PasswordResetTokenByteLength);
         string rawToken = Convert.ToBase64String(randomBytes);
         string tokenHashForDb = ComputeSha256Hash(rawToken);
 

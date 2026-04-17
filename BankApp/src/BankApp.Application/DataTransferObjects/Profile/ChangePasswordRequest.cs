@@ -1,4 +1,4 @@
-namespace BankApp.Application.DTOs.Profile;
+namespace BankApp.Application.DataTransferObjects.Profile;
 
 /// <summary>
 /// Represents a request to change the user's password.

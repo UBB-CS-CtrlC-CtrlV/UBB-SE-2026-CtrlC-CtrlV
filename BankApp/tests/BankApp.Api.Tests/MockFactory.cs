@@ -2,9 +2,9 @@
 // Copyright (c) CtrlC CtrlV. All rights reserved.
 // </copyright>
 
-using BankApp.Application.DTOs.Auth;
-using BankApp.Application.DTOs.Dashboard;
-using BankApp.Application.DTOs.Profile;
+using BankApp.Application.DataTransferObjects.Auth;
+using BankApp.Application.DataTransferObjects.Dashboard;
+using BankApp.Application.DataTransferObjects.Profile;
 using BankApp.Application.Repositories.Interfaces;
 using BankApp.Application.Services.Dashboard;
 using BankApp.Application.Services.Login;
@@ -104,19 +104,19 @@ internal static class MockFactory
         mock.Setup(service => service.Disable2FA(It.IsAny<int>()))
             .Returns(Result.Success);
         mock.Setup(service => service.GetOAuthLinks(It.IsAny<int>()))
-            .Returns(new List<OAuthLinkDto>());
+            .Returns(new List<OAuthLinkDataTransferObject>());
         mock.Setup(service => service.LinkOAuth(It.IsAny<int>(), It.IsAny<string>()))
             .Returns(Result.Success);
         mock.Setup(service => service.UnlinkOAuth(It.IsAny<int>(), It.IsAny<string>()))
             .Returns(Result.Success);
         mock.Setup(service => service.GetNotificationPreferences(It.IsAny<int>()))
-            .Returns(new List<NotificationPreferenceDto>());
-        mock.Setup(service => service.UpdateNotificationPreferences(It.IsAny<int>(), It.IsAny<List<NotificationPreferenceDto>>()))
+            .Returns(new List<NotificationPreferenceDataTransferObject>());
+        mock.Setup(service => service.UpdateNotificationPreferences(It.IsAny<int>(), It.IsAny<List<NotificationPreferenceDataTransferObject>>()))
             .Returns(Result.Success);
         mock.Setup(service => service.VerifyPassword(It.IsAny<int>(), It.IsAny<string>()))
             .Returns(true);
         mock.Setup(service => service.GetActiveSessions(It.IsAny<int>()))
-            .Returns(new List<SessionDto>());
+            .Returns(new List<SessionDataTransferObject>());
         mock.Setup(service => service.RevokeSession(It.IsAny<int>(), It.IsAny<int>()))
             .Returns(Result.Success);
         return mock;

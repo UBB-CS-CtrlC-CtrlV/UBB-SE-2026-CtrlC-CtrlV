@@ -1,5 +1,5 @@
 using System.Linq;
-using BankApp.Application.DTOs.Dashboard;
+using BankApp.Application.DataTransferObjects.Dashboard;
 using BankApp.Domain.Entities;
 using BankApp.Application.Repositories.Interfaces;
 using ErrorOr;
@@ -16,6 +16,9 @@ public class DashboardService : IDashboardService
     private readonly IUserRepository userRepository;
     private readonly ILogger<DashboardService> logger;
     private const int DefaultRecentTransactionLimit = 5;
+    private const int CardNumberVisibleSuffixLength = 4;
+    private const string FullyMaskedCardNumber = "**** **** **** ****";
+    private const string CardNumberMaskPrefix = "**** **** ****";
 
     /// <summary>
     /// Initializes a new instance of the <see cref="DashboardService"/> class.
@@ -84,15 +87,15 @@ public class DashboardService : IDashboardService
 
         return new DashboardResponse
         {
-            CurrentUser = new UserSummaryDto
+            CurrentUser = new UserSummaryDataTransferObject
             {
                 FullName = userResult.Value.FullName,
                 Email = userResult.Value.Email,
                 PhoneNumber = userResult.Value.PhoneNumber,
                 Is2FAEnabled = userResult.Value.Is2FAEnabled,
             },
-            Cards = cardsResult.IsError ? new List<CardDto>() : cardsResult.Value
-                .Select(card => new CardDto
+            Cards = cardsResult.IsError ? new List<CardDataTransferObject>() : cardsResult.Value
+                .Select(card => new CardDataTransferObject
                 {
                     Id = card.Id,
                     CardNumber = MaskCardNumber(card.CardNumber),
@@ -110,7 +113,7 @@ public class DashboardService : IDashboardService
                 })
                 .ToList(),
             RecentTransactions = allTransactions
-                .Select(transaction => new TransactionDto
+                .Select(transaction => new TransactionDataTransferObject
                 {
                     Id = transaction.Id,
                     Direction = transaction.Direction,
@@ -123,17 +126,17 @@ public class DashboardService : IDashboardService
                     CreatedAt = transaction.CreatedAt,
                 })
                 .ToList(),
-            UnreadNotificationCount = notifCountResult.IsError ? 0 : notifCountResult.Value,
+            UnreadNotificationCount = notifCountResult.IsError ? default : notifCountResult.Value,
         };
     }
 
     private static string MaskCardNumber(string? cardNumber)
     {
-        if (string.IsNullOrWhiteSpace(cardNumber) || cardNumber.Length < 4)
+        if (string.IsNullOrWhiteSpace(cardNumber) || cardNumber.Length < CardNumberVisibleSuffixLength)
         {
-            return "**** **** **** ****";
+            return FullyMaskedCardNumber;
         }
 
-        return $"**** **** **** {cardNumber[^4..]}";
+        return $"{CardNumberMaskPrefix} {cardNumber[^CardNumberVisibleSuffixLength..]}";
     }
 }

@@ -2,7 +2,7 @@
 // Copyright (c) CtrlC CtrlV. All rights reserved.
 // </copyright>
 
-using BankApp.Application.DTOs.Auth;
+using BankApp.Application.DataTransferObjects.Auth;
 using BankApp.Domain.Entities;
 using BankApp.Domain.Enums;
 using BankApp.Application.Repositories.Interfaces;
@@ -31,6 +31,8 @@ public class AuthService : IAuthService
     private const int MaxFailedAttempts = 5;
     private const int LockoutMinutes = 15;
     private const int PasswordResetTokenExpiryMinutes = 30;
+    private const int PasswordResetTokenByteLength = 32;
+    private const int FailedLoginAttemptIncrement = 1;
     private const string GoogleOAuthProvider = "Google";
     private const string DefaultLanguage = "en";
     private const string TemporaryPasswordSuffix = "A1a!";
@@ -185,7 +187,7 @@ public class AuthService : IAuthService
                     PreferredLanguage = DefaultLanguage,
                     Is2FAEnabled = false,
                     IsLocked = false,
-                    FailedLoginAttempts = 0,
+                    FailedLoginAttempts = default,
                 };
 
                 if (authRepository.CreateUser(newUser).IsError)
@@ -265,7 +267,7 @@ public class AuthService : IAuthService
                 PreferredLanguage = DefaultLanguage,
                 Is2FAEnabled = false,
                 IsLocked = false,
-                FailedLoginAttempts = 0,
+                FailedLoginAttempts = default,
             };
 
             if (authRepository.CreateUser(newUser).IsError)
@@ -368,7 +370,7 @@ public class AuthService : IAuthService
         User user = userResult.Value;
         _ = authRepository.DeleteExpiredPasswordResetTokens();
 
-        byte[] randomBytes = System.Security.Cryptography.RandomNumberGenerator.GetBytes(32);
+        byte[] randomBytes = System.Security.Cryptography.RandomNumberGenerator.GetBytes(PasswordResetTokenByteLength);
         string rawToken = Convert.ToBase64String(randomBytes);
         string tokenHashForDb = ComputeSha256Hash(rawToken);
 
@@ -497,9 +499,10 @@ public class AuthService : IAuthService
     private Error HandleFailedPassword(User user)
     {
         _ = authRepository.IncrementFailedAttempts(user.Id);
-        logger.LogWarning("Failed login attempt for user {UserId}. Attempt {Attempt}/{Max}.", user.Id, user.FailedLoginAttempts + 1, MaxFailedAttempts);
+        int failedAttemptsAfterCurrentFailure = user.FailedLoginAttempts + FailedLoginAttemptIncrement;
+        logger.LogWarning("Failed login attempt for user {UserId}. Attempt {Attempt}/{Max}.", user.Id, failedAttemptsAfterCurrentFailure, MaxFailedAttempts);
 
-        if (user.FailedLoginAttempts + 1 < MaxFailedAttempts)
+        if (failedAttemptsAfterCurrentFailure < MaxFailedAttempts)
         {
             return Error.Unauthorized(code: "invalid_credentials", description: "Invalid email or password.");
         }
@@ -594,7 +597,7 @@ public class AuthService : IAuthService
             PreferredLanguage = DefaultLanguage,
             Is2FAEnabled = false,
             IsLocked = false,
-            FailedLoginAttempts = 0,
+            FailedLoginAttempts = default,
         };
     }
 

@@ -7,6 +7,9 @@ using Serilog;
 using Serilog.Events;
 
 const string DefaultLogFilePath = "logs/bankapp-server-.log";
+const int RetainedLogFileCountLimit = 14;
+const int CommandLineExecutableArgumentCount = 1;
+const int InternalServerErrorStatusCode = StatusCodes.Status500InternalServerError;
 
 SqlMapper.AddTypeHandler(new EnumTypeHandler<TransactionDirection>());
 SqlMapper.AddTypeHandler(new EnumTypeHandler<TransactionStatus>());
@@ -23,19 +26,20 @@ Log.Logger = new LoggerConfiguration()
     .WriteTo.File(
         path: DefaultLogFilePath,
         rollingInterval: RollingInterval.Day,
-        retainedFileCountLimit: 14)
+        retainedFileCountLimit: RetainedLogFileCountLimit)
     .CreateBootstrapLogger();
 
 try
 {
     Log.Information("Starting BankApp.Api");
 
-    var builder = WebApplication.CreateBuilder(args);
+    string[] commandLineArguments = Environment.GetCommandLineArgs().Skip(CommandLineExecutableArgumentCount).ToArray();
+    var builder = WebApplication.CreateBuilder(commandLineArguments);
 
     // Replace the default MEL providers with Serilog. Configuration (log levels, sinks)
     // can be further overridden via appsettings.json under the "Serilog" key.
-    builder.Host.UseSerilog((context, services, config) =>
-        config
+    builder.Host.UseSerilog((context, services, configurationBuilder) =>
+        configurationBuilder
             .ReadFrom.Configuration(context.Configuration)
             .ReadFrom.Services(services)
             .Enrich.FromLogContext()
@@ -43,7 +47,7 @@ try
             .WriteTo.File(
                 path: context.Configuration["Logging:FilePath"] ?? DefaultLogFilePath,
                 rollingInterval: RollingInterval.Day,
-                retainedFileCountLimit: 14));
+                retainedFileCountLimit: RetainedLogFileCountLimit));
 
     builder.Services.AddControllers();
     builder.Services.AddEndpointsApiExplorer();
@@ -75,41 +79,41 @@ try
     });
 
     // Allow the client to connect
-    builder.Services.AddCors(o => o.AddDefaultPolicy(p =>
-        p.AllowAnyOrigin().AllowAnyMethod().AllowAnyHeader()));
+    builder.Services.AddCors(corsOptions => corsOptions.AddDefaultPolicy(corsPolicy =>
+        corsPolicy.AllowAnyOrigin().AllowAnyMethod().AllowAnyHeader()));
 
     builder.Services.AddInfrastructure(builder.Configuration);
 
-    var app = builder.Build();
+    var application = builder.Build();
 
-    app.UseExceptionHandler(a => a.Run(async context =>
+    application.UseExceptionHandler(exceptionApplicationBuilder => exceptionApplicationBuilder.Run(async context =>
     {
-        context.Response.StatusCode = 500;
+        context.Response.StatusCode = InternalServerErrorStatusCode;
         context.Response.ContentType = "application/json";
         await context.Response.WriteAsJsonAsync(new { error = "Something went wrong." });
     }));
 
-    if (app.Environment.IsDevelopment())
+    if (application.Environment.IsDevelopment())
     {
-        app.UseSwagger();
-        app.UseSwaggerUI();
+        application.UseSwagger();
+        application.UseSwaggerUI();
     }
 
-    app.UseCors();
+    application.UseCors();
 
     // Logs each HTTP request: method, path, status code, and duration.
     // Placed before middleware that may short-circuit the pipeline so all
     // requests are captured, including those rejected by session validation.
-    app.UseSerilogRequestLogging();
+    application.UseSerilogRequestLogging();
 
-    app.UseMiddleware<SessionValidationMiddleware>();
+    application.UseMiddleware<SessionValidationMiddleware>();
 
-    app.MapControllers();
-    app.Run();
+    application.MapControllers();
+    application.Run();
 }
-catch (Exception ex)
+catch (Exception exception)
 {
-    Log.Fatal(ex, "BankApp.Api terminated unexpectedly");
+    Log.Fatal(exception, "BankApp.Api terminated unexpectedly");
 }
 finally
 {

@@ -149,11 +149,11 @@ public sealed partial class ForgotPasswordView : IStateObserver<ForgotPasswordSt
     /// <summary>
     /// Shows a status message in the view's info bar.
     /// </summary>
-    /// <param name="msg">The message to display.</param>
+    /// <param name="message">The message to display.</param>
     /// <param name="severity">The severity level.</param>
-    private void ShowMessage(string msg, InfoBarSeverity severity)
+    private void ShowMessage(string message, InfoBarSeverity severity)
     {
-        this.StatusInfoBar.Message = msg;
+        this.StatusInfoBar.Message = message;
         this.StatusInfoBar.Severity = severity;
         this.StatusInfoBar.IsOpen = true;
     }

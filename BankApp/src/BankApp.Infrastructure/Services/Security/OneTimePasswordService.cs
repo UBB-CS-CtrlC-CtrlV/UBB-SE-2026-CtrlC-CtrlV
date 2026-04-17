@@ -1,4 +1,4 @@
-// <copyright file="OtpService.cs" company="CtrlC CtrlV">
+// <copyright file="OneTimePasswordService.cs" company="CtrlC CtrlV">
 // Copyright (c) CtrlC CtrlV. All rights reserved.
 // </copyright>
 
@@ -13,7 +13,7 @@ namespace BankApp.Infrastructure.Services.Security;
 /// <summary>
 /// Provides HMAC-based TOTP and in-memory SMS OTP generation and verification.
 /// </summary>
-public class OtpService : IOtpService
+public class OneTimePasswordService : IOtpService
 {
     private static readonly Dictionary<int, (string Code, DateTime ExpiryTime)> TemporarySmsStorage = new Dictionary<int, (string Code, DateTime ExpiryTime)>();
     private const int SmsOtpExpiryMinutes = 5;
@@ -26,14 +26,22 @@ public class OtpService : IOtpService
     private const int TruncationOffsetMask = 0x0F;
     private const int SignBitMask = 0x7F;
     private const int ByteMask = 0xFF;
+    private const int PreviousTotpWindowOffset = 1;
+    private const int FirstDynamicTruncationByteOffset = 0;
+    private const int SecondDynamicTruncationByteOffset = 1;
+    private const int ThirdDynamicTruncationByteOffset = 2;
+    private const int FourthDynamicTruncationByteOffset = 3;
+    private const int FirstDynamicTruncationByteShift = 24;
+    private const int SecondDynamicTruncationByteShift = 16;
+    private const int ThirdDynamicTruncationByteShift = 8;
 
     private readonly string otpServerSecret;
 
     /// <summary>
-    /// Initializes a new instance of the <see cref="OtpService"/> class.
+    /// Initializes a new instance of the <see cref="OneTimePasswordService"/> class.
     /// </summary>
     /// <param name="configuration">The application configuration used to read <c>Otp:ServerSecret</c>.</param>
-    public OtpService(IConfiguration configuration)
+    public OneTimePasswordService(IConfiguration configuration)
     {
         this.otpServerSecret = configuration["Otp:ServerSecret"] ?? FallbackOtpServerSecret;
     }
@@ -48,9 +56,9 @@ public class OtpService : IOtpService
             TemporarySmsStorage[userId] = (code, expiryTime);
             return code;
         }
-        catch (Exception ex)
+        catch (Exception exception)
         {
-            return Error.Failure(code: "otp.generate_sms_failed", description: ex.Message);
+            return Error.Failure(code: "otp.generate_sms_failed", description: exception.Message);
         }
     }
 
@@ -62,9 +70,9 @@ public class OtpService : IOtpService
             long currentWindow = DateTimeOffset.UtcNow.ToUnixTimeSeconds() / TotpWindowSeconds;
             return GenerateHmacCode(userId, currentWindow);
         }
-        catch (Exception ex)
+        catch (Exception exception)
         {
-            return Error.Failure(code: "otp.generate_totp_failed", description: ex.Message);
+            return Error.Failure(code: "otp.generate_totp_failed", description: exception.Message);
         }
     }
 
@@ -102,9 +110,9 @@ public class OtpService : IOtpService
 
             return false;
         }
-        catch (Exception ex)
+        catch (Exception exception)
         {
-            return Error.Failure(code: "otp.verify_sms_failed", description: ex.Message);
+            return Error.Failure(code: "otp.verify_sms_failed", description: exception.Message);
         }
     }
 
@@ -119,16 +127,16 @@ public class OtpService : IOtpService
                 return true;
             }
 
-            if (code == GenerateHmacCode(userId, currentWindow - 1))
+            if (code == GenerateHmacCode(userId, currentWindow - PreviousTotpWindowOffset))
             {
                 return true;
             }
 
             return false;
         }
-        catch (Exception ex)
+        catch (Exception exception)
         {
-            return Error.Failure(code: "otp.verify_totp_failed", description: ex.Message);
+            return Error.Failure(code: "otp.verify_totp_failed", description: exception.Message);
         }
     }
 
@@ -137,11 +145,11 @@ public class OtpService : IOtpService
         string secret = $"{this.otpServerSecret}_{userId}";
         using HMACSHA1 hmac = new HMACSHA1(Encoding.UTF8.GetBytes(secret));
         byte[] hash = hmac.ComputeHash(BitConverter.GetBytes(timeWindow));
-        int offset = hash[hash.Length - 1] & TruncationOffsetMask;
-        int binary = ((hash[offset] & SignBitMask) << 24) |
-                     ((hash[offset + 1] & ByteMask) << 16) |
-                     ((hash[offset + 2] & ByteMask) << 8) |
-                     (hash[offset + 3] & ByteMask);
+        int offset = hash.Last() & TruncationOffsetMask;
+        int binary = ((hash.ElementAt(offset + FirstDynamicTruncationByteOffset) & SignBitMask) << FirstDynamicTruncationByteShift) |
+                     ((hash.ElementAt(offset + SecondDynamicTruncationByteOffset) & ByteMask) << SecondDynamicTruncationByteShift) |
+                     ((hash.ElementAt(offset + ThirdDynamicTruncationByteOffset) & ByteMask) << ThirdDynamicTruncationByteShift) |
+                     (hash.ElementAt(offset + FourthDynamicTruncationByteOffset) & ByteMask);
         return (binary % OtpModulus).ToString($"D{OtpDigitCount}");
     }
 }

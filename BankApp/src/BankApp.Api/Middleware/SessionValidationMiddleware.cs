@@ -63,7 +63,7 @@ public class SessionValidationMiddleware
             return;
         }
 
-        // Check if session still active in the DB
+        // Check if session still active in the databaseContext
         ErrorOr<Session> sessionResult = authRepository.FindSessionByToken(token);
         if (sessionResult.IsError)
         {

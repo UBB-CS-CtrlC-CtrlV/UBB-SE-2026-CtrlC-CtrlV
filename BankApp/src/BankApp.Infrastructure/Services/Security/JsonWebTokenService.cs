@@ -10,16 +10,16 @@ namespace BankApp.Infrastructure.Services.Security;
 /// <summary>
 /// Provides JWT generation, validation, and claim extraction using HMAC-SHA256.
 /// </summary>
-public class JwtService : IJwtService
+public class JsonWebTokenService : IJwtService
 {
     private readonly string secret;
     private const int TokenExpirationDays = 7;
 
     /// <summary>
-    /// Initializes a new instance of the <see cref="JwtService"/> class.
+    /// Initializes a new instance of the <see cref="JsonWebTokenService"/> class.
     /// </summary>
     /// <param name="secret">The symmetric key used for signing tokens.</param>
-    public JwtService(string secret)
+    public JsonWebTokenService(string secret)
     {
         this.secret = secret;
     }
@@ -38,9 +38,9 @@ public class JwtService : IJwtService
                 signingCredentials: credentials);
             return new JwtSecurityTokenHandler().WriteToken(token);
         }
-        catch (Exception ex)
+        catch (Exception exception)
         {
-            return Error.Failure(code: "jwt.generate_failed", description: ex.Message);
+            return Error.Failure(code: "jwt.generate_failed", description: exception.Message);
         }
     }
 

@@ -1,13 +1,13 @@
-// <copyright file="OAuthLinkDto.cs" company="CtrlC CtrlV">
+// <copyright file="OAuthLinkDataTransferObject.cs" company="CtrlC CtrlV">
 // Copyright (c) CtrlC CtrlV. All rights reserved.
 // </copyright>
 
-namespace BankApp.Application.DTOs.Profile;
+namespace BankApp.Application.DataTransferObjects.Profile;
 
 /// <summary>
 /// Data transfer object representing a linked OAuth provider for a user.
 /// </summary>
-public class OAuthLinkDto
+public class OAuthLinkDataTransferObject
 {
     /// <summary>
     /// Gets or sets the unique identifier of the OAuth link.

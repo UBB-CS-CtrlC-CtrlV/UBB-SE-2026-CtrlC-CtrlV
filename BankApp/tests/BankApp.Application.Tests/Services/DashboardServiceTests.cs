@@ -2,7 +2,7 @@
 // Copyright (c) CtrlC CtrlV. All rights reserved.
 // </copyright>
 
-using BankApp.Application.DTOs.Dashboard;
+using BankApp.Application.DataTransferObjects.Dashboard;
 using BankApp.Application.Repositories.Interfaces;
 using BankApp.Application.Services.Dashboard;
 using BankApp.Domain.Entities;
@@ -134,11 +134,11 @@ public class DashboardServiceTests
         // Assert
         result.IsError.Should().BeFalse();
         result.Value.Cards.Should().ContainSingle();
-        result.Value.Cards[0].CardholderName.Should().Be("Ada Lovelace");
-        result.Value.Cards[0].CardType.Should().Be(CardType.Debit);
-        result.Value.Cards[0].CardNumber.Should().Be("**** **** **** 3456");
-        result.Value.Cards[0].AccountName.Should().Be("Checking");
-        result.Value.Cards[0].AccountBalance.Should().Be(2500);
+        result.Value.Cards.First().CardholderName.Should().Be("Ada Lovelace");
+        result.Value.Cards.First().CardType.Should().Be(CardType.Debit);
+        result.Value.Cards.First().CardNumber.Should().Be("**** **** **** 3456");
+        result.Value.Cards.First().AccountName.Should().Be("Checking");
+        result.Value.Cards.First().AccountBalance.Should().Be(2500);
     }
 
     /// <summary>
@@ -207,8 +207,8 @@ public class DashboardServiceTests
         // Assert
         result.IsError.Should().BeFalse();
         result.Value.RecentTransactions.Should().ContainSingle();
-        result.Value.RecentTransactions[0].MerchantName.Should().Be("Shop");
-        result.Value.RecentTransactions[0].Amount.Should().Be(100);
+        result.Value.RecentTransactions.First().MerchantName.Should().Be("Shop");
+        result.Value.RecentTransactions.First().Amount.Should().Be(100);
     }
 
     /// <summary>
@@ -279,25 +279,25 @@ public class DashboardServiceTests
                     new Account { Id = accountId2, UserId = userId },
                 });
 
-        List<Transaction> transactions1 = Enumerable.Range(1, 8).Select(i => new Transaction
+        List<Transaction> transactions1 = Enumerable.Range(1, 8).Select(index => new Transaction
         {
-            Id = i,
+            Id = index,
             AccountId = accountId1,
             Direction = TransactionDirection.In,
-            Amount = i * 10,
+            Amount = index * 10,
             Currency = "RON",
             Status = TransactionStatus.Completed,
-            CreatedAt = DateTime.UtcNow.AddMinutes(-i),
+            CreatedAt = DateTime.UtcNow.AddMinutes(-index),
         }).ToList();
-        List<Transaction> transactions2 = Enumerable.Range(9, 5).Select(i => new Transaction
+        List<Transaction> transactions2 = Enumerable.Range(9, 5).Select(index => new Transaction
         {
-            Id = i,
+            Id = index,
             AccountId = accountId2,
             Direction = TransactionDirection.Out,
-            Amount = i * 10,
+            Amount = index * 10,
             Currency = "RON",
             Status = TransactionStatus.Completed,
-            CreatedAt = DateTime.UtcNow.AddMinutes(-i),
+            CreatedAt = DateTime.UtcNow.AddMinutes(-index),
         }).ToList();
         this.dashboardRepository
             .Setup(repository => repository.GetRecentTransactions(accountId1, It.IsAny<int>()))
