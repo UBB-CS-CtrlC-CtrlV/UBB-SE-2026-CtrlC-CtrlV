@@ -21,7 +21,7 @@ public class PasswordRecoveryService : IPasswordRecoveryService
     private readonly IEmailService emailService;
     private readonly ILogger<PasswordRecoveryService> logger;
 
-    private const int PasswordResetTokenExpiryMinutes = 5;
+    private const int PasswordResetTokenExpiryMinutes = 30;
 
     /// <summary>
     /// Initializes a new instance of the <see cref="PasswordRecoveryService"/> class.

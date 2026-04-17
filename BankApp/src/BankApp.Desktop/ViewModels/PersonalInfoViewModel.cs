@@ -82,8 +82,9 @@ public class PersonalInfoViewModel
     /// <param name="phone">The phone number to persist.</param>
     /// <param name="address">The address to persist.</param>
     /// <param name="password">The verified password associated with the edit flow.</param>
+    /// <param name="fullName">The full name to persist, or <see langword="null"/> to keep the current value.</param>
     /// <returns><see langword="true"/> if the update succeeded; otherwise, <see langword="false"/>.</returns>
-    public async Task<bool> UpdatePersonalInfo(string? phone, string? address, string password)
+    public async Task<bool> UpdatePersonalInfo(string? phone, string? address, string password, string? fullName = null)
     {
         this.State.SetValue(ProfileState.Loading);
 
@@ -95,13 +96,21 @@ public class PersonalInfoViewModel
 
         string? trimmedPhone = string.IsNullOrWhiteSpace(phone) ? null : phone.Trim();
         string? trimmedAddress = string.IsNullOrWhiteSpace(address) ? null : address.Trim();
+        string? trimmedFullName = string.IsNullOrWhiteSpace(fullName) ? this.ProfileInfo.FullName : fullName.Trim();
 
-        UpdateProfileRequest request = new UpdateProfileRequest(this.ProfileInfo.UserId, trimmedPhone, trimmedAddress);
+        UpdateProfileRequest request = new UpdateProfileRequest(this.ProfileInfo.UserId, trimmedPhone, trimmedAddress)
+        {
+            FullName = trimmedFullName,
+            DateOfBirth = this.ProfileInfo.DateOfBirth,
+            Nationality = this.ProfileInfo.Nationality,
+            PreferredLanguage = this.ProfileInfo.PreferredLanguage,
+        };
         ErrorOr<Success> result = await this.apiClient.PutAsync<UpdateProfileRequest>(ApiEndpoints.Profile, request);
 
         return result.Match(
             _ =>
             {
+                this.ProfileInfo.FullName = trimmedFullName;
                 this.ProfileInfo.PhoneNumber = trimmedPhone;
                 this.ProfileInfo.Address = trimmedAddress;
                 this.State.SetValue(ProfileState.UpdateSuccess);

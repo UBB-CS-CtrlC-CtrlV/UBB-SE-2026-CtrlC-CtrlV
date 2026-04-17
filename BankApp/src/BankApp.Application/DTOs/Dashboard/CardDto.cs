@@ -18,9 +18,19 @@ public class CardDto
     public int Id { get; set; }
 
     /// <summary>
-    /// Gets or sets the card number.
+    /// Gets or sets the masked card number.
     /// </summary>
     public string CardNumber { get; set; } = string.Empty;
+
+    /// <summary>
+    /// Gets or sets the display name of the account associated with this card.
+    /// </summary>
+    public string? AccountName { get; set; }
+
+    /// <summary>
+    /// Gets or sets the current balance of the account associated with this card.
+    /// </summary>
+    public decimal? AccountBalance { get; set; }
 
     /// <summary>
     /// Gets or sets the name of the cardholder.

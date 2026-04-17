@@ -100,13 +100,16 @@ public sealed partial class ProfileView : IStateObserver<ProfileState>
 
     private void SetEditingEnabled(bool enabled)
     {
+        this.FullNameBox.IsEnabled = enabled;
         this.PhoneBox.IsEnabled = enabled;
         this.AddressBox.IsEnabled = enabled;
         this.SaveButton.IsEnabled = enabled;
 
+        this.FullNameBox.IsReadOnly = !enabled;
         this.PhoneBox.IsReadOnly = !enabled;
         this.AddressBox.IsReadOnly = !enabled;
 
+        this.FullNameBox.Opacity = enabled ? 1.0 : 0.6;
         this.PhoneBox.Opacity = enabled ? 1.0 : 0.6;
         this.AddressBox.Opacity = enabled ? 1.0 : 0.6;
 
@@ -210,12 +213,14 @@ public sealed partial class ProfileView : IStateObserver<ProfileState>
         var success = await this.viewModel.PersonalInfo.UpdatePersonalInfo(
             this.PhoneBox.Text,
             this.AddressBox.Text,
-            this.verifiedPassword);
+            this.verifiedPassword,
+            this.FullNameBox.Text);
 
         this.ShowLoading(false);
 
         if (success)
         {
+            this.ProfileCardName.Text = this.FullNameBox.Text.Trim();
             this.ProfileCardPhone.Text = this.PhoneBox.Text.Trim();
             this.ProfileCardAddress.Text = this.AddressBox.Text.Trim();
             this.verifiedPassword = string.Empty;

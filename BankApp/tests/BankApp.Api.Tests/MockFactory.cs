@@ -84,6 +84,10 @@ internal static class MockFactory
             .Returns(Result.Success);
         mock.Setup(service => service.GetOAuthLinks(It.IsAny<int>()))
             .Returns(new List<OAuthLinkDto>());
+        mock.Setup(service => service.LinkOAuth(It.IsAny<int>(), It.IsAny<string>()))
+            .Returns(Result.Success);
+        mock.Setup(service => service.UnlinkOAuth(It.IsAny<int>(), It.IsAny<string>()))
+            .Returns(Result.Success);
         mock.Setup(service => service.GetNotificationPreferences(It.IsAny<int>()))
             .Returns(new List<NotificationPreferenceDto>());
         mock.Setup(service => service.UpdateNotificationPreferences(It.IsAny<int>(), It.IsAny<List<NotificationPreferenceDto>>()))

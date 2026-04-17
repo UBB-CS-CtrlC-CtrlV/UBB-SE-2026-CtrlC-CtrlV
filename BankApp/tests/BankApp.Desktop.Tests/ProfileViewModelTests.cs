@@ -297,6 +297,9 @@ public class ProfileViewModelTests
         const string providerEmail = "user@gmail.com";
         var viewModel = new OAuthViewModel(this.apiClient.Object, NullLogger<OAuthViewModel>.Instance);
         viewModel.OAuthLinks.Add(new OAuthLinkDto { Provider = provider, ProviderEmail = providerEmail });
+        this.apiClient
+            .Setup(client => client.DeleteAsync($"{ApiEndpoints.UnlinkOAuth}/{provider}"))
+            .ReturnsAsync(Result.Success);
 
         // Act
         bool result = await viewModel.UnlinkOAuth(provider);
@@ -311,7 +314,7 @@ public class ProfileViewModelTests
     public async Task UnlinkOAuth_WhenProviderDoesNotExist_ReturnsFalse()
     {
         // Arrange
-        const string provider = "GitHub";
+        const string provider = "Facebook";
         var viewModel = new OAuthViewModel(this.apiClient.Object, NullLogger<OAuthViewModel>.Instance);
 
         // Act

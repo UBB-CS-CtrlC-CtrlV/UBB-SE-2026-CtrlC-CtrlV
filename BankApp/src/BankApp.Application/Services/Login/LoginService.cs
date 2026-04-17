@@ -20,6 +20,7 @@ namespace BankApp.Application.Services.Login;
 /// </summary>
 public class LoginService : ILoginService
 {
+    private static readonly Dictionary<int, int> FailedOtpAttempts = new Dictionary<int, int>();
     private readonly IAuthRepository authRepository;
     private readonly IHashService hashService;
     private readonly IJwtService jwtService;
@@ -28,7 +29,8 @@ public class LoginService : ILoginService
     private readonly ILogger<LoginService> logger;
 
     private const int MaxFailedAttempts = 5;
-    private const int LockoutMinutes = 30;
+    private const int LockoutMinutes = 15;
+    private const int MaxFailedOtpAttempts = 3;
     private const string GoogleOAuthProvider = "Google";
     private const string DefaultLanguage = "en";
     private const string TemporaryPasswordSuffix = "A1a!";
@@ -207,19 +209,28 @@ public class LoginService : ILoginService
 
         User user = userResult.Value;
 
-        ErrorOr<bool> verifyResult = otpService.VerifyTOTP(request.UserId, request.OTPCode);
+        ErrorOr<bool> verifyResult = VerifyOtpForPreferredMethod(user, request.OTPCode);
         if (verifyResult.IsError)
         {
-            logger.LogError("TOTP verification threw for user {UserId}: {Error}", user.Id, verifyResult.FirstError.Description);
+            logger.LogError("OTP verification threw for user {UserId}: {Error}", user.Id, verifyResult.FirstError.Description);
             return verifyResult.FirstError;
         }
 
         if (!verifyResult.Value)
         {
             logger.LogWarning("OTP verification failed for user {UserId}: invalid or expired code.", user.Id);
+            if (TrackFailedOtpAttempt(user.Id) >= MaxFailedOtpAttempts)
+            {
+                otpService.InvalidateOTP(user.Id);
+                FailedOtpAttempts.Remove(user.Id);
+                logger.LogWarning("OTP challenge invalidated for user {UserId} after {MaxAttempts} failed attempts.", user.Id, MaxFailedOtpAttempts);
+                return Error.Unauthorized(code: "otp_attempts_exceeded", description: "Too many incorrect OTP entries. Please restart login.");
+            }
+
             return Error.Unauthorized(code: "invalid_otp", description: "Invalid or expired OTP code.");
         }
 
+        FailedOtpAttempts.Remove(user.Id);
         otpService.InvalidateOTP(user.Id);
         return CompleteLogin(user, metadata);
     }
@@ -236,10 +247,10 @@ public class LoginService : ILoginService
 
         User user = userResult.Value;
 
-        ErrorOr<string> otpResult = otpService.GenerateTOTP(user.Id);
+        ErrorOr<string> otpResult = GenerateOtpForMethod(user);
         if (otpResult.IsError)
         {
-            logger.LogError("TOTP generation failed during resend for user {UserId}: {Error}", user.Id, otpResult.FirstError.Description);
+            logger.LogError("OTP generation failed during resend for user {UserId}: {Error}", user.Id, otpResult.FirstError.Description);
             return otpResult.FirstError;
         }
 
@@ -249,6 +260,7 @@ public class LoginService : ILoginService
             emailService.SendOTPCode(user.Email, otpResult.Value);
         }
 
+        FailedOtpAttempts.Remove(user.Id);
         return Result.Success;
     }
 
@@ -307,10 +319,10 @@ public class LoginService : ILoginService
 
     private ErrorOr<LoginSuccess> Handle2FA(User user)
     {
-        ErrorOr<string> otpResult = otpService.GenerateTOTP(user.Id);
+        ErrorOr<string> otpResult = GenerateOtpForMethod(user);
         if (otpResult.IsError)
         {
-            logger.LogError("TOTP generation failed for user {UserId}: {Error}", user.Id, otpResult.FirstError.Description);
+            logger.LogError("OTP generation failed for user {UserId}: {Error}", user.Id, otpResult.FirstError.Description);
             return otpResult.FirstError;
         }
 
@@ -319,8 +331,31 @@ public class LoginService : ILoginService
             emailService.SendOTPCode(user.Email, otpResult.Value);
         }
 
+        FailedOtpAttempts.Remove(user.Id);
         logger.LogInformation("2FA required for user {UserId} via {Method}.", user.Id, user.Preferred2FAMethod);
         return new RequiresTwoFactor(user.Id);
+    }
+
+    private ErrorOr<string> GenerateOtpForMethod(User user)
+    {
+        return string.Equals(user.Preferred2FAMethod, nameof(TwoFactorMethod.Authenticator), StringComparison.OrdinalIgnoreCase)
+            ? otpService.GenerateTOTP(user.Id)
+            : otpService.GenerateSMSOTP(user.Id);
+    }
+
+    private ErrorOr<bool> VerifyOtpForPreferredMethod(User user, string code)
+    {
+        return string.Equals(user.Preferred2FAMethod, nameof(TwoFactorMethod.Authenticator), StringComparison.OrdinalIgnoreCase)
+            ? otpService.VerifyTOTP(user.Id, code)
+            : otpService.VerifySMSOTP(user.Id, code);
+    }
+
+    private static int TrackFailedOtpAttempt(int userId)
+    {
+        FailedOtpAttempts.TryGetValue(userId, out int attempts);
+        attempts++;
+        FailedOtpAttempts[userId] = attempts;
+        return attempts;
     }
 
     private ErrorOr<LoginSuccess> CompleteLogin(User user, SessionMetadata? metadata)

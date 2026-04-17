@@ -56,7 +56,6 @@ See [`diagrams/architecture.png`](diagrams/architecture.png) for the full layer 
 | Service | Purpose |
 |---|---|
 | Google OAuth | Social login and registration |
-| Other OAuth providers | Additional social login options |
 | SMTP / SendGrid | Email delivery (2FA codes, password reset) |
 | SMS Gateway | SMS-based 2FA codes |
 | Exchange Rate API | Live FX rates for currency exchange |

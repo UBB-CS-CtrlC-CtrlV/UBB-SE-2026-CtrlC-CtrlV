@@ -18,7 +18,7 @@ public class OtpService : IOtpService
     private static readonly Dictionary<int, (string Code, DateTime ExpiryTime)> TemporarySmsStorage = new Dictionary<int, (string Code, DateTime ExpiryTime)>();
     private const int SmsOtpExpiryMinutes = 5;
     private const string FallbackOtpServerSecret = "BankApp-Default-OTP-Secret";
-    internal const int TotpWindowSeconds = 300;
+    internal const int TotpWindowSeconds = 60;
     private const int OtpRangeMinimum = 100000;
     private const int OtpRangeMaximum = 999999;
     private const int OtpModulus = 1000000;

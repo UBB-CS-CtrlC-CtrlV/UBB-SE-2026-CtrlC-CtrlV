@@ -57,6 +57,9 @@ public static class ApiEndpoints
     /// <summary>POST api/profile/oauth/link — link a new OAuth provider.</summary>
     public const string LinkOAuth = "api/profile/oauth/link";
 
+    /// <summary>DELETE api/profile/oauth/{provider} — unlink an OAuth provider.</summary>
+    public const string UnlinkOAuth = "api/profile/oauth";
+
     /// <summary>GET/PUT api/profile/notifications/preferences — load or update notification preferences.</summary>
     public const string NotificationPreferences = "api/profile/notifications/preferences";
 

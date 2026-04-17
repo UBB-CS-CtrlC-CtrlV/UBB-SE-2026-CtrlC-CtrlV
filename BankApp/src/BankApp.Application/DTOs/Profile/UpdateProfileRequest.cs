@@ -11,14 +11,34 @@ public class UpdateProfileRequest
     public int? UserId { get; set; }
 
     /// <summary>
+    /// Gets or sets the new full name.
+    /// </summary>
+    public string? FullName { get; set; }
+
+    /// <summary>
     /// Gets or sets the new phone number.
     /// </summary>
     public string? PhoneNumber { get; set; }
 
     /// <summary>
+    /// Gets or sets the new date of birth.
+    /// </summary>
+    public DateTime? DateOfBirth { get; set; }
+
+    /// <summary>
     /// Gets or sets the new address.
     /// </summary>
     public string? Address { get; set; }
+
+    /// <summary>
+    /// Gets or sets the new nationality.
+    /// </summary>
+    public string? Nationality { get; set; }
+
+    /// <summary>
+    /// Gets or sets the new preferred language.
+    /// </summary>
+    public string? PreferredLanguage { get; set; }
 
     /// <summary>
     /// Initializes a new instance of the <see cref="UpdateProfileRequest"/> class.

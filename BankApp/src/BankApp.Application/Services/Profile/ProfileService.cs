@@ -18,6 +18,8 @@ namespace BankApp.Application.Services.Profile;
 /// </summary>
 public class ProfileService : IProfileService
 {
+    private const string GoogleOAuthProvider = "Google";
+
     private readonly IUserRepository userRepository;
     private readonly IHashService hashService;
     private readonly ILogger<ProfileService> logger;
@@ -67,6 +69,16 @@ public class ProfileService : IProfileService
 
         User user = userResult.Value;
 
+        if (request.FullName != null)
+        {
+            if (string.IsNullOrWhiteSpace(request.FullName))
+            {
+                return Error.Validation(code: "full_name_required", description: "Full name is required.");
+            }
+
+            user.FullName = request.FullName.Trim();
+        }
+
         if (request.PhoneNumber != null)
         {
             if (!ValidationUtilities.IsValidPhoneNumber(request.PhoneNumber))
@@ -77,9 +89,29 @@ public class ProfileService : IProfileService
             user.PhoneNumber = request.PhoneNumber;
         }
 
+        if (request.DateOfBirth != null)
+        {
+            user.DateOfBirth = request.DateOfBirth;
+        }
+
         if (request.Address != null)
         {
-            user.Address = request.Address;
+            user.Address = request.Address.Trim();
+        }
+
+        if (request.Nationality != null)
+        {
+            user.Nationality = request.Nationality.Trim();
+        }
+
+        if (request.PreferredLanguage != null)
+        {
+            if (string.IsNullOrWhiteSpace(request.PreferredLanguage))
+            {
+                return Error.Validation(code: "preferred_language_required", description: "Preferred language is required.");
+            }
+
+            user.PreferredLanguage = request.PreferredLanguage.Trim();
         }
 
         if (userRepository.UpdateUser(user).IsError)
@@ -217,13 +249,78 @@ public class ProfileService : IProfileService
     /// <inheritdoc />
     public ErrorOr<Success> LinkOAuth(int userId, string provider)
     {
-        throw new NotImplementedException();
+        if (!IsSupportedOAuthProvider(provider))
+        {
+            return Error.Validation(code: "unsupported_provider", description: "Only Google OAuth is supported.");
+        }
+
+        ErrorOr<User> userResult = userRepository.FindById(userId);
+        if (userResult.IsError)
+        {
+            logger.LogWarning("OAuth link failed: user {UserId} not found.", userId);
+            return userResult.FirstError;
+        }
+
+        ErrorOr<List<OAuthLink>> linksResult = userRepository.GetLinkedProviders(userId);
+        if (linksResult.IsError)
+        {
+            logger.LogError("Failed to fetch OAuth links for user {UserId}: {Error}", userId, linksResult.FirstError.Description);
+            return linksResult.FirstError;
+        }
+
+        if (linksResult.Value.Any(link => string.Equals(link.Provider, GoogleOAuthProvider, StringComparison.OrdinalIgnoreCase)))
+        {
+            return Error.Conflict(code: "oauth_already_linked", description: "Google OAuth is already linked.");
+        }
+
+        string providerUserId = $"local:{userId}:{GoogleOAuthProvider}";
+        ErrorOr<Success> result = userRepository.SaveOAuthLink(userId, GoogleOAuthProvider, providerUserId, userResult.Value.Email);
+        if (result.IsError)
+        {
+            logger.LogError("Failed to link Google OAuth for user {UserId}: {Error}", userId, result.FirstError.Description);
+            return result.FirstError;
+        }
+
+        return Result.Success;
     }
 
     /// <inheritdoc />
     public ErrorOr<Success> UnlinkOAuth(int userId, string provider)
     {
-        throw new NotImplementedException();
+        if (!IsSupportedOAuthProvider(provider))
+        {
+            return Error.Validation(code: "unsupported_provider", description: "Only Google OAuth is supported.");
+        }
+
+        ErrorOr<User> userResult = userRepository.FindById(userId);
+        if (userResult.IsError)
+        {
+            logger.LogWarning("OAuth unlink failed: user {UserId} not found.", userId);
+            return userResult.FirstError;
+        }
+
+        ErrorOr<List<OAuthLink>> linksResult = userRepository.GetLinkedProviders(userId);
+        if (linksResult.IsError)
+        {
+            logger.LogError("Failed to fetch OAuth links for user {UserId}: {Error}", userId, linksResult.FirstError.Description);
+            return linksResult.FirstError;
+        }
+
+        OAuthLink? link = linksResult.Value.FirstOrDefault(oauthLink =>
+            string.Equals(oauthLink.Provider, GoogleOAuthProvider, StringComparison.OrdinalIgnoreCase));
+        if (link is null)
+        {
+            return Error.NotFound(code: "oauth_link_not_found", description: "Google OAuth is not linked.");
+        }
+
+        ErrorOr<Success> result = userRepository.DeleteOAuthLink(link.Id);
+        if (result.IsError)
+        {
+            logger.LogError("Failed to unlink Google OAuth for user {UserId}: {Error}", userId, result.FirstError.Description);
+            return result.FirstError;
+        }
+
+        return Result.Success;
     }
 
     /// <inheritdoc />
@@ -353,4 +450,7 @@ public class ProfileService : IProfileService
         logger.LogInformation("Session {SessionId} revoked for user {UserId}.", sessionId, userId);
         return Result.Success;
     }
+
+    private static bool IsSupportedOAuthProvider(string provider) =>
+        string.Equals(provider, GoogleOAuthProvider, StringComparison.OrdinalIgnoreCase);
 }

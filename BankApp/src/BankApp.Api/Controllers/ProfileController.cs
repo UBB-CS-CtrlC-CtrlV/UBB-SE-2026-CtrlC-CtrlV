@@ -93,6 +93,30 @@ public class ProfileController : ApiControllerBase
     }
 
     /// <summary>
+    /// Links a supported OAuth provider to the currently authenticated user.
+    /// </summary>
+    /// <param name="request">The provider link request.</param>
+    /// <returns>204 No Content on success, or 400/404/409 if linking fails.</returns>
+    [HttpPost("oauth/link")]
+    public IActionResult LinkOAuth([FromBody] LinkOAuthRequest request)
+    {
+        int userId = this.GetAuthenticatedUserId();
+        return this.ToActionResult(this.profileService.LinkOAuth(userId, request.Provider));
+    }
+
+    /// <summary>
+    /// Unlinks a supported OAuth provider from the currently authenticated user.
+    /// </summary>
+    /// <param name="provider">The provider to unlink.</param>
+    /// <returns>204 No Content on success, or 400/404 if unlinking fails.</returns>
+    [HttpDelete("oauth/{provider}")]
+    public IActionResult UnlinkOAuth(string provider)
+    {
+        int userId = this.GetAuthenticatedUserId();
+        return this.ToActionResult(this.profileService.UnlinkOAuth(userId, provider));
+    }
+
+    /// <summary>
     /// Retrieves the notification preferences of the currently authenticated user.
     /// </summary>
     /// <returns>

@@ -29,8 +29,8 @@ public class AuthService : IAuthService
 
     // TODO: Consider changing or removing default constants
     private const int MaxFailedAttempts = 5;
-    private const int LockoutMinutes = 30;
-    private const int PasswordResetTokenExpiryMinutes = 5;
+    private const int LockoutMinutes = 15;
+    private const int PasswordResetTokenExpiryMinutes = 30;
     private const string GoogleOAuthProvider = "Google";
     private const string DefaultLanguage = "en";
     private const string TemporaryPasswordSuffix = "A1a!";

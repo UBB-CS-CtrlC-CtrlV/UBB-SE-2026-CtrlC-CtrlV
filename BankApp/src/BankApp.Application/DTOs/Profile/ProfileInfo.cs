@@ -28,6 +28,11 @@ public class ProfileInfo
     public string? PhoneNumber { get; set; }
 
     /// <summary>
+    /// Gets or sets the date of birth.
+    /// </summary>
+    public DateTime? DateOfBirth { get; set; }
+
+    /// <summary>
     /// Gets or sets the address.
     /// </summary>
     public string? Address { get; set; }
@@ -36,6 +41,11 @@ public class ProfileInfo
     /// Gets or sets the nationality.
     /// </summary>
     public string? Nationality { get; set; }
+
+    /// <summary>
+    /// Gets or sets the preferred language.
+    /// </summary>
+    public string? PreferredLanguage { get; set; }
 
     /// <summary>
     /// Gets or sets a value indicating whether two-factor authentication is enabled.
@@ -67,8 +77,10 @@ public class ProfileInfo
             Email = user.Email;
             FullName = user.FullName;
             PhoneNumber = user.PhoneNumber;
+            DateOfBirth = user.DateOfBirth;
             Address = user.Address;
             Nationality = user.Nationality;
+            PreferredLanguage = user.PreferredLanguage;
             Is2FAEnabled = user.Is2FAEnabled;
             Preferred2FAMethod = user.Preferred2FAMethod;
         }

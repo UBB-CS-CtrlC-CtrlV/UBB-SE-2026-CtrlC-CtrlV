@@ -108,6 +108,12 @@ public class DashboardServiceTests
                     Status = CardStatus.Active,
                 },
             });
+        this.dashboardRepository
+            .Setup(repository => repository.GetAccountsByUser(userId))
+            .Returns(new List<Account>
+            {
+                new Account { Id = 0, AccountName = "Checking", Balance = 2500 },
+            });
 
         // Act
         ErrorOr<DashboardResponse> result = this.service.GetDashboardData(userId);
@@ -117,6 +123,9 @@ public class DashboardServiceTests
         result.Value.Cards.Should().ContainSingle();
         result.Value.Cards[0].CardholderName.Should().Be("Ada Lovelace");
         result.Value.Cards[0].CardType.Should().Be(CardType.Debit);
+        result.Value.Cards[0].CardNumber.Should().Be("**** **** **** 3456");
+        result.Value.Cards[0].AccountName.Should().Be("Checking");
+        result.Value.Cards[0].AccountBalance.Should().Be(2500);
     }
 
     [Fact]
@@ -271,7 +280,7 @@ public class DashboardServiceTests
 
         // Assert
         result.IsError.Should().BeFalse();
-        result.Value.RecentTransactions.Should().HaveCount(10);
+        result.Value.RecentTransactions.Should().HaveCount(5);
     }
 
     [Fact]

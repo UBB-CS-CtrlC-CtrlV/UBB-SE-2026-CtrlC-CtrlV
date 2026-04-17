@@ -15,7 +15,7 @@ public class DashboardService : IDashboardService
     private readonly IDashboardRepository dashboardRepository;
     private readonly IUserRepository userRepository;
     private readonly ILogger<DashboardService> logger;
-    private const int DefaultRecentTransactionLimit = 10;
+    private const int DefaultRecentTransactionLimit = 5;
 
     /// <summary>
     /// Initializes a new instance of the <see cref="DashboardService"/> class.
@@ -53,9 +53,9 @@ public class DashboardService : IDashboardService
             logger.LogError("Failed to fetch notification count for user {UserId}: {Error}", userId, notifCountResult.FirstError.Description);
         }
 
-        // Fetch accounts first, then get transactions per account
         List<Transaction> allTransactions = new List<Transaction>();
         ErrorOr<List<Account>> accountsResult = dashboardRepository.GetAccountsByUser(userId);
+        Dictionary<int, Account> accountsById = new Dictionary<int, Account>();
 
         if (accountsResult.IsError)
         {
@@ -63,6 +63,7 @@ public class DashboardService : IDashboardService
         }
         else
         {
+            accountsById = accountsResult.Value.ToDictionary(account => account.Id);
             foreach (Account account in accountsResult.Value)
             {
                 ErrorOr<List<Transaction>> transactionsResult = dashboardRepository.GetRecentTransactions(account.Id, DefaultRecentTransactionLimit);
@@ -94,7 +95,7 @@ public class DashboardService : IDashboardService
                 .Select(card => new CardDto
                 {
                     Id = card.Id,
-                    CardNumber = card.CardNumber,
+                    CardNumber = MaskCardNumber(card.CardNumber),
                     CardholderName = card.CardholderName,
                     CardType = card.CardType,
                     CardBrand = card.CardBrand,
@@ -102,6 +103,10 @@ public class DashboardService : IDashboardService
                     Status = card.Status,
                     IsContactlessEnabled = card.IsContactlessEnabled,
                     IsOnlineEnabled = card.IsOnlineEnabled,
+                    AccountName = accountsById.TryGetValue(card.AccountId, out Account? account)
+                        ? account.AccountName
+                        : null,
+                    AccountBalance = account?.Balance,
                 })
                 .ToList(),
             RecentTransactions = allTransactions
@@ -120,5 +125,15 @@ public class DashboardService : IDashboardService
                 .ToList(),
             UnreadNotificationCount = notifCountResult.IsError ? 0 : notifCountResult.Value,
         };
+    }
+
+    private static string MaskCardNumber(string? cardNumber)
+    {
+        if (string.IsNullOrWhiteSpace(cardNumber) || cardNumber.Length < 4)
+        {
+            return "**** **** **** ****";
+        }
+
+        return $"**** **** **** {cardNumber[^4..]}";
     }
 }

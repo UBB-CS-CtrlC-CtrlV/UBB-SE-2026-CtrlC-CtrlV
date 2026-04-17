@@ -41,9 +41,17 @@ public class ProfileServiceTests
         const int userId = 1;
         const string fullName = "Ada Lovelace";
         const string email = "ada@lovelace.com";
+        DateTime dateOfBirth = new DateTime(1815, 12, 10);
         this.userRepository
             .Setup(repository => repository.FindById(userId))
-            .Returns(new User { Id = userId, FullName = fullName, Email = email });
+            .Returns(new User
+            {
+                Id = userId,
+                FullName = fullName,
+                Email = email,
+                DateOfBirth = dateOfBirth,
+                PreferredLanguage = "ro",
+            });
 
         // Act
         ErrorOr<ProfileInfo> result = this.service.GetProfile(userId);
@@ -53,6 +61,8 @@ public class ProfileServiceTests
         result.Value.FullName.Should().Be(fullName);
         result.Value.Email.Should().Be(email);
         result.Value.UserId.Should().Be(userId);
+        result.Value.DateOfBirth.Should().Be(dateOfBirth);
+        result.Value.PreferredLanguage.Should().Be("ro");
     }
 
     [Fact]
@@ -126,15 +136,25 @@ public class ProfileServiceTests
     {
         // Arrange
         const int userId = 1;
+        const string fullName = "Ada Lovelace";
         const string validPhone = "0712345678";
         const string address = "123 Main St";
+        const string nationality = "Romanian";
+        const string preferredLanguage = "ro";
+        DateTime dateOfBirth = new DateTime(1815, 12, 10);
         this.userRepository
             .Setup(repository => repository.FindById(userId))
             .Returns(new User { Id = userId, Email = "ada@test.com", FullName = "Ada" });
         this.userRepository
             .Setup(repository => repository.UpdateUser(It.IsAny<User>()))
             .Returns(Result.Success);
-        var request = new UpdateProfileRequest(userId, validPhone, address);
+        var request = new UpdateProfileRequest(userId, validPhone, address)
+        {
+            FullName = fullName,
+            DateOfBirth = dateOfBirth,
+            Nationality = nationality,
+            PreferredLanguage = preferredLanguage,
+        };
 
         // Act
         ErrorOr<Success> result = this.service.UpdatePersonalInfo(request);
@@ -143,8 +163,71 @@ public class ProfileServiceTests
         result.IsError.Should().BeFalse();
         this.userRepository.Verify(
             repository => repository.UpdateUser(It.Is<User>(user =>
-                user.PhoneNumber == validPhone && user.Address == address)),
+                user.FullName == fullName &&
+                user.PhoneNumber == validPhone &&
+                user.DateOfBirth == dateOfBirth &&
+                user.Address == address &&
+                user.Nationality == nationality &&
+                user.PreferredLanguage == preferredLanguage)),
             Times.Once);
+    }
+
+    [Fact]
+    public void LinkOAuth_WhenGoogleIsNotLinked_SavesGoogleLink()
+    {
+        // Arrange
+        const int userId = 1;
+        this.userRepository
+            .Setup(repository => repository.FindById(userId))
+            .Returns(new User { Id = userId, Email = "ada@test.com" });
+        this.userRepository
+            .Setup(repository => repository.GetLinkedProviders(userId))
+            .Returns(new List<OAuthLink>());
+        this.userRepository
+            .Setup(repository => repository.SaveOAuthLink(userId, "Google", It.IsAny<string>(), "ada@test.com"))
+            .Returns(Result.Success);
+
+        // Act
+        ErrorOr<Success> result = this.service.LinkOAuth(userId, "Google");
+
+        // Assert
+        result.IsError.Should().BeFalse();
+        this.userRepository.Verify(repository => repository.SaveOAuthLink(userId, "Google", It.IsAny<string>(), "ada@test.com"), Times.Once);
+    }
+
+    [Fact]
+    public void LinkOAuth_WhenProviderIsUnsupported_ReturnsValidationError()
+    {
+        // Act
+        ErrorOr<Success> result = this.service.LinkOAuth(1, "Facebook");
+
+        // Assert
+        result.IsError.Should().BeTrue();
+        result.FirstError.Code.Should().Be("unsupported_provider");
+    }
+
+    [Fact]
+    public void UnlinkOAuth_WhenGoogleIsLinked_DeletesLink()
+    {
+        // Arrange
+        const int userId = 1;
+        const int linkId = 7;
+        this.userRepository
+            .Setup(repository => repository.FindById(userId))
+            .Returns(new User { Id = userId });
+        this.userRepository
+            .Setup(repository => repository.GetLinkedProviders(userId))
+            .Returns(new List<OAuthLink> { new OAuthLink { Id = linkId, Provider = "Google" } });
+        this.userRepository
+            .Setup(repository => repository.DeleteOAuthLink(linkId))
+            .Returns(Result.Success);
+
+        // Act
+        ErrorOr<Success> result = this.service.UnlinkOAuth(userId, "Google");
+
+        // Assert
+        result.IsError.Should().BeFalse();
+        this.userRepository.Verify(repository => repository.DeleteOAuthLink(linkId), Times.Once);
     }
 
     [Fact]

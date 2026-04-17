@@ -83,18 +83,14 @@ public class OAuthViewModel
 
         this.State.SetValue(ProfileState.Loading);
 
-        var request = new { Provider = provider.Trim() };
-        var result = await this.apiClient.PostAsync<object, bool>(ApiEndpoints.LinkOAuth, request);
+        string trimmedProvider = provider.Trim();
+        var request = new { Provider = trimmedProvider };
+        ErrorOr<Success> result = await this.apiClient.PostAsync(ApiEndpoints.LinkOAuth, request);
 
         return result.Match(
-            linked =>
+            _ =>
             {
-                if (!linked)
-                {
-                    this.State.SetValue(ProfileState.Error);
-                    return false;
-                }
-
+                this.OAuthLinks.Add(new OAuthLinkDto { Provider = trimmedProvider });
                 this.State.SetValue(ProfileState.UpdateSuccess);
                 return true;
             },
@@ -111,22 +107,31 @@ public class OAuthViewModel
     /// </summary>
     /// <param name="provider">The provider to remove.</param>
     /// <returns><see langword="true"/> if the provider was removed; otherwise, <see langword="false"/>.</returns>
-    public Task<bool> UnlinkOAuth(string provider)
+    public async Task<bool> UnlinkOAuth(string provider)
     {
         if (string.IsNullOrWhiteSpace(provider))
         {
-            return Task.FromResult(false);
+            return false;
         }
 
         OAuthLinkDto? existing = this.OAuthLinks.Find(o =>
             string.Equals(o.Provider, provider, StringComparison.OrdinalIgnoreCase));
         if (existing == null)
         {
-            return Task.FromResult(false);
+            return false;
+        }
+
+        this.State.SetValue(ProfileState.Loading);
+        ErrorOr<Success> result = await this.apiClient.DeleteAsync($"{ApiEndpoints.UnlinkOAuth}/{Uri.EscapeDataString(provider.Trim())}");
+        if (result.IsError)
+        {
+            this.logger.LogError("UnlinkOAuth failed: {Errors}", result.Errors);
+            this.State.SetValue(ProfileState.Error);
+            return false;
         }
 
         this.OAuthLinks.Remove(existing);
         this.State.SetValue(ProfileState.UpdateSuccess);
-        return Task.FromResult(true);
+        return true;
     }
 }
