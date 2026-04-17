@@ -1,18 +1,13 @@
-using System;
-using System.Threading.Tasks;
-using ErrorOr;
 using BankApp.Application.DTOs.Auth;
-using BankApp.Domain.Entities;
 using BankApp.Application.Repositories.Interfaces;
 using BankApp.Application.Services.Auth;
 using BankApp.Application.Services.Notifications;
 using BankApp.Application.Services.Security;
-using FluentAssertions;
+using BankApp.Domain.Entities;
+using ErrorOr;
 using Microsoft.Extensions.Logging.Abstractions;
-using Moq;
-using Xunit;
 
-namespace BankApp.Application.Tests.Unit;
+namespace BankApp.Application.Tests.Services;
 
 public sealed class AuthServiceTests
 {
