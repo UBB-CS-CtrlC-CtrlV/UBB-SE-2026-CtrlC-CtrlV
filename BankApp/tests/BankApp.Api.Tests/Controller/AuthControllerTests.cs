@@ -44,10 +44,11 @@ public sealed class AuthControllerTests
     public void Login_WhenSuccessWithFullLogin_ReturnsOkWithToken()
     {
         // Arrange
+        var validUserId = 1;
         var request = new LoginRequest { Email = "user@test.com", Password = "Pass123!" };
         this.loginService
             .Setup(service => service.Login(request, It.IsAny<SessionMetadata?>()))
-            .Returns((ErrorOr<LoginSuccess>)new FullLogin(1, "jwt-token"));
+            .Returns((ErrorOr<LoginSuccess>)new FullLogin(validUserId, "jwt-token"));
         AuthController controller = this.CreateController();
 
         // Act
@@ -62,10 +63,11 @@ public sealed class AuthControllerTests
     public void Login_WhenRequires2FA_ReturnsOk()
     {
         // Arrange
+        var validUserId = 1;
         var request = new LoginRequest { Email = "user@test.com", Password = "Pass123!" };
         this.loginService
             .Setup(service => service.Login(request, It.IsAny<SessionMetadata?>()))
-            .Returns((ErrorOr<LoginSuccess>)new RequiresTwoFactor(1));
+            .Returns((ErrorOr<LoginSuccess>)new RequiresTwoFactor(validUserId));
         AuthController controller = this.CreateController();
 
         // Act
@@ -115,10 +117,11 @@ public sealed class AuthControllerTests
     public void Login_WhenUnexpectedSuccessType_ReturnsInternalServerError()
     {
         // Arrange
+        var validUserId = 1;
         var request = new LoginRequest { Email = "user@test.com", Password = "Pass123!" };
         this.loginService
             .Setup(service => service.Login(request, It.IsAny<SessionMetadata?>()))
-            .Returns((ErrorOr<LoginSuccess>)new UnexpectedLoginSuccess(1));
+            .Returns((ErrorOr<LoginSuccess>)new UnexpectedLoginSuccess(validUserId));
         AuthController controller = this.CreateController();
 
         // Act
@@ -183,10 +186,11 @@ public sealed class AuthControllerTests
     public void VerifyOTP_WhenSuccess_ReturnsOk()
     {
         // Arrange
-        var request = new VerifyOTPRequest { UserId = 1, OTPCode = "123456" };
+        var validUserId = 1;
+        var request = new VerifyOTPRequest { UserId = validUserId, OTPCode = "123456" };
         this.loginService
             .Setup(service => service.VerifyOTP(request, It.IsAny<SessionMetadata?>()))
-            .Returns((ErrorOr<LoginSuccess>)new FullLogin(1, "jwt-token"));
+            .Returns((ErrorOr<LoginSuccess>)new FullLogin(validUserId, "jwt-token"));
         AuthController controller = this.CreateController();
 
         // Act
@@ -200,7 +204,8 @@ public sealed class AuthControllerTests
     public void VerifyOTP_WhenInvalidOTP_ReturnsUnauthorized()
     {
         // Arrange
-        var request = new VerifyOTPRequest { UserId = 1, OTPCode = "000000" };
+        var validUserId = 1;
+        var request = new VerifyOTPRequest { UserId = validUserId, OTPCode = "000000" };
         this.loginService
             .Setup(service => service.VerifyOTP(request, It.IsAny<SessionMetadata?>()))
             .Returns(Error.Unauthorized("invalid_otp", "Invalid OTP."));
@@ -335,11 +340,12 @@ public sealed class AuthControllerTests
     public void ResendOTP_AlwaysReturnsOk()
     {
         // Arrange
-        this.loginService.Setup(service => service.ResendOTP(1, "email")).Returns(Result.Success);
+        var validUserId = 1;
+        this.loginService.Setup(service => service.ResendOTP(validUserId, "email")).Returns(Result.Success);
         AuthController controller = this.CreateController();
 
         // Act
-        IActionResult result = controller.ResendOTP(1, "email");
+        IActionResult result = controller.ResendOTP(validUserId, "email");
 
         // Assert
         result.Should().BeOfType<OkObjectResult>();
@@ -378,10 +384,11 @@ public sealed class AuthControllerTests
     public async Task OAuthLogin_WhenSuccess_ReturnsOk()
     {
         // Arrange
+        var validUserId = 1;
         var request = new OAuthLoginRequest { Provider = "Google", ProviderToken = "google-token" };
         this.loginService
             .Setup(service => service.OAuthLoginAsync(request, It.IsAny<SessionMetadata?>()))
-            .ReturnsAsync((ErrorOr<LoginSuccess>)new FullLogin(1, "jwt-token"));
+            .ReturnsAsync((ErrorOr<LoginSuccess>)new FullLogin(validUserId, "jwt-token"));
         AuthController controller = this.CreateController();
 
         // Act
