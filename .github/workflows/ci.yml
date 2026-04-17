@@ -109,9 +109,17 @@ jobs:
           dotnet test BankApp/tests/BankApp.Desktop.Tests/BankApp.Desktop.Tests.csproj --no-restore --configuration Release --logger "trx;LogFileName=desktop-tests.trx" --results-directory BankApp/test-results
           Get-ChildItem -Path BankApp/test-results -Recurse
 
+      - name: Upload desktop test results
+        uses: actions/upload-artifact@v4
+        if: always()
+        with:
+          name: desktop-test-results
+          path: BankApp/test-results
+          if-no-files-found: warn
+
       - name: Publish test results
         uses: dorny/test-reporter@v1
-        if: always()
+        if: always() && hashFiles('BankApp/test-results/**/*.trx') != ''
         with:
           name: Desktop Test Results
           path: BankApp/test-results/**/*.trx
