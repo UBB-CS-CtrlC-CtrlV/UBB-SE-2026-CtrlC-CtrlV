@@ -66,8 +66,10 @@ public class LoginViewModel
     /// <param name="email">The email address entered by the user.</param>
     /// <param name="password">The password entered by the user.</param>
     /// <returns><see langword="true"/> if the inputs are sufficient to attempt login.</returns>
-    public bool CanLogin(string email, string password) =>
-        !string.IsNullOrWhiteSpace(email) && !string.IsNullOrWhiteSpace(password);
+    public bool CanLogin(string email, string password)
+    {
+        return !string.IsNullOrWhiteSpace(email) && !string.IsNullOrWhiteSpace(password);
+    }
 
     /// <summary>
     /// Attempts to sign in with the provided email address and password.
