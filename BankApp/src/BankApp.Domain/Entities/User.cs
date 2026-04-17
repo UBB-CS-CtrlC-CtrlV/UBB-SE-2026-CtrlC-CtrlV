@@ -6,6 +6,11 @@ namespace BankApp.Domain.Entities;
 public class User
 {
     /// <summary>
+    /// The default preferred language assigned to new users.
+    /// </summary>
+    public const string DefaultPreferredLanguage = "en";
+
+    /// <summary>
     /// Gets or sets the unique identifier for the user.
     /// </summary>
     public int Id { get; set; }
@@ -48,7 +53,7 @@ public class User
     /// <summary>
     /// Gets or sets the preferred language of the user.
     /// </summary>
-    public string PreferredLanguage { get; set; } = "en";
+    public string PreferredLanguage { get; set; } = DefaultPreferredLanguage;
 
     /// <summary>
     /// Gets or sets a value indicating whether two-factor authentication is enabled.

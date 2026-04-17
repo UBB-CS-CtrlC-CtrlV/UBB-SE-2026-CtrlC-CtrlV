@@ -6,6 +6,11 @@ namespace BankApp.Domain.Entities;
 public class Account
 {
     /// <summary>
+    /// The default status assigned to newly created accounts.
+    /// </summary>
+    public const string DefaultAccountStatus = "Active";
+
+    /// <summary>
     /// Gets or sets the unique identifier for the account.
     /// </summary>
     public int Id { get; set; }
@@ -43,7 +48,7 @@ public class Account
     /// <summary>
     /// Gets or sets the status of the account.
     /// </summary>
-    public string Status { get; set; } = "Active";
+    public string Status { get; set; } = DefaultAccountStatus;
 
     /// <summary>
     /// Gets or sets the date and time when the account was created.
