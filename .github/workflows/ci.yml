@@ -1,10 +1,12 @@
 name: CI
 
 on:
-  push:
-    branches: ['**']
   pull_request:
     branches: [main]
+
+concurrency:
+  group: ci-${{ github.event.pull_request.number }}
+  cancel-in-progress: true
 
 jobs:
   backend:
@@ -101,12 +103,12 @@ jobs:
             ${{ runner.os }}-nuget-
 
       - name: Restore dependencies
-        run: dotnet restore BankApp/tests/BankApp.Desktop.Tests/BankApp.Desktop.Tests.csproj
+        run: dotnet restore BankApp/tests/BankApp.Desktop.Tests/BankApp.Desktop.Tests.csproj /p:PublishReadyToRun=false /p:PublishTrimmed=false
 
       - name: Test
         run: |
           New-Item -ItemType Directory -Force -Path BankApp/test-results
-          dotnet test BankApp/tests/BankApp.Desktop.Tests/BankApp.Desktop.Tests.csproj --no-restore --configuration Release --logger "trx;LogFileName=desktop-tests.trx" --results-directory BankApp/test-results
+          dotnet test BankApp/tests/BankApp.Desktop.Tests/BankApp.Desktop.Tests.csproj --no-restore --configuration Release /p:PublishReadyToRun=false /p:PublishTrimmed=false --logger "trx;LogFileName=desktop-tests.trx" --results-directory BankApp/test-results
           Get-ChildItem -Path BankApp/test-results -Recurse
 
       - name: Upload desktop test results
