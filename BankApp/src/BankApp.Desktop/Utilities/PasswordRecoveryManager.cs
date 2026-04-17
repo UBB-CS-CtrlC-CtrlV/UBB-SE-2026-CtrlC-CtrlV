@@ -28,7 +28,7 @@ public class PasswordRecoveryManager : IPasswordRecoveryManager
     /// <summary>
     /// Initializes a new instance of the <see cref="PasswordRecoveryManager"/> class.
     /// </summary>
-    /// <param name="apiClient">The HTTP client used to reach the auth API.</param>
+    /// <param name="apiClient">The HTTP client used to reach the auth API.</param> // To Do: Change to auth
     /// <param name="clock">The system clock abstraction used for throttle calculations.</param>
     /// <exception cref="ArgumentNullException">Thrown when any parameter is null.</exception>
     public PasswordRecoveryManager(IApiClient apiClient, ISystemClock clock)

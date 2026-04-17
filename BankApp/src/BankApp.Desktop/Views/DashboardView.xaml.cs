@@ -279,7 +279,7 @@ public sealed partial class DashboardView : IStateObserver<DashboardState>
         {
             Title = title,
             Content = message,
-            CloseButtonText = "OK",
+            CloseButtonText = "OK", // To Do: Change to OK
             XamlRoot = this.XamlRoot,
         };
         await dialog.ShowAsync();

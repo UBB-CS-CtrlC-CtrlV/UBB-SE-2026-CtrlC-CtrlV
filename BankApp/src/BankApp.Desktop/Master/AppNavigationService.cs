@@ -13,7 +13,7 @@ namespace BankApp.Desktop.Master;
 /// history.
 /// </summary>
 /// <remarks>
-/// Pages are resolved through the DI container so that their constructor dependencies
+/// Pages are resolved through the DI container so that their constructor dependencies // To Do: Change to DI
 /// (e.g. view models) are injected automatically. Navigation is performed by setting
 /// the Frame.Content property directly rather than calling <see cref="Frame.Navigate(Type)"/>,
 /// because the latter instantiates pages via reflection and bypasses the container.
@@ -29,7 +29,7 @@ public class AppNavigationService : IAppNavigationService
     /// Initializes a new instance of the <see cref="AppNavigationService"/> class.
     /// </summary>
     /// <param name="serviceProvider">
-    /// The DI container used to resolve page instances with their injected dependencies.
+    /// The DI container used to resolve page instances with their injected dependencies. // To Do: Change to DI
     /// </param>
     public AppNavigationService(IServiceProvider serviceProvider)
     {

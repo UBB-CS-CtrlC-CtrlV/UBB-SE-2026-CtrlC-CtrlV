@@ -10,28 +10,28 @@ namespace BankApp.Desktop.Utilities;
 public static class ApiEndpoints
 {
     /// <summary>POST api/auth/login — credential login.</summary>
-    public const string Login = "api/auth/login";
+    public const string Login = "api/auth/login"; // To Do: Change to auth
 
     /// <summary>POST api/auth/oauth-login — OAuth provider login or registration.</summary>
-    public const string OAuthLogin = "api/auth/oauth-login";
+    public const string OAuthLogin = "api/auth/oauth-login"; // To Do: Change to auth, oauth (OAuth)
 
     /// <summary>POST api/auth/register — new account registration.</summary>
-    public const string Register = "api/auth/register";
+    public const string Register = "api/auth/register"; // To Do: Change to auth
 
     /// <summary>POST api/auth/forgot-password — request a password-reset code.</summary>
-    public const string ForgotPassword = "api/auth/forgot-password";
+    public const string ForgotPassword = "api/auth/forgot-password"; // To Do: Change to auth
 
     /// <summary>POST api/auth/verify-reset-token — validate a password-reset token.</summary>
-    public const string VerifyResetToken = "api/auth/verify-reset-token";
+    public const string VerifyResetToken = "api/auth/verify-reset-token"; // To Do: Change to auth
 
     /// <summary>POST api/auth/reset-password — apply a new password via reset token.</summary>
-    public const string ResetPassword = "api/auth/reset-password";
+    public const string ResetPassword = "api/auth/reset-password"; // To Do: Change to auth
 
     /// <summary>POST api/auth/verify-otp — submit a one-time password for 2FA.</summary>
-    public const string VerifyOtp = "api/auth/verify-otp";
+    public const string VerifyOtp = "api/auth/verify-otp"; // To Do: Change to auth, otp (Otp)
 
     /// <summary>POST api/auth/resend-otp — request a new OTP code.</summary>
-    public const string ResendOtp = "api/auth/resend-otp";
+    public const string ResendOtp = "api/auth/resend-otp"; // To Do: Change to auth, otp (Otp)
 
     /// <summary>GET api/dashboard/ — load the authenticated user's dashboard data.</summary>
     public const string Dashboard = "api/dashboard/";
@@ -46,19 +46,19 @@ public static class ApiEndpoints
     public const string ChangePassword = "api/profile/password";
 
     /// <summary>PUT api/profile/2fa/enable — enable two-factor authentication.</summary>
-    public const string Enable2Fa = "api/profile/2fa/enable";
+    public const string Enable2Fa = "api/profile/2fa/enable"; // To Do: Change to 2fa (2Fa)
 
     /// <summary>PUT api/profile/2fa/disable — disable two-factor authentication.</summary>
-    public const string Disable2Fa = "api/profile/2fa/disable";
+    public const string Disable2Fa = "api/profile/2fa/disable"; // To Do: Change to 2fa (2Fa)
 
     /// <summary>GET api/profile/oauth-links — list linked OAuth providers.</summary>
-    public const string OAuthLinks = "api/profile/oauth-links";
+    public const string OAuthLinks = "api/profile/oauth-links"; // To Do: Change to oauth (OAuth)
 
     /// <summary>POST api/profile/oauth/link — link a new OAuth provider.</summary>
-    public const string LinkOAuth = "api/profile/oauth/link";
+    public const string LinkOAuth = "api/profile/oauth/link"; // To Do: Change to oauth (OAuth)
 
     /// <summary>DELETE api/profile/oauth/{provider} — unlink an OAuth provider.</summary>
-    public const string UnlinkOAuth = "api/profile/oauth";
+    public const string UnlinkOAuth = "api/profile/oauth"; // To Do: Change to oauth (OAuth)
 
     /// <summary>GET/PUT api/profile/notifications/preferences — load or update notification preferences.</summary>
     public const string NotificationPreferences = "api/profile/notifications/preferences";

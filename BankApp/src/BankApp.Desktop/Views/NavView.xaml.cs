@@ -22,9 +22,9 @@ public sealed partial class NavView
     private const int MaximumInlineNotificationBadgeCount = 99;
     private const string OverflowNotificationBadgeText = "99+";
 
-    private readonly List<Button> navButtons;
+    private readonly List<Button> navButtons; // To Do: Change to nav
 
-    private Button? activeNavButton;
+    private Button? activeNavButton; // To Do: Change to nav
 
     private readonly IAppNavigationService navigationService;
     private readonly IApiClient apiClient;
@@ -40,9 +40,9 @@ public sealed partial class NavView
         Current = this;
         this.navButtons =
         [
-            this.NavDashboard, this.NavTransfers, this.NavBillPayments, this.NavCards,
+            this.NavDashboard, this.NavTransfers, this.NavBillPayments, this.NavCards, // To Do: Change to Nav
             this.NavTransferHistory, this.NavCurrencyExchange, this.NavSavings,
-            this.NavInvestments, this.NavStatistics, this.NavSupport, this.NavProfile
+            this.NavInvestments, this.NavStatistics, this.NavSupport, this.NavProfile // To Do: Change to Nav
         ];
         this.apiClient = apiClient;
         this.navigationService = navigationService;
@@ -85,15 +85,15 @@ public sealed partial class NavView
         {
             Title = feature,
             Content = $"{feature} is coming soon.",
-            CloseButtonText = "OK",
+            CloseButtonText = "OK", // To Do: Change to OK
             XamlRoot = this.XamlRoot,
         };
         await dialog.ShowAsync();
     }
 
-    private void SetActiveNav(Button selected)
+    private void SetActiveNav(Button selected) // To Do: Change to Nav
     {
-        foreach (var button in this.navButtons)
+        foreach (var button in this.navButtons) // To Do: Change to nav
         {
             button.Style = (Style)this.Resources["NavItemStyle"];
         }
@@ -102,20 +102,20 @@ public sealed partial class NavView
         this.activeNavButton = selected;
     }
 
-    private void NavDashboard_Click(object sender, RoutedEventArgs e)
+    private void NavDashboard_Click(object sender, RoutedEventArgs e) // To Do: Change to Nav
     {
-        this.SetActiveNav(this.NavDashboard);
+        this.SetActiveNav(this.NavDashboard); // To Do: Change to Nav
         this.navigationService.NavigateToContent<DashboardView>();
     }
 
-    private void NavProfile_Click(object sender, RoutedEventArgs e)
+    private void NavProfile_Click(object sender, RoutedEventArgs e) // To Do: Change to Nav
     {
-        this.SetActiveNav(this.NavProfile);
+        this.SetActiveNav(this.NavProfile); // To Do: Change to Nav
         this.navigationService.NavigateToContent<ProfileView>();
     }
 
     // All other nav items show a coming soon alert
-    private async void NavTransfers_Click(object sender, RoutedEventArgs e) =>
+    private async void NavTransfers_Click(object sender, RoutedEventArgs e) => // To Do: Change to Nav
         await this.ShowComingSoonAsync("Transfers");
 
     private async void NavBillPayments_Click(object sender, RoutedEventArgs e) =>
@@ -155,7 +155,7 @@ public sealed partial class NavView
     {
         try
         {
-            await this.apiClient.PostAsync<object>("/api/auth/logout", new { });
+            await this.apiClient.PostAsync<object>("/api/auth/logout", new { }); // To Do: Change to auth
         }
         catch
         {
@@ -171,7 +171,7 @@ public sealed partial class NavView
         {
             Title = title,
             Content = message,
-            CloseButtonText = "OK",
+            CloseButtonText = "OK", // To Do: Change to OK
             XamlRoot = this.XamlRoot,
         };
 

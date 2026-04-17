@@ -128,7 +128,7 @@ public class RegisterViewModel
             string redirectUri = this.configuration["OAuth:Google:RedirectUri"]
                 ?? throw new InvalidOperationException("OAuth:Google:RedirectUri is missing from configuration.");
 
-            Duende.IdentityModel.OidcClient.OidcClientOptions options = new Duende.IdentityModel.OidcClient.OidcClientOptions
+            Duende.IdentityModel.OidcClient.OidcClientOptions options = new Duende.IdentityModel.OidcClient.OidcClientOptions // To Do: Change to Oidc
             {
                 Authority = authority,
                 ClientId = clientId,
@@ -139,7 +139,7 @@ public class RegisterViewModel
             };
             options.Policy.Discovery.ValidateEndpoints = false;
 
-            Duende.IdentityModel.OidcClient.OidcClient oidcClient = new Duende.IdentityModel.OidcClient.OidcClient(options);
+            Duende.IdentityModel.OidcClient.OidcClient oidcClient = new Duende.IdentityModel.OidcClient.OidcClient(options); // To Do: Change to Oidc
             Duende.IdentityModel.OidcClient.LoginResult loginResult = await oidcClient.LoginAsync(new Duende.IdentityModel.OidcClient.LoginRequest());
             if (loginResult.IsError)
             {
@@ -170,7 +170,7 @@ public class RegisterViewModel
         }
         catch (Exception exception)
         {
-            this.logger.LogError(exception, "OAuthRegister OIDC flow failed.");
+            this.logger.LogError(exception, "OAuthRegister OIDC flow failed."); // To Do: Change to OAuth, OIDC
             this.State.SetValue(RegisterState.Error);
         }
     }

@@ -46,7 +46,7 @@ public partial class App
         var serviceCollection = new ServiceCollection();
 
         // AddLogging registers ILoggerFactory and ILogger<T> in the container.
-        // AddSerilog bridges the MEL abstraction to the Serilog backend configured above.
+        // AddSerilog bridges the MEL abstraction to the Serilog backend configured above. // To Do: Change to MEL
         // dispose: true ensures Serilog flushes when the container is disposed.
         serviceCollection.AddLogging(logging => logging.AddSerilog(dispose: true));
 
@@ -56,7 +56,7 @@ public partial class App
     }
 
     /// <summary>
-    /// Gets the application-wide DI container.
+    /// Gets the application-wide DI container. // To Do: Change to DI
     /// Only resolve services at the composition root boundary (that is in <see cref="OnLaunched"/>).
     /// All other classes must receive their dependencies via constructor injection.
     /// </summary>

@@ -9,7 +9,7 @@ using System.ComponentModel;
 using System.Runtime.CompilerServices;
 using System.Threading.Tasks;
 using BankApp.Desktop.Utilities;
-using BankApp.Application.DataTransferObjects.Auth;
+using BankApp.Application.DataTransferObjects.Auth; // To Do: Change to Auth
 using BankApp.Desktop.Enums;
 using ErrorOr;
 using Microsoft.Extensions.Logging;
@@ -17,7 +17,7 @@ using Microsoft.Extensions.Logging;
 namespace BankApp.Desktop.ViewModels;
 
 /// <summary>
-/// Coordinates OTP verification and resend operations for the two-factor authentication flow.
+/// Coordinates OTP verification and resend operations for the two-factor authentication flow. // To Do: Change to OTP
 /// Owns the resend-countdown state and exposes observable properties that the view
 /// binds to directly via <c>{x:Bind}</c>, keeping all business decisions out of the
 /// code-behind.
@@ -46,7 +46,7 @@ public partial class TwoFactorViewModel : INotifyPropertyChanged
     /// An injectable timer abstraction. Pass a <see cref="DispatcherCountdownTimer"/>
     /// in production or a test double in unit tests.
     /// </param>
-    /// <param name="logger">Logger for OTP verification and resend errors.</param>
+    /// <param name="logger">Logger for OTP verification and resend errors.</param> // To Do: Change to OTP
     public TwoFactorViewModel(IApiClient apiClient, ICountdownTimer countdownTimer, ILogger<TwoFactorViewModel> logger)
     {
         this.apiClient = apiClient ?? throw new ArgumentNullException(nameof(apiClient));
@@ -69,7 +69,7 @@ public partial class TwoFactorViewModel : INotifyPropertyChanged
     // ─── Input ────────────────────────────────────────────────────────────────
 
     /// <summary>
-    /// Gets or sets the OTP code typed by the user.
+    /// Gets or sets the OTP code typed by the user. // To Do: Change to OTP
     /// Set by the view via a <c>TextChanged</c> handler — no Two-Way binding needed.
     /// </summary>
     public string OtpCode
@@ -112,7 +112,7 @@ public partial class TwoFactorViewModel : INotifyPropertyChanged
     }
 
     /// <summary>
-    /// Gets a value indicating whether the OTP input and verify button are enabled.
+    /// Gets a value indicating whether the OTP input and verify button are enabled. // To Do: Change to OTP
     /// Binds to both <c>OtpBox.IsEnabled</c> and <c>VerifyButton.IsEnabled</c>.
     /// </summary>
     public bool IsInputEnabled => !this.isLoading && !this.isLocked;
@@ -177,14 +177,14 @@ public partial class TwoFactorViewModel : INotifyPropertyChanged
     // ─── Commands ─────────────────────────────────────────────────────────────
 
     /// <summary>
-    /// Validates and submits the current <see cref="OtpCode"/> to the API.
+    /// Validates and submits the current <see cref="OtpCode"/> to the API. // To Do: Change to OTP
     /// Length validation (6 digits) is enforced here — not in the view.
     /// Sets <see cref="TwoFactorState.Success"/> on a valid code, or
     /// <see cref="TwoFactorState.InvalidOTP"/> when the code is rejected or the
     /// session has expired.
     /// </summary>
     /// <returns>A <see cref="Task"/> representing the asynchronous operation.</returns>
-    public async Task VerifyOtp()
+    public async Task VerifyOtp() // To Do: Change to OTP
     {
         this.ClearError();
 
@@ -204,13 +204,13 @@ public partial class TwoFactorViewModel : INotifyPropertyChanged
             return;
         }
 
-        var request = new VerifyOTPRequest
+        var request = new VerifyOTPRequest // To Do: Change to OTP
         {
             UserId = userId.Value,
-            OTPCode = this.OtpCode,
+            OTPCode = this.OtpCode, // To Do: Change to OTP
         };
 
-        var result = await this.apiClient.PostAsync<VerifyOTPRequest, LoginSuccessResponse>(
+        var result = await this.apiClient.PostAsync<VerifyOTPRequest, LoginSuccessResponse>( // To Do: Change to OTP
             ApiEndpoints.VerifyOtp, request);
 
         result.Switch(
@@ -232,14 +232,14 @@ public partial class TwoFactorViewModel : INotifyPropertyChanged
     }
 
     /// <summary>
-    /// Requests a new OTP for the current user.
+    /// Requests a new OTP for the current user. // To Do: Change to OTP
     /// Does nothing if <see cref="CanResend"/> is <see langword="false"/> —
     /// the view may call this unconditionally and the guard here prevents
     /// duplicate or premature API calls.
     /// Failures are logged but do not change the view state; resend is best-effort.
     /// </summary>
     /// <returns>A <see cref="Task"/> representing the asynchronous operation.</returns>
-    public async Task ResendOtp()
+    public async Task ResendOtp() // To Do: Change to OTP
     {
         if (!this.CanResend)
         {
@@ -283,7 +283,7 @@ public partial class TwoFactorViewModel : INotifyPropertyChanged
     {
         this.IsLoading = false;
         this.SetError(UserMessages.TwoFactor.IncorrectCode);
-        this.State.SetValue(TwoFactorState.InvalidOTP);
+        this.State.SetValue(TwoFactorState.InvalidOTP); // To Do: Change to OTP
     }
 
     private void SetError(string message)

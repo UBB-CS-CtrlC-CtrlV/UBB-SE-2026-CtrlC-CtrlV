@@ -14,7 +14,7 @@ namespace BankApp.Desktop.ViewModels;
 
 /// <summary>
 /// Coordinates profile-related operations by delegating to specialised sub-ViewModels
-/// for personal info, security, OAuth, notifications, and sessions.
+/// for personal info, security, OAuth, notifications, and sessions. // To Do: Change to OAuth
 /// </summary>
 public class ProfileViewModel
 {
@@ -26,21 +26,21 @@ public class ProfileViewModel
     /// </summary>
     /// <param name="personalInfo">The personal info sub-ViewModel.</param>
     /// <param name="security">The security sub-ViewModel.</param>
-    /// <param name="oAuth">The OAuth sub-ViewModel.</param>
+    /// <param name="oAuth">The OAuth sub-ViewModel.</param> // To Do: Change to OAuth
     /// <param name="notifications">The notifications sub-ViewModel.</param>
     /// <param name="sessions">The sessions sub-ViewModel.</param>
     /// <param name="logger">Logger for profile coordination errors.</param>
     public ProfileViewModel(
         PersonalInfoViewModel personalInfo,
         SecurityViewModel security,
-        OAuthViewModel oAuth,
+        OAuthViewModel oAuth, // To Do: Change to OAuth
         NotificationsViewModel notifications,
         SessionsViewModel sessions,
         ILogger<ProfileViewModel> logger)
     {
         this.PersonalInfo = personalInfo ?? throw new ArgumentNullException(nameof(personalInfo));
         this.Security = security ?? throw new ArgumentNullException(nameof(security));
-        this.OAuth = oAuth ?? throw new ArgumentNullException(nameof(oAuth));
+        this.OAuth = oAuth ?? throw new ArgumentNullException(nameof(oAuth)); // To Do: Change to OAuth
         this.Notifications = notifications ?? throw new ArgumentNullException(nameof(notifications));
         this.Sessions = sessions ?? throw new ArgumentNullException(nameof(sessions));
         this.logger = logger ?? throw new ArgumentNullException(nameof(logger));
@@ -69,9 +69,9 @@ public class ProfileViewModel
     public SecurityViewModel Security { get; }
 
     /// <summary>
-    /// Gets the OAuth sub-ViewModel.
+    /// Gets the OAuth sub-ViewModel. // To Do: Change to OAuth
     /// </summary>
-    public OAuthViewModel OAuth { get; }
+    public OAuthViewModel OAuth { get; } // To Do: Change to OAuth
 
     /// <summary>
     /// Gets the notifications sub-ViewModel.
@@ -92,18 +92,18 @@ public class ProfileViewModel
     /// Gets a value indicating whether phone-based two-factor authentication is active.
     /// </summary>
     public bool IsPhoneTwoFactorActive =>
-        this.ProfileInfo.Is2FAEnabled &&
-        string.Equals(this.ProfileInfo.Preferred2FAMethod, nameof(TwoFactorMethod.Phone), StringComparison.OrdinalIgnoreCase);
+        this.ProfileInfo.Is2FAEnabled && // To Do: Change to 2FA
+        string.Equals(this.ProfileInfo.Preferred2FAMethod, nameof(TwoFactorMethod.Phone), StringComparison.OrdinalIgnoreCase); // To Do: Change to 2FA
 
     /// <summary>
     /// Gets a value indicating whether email-based two-factor authentication is active.
     /// </summary>
     public bool IsEmailTwoFactorActive =>
-        this.ProfileInfo.Is2FAEnabled &&
-        string.Equals(this.ProfileInfo.Preferred2FAMethod, nameof(TwoFactorMethod.Email), StringComparison.OrdinalIgnoreCase);
+        this.ProfileInfo.Is2FAEnabled && // To Do: Change to 2FA
+        string.Equals(this.ProfileInfo.Preferred2FAMethod, nameof(TwoFactorMethod.Email), StringComparison.OrdinalIgnoreCase); // To Do: Change to 2FA
 
     /// <summary>
-    /// Loads the current user's profile, OAuth links, and notification preferences.
+    /// Loads the current user's profile, OAuth links, and notification preferences. // To Do: Change to OAuth
     /// Each request is issued sequentially; the load stops at the first failure.
     /// </summary>
     /// <returns><see langword="true"/> if all data loaded successfully; otherwise, <see langword="false"/>.</returns>
@@ -117,7 +117,7 @@ public class ProfileViewModel
             return false;
         }
 
-        if (!await this.OAuth.LoadOAuthLinks())
+        if (!await this.OAuth.LoadOAuthLinks()) // To Do: Change to OAuth
         {
             this.State.SetValue(ProfileState.Error);
             return false;
@@ -146,8 +146,8 @@ public class ProfileViewModel
             return false;
         }
 
-        this.ProfileInfo.Is2FAEnabled = true;
-        this.ProfileInfo.Preferred2FAMethod = method.ToString();
+        this.ProfileInfo.Is2FAEnabled = true; // To Do: Change to 2FA
+        this.ProfileInfo.Preferred2FAMethod = method.ToString(); // To Do: Change to 2FA
         return true;
     }
 
@@ -163,8 +163,8 @@ public class ProfileViewModel
             return false;
         }
 
-        this.ProfileInfo.Is2FAEnabled = false;
-        this.ProfileInfo.Preferred2FAMethod = null;
+        this.ProfileInfo.Is2FAEnabled = false; // To Do: Change to 2FA
+        this.ProfileInfo.Preferred2FAMethod = null; // To Do: Change to 2FA
         return true;
     }
 
@@ -181,8 +181,8 @@ public class ProfileViewModel
             return false;
         }
 
-        this.ProfileInfo.Is2FAEnabled = enabled;
-        this.ProfileInfo.Preferred2FAMethod = enabled ? nameof(TwoFactorMethod.Email) : null;
+        this.ProfileInfo.Is2FAEnabled = enabled; // To Do: Change to 2FA
+        this.ProfileInfo.Preferred2FAMethod = enabled ? nameof(TwoFactorMethod.Email) : null; // To Do: Change to 2FA
         return true;
     }
 

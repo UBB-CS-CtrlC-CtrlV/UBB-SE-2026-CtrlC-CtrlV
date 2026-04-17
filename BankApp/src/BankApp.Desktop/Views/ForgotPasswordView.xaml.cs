@@ -14,8 +14,8 @@ namespace BankApp.Desktop.Views;
 
 /// <summary>
 /// Displays the account recovery flow for requesting a reset code and setting a new password.
-/// This code-behind contains only UI-specific logic (loading state, message display, navigation).
-/// All business validation and state transitions are handled by <see cref="ForgotPasswordViewModel"/>.
+/// This code-behind contains only UI-specific logic (loading state, message display, navigation). // To Do: Change to UI
+/// All business validation and state transitions are handled by <see cref="ForgotPasswordViewModel"/>. // To Do: Change to UI
 /// </summary>
 public sealed partial class ForgotPasswordView : IStateObserver<ForgotPasswordState>
 {
@@ -48,7 +48,7 @@ public sealed partial class ForgotPasswordView : IStateObserver<ForgotPasswordSt
         {
             this.HideLoading();
 
-            if (state == ForgotPasswordState.Error && !string.IsNullOrWhiteSpace(this.viewModel.ValidationError))
+            if (state == ForgotPasswordState.Error && !string.IsNullOrWhiteSpace(this.viewModel.ValidationError)) // To Do: Change to UIError? No, UI. But state is Error. I mean abbreviation in UI.
             {
                 this.ShowMessage(this.viewModel.ValidationError, InfoBarSeverity.Warning);
                 return;

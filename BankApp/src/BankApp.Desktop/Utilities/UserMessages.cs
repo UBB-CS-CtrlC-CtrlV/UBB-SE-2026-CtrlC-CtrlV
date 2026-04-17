@@ -31,7 +31,7 @@ internal static class UserMessages
     internal static class TwoFactor
     {
         /// <summary>Shown when the user submits a code that is not exactly 6 digits.</summary>
-        internal const string InvalidCodeFormat = "Please enter a valid 6-digit code.";
+        internal const string InvalidCodeFormat = "Please enter a valid 6-digit code."; // To Do: Replace magic number 6 with constant
 
         /// <summary>Shown when the server rejects the submitted code.</summary>
         internal const string IncorrectCode = "The code you entered is incorrect.";
@@ -47,7 +47,7 @@ internal static class UserMessages
         internal const string InvalidEmail = "Please enter a valid email address.";
 
         /// <summary>Shown when the chosen password does not meet strength requirements.</summary>
-        internal const string WeakPassword = "Password must be at least 8 characters with uppercase, lowercase, a digit and a special character.";
+        internal const string WeakPassword = "Password must be at least 8 characters with uppercase, lowercase, a digit and a special character."; // To Do: Replace magic number 8 with constant
 
         /// <summary>Shown when the password and confirmation password do not match.</summary>
         internal const string PasswordMismatch = "Passwords do not match.";
@@ -67,7 +67,7 @@ internal static class UserMessages
     internal static class Security
     {
         /// <summary>Shown when the new password does not meet the minimum length requirement.</summary>
-        internal const string MinimumLengthRequired = "Minimum 8 characters required.";
+        internal const string MinimumLengthRequired = "Minimum 8 characters required."; // To Do: Replace magic number 8 with constant
 
         /// <summary>Shown when the new password and confirmation do not match.</summary>
         internal const string PasswordMismatch = "Passwords do not match.";
@@ -89,7 +89,7 @@ internal static class UserMessages
         internal const string AllFieldsRequired = "Please fill in all fields.";
 
         /// <summary>Shown when the chosen password does not meet the complexity requirements.</summary>
-        internal const string PasswordTooWeak = "Password must be at least 8 characters with uppercase, lowercase, a digit, and a special character.";
+        internal const string PasswordTooWeak = "Password must be at least 8 characters with uppercase, lowercase, a digit, and a special character."; // To Do: Replace magic number 8 with constant
 
         /// <summary>Shown when the user tries to verify without pasting a recovery code.</summary>
         internal const string CodeRequired = "Please paste the recovery code first.";

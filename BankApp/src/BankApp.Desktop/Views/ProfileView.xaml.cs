@@ -118,12 +118,12 @@ public sealed partial class ProfileView : IStateObserver<ProfileState>
         this.TwoFactorEmailDisplay.Text = user.Email ?? string.Empty;
 
         this.viewModel.IsInitializingView = true;
-        this.TwoFactorToggle.IsOn = user.Is2FAEnabled;
+        this.TwoFactorToggle.IsOn = user.Is2FAEnabled; // To Do: Change to 2FA
         this.viewModel.IsInitializingView = false;
 
-        this.PopulateOAuthLinks(this.viewModel.OAuth.OAuthLinks);
+        this.PopulateOAuthLinks(this.viewModel.OAuth.OAuthLinks); // To Do: Change to OAuth
         this.PopulateNotificationPreferences(this.viewModel.Notifications.NotificationPreferences);
-        this.Update2FaVisuals();
+        this.Update2FaVisuals(); // To Do: Change to 2Fa
     }
 
     private void SetEditingEnabled(bool enabled)
@@ -225,12 +225,12 @@ public sealed partial class ProfileView : IStateObserver<ProfileState>
             this.viewModel.IsInitializingView = true;
             this.TwoFactorToggle.IsOn = true;
             this.viewModel.IsInitializingView = false;
-            this.Update2FaVisuals();
+            this.Update2FaVisuals(); // To Do: Change to 2Fa
             this.ShowSuccess($"Two-factor authentication enabled via {this.pendingTwoFactorAuthType}.");
         }
         else
         {
-            this.ShowError($"Failed to enable 2FA via {this.pendingTwoFactorAuthType}.");
+            this.ShowError($"Failed to enable 2FA via {this.pendingTwoFactorAuthType}."); // To Do: Change to 2FA
         }
     }
 
@@ -320,12 +320,12 @@ public sealed partial class ProfileView : IStateObserver<ProfileState>
                 this.viewModel.IsInitializingView = true;
                 this.TwoFactorToggle.IsOn = false;
                 this.viewModel.IsInitializingView = false;
-                this.Update2FaVisuals();
+                this.Update2FaVisuals(); // To Do: Change to 2Fa
                 this.ShowSuccess("Two-factor authentication has been disabled.");
             }
             else
             {
-                this.ShowError("Failed to remove 2FA.");
+                this.ShowError("Failed to remove 2FA."); // To Do: Change to 2FA
             }
         }
         else
@@ -352,11 +352,11 @@ public sealed partial class ProfileView : IStateObserver<ProfileState>
             this.viewModel.IsInitializingView = true;
             this.TwoFactorToggle.IsOn = !this.TwoFactorToggle.IsOn;
             this.viewModel.IsInitializingView = false;
-            this.ShowError("Failed to update 2FA settings.");
+            this.ShowError("Failed to update 2FA settings."); // To Do: Change to 2FA
         }
         else
         {
-            this.Update2FaVisuals();
+            this.Update2FaVisuals(); // To Do: Change to 2Fa
         }
     }
 
@@ -365,7 +365,6 @@ public sealed partial class ProfileView : IStateObserver<ProfileState>
         if (sender is Button { Tag: OAuthLinkDataTransferObject link })
         {
             var success = await this.viewModel.OAuth.UnlinkOAuth(link.Provider);
-
             if (success)
             {
                 this.PopulateOAuthLinks(this.viewModel.OAuth.OAuthLinks);
@@ -410,7 +409,7 @@ public sealed partial class ProfileView : IStateObserver<ProfileState>
         this.navigationService.NavigateTo<LoginView>();
     }
 
-    private void Update2FaVisuals()
+    private void Update2FaVisuals() // To Do: Change to 2Fa
     {
         this.TwoFactorPhoneDisplay.Text = this.viewModel.PersonalInfo.TwoFactorPhoneDisplay;
 

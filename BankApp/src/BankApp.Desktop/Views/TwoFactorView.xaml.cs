@@ -26,7 +26,7 @@ public sealed partial class TwoFactorView : IStateObserver<TwoFactorState>
     /// <summary>
     /// Initializes a new instance of the <see cref="TwoFactorView"/> class.
     /// </summary>
-    /// <param name="viewModel">The view model that drives OTP verification logic and exposes two-factor state.</param>
+    /// <param name="viewModel">The view model that drives OTP verification logic and exposes two-factor state.</param> // To Do: Change to OTP
     /// <param name="navigationService">Used to navigate to other pages in response to state changes.</param>
     /// <param name="apiClient">Used to clear authentication state when the user cancels and returns to login.</param>
     public TwoFactorView(TwoFactorViewModel viewModel, IAppNavigationService navigationService, IApiClient apiClient)
@@ -74,7 +74,7 @@ public sealed partial class TwoFactorView : IStateObserver<TwoFactorState>
 
             case TwoFactorState.Idle:
             case TwoFactorState.Verifying:
-            case TwoFactorState.InvalidOTP:
+            case TwoFactorState.InvalidOTP: // To Do: Change to OTP
             case TwoFactorState.Expired:
             case TwoFactorState.MaxAttemptsReached:
                 // Handled through bindings: HasError, ErrorMessage, IsInputEnabled.
@@ -89,22 +89,22 @@ public sealed partial class TwoFactorView : IStateObserver<TwoFactorState>
     private async void VerifyButton_Click(object sender, RoutedEventArgs e)
     {
         // Validation (6-digit length check) is enforced inside the ViewModel.
-        await this.viewModel.VerifyOtp();
+        await this.viewModel.VerifyOtp(); // To Do: Change to OTP
     }
 
     private async void ResendButton_Click(object sender, RoutedEventArgs e)
     {
         // Guard against premature resend is enforced inside the ViewModel.
-        await this.viewModel.ResendOtp();
+        await this.viewModel.ResendOtp(); // To Do: Change to OTP
     }
 
     /// <summary>
-    /// Propagates the typed text to the ViewModel so that <see cref="TwoFactorViewModel.OtpCode"/>
+    /// Propagates the typed text to the ViewModel so that <see cref="TwoFactorViewModel.OtpCode"/> // To Do: Change to OTP
     /// is always in sync without requiring a Two-Way binding.
     /// </summary>
     private void OtpBox_TextChanged(object sender, TextChangedEventArgs e)
     {
-        this.viewModel.OtpCode = this.OtpBox.Text;
+        this.viewModel.OtpCode = this.OtpBox.Text; // To Do: Change to OTP
     }
 
     private void BackToLoginButton_Click(object sender, RoutedEventArgs e)

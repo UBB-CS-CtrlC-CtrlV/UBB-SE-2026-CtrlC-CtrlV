@@ -8,7 +8,7 @@ using System.Threading.Tasks;
 using BankApp.Desktop.Utilities;
 using BankApp.Application.DataTransferObjects.Auth;
 using BankApp.Desktop.Enums;
-using Duende.IdentityModel.OidcClient;
+using Duende.IdentityModel.OidcClient; // To Do: Change to Oidc
 using ErrorOr;
 using Microsoft.Extensions.Configuration;
 using Microsoft.Extensions.Logging;
@@ -92,10 +92,10 @@ public class LoginViewModel
         result.Switch(
             response =>
             {
-                if (response.Requires2FA)
+                if (response.Requires2FA) // To Do: Change to 2FA
                 {
                     this.apiClient.CurrentUserId = response.UserId;
-                    this.State.SetValue(LoginState.Require2Fa);
+                    this.State.SetValue(LoginState.Require2Fa); // To Do: Change to 2FA
                     return;
                 }
 
@@ -147,7 +147,7 @@ public class LoginViewModel
             string redirectUri = this.configuration["OAuth:Google:RedirectUri"]
                 ?? throw new InvalidOperationException("OAuth:Google:RedirectUri is missing from configuration.");
 
-            OidcClientOptions options = new OidcClientOptions
+            OidcClientOptions options = new OidcClientOptions // To Do: Change to Oidc
             {
                 Authority = authority,
                 ClientId = clientId,
@@ -160,7 +160,7 @@ public class LoginViewModel
             options.Policy.Discovery.ValidateEndpoints = false;
 
             OidcClient oidcClient = new OidcClient(options);
-            LoginResult loginResult = await oidcClient.LoginAsync(new Duende.IdentityModel.OidcClient.LoginRequest());
+            LoginResult loginResult = await oidcClient.LoginAsync(new Duende.IdentityModel.OidcClient.LoginRequest()); // To Do: Change to Oidc
 
             if (loginResult.IsError)
             {
@@ -181,7 +181,7 @@ public class LoginViewModel
             result.Switch(
                 response =>
                 {
-                    if (response.Requires2FA)
+                    if (response.Requires2FA) // To Do: Change to 2FA
                     {
                         this.apiClient.CurrentUserId = response.UserId;
                         this.State.SetValue(LoginState.Require2Fa);
@@ -200,7 +200,7 @@ public class LoginViewModel
         }
         catch (Exception exception)
         {
-            this.logger.LogError(exception, "OAuthLogin OIDC flow failed.");
+            this.logger.LogError(exception, "OAuthLogin OIDC flow failed."); // To Do: Change to OAuth, OIDC
             this.State.SetValue(LoginState.Error);
         }
     }

@@ -44,7 +44,7 @@ public class SecurityViewModel
     /// Enables or disables two-factor authentication for the current user.
     /// </summary>
     /// <param name="enabled">
-    /// <see langword="true"/> to enable 2FA via email; <see langword="false"/> to disable it.
+    /// <see langword="true"/> to enable 2FA via email; <see langword="false"/> to disable it. // To Do: Change to 2FA
     /// </param>
     /// <returns>A <see cref="Task{TResult}"/> representing the result of the asynchronous operation.</returns>
     public async Task<bool> SetTwoFactorEnabled(bool enabled)
@@ -106,7 +106,7 @@ public class SecurityViewModel
         this.State.SetValue(ProfileState.Loading);
 
         object request = new { Method = method };
-        ErrorOr<Success> result = await this.apiClient.PutAsync<object>(ApiEndpoints.Enable2Fa, request);
+        ErrorOr<Success> result = await this.apiClient.PutAsync<object>(ApiEndpoints.Enable2Fa, request); // To Do: Change to 2FA
 
         return result.Match(
             _ =>
@@ -130,7 +130,7 @@ public class SecurityViewModel
     {
         this.State.SetValue(ProfileState.Loading);
 
-        ErrorOr<Success> result = await this.apiClient.PutAsync<object>(ApiEndpoints.Disable2Fa, new { });
+        ErrorOr<Success> result = await this.apiClient.PutAsync<object>(ApiEndpoints.Disable2Fa, new { }); // To Do: Change to 2FA
 
         return result.Match(
             _ =>

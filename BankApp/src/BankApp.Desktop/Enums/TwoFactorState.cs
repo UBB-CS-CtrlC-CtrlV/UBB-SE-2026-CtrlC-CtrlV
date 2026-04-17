@@ -27,7 +27,7 @@ public enum TwoFactorState
     /// <summary>
     /// The submitted OTP did not match the expected value.
     /// </summary>
-    InvalidOTP,
+    InvalidOTP,     // To Do: Change to OTP
 
     /// <summary>
     /// The OTP was valid but has passed its expiry window.
