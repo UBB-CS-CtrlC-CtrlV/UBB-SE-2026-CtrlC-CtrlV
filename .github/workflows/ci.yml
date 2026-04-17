@@ -108,7 +108,7 @@ jobs:
       - name: Test
         run: |
           New-Item -ItemType Directory -Force -Path BankApp/test-results
-          dotnet test BankApp/tests/BankApp.Desktop.Tests/BankApp.Desktop.Tests.csproj --no-restore --configuration Release /p:PublishReadyToRun=false /p:PublishTrimmed=false --logger "trx;LogFileName=desktop-tests.trx" --results-directory BankApp/test-results
+          dotnet test BankApp/tests/BankApp.Desktop.Tests/BankApp.Desktop.Tests.csproj --no-restore --configuration Debug /p:PublishReadyToRun=false /p:PublishTrimmed=false --logger "trx;LogFileName=desktop-tests.trx" --results-directory BankApp/test-results --blame-hang --blame-hang-timeout 2m --blame-hang-dump-type none
           Get-ChildItem -Path BankApp/test-results -Recurse
 
       - name: Upload desktop test results
