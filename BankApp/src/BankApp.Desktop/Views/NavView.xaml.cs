@@ -115,32 +115,50 @@ public sealed partial class NavView
     }
 
     // All other nav items show a coming soon alert
-    private async void NavTransfers_Click(object sender, RoutedEventArgs e) =>
+    private async void NavTransfers_Click(object sender, RoutedEventArgs e)
+    {
         await this.ShowComingSoonAsync("Transfers");
+    }
 
-    private async void NavBillPayments_Click(object sender, RoutedEventArgs e) =>
+    private async void NavBillPayments_Click(object sender, RoutedEventArgs e)
+    {
         await this.ShowComingSoonAsync("Bill Payments");
+    }
 
-    private async void NavCards_Click(object sender, RoutedEventArgs e) =>
+    private async void NavCards_Click(object sender, RoutedEventArgs e)
+    {
         await this.ShowComingSoonAsync("Cards");
+    }
 
-    private async void NavTransferHistory_Click(object sender, RoutedEventArgs e) =>
+    private async void NavTransferHistory_Click(object sender, RoutedEventArgs e)
+    {
         await this.ShowComingSoonAsync("Transfer History");
+    }
 
-    private async void NavCurrencyExchange_Click(object sender, RoutedEventArgs e) =>
+    private async void NavCurrencyExchange_Click(object sender, RoutedEventArgs e)
+    {
         await this.ShowComingSoonAsync("Currency Exchange");
+    }
 
-    private async void NavSavings_Click(object sender, RoutedEventArgs e) =>
+    private async void NavSavings_Click(object sender, RoutedEventArgs e)
+    {
         await this.ShowComingSoonAsync("Savings & Loans");
+    }
 
-    private async void NavInvestments_Click(object sender, RoutedEventArgs e) =>
+    private async void NavInvestments_Click(object sender, RoutedEventArgs e)
+    {
         await this.ShowComingSoonAsync("Investments & Trading");
+    }
 
-    private async void NavStatistics_Click(object sender, RoutedEventArgs e) =>
+    private async void NavStatistics_Click(object sender, RoutedEventArgs e)
+    {
         await this.ShowComingSoonAsync("Statistics");
+    }
 
-    private async void NavSupport_Click(object sender, RoutedEventArgs e) =>
+    private async void NavSupport_Click(object sender, RoutedEventArgs e)
+    {
         await this.ShowComingSoonAsync("Support");
+    }
 
     private void NotificationBell_PointerPressed(object sender, PointerRoutedEventArgs e)
     {

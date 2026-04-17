@@ -182,12 +182,24 @@ public class PasswordRecoveryManagerTests
     {
         private DateTime current;
 
-        public FakeSystemClock(DateTime start) => this.current = start;
+        public FakeSystemClock(DateTime start)
+        {
+            this.current = start;
+        }
 
         /// <inheritdoc/>
-        public DateTime UtcNow => this.current;
+        public DateTime UtcNow
+        {
+            get
+            {
+                return this.current;
+            }
+        }
 
-        public void Advance(TimeSpan duration) => this.current += duration;
+        public void Advance(TimeSpan duration)
+        {
+            this.current += duration;
+        }
     }
 
     /// <summary>
@@ -265,11 +277,15 @@ public class PasswordRecoveryManagerTests
             return state;
         }
 
-        public Task<ForgotPasswordState> VerifyTokenAsync(string token) =>
-            Task.FromResult(ForgotPasswordState.TokenValid);
+        public Task<ForgotPasswordState> VerifyTokenAsync(string token)
+        {
+            return Task.FromResult(ForgotPasswordState.TokenValid);
+        }
 
-        public Task<ForgotPasswordState> ResetPasswordAsync(string token, string newPassword) =>
-            Task.FromResult(ForgotPasswordState.PasswordResetSuccess);
+        public Task<ForgotPasswordState> ResetPasswordAsync(string token, string newPassword)
+        {
+            return Task.FromResult(ForgotPasswordState.PasswordResetSuccess);
+        }
 
         public bool IsPasswordValid(string password)
         {

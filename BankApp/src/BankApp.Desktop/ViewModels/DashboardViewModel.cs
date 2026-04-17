@@ -85,67 +85,123 @@ public class DashboardViewModel
     /// </summary>
     public int CurrentCardIndex
     {
-        get => this.currentCardIndex;
-        private set => this.currentCardIndex = Math.Clamp(value, FirstCardIndex, Math.Max(FirstCardIndex, this.Cards.Count - LastCardIndexOffset));
+        get
+        {
+            return this.currentCardIndex;
+        }
+
+        private set
+        {
+            this.currentCardIndex = Math.Clamp(value, FirstCardIndex, Math.Max(FirstCardIndex, this.Cards.Count - LastCardIndexOffset));
+        }
     }
 
     /// <summary>
     /// Gets a value indicating whether the user can navigate to the previous card.
     /// </summary>
-    public bool CanNavigatePrevious => this.Cards.Count > default(int) && this.CurrentCardIndex > FirstCardIndex;
+    public bool CanNavigatePrevious
+    {
+        get
+        {
+            return this.Cards.Count > default(int) && this.CurrentCardIndex > FirstCardIndex;
+        }
+    }
 
     /// <summary>
     /// Gets a value indicating whether the user can navigate to the next card.
     /// </summary>
-    public bool CanNavigateNext => this.Cards.Count > default(int) && this.CurrentCardIndex < this.Cards.Count - LastCardIndexOffset;
+    public bool CanNavigateNext
+    {
+        get
+        {
+            return this.Cards.Count > default(int) && this.CurrentCardIndex < this.Cards.Count - LastCardIndexOffset;
+        }
+    }
 
     /// <summary>
     /// Gets a value indicating whether the user has any linked cards.
     /// </summary>
-    public bool HasCards => this.Cards.Count > default(int);
+    public bool HasCards
+    {
+        get
+        {
+            return this.Cards.Count > default(int);
+        }
+    }
 
     /// <summary>
     /// Gets the ordered list of card-dot view models for the carousel indicator.
     /// Each dot knows whether it represents the currently active card.
     /// </summary>
-    public IReadOnlyList<CardPageIndicatorViewModel> CardDots =>
-        this.Cards.Select((_, index) => new CardPageIndicatorViewModel { IsActive = index == this.CurrentCardIndex })
-            .ToList();
+    public IReadOnlyList<CardPageIndicatorViewModel> CardDots
+    {
+        get
+        {
+            return this.Cards.Select((_, index) => new CardPageIndicatorViewModel { IsActive = index == this.CurrentCardIndex })
+                .ToList();
+        }
+    }
 
     /// <summary>
     /// Gets a value indicating whether the user has any recent transactions.
     /// </summary>
-    public bool HasTransactions => this.RecentTransactionItems.Count > default(int);
+    public bool HasTransactions
+    {
+        get
+        {
+            return this.RecentTransactionItems.Count > default(int);
+        }
+    }
 
     /// <summary>
     /// Gets the display name of the selected card's brand (falls back to card type when brand is absent).
     /// </summary>
-    public string SelectedCardBrandDisplay =>
-        this.SelectedCard is { } card
-            ? string.IsNullOrWhiteSpace(card.CardBrand) ? card.CardType.ToString() : card.CardBrand
-            : string.Empty;
+    public string SelectedCardBrandDisplay
+    {
+        get
+        {
+            return this.SelectedCard is { } card
+                ? string.IsNullOrWhiteSpace(card.CardBrand) ? card.CardType.ToString() : card.CardBrand
+                : string.Empty;
+        }
+    }
 
     /// <summary>
     /// Gets the upper-cased cardholder name, or a placeholder when absent.
     /// </summary>
-    public string SelectedCardHolderDisplay =>
-        this.SelectedCard is { } card
-            ? string.IsNullOrWhiteSpace(card.CardholderName)
-                ? "CARD HOLDER"
-                : card.CardholderName.ToUpperInvariant()
-            : string.Empty;
+    public string SelectedCardHolderDisplay
+    {
+        get
+        {
+            return this.SelectedCard is { } card
+                ? string.IsNullOrWhiteSpace(card.CardholderName)
+                    ? "CARD HOLDER"
+                    : card.CardholderName.ToUpperInvariant()
+                : string.Empty;
+        }
+    }
 
     /// <summary>
     /// Gets the formatted expiry date (MM/yy) of the selected card.
     /// </summary>
-    public string SelectedCardExpiryDisplay =>
-        this.SelectedCard?.ExpiryDate.ToString("MM/yy") ?? string.Empty;
+    public string SelectedCardExpiryDisplay
+    {
+        get
+        {
+            return this.SelectedCard?.ExpiryDate.ToString("MM/yy") ?? string.Empty;
+        }
+    }
 
     /// <summary>
     /// Gets the masked card number of the selected card.
     /// </summary>
-    public string SelectedCardNumberMasked =>
-        this.SelectedCard is { } card ? MaskCardNumber(card.CardNumber) : FullyMaskedCardNumber;
+    public string SelectedCardNumberMasked
+    {
+        get
+        {
+            return this.SelectedCard is { } card ? MaskCardNumber(card.CardNumber) : FullyMaskedCardNumber;
+        }
+    }
 
     /// <summary>
     /// Gets or sets the cards.
@@ -155,7 +211,13 @@ public class DashboardViewModel
     /// <summary>
     /// Gets the currently selected card, or <see langword="null"/> if no cards are available.
     /// </summary>
-    private CardDataTransferObject? SelectedCard => this.Cards.Count > default(int) ? this.Cards.ElementAt(this.CurrentCardIndex) : null;
+    private CardDataTransferObject? SelectedCard
+    {
+        get
+        {
+            return this.Cards.Count > default(int) ? this.Cards.ElementAt(this.CurrentCardIndex) : null;
+        }
+    }
 
     private List<TransactionDataTransferObject> RecentTransactions { get; set; }
 

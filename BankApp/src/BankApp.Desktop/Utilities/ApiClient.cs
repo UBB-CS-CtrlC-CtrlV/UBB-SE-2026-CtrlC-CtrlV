@@ -61,8 +61,10 @@ public class ApiClient : IApiClient
     /// or a <see cref="Error.Failure"/> describing the missing configuration otherwise.
     /// Callers should check this before issuing any requests.
     /// </summary>
-    public ErrorOr<Success> EnsureConfigured() =>
-        this.configurationError is null ? Result.Success : this.configurationError.Value;
+    public ErrorOr<Success> EnsureConfigured()
+    {
+        return this.configurationError is null ? Result.Success : this.configurationError.Value;
+    }
 
     /// <summary>
     /// Gets or sets the identifier of the currently authenticated user.
@@ -72,7 +74,13 @@ public class ApiClient : IApiClient
     /// <summary>
     /// Gets the currently configured bearer token.
     /// </summary>
-    public string? Token => this.token;
+    public string? Token
+    {
+        get
+        {
+            return this.token;
+        }
+    }
 
     /// <summary>
     /// Gets the identifier of the currently authenticated user.

@@ -38,8 +38,14 @@ public sealed class DispatcherCountdownTimer : ICountdownTimer
     public event EventHandler? Tick;
 
     /// <inheritdoc/>
-    public void Start() => this.inner.Start();
+    public void Start()
+    {
+        this.inner.Start();
+    }
 
     /// <inheritdoc/>
-    public void Stop() => this.inner.Stop();
+    public void Stop()
+    {
+        this.inner.Stop();
+    }
 }

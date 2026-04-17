@@ -43,7 +43,13 @@ public sealed partial class TwoFactorView : IStateObserver<TwoFactorState>
     /// Gets the view model. Exposed as a public property so that compiled
     /// <c>{x:Bind ViewModel.Property}</c> expressions in the XAML can resolve it.
     /// </summary>
-    public TwoFactorViewModel ViewModel => this.viewModel;
+    public TwoFactorViewModel ViewModel
+    {
+        get
+        {
+            return this.viewModel;
+        }
+    }
 
     /// <inheritdoc/>
     public void Update(TwoFactorState state)
@@ -54,8 +60,10 @@ public sealed partial class TwoFactorView : IStateObserver<TwoFactorState>
     // ─── Visibility helper for {x:Bind} function expressions ──────────────────
     // Used in XAML as: Visibility="{x:Bind BoolToVisibility(ViewModel.SomeBool), Mode=OneWay}"
     // Keeps WinUI-specific Visibility type out of the ViewModel.
-    private Visibility BoolToVisibility(bool value) =>
-        value ? Visibility.Visible : Visibility.Collapsed;
+    private Visibility BoolToVisibility(bool value)
+    {
+        return value ? Visibility.Visible : Visibility.Collapsed;
+    }
 
     // ─── State handling ────────────────────────────────────────────────────────
 

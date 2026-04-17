@@ -12,5 +12,11 @@ namespace BankApp.Desktop.Utilities;
 public class SystemClock : ISystemClock
 {
     /// <inheritdoc/>
-    public DateTime UtcNow => DateTime.UtcNow;
+    public DateTime UtcNow
+    {
+        get
+        {
+            return DateTime.UtcNow;
+        }
+    }
 }
