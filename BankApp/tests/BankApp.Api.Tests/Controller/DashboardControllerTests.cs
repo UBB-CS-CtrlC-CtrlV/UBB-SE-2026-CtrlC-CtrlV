@@ -36,9 +36,10 @@ public sealed class DashboardControllerTests
     public void GetDashboard_WhenSuccess_ReturnsOkWithData()
     {
         // Arrange
+        var validUserId = 1;
         var response = new DashboardResponse();
-        this.dashboardService.Setup(service => service.GetDashboardData(1)).Returns(response);
-        var controller = this.CreateController(1);
+        this.dashboardService.Setup(service => service.GetDashboardData(validUserId)).Returns(response);
+        var controller = this.CreateController(validUserId);
 
         // Act
         var result = controller.GetDashboard();
@@ -52,11 +53,12 @@ public sealed class DashboardControllerTests
     public void GetDashboard_WhenUserNotFound_ReturnsNotFound()
     {
         // Arrange
+        var nonExistentUserId = 99;
         this.dashboardService
-            .Setup(service => service.GetDashboardData(99))
+            .Setup(service => service.GetDashboardData(nonExistentUserId))
             .Returns(Error.NotFound("user_not_found", "User not found."));
 
-        var controller = this.CreateController(99);
+        var controller = this.CreateController(nonExistentUserId);
 
         // Act
         var result = controller.GetDashboard();
