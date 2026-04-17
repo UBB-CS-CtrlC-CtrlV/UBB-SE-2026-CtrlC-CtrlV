@@ -7,6 +7,13 @@ namespace BankApp.Domain.Extensions;
 /// </summary>
 public static class NotificationTypeExtensions
 {
+    private const string PaymentDisplayName = "Payment";
+    private const string InboundTransferDisplayName = "Inbound Transfer";
+    private const string OutboundTransferDisplayName = "Outbound Transfer";
+    private const string LowBalanceDisplayName = "Low Balance";
+    private const string DuePaymentDisplayName = "Due Payment";
+    private const string SuspiciousActivityDisplayName = "Suspicious Activity";
+
     /// <summary>
     /// Converts a <see cref="NotificationType"/> value to its human-readable display name.
     /// </summary>
@@ -14,11 +21,11 @@ public static class NotificationTypeExtensions
     /// <returns>A display-friendly string representation of the notification type.</returns>
     public static string ToDisplayName(this NotificationType type) => type switch
     {
-        NotificationType.InboundTransfer => "Inbound Transfer",
-        NotificationType.OutboundTransfer => "Outbound Transfer",
-        NotificationType.LowBalance => "Low Balance",
-        NotificationType.DuePayment => "Due Payment",
-        NotificationType.SuspiciousActivity => "Suspicious Activity",
+        NotificationType.InboundTransfer => InboundTransferDisplayName,
+        NotificationType.OutboundTransfer => OutboundTransferDisplayName,
+        NotificationType.LowBalance => LowBalanceDisplayName,
+        NotificationType.DuePayment => DuePaymentDisplayName,
+        NotificationType.SuspiciousActivity => SuspiciousActivityDisplayName,
         _ => type.ToString()
     };
 
@@ -30,12 +37,12 @@ public static class NotificationTypeExtensions
     /// <exception cref="ArgumentException">Thrown when the value does not match a known notification type.</exception>
     public static NotificationType FromString(string value) => value switch
     {
-        "Payment" => NotificationType.Payment,
-        "Inbound Transfer" => NotificationType.InboundTransfer,
-        "Outbound Transfer" => NotificationType.OutboundTransfer,
-        "Low Balance" => NotificationType.LowBalance,
-        "Due Payment" => NotificationType.DuePayment,
-        "Suspicious Activity" => NotificationType.SuspiciousActivity,
+        PaymentDisplayName => NotificationType.Payment,
+        InboundTransferDisplayName => NotificationType.InboundTransfer,
+        OutboundTransferDisplayName => NotificationType.OutboundTransfer,
+        LowBalanceDisplayName => NotificationType.LowBalance,
+        DuePaymentDisplayName => NotificationType.DuePayment,
+        SuspiciousActivityDisplayName => NotificationType.SuspiciousActivity,
         _ => throw new ArgumentException($"Unknown NotificationType: {value}")
     };
 }
