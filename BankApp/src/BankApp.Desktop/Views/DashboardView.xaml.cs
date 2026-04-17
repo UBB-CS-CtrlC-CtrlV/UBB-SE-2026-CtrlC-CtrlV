@@ -3,6 +3,7 @@
 // </copyright>
 
 using System;
+using System.Collections.Generic;
 using System.Threading;
 using System.Threading.Tasks;
 using BankApp.Desktop.Enums;
@@ -25,8 +26,15 @@ public sealed partial class DashboardView : IStateObserver<DashboardState>
 {
     private const int ActiveCardDotSize = 18;
     private const int InactiveCardDotSize = 8;
-    private static readonly Color ActiveDotColor = Color.FromArgb(255, 78, 205, 196);
-    private static readonly Color InactiveDotColor = Color.FromArgb(100, 78, 205, 196);
+    private const int MinimumVisibleDotCount = 1;
+    private const int FirstCardDotIndex = 0;
+    private const byte ActiveDotAlpha = 255;
+    private const byte InactiveDotAlpha = 100;
+    private const byte DotRedChannel = 78;
+    private const byte DotGreenChannel = 205;
+    private const byte DotBlueChannel = 196;
+    private static readonly Color ActiveDotColor = Color.FromArgb(ActiveDotAlpha, DotRedChannel, DotGreenChannel, DotBlueChannel);
+    private static readonly Color InactiveDotColor = Color.FromArgb(InactiveDotAlpha, DotRedChannel, DotGreenChannel, DotBlueChannel);
 
     private readonly DashboardViewModel viewModel;
     private bool isObserverAttached;
@@ -158,7 +166,7 @@ public sealed partial class DashboardView : IStateObserver<DashboardState>
     {
         this.CardDots.Children.Clear();
         var dots = this.viewModel.CardDots;
-        this.CardDots.Visibility = dots.Count > 1 ? Visibility.Visible : Visibility.Collapsed;
+        this.CardDots.Visibility = dots.Count > MinimumVisibleDotCount ? Visibility.Visible : Visibility.Collapsed;
         foreach (var dotViewModel in dots)
         {
             var dot = new Ellipse
@@ -173,16 +181,16 @@ public sealed partial class DashboardView : IStateObserver<DashboardState>
 
     private void UpdateCardDots()
     {
-        var dots = this.viewModel.CardDots;
-        for (var i = 0; i < this.CardDots.Children.Count; i++)
+        IReadOnlyList<CardPageIndicatorViewModel> dots = this.viewModel.CardDots;
+        for (int index = FirstCardDotIndex; index < this.CardDots.Children.Count; index++)
         {
-            if (this.CardDots.Children[i] is not Ellipse dot || i >= dots.Count)
+            if (this.CardDots.Children[index] is not Ellipse dot || index >= dots.Count)
             {
                 continue;
             }
 
-            dot.Width = dots[i].IsActive ? ActiveCardDotSize : InactiveCardDotSize;
-            dot.Fill = new SolidColorBrush(dots[i].IsActive ? ActiveDotColor : InactiveDotColor);
+            dot.Width = dots[index].IsActive ? ActiveCardDotSize : InactiveCardDotSize;
+            dot.Fill = new SolidColorBrush(dots[index].IsActive ? ActiveDotColor : InactiveDotColor);
         }
     }
 
@@ -256,7 +264,7 @@ public sealed partial class DashboardView : IStateObserver<DashboardState>
     /// </summary>
     private async Task ShowCurrentCardDetailsAsync()
     {
-        var details = this.viewModel.GetSelectedCardDetails();
+        string details = this.viewModel.GetSelectedCardDetails();
         if (string.IsNullOrEmpty(details))
         {
             return;
@@ -298,11 +306,11 @@ public sealed partial class DashboardView : IStateObserver<DashboardState>
         this.LoadingOverlay.Visibility = Visibility.Collapsed;
     }
 
-    private void ShowError(string msg)
+    private void ShowError(string message)
     {
-        this.ErrorInfoBar.Message = string.IsNullOrWhiteSpace(msg)
+        this.ErrorInfoBar.Message = string.IsNullOrWhiteSpace(message)
             ? "We couldn't load your dashboard right now."
-            : msg;
+            : message;
         this.ErrorInfoBar.IsOpen = true;
     }
 
@@ -349,10 +357,10 @@ public sealed partial class DashboardView : IStateObserver<DashboardState>
         catch (OperationCanceledException)
         {
         }
-        catch (Exception ex)
+        catch (Exception exception)
         {
             this.HideLoading();
-            this.ShowError($"Unexpected error: {ex.Message}");
+            this.ShowError($"Unexpected error: {exception.Message}");
         }
     }
 }

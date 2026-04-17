@@ -16,22 +16,22 @@ public class AccountDataAccess : IAccountDataAccess
         FROM Account
         """;
 
-    private readonly AppDbContext db;
+    private readonly AppDatabaseContext databaseContext;
 
     /// <summary>
     /// Initializes a new instance of the <see cref="AccountDataAccess"/> class.
     /// </summary>
-    /// <param name="db">The database context used for executing queries.</param>
-    public AccountDataAccess(AppDbContext db)
+    /// <param name="databaseContext">The database context used for executing queries.</param>
+    public AccountDataAccess(AppDatabaseContext databaseContext)
     {
-        this.db = db;
+        this.databaseContext = databaseContext;
     }
 
     /// <inheritdoc />
     public ErrorOr<Account> FindById(int id)
     {
         const string query = $"{SelectAllColumns} WHERE Id = @Id";
-        return this.db.Query(conn => conn.QueryFirstOrDefault<Account>(query, new { Id = id }))
+        return this.databaseContext.Query(connection => connection.QueryFirstOrDefault<Account>(query, new { Id = id }))
             .Then(account => account ?? (ErrorOr<Account>)Error.NotFound(description: "Account not found."));
     }
 
@@ -39,6 +39,6 @@ public class AccountDataAccess : IAccountDataAccess
     public ErrorOr<List<Account>> FindByUserId(int userId)
     {
         const string query = $"{SelectAllColumns} WHERE UserId = @UserId";
-        return this.db.Query(conn => conn.Query<Account>(query, new { UserId = userId }).AsList());
+        return this.databaseContext.Query(connection => connection.Query<Account>(query, new { UserId = userId }).AsList());
     }
 }

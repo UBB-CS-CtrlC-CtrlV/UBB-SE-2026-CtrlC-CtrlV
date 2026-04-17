@@ -7,7 +7,7 @@ using System.Collections.Generic;
 using System.Threading.Tasks;
 using BankApp.Desktop.Utilities;
 using BankApp.Desktop.Enums;
-using BankApp.Application.DTOs.Profile;
+using BankApp.Application.DataTransferObjects.Profile;
 using ErrorOr;
 using Microsoft.Extensions.Logging;
 
@@ -31,7 +31,7 @@ public class SessionsViewModel
         this.apiClient = apiClient ?? throw new ArgumentNullException(nameof(apiClient));
         this.logger = logger ?? throw new ArgumentNullException(nameof(logger));
         this.State = new ObservableState<ProfileState>(ProfileState.Idle);
-        this.ActiveSessions = new List<SessionDto>();
+        this.ActiveSessions = new List<SessionDataTransferObject>();
     }
 
     /// <summary>
@@ -42,7 +42,7 @@ public class SessionsViewModel
     /// <summary>
     /// Gets the active sessions for the current user.
     /// </summary>
-    public List<SessionDto> ActiveSessions { get; private set; }
+    public List<SessionDataTransferObject> ActiveSessions { get; private set; }
 
     /// <summary>
     /// Loads all active sessions for the specified user from the server.
@@ -54,10 +54,10 @@ public class SessionsViewModel
         this.State.SetValue(ProfileState.Loading);
         try
         {
-            ErrorOr<List<SessionDto>> result = await this.apiClient.GetAsync<List<SessionDto>>(ApiEndpoints.Sessions);
+            ErrorOr<List<SessionDataTransferObject>> result = await this.apiClient.GetAsync<List<SessionDataTransferObject>>(ApiEndpoints.Sessions);
             if (result.IsError)
             {
-                this.ActiveSessions = new List<SessionDto>();
+                this.ActiveSessions = new List<SessionDataTransferObject>();
                 this.State.SetValue(ProfileState.Error);
                 return false;
             }
@@ -69,7 +69,7 @@ public class SessionsViewModel
         catch (Exception exception)
         {
             this.logger.LogError(exception, "Failed to load sessions for user {UserId}", userId);
-            this.ActiveSessions = new List<SessionDto>();
+            this.ActiveSessions = new List<SessionDataTransferObject>();
             this.State.SetValue(ProfileState.Error);
             return false;
         }

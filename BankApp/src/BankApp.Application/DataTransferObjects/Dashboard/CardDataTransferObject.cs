@@ -1,16 +1,16 @@
-// <copyright file="CardDto.cs" company="CtrlC CtrlV">
+// <copyright file="CardDataTransferObject.cs" company="CtrlC CtrlV">
 // Copyright (c) CtrlC CtrlV. All rights reserved.
 // </copyright>
 
 using System.Text.Json.Serialization;
 using BankApp.Domain.Enums;
 
-namespace BankApp.Application.DTOs.Dashboard;
+namespace BankApp.Application.DataTransferObjects.Dashboard;
 
 /// <summary>
 /// Data transfer object representing a payment card on the dashboard.
 /// </summary>
-public class CardDto
+public class CardDataTransferObject
 {
     /// <summary>
     /// Gets or sets the unique identifier for the card.

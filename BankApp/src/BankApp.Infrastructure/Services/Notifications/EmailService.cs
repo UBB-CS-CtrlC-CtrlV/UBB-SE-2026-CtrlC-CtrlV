@@ -69,9 +69,9 @@ public class EmailService : IEmailService
             using var mailMessage = new MailMessage(fromAddress, toEmail, subject, body);
             client.Send(mailMessage);
         }
-        catch (Exception ex)
+        catch (Exception exception)
         {
-            this.logger.LogError(ex, "Failed to send email to {ToEmail} with subject '{Subject}'.", toEmail, subject);
+            this.logger.LogError(exception, "Failed to send email to {ToEmail} with subject '{Subject}'.", toEmail, subject);
         }
     }
 }

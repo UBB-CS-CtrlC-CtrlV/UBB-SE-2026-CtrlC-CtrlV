@@ -12,21 +12,21 @@ public class TransactionDataAccess : ITransactionDataAccess
 {
     private const int DefaultTransactionLimit = 10;
 
-    private readonly AppDbContext db;
+    private readonly AppDatabaseContext databaseContext;
 
     /// <summary>
     /// Initializes a new instance of the <see cref="TransactionDataAccess"/> class.
     /// </summary>
-    /// <param name="db">The database context used for executing queries.</param>
-    public TransactionDataAccess(AppDbContext db)
+    /// <param name="databaseContext">The database context used for executing queries.</param>
+    public TransactionDataAccess(AppDatabaseContext databaseContext)
     {
-        this.db = db;
+        this.databaseContext = databaseContext;
     }
 
     /// <inheritdoc />
     public ErrorOr<List<Transaction>> FindRecentByAccountId(int accountId, int limit = DefaultTransactionLimit)
     {
-        const string sql = """
+        const string databaseCommandText = """
             SELECT TOP (@Limit)
                 Id, AccountId, CardId, TransactionRef, [Type], Direction, Amount,
                 Currency, BalanceAfter, CounterpartyName, CounterpartyIBAN, MerchantName,
@@ -37,6 +37,6 @@ public class TransactionDataAccess : ITransactionDataAccess
             ORDER BY CreatedAt DESC
             """;
 
-        return this.db.Query(conn => conn.Query<Transaction>(sql, new { AccountId = accountId, Limit = limit }).AsList());
+        return this.databaseContext.Query(connection => connection.Query<Transaction>(databaseCommandText, new { AccountId = accountId, Limit = limit }).AsList());
     }
 }

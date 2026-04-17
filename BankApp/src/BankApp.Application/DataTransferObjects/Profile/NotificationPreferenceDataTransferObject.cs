@@ -1,15 +1,15 @@
-// <copyright file="NotificationPreferenceDto.cs" company="CtrlC CtrlV">
+// <copyright file="NotificationPreferenceDataTransferObject.cs" company="CtrlC CtrlV">
 // Copyright (c) CtrlC CtrlV. All rights reserved.
 // </copyright>
 
 using BankApp.Domain.Enums;
 
-namespace BankApp.Application.DTOs.Profile;
+namespace BankApp.Application.DataTransferObjects.Profile;
 
 /// <summary>
 /// Data transfer object representing a user's notification preference for a specific category.
 /// </summary>
-public class NotificationPreferenceDto
+public class NotificationPreferenceDataTransferObject
 {
     /// <summary>
     /// Gets or sets the unique identifier of the preference.

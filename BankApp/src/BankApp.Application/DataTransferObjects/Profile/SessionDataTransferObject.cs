@@ -1,13 +1,13 @@
-// <copyright file="SessionDto.cs" company="CtrlC CtrlV">
+// <copyright file="SessionDataTransferObject.cs" company="CtrlC CtrlV">
 // Copyright (c) CtrlC CtrlV. All rights reserved.
 // </copyright>
 
-namespace BankApp.Application.DTOs.Profile;
+namespace BankApp.Application.DataTransferObjects.Profile;
 
 /// <summary>
 /// Represents the safe session details exposed to profile clients.
 /// </summary>
-public class SessionDto
+public class SessionDataTransferObject
 {
     /// <summary>
     /// Gets or sets the unique identifier for the session.

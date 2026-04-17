@@ -3,7 +3,7 @@
 // </copyright>
 
 using System.Globalization;
-using BankApp.Application.DTOs.Dashboard;
+using BankApp.Application.DataTransferObjects.Dashboard;
 using BankApp.Desktop.Enums;
 using BankApp.Desktop.Utilities;
 using BankApp.Desktop.ViewModels;
@@ -21,6 +21,8 @@ namespace BankApp.Desktop.Tests.ViewModels;
 /// </summary>
 public class DashboardViewModelTests
 {
+    private const int CardNumberVisibleSuffixLength = 4;
+
     private readonly Mock<IApiClient> apiClient;
     private readonly DashboardViewModel viewModel;
 
@@ -55,14 +57,14 @@ public class DashboardViewModelTests
 
         var response = new DashboardResponse
         {
-            CurrentUser = new UserSummaryDto
+            CurrentUser = new UserSummaryDataTransferObject
             {
                 FullName = fullName,
                 Email = email,
             },
             Cards =
             [
-                new CardDto
+                new CardDataTransferObject
                 {
                     CardBrand = cardBrand,
                     CardType = cardType,
@@ -76,7 +78,7 @@ public class DashboardViewModelTests
             ],
             RecentTransactions =
             [
-                new TransactionDto
+                new TransactionDataTransferObject
                 {
                     MerchantName = merchantName,
                     Direction = TransactionDirection.Out,
@@ -100,7 +102,7 @@ public class DashboardViewModelTests
 
         // Assert — current user
         this.viewModel.CurrentUser.Should().BeEquivalentTo(
-            new UserSummaryDto
+            new UserSummaryDataTransferObject
         {
             FullName = fullName,
             Email = email,
@@ -110,7 +112,7 @@ public class DashboardViewModelTests
         this.viewModel.CardDots.Should().ContainSingle();
         this.viewModel.SelectedCardBrandDisplay.Should().Be(cardBrand);
         this.viewModel.SelectedCardHolderDisplay.Should().Be(fullName.ToUpperInvariant());
-        this.viewModel.SelectedCardNumberMasked.Should().Be($"**** **** **** {cardNumber[^4..]}");
+        this.viewModel.SelectedCardNumberMasked.Should().Be($"**** **** **** {cardNumber[^CardNumberVisibleSuffixLength..]}");
         this.viewModel.SelectedCardExpiryDisplay.Should().Be(cardExpiry.ToString("MM/yy"));
 
         // Assert — transaction item
@@ -409,7 +411,7 @@ public class DashboardViewModelTests
     {
         // Arrange
         const string cardNumber = "1234567890123456";
-        var expectedMaskedCardNumber = $"**** **** **** {cardNumber[^4..]}";
+        var expectedMaskedCardNumber = $"**** **** **** {cardNumber[^CardNumberVisibleSuffixLength..]}";
         await this.LoadViewModelWithCards(1, cardNumber: cardNumber);
 
         // Act
@@ -467,7 +469,7 @@ public class DashboardViewModelTests
         const string cardBrand = "Visa";
         const string cardNumber = "1234567890123456";
         const string cardholderName = "Ada Lovelace";
-        var expectedMaskedCardNumber = $"**** **** **** {cardNumber[^4..]}";
+        var expectedMaskedCardNumber = $"**** **** **** {cardNumber[^CardNumberVisibleSuffixLength..]}";
         await this.LoadViewModelWithCards(
             cardCount: 1,
             cardType: cardType,
@@ -510,8 +512,8 @@ public class DashboardViewModelTests
         string cardholderName = "Test User",
         string cardNumber = "1234567812345678")
     {
-        List<CardDto> cards = Enumerable.Range(0, cardCount)
-            .Select(index => new CardDto
+        List<CardDataTransferObject> cards = Enumerable.Range(0, cardCount)
+            .Select(index => new CardDataTransferObject
             {
                 CardBrand = cardBrand,
                 CardType = cardType,
@@ -522,7 +524,7 @@ public class DashboardViewModelTests
 
         var response = new DashboardResponse
         {
-            CurrentUser = new UserSummaryDto { FullName = "Test User" },
+            CurrentUser = new UserSummaryDataTransferObject { FullName = "Test User" },
             Cards = cards,
         };
 

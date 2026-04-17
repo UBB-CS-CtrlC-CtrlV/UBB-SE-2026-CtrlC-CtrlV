@@ -17,22 +17,22 @@ public class UserDataAccess : IUserDataAccess
         FROM [User]
         """;
 
-    private readonly AppDbContext db;
+    private readonly AppDatabaseContext databaseContext;
 
     /// <summary>
     /// Initializes a new instance of the <see cref="UserDataAccess"/> class.
     /// </summary>
-    /// <param name="db">The database context used for executing queries.</param>
-    public UserDataAccess(AppDbContext db)
+    /// <param name="databaseContext">The database context used for executing queries.</param>
+    public UserDataAccess(AppDatabaseContext databaseContext)
     {
-        this.db = db;
+        this.databaseContext = databaseContext;
     }
 
     /// <inheritdoc />
     public ErrorOr<User> FindByEmail(string email)
     {
         const string query = $"{SelectAllColumns} WHERE Email = @Email";
-        return this.db.Query(conn => conn.QueryFirstOrDefault<User>(query, new { Email = email }))
+        return this.databaseContext.Query(connection => connection.QueryFirstOrDefault<User>(query, new { Email = email }))
             .Then(user => user ?? (ErrorOr<User>)Error.NotFound(description: "User not found."));
     }
 
@@ -40,28 +40,28 @@ public class UserDataAccess : IUserDataAccess
     public ErrorOr<User> FindById(int id)
     {
         const string query = $"{SelectAllColumns} WHERE Id = @Id";
-        return this.db.Query(conn => conn.QueryFirstOrDefault<User>(query, new { Id = id }))
+        return this.databaseContext.Query(connection => connection.QueryFirstOrDefault<User>(query, new { Id = id }))
             .Then(user => user ?? (ErrorOr<User>)Error.NotFound(description: "User not found."));
     }
 
     /// <inheritdoc />
     public ErrorOr<Success> Create(User user)
     {
-        const string sql = """
+        const string databaseCommandText = """
             INSERT INTO [User] (Email, PasswordHash, FullName, PhoneNumber, DateOfBirth,
                 [Address], Nationality, PreferredLanguage, Is2FAEnabled, Preferred2FAMethod)
             VALUES (@Email, @PasswordHash, @FullName, @PhoneNumber, @DateOfBirth,
                 @Address, @Nationality, @PreferredLanguage, @Is2FAEnabled, @Preferred2FAMethod)
             """;
 
-        return this.db.Query(conn => conn.Execute(sql, user))
-            .Then(rows => rows > 0 ? Result.Success : (ErrorOr<Success>)Error.Failure(description: "Failed to create user."));
+        return this.databaseContext.Query(connection => connection.Execute(databaseCommandText, user))
+            .Then(rows => rows > default(int) ? Result.Success : (ErrorOr<Success>)Error.Failure(description: "Failed to create user."));
     }
 
     /// <inheritdoc />
     public ErrorOr<Success> Update(User user)
     {
-        const string sql = """
+        const string databaseCommandText = """
             UPDATE [User]
             SET Email              = @Email,
                 FullName           = @FullName,
@@ -76,45 +76,45 @@ public class UserDataAccess : IUserDataAccess
             WHERE Id = @Id
             """;
 
-        return this.db.Query(conn => conn.Execute(sql, user))
-            .Then(rows => rows > 0 ? Result.Success : (ErrorOr<Success>)Error.Failure(description: "Failed to update user."));
+        return this.databaseContext.Query(connection => connection.Execute(databaseCommandText, user))
+            .Then(rows => rows > default(int) ? Result.Success : (ErrorOr<Success>)Error.Failure(description: "Failed to update user."));
     }
 
     /// <inheritdoc />
     public ErrorOr<Success> UpdatePassword(int userId, string newPasswordHash)
     {
-        const string sql = """
+        const string databaseCommandText = """
             UPDATE [User]
             SET PasswordHash = @PasswordHash,
                 UpdatedAt    = GETUTCDATE()
             WHERE Id = @UserId
             """;
 
-        return this.db.Query(conn => conn.Execute(sql, new { UserId = userId, PasswordHash = newPasswordHash }))
-            .Then(rows => rows > 0 ? Result.Success : (ErrorOr<Success>)Error.Failure(description: "Failed to update password."));
+        return this.databaseContext.Query(connection => connection.Execute(databaseCommandText, new { UserId = userId, PasswordHash = newPasswordHash }))
+            .Then(rows => rows > default(int) ? Result.Success : (ErrorOr<Success>)Error.Failure(description: "Failed to update password."));
     }
 
     /// <inheritdoc />
     public ErrorOr<Success> IncrementFailedAttempts(int userId)
     {
-        const string sql = "UPDATE [User] SET FailedLoginAttempts = FailedLoginAttempts + 1 WHERE Id = @UserId";
-        return this.db.Query(conn => conn.Execute(sql, new { UserId = userId }))
+        const string databaseCommandText = "UPDATE [User] SET FailedLoginAttempts = FailedLoginAttempts + 1 WHERE Id = @UserId";
+        return this.databaseContext.Query(connection => connection.Execute(databaseCommandText, new { UserId = userId }))
             .Then(_ => (ErrorOr<Success>)Result.Success);
     }
 
     /// <inheritdoc />
     public ErrorOr<Success> ResetFailedAttempts(int userId)
     {
-        const string sql = "UPDATE [User] SET FailedLoginAttempts = 0 WHERE Id = @UserId";
-        return this.db.Query(conn => conn.Execute(sql, new { UserId = userId }))
+        const string databaseCommandText = "UPDATE [User] SET FailedLoginAttempts = default WHERE Id = @UserId";
+        return this.databaseContext.Query(connection => connection.Execute(databaseCommandText, new { UserId = userId }))
             .Then(_ => (ErrorOr<Success>)Result.Success);
     }
 
     /// <inheritdoc />
     public ErrorOr<Success> LockAccount(int userId, DateTime lockoutEnd)
     {
-        const string sql = "UPDATE [User] SET IsLocked = 1, LockoutEnd = @LockoutEnd WHERE Id = @UserId";
-        return this.db.Query(conn => conn.Execute(sql, new { UserId = userId, LockoutEnd = lockoutEnd }))
+        const string databaseCommandText = "UPDATE [User] SET IsLocked = 1, LockoutEnd = @LockoutEnd WHERE Id = @UserId";
+        return this.databaseContext.Query(connection => connection.Execute(databaseCommandText, new { UserId = userId, LockoutEnd = lockoutEnd }))
             .Then(_ => (ErrorOr<Success>)Result.Success);
     }
 }

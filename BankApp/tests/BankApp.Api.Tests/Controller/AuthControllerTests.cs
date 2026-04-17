@@ -3,7 +3,7 @@
 // </copyright>
 
 using BankApp.Api.Controllers;
-using BankApp.Application.DTOs.Auth;
+using BankApp.Application.DataTransferObjects.Auth;
 using BankApp.Application.Services.Login;
 using BankApp.Application.Services.PasswordRecovery;
 using BankApp.Application.Services.Registration;
@@ -355,7 +355,7 @@ public sealed class AuthControllerTests
         AuthController controller = this.CreateController();
 
         // Act
-        IActionResult result = controller.VerifyResetToken(new VerifyTokenDto { Token = "valid-token" });
+        IActionResult result = controller.VerifyResetToken(new VerifyTokenDataTransferObject { Token = "valid-token" });
 
         // Assert
         result.Should().BeOfType<NoContentResult>();
@@ -368,7 +368,7 @@ public sealed class AuthControllerTests
         AuthController controller = this.CreateController();
 
         // Act
-        IActionResult result = controller.VerifyResetToken(new VerifyTokenDto { Token = string.Empty });
+        IActionResult result = controller.VerifyResetToken(new VerifyTokenDataTransferObject { Token = string.Empty });
 
         // Assert
         result.Should().BeOfType<BadRequestObjectResult>();

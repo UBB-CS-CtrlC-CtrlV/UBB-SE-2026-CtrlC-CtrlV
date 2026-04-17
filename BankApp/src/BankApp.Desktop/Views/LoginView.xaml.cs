@@ -95,7 +95,7 @@ public sealed partial class LoginView : IStateObserver<LoginState>
 
                 case LoginState.ServerNotConfigured:
                     // Form stays disabled — misconfiguration cannot be resolved at runtime.
-                    this.ShowError("The app is not properly set up. Please contact your administrator.");
+                    this.ShowError("The application is not properly set up. Please contact your administrator.");
                     break;
 
                 default:
@@ -104,9 +104,9 @@ public sealed partial class LoginView : IStateObserver<LoginState>
         });
     }
 
-    private void ShowError(string msg)
+    private void ShowError(string message)
     {
-        this.ErrorInfoBar.Message = msg;
+        this.ErrorInfoBar.Message = message;
         this.ErrorInfoBar.IsOpen = true;
     }
 

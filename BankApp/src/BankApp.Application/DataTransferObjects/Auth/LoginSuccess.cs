@@ -2,7 +2,7 @@
 // Copyright (c) CtrlC CtrlV. All rights reserved.
 // </copyright>
 
-namespace BankApp.Application.DTOs.Auth;
+namespace BankApp.Application.DataTransferObjects.Auth;
 
 /// <summary>
 /// Represents a successful login outcome. Pattern-match on the concrete type to

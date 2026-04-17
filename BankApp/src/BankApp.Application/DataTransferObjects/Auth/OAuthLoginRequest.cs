@@ -1,4 +1,4 @@
-namespace BankApp.Application.DTOs.Auth;
+namespace BankApp.Application.DataTransferObjects.Auth;
 
 /// <summary>
 /// Represents a login request using an OAuth provider token.

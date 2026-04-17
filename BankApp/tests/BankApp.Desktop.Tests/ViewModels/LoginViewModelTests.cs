@@ -2,7 +2,7 @@
 // Copyright (c) CtrlC CtrlV. All rights reserved.
 // </copyright>
 
-using BankApp.Application.DTOs.Auth;
+using BankApp.Application.DataTransferObjects.Auth;
 using BankApp.Desktop.Enums;
 using BankApp.Desktop.Utilities;
 using BankApp.Desktop.ViewModels;

@@ -11,8 +11,8 @@ namespace BankApp.Infrastructure.Services.Notifications;
 /// </summary>
 public static class EmailTemplates
 {
-    /// <summary>OTP validity period in minutes, derived from <see cref="OtpService.TotpWindowSeconds"/>.</summary>
-    internal const int OtpValidityMinutes = OtpService.TotpWindowSeconds / 60;
+    /// <summary>OTP validity period in minutes, derived from <see cref="OneTimePasswordService.TotpWindowSeconds"/>.</summary>
+    internal const int OtpValidityMinutes = OneTimePasswordService.TotpWindowSeconds / 60;
 
     /// <summary>Subject for the account-locked notification.</summary>
     public const string AccountLockedSubject = "BankApp - Account Locked";
@@ -39,7 +39,7 @@ public static class EmailTemplates
 
     /// <summary>
     /// Returns the body for the OTP delivery email, embedding the generated <paramref name="code"/>
-    /// and the validity window derived from <see cref="OtpService.TotpWindowSeconds"/>.
+    /// and the validity window derived from <see cref="OneTimePasswordService.TotpWindowSeconds"/>.
     /// </summary>
     /// <param name="code">The one-time password to include in the message.</param>
     /// <returns>The formatted email body.</returns>
@@ -54,6 +54,6 @@ public static class EmailTemplates
     /// <returns>The formatted email body.</returns>
     public static string GetPasswordResetBody(string token) =>
         $"Hello,\n\nYou requested a password reset. " +
-        $"Please copy and paste the recovery code below into the app:\n\n{token}\n\n" +
+        $"Please copy and paste the recovery code below into the application:\n\n{token}\n\n" +
         "If you did not request this, please ignore this email.";
 }

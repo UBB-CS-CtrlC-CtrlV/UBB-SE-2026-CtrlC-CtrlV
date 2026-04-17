@@ -1,4 +1,4 @@
-using BankApp.Application.DTOs.Auth;
+using BankApp.Application.DataTransferObjects.Auth;
 using BankApp.Application.Repositories.Interfaces;
 using BankApp.Application.Services.Auth;
 using BankApp.Application.Services.Notifications;

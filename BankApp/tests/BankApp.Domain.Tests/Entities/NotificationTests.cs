@@ -7,9 +7,6 @@ namespace BankApp.Domain.Tests.Entities;
 /// </summary>
 public class NotificationTests
 {
-    /// <summary>
-    /// Verifies the default values assigned to a new notification.
-    /// </summary>
     [Fact]
     public void Constructor_WhenCreated_SetsExpectedDefaults()
     {

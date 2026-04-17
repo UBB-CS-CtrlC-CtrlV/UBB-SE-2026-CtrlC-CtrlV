@@ -2,7 +2,7 @@
 // Copyright (c) CtrlC CtrlV. All rights reserved.
 // </copyright>
 
-using BankApp.Application.DTOs.Auth;
+using BankApp.Application.DataTransferObjects.Auth;
 using BankApp.Domain.Entities;
 using BankApp.Application.Repositories.Interfaces;
 using BankApp.Application.Services.Security;
@@ -126,7 +126,7 @@ public class RegistrationService : IRegistrationService
                 PreferredLanguage = DefaultLanguage,
                 Is2FAEnabled = false,
                 IsLocked = false,
-                FailedLoginAttempts = 0,
+                FailedLoginAttempts = default,
             };
 
             if (authRepository.CreateUser(newUser).IsError)
@@ -196,7 +196,7 @@ public class RegistrationService : IRegistrationService
             PreferredLanguage = DefaultLanguage,
             Is2FAEnabled = false,
             IsLocked = false,
-            FailedLoginAttempts = 0,
+            FailedLoginAttempts = default,
         };
     }
 }

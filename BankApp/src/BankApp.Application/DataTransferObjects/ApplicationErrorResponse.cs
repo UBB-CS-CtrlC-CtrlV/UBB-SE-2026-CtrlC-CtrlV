@@ -1,15 +1,15 @@
-// <copyright file="ApiErrorResponse.cs" company="CtrlC CtrlV">
+// <copyright file="ApplicationErrorResponse.cs" company="CtrlC CtrlV">
 // Copyright (c) CtrlC CtrlV. All rights reserved.
 // </copyright>
 
-namespace BankApp.Application.DTOs;
+namespace BankApp.Application.DataTransferObjects;
 
 /// <summary>
 /// Represents the JSON error body returned by all API endpoints on failure.
 /// The HTTP status code signals the error category; this body carries the
 /// human-readable message and a machine-readable code for client branching logic.
 /// </summary>
-public sealed class ApiErrorResponse
+public sealed class ApplicationErrorResponse
 {
     /// <summary>
     /// Gets or sets the human-readable error description.

@@ -7,7 +7,7 @@ namespace BankApp.Infrastructure.DataAccess;
 /// <summary>
 /// Provides an abstraction over the database connection, supporting transactions and safe query execution.
 /// </summary>
-public interface IDbContext : IDisposable
+public interface IDatabaseContext : IDisposable
 {
     /// <summary>
     /// Executes a database operation using an open connection, returning the result as <see cref="ErrorOr{T}"/>.

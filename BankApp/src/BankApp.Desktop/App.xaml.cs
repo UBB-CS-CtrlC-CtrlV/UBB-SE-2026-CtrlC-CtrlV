@@ -18,6 +18,8 @@ namespace BankApp.Desktop;
 /// </summary>
 public partial class App
 {
+    private const int RetainedLoggingFileCountLimit = 14;
+
     private Window? window;
 
     /// <summary>
@@ -55,7 +57,7 @@ public partial class App
 
     /// <summary>
     /// Gets the application-wide DI container.
-    /// Only resolve services at the composition root boundary (i.e. in <see cref="OnLaunched"/>).
+    /// Only resolve services at the composition root boundary (that is in <see cref="OnLaunched"/>).
     /// All other classes must receive their dependencies via constructor injection.
     /// </summary>
     private IServiceProvider Services { get; }
@@ -64,11 +66,11 @@ public partial class App
     /// Invoked when the application is launched. Resolves the navigation service,
     /// creates the main window and activates it.
     /// </summary>
-    /// <param name="args">
+    /// <param name="arguments">
     /// Contains information about the launch request and process, such as the
     /// activation kind and previous execution state.
     /// </param>
-    protected override void OnLaunched(LaunchActivatedEventArgs args)
+    protected override void OnLaunched(LaunchActivatedEventArgs arguments)
     {
         var navigationService = this.Services.GetRequiredService<IAppNavigationService>();
         this.window = new MainWindow(navigationService);
@@ -82,6 +84,7 @@ public partial class App
             "BankApp",
             "Logs");
 
+        const string loggingFileFormat = "bankapp-client-.log";
         Log.Logger = new LoggerConfiguration()
             .MinimumLevel.Debug()
             .Enrich.FromLogContext()
@@ -89,12 +92,12 @@ public partial class App
             // Writes to the Visual Studio Output window during development.
             .WriteTo.Debug()
 
-            // Writes to a daily rolling file outside the repo.
+            // Writes to a daily rolling file outside the repository.
             // Log path: %LocalAppData%\BankApp\Logs\bankapp-client-YYYYMMDD.log
             .WriteTo.File(
-                path: Path.Combine(logDirectory, "bankapp-client-.log"),
+                path: Path.Combine(logDirectory, loggingFileFormat),
                 rollingInterval: RollingInterval.Day,
-                retainedFileCountLimit: 14)
+                retainedFileCountLimit: RetainedLoggingFileCountLimit)
             .CreateLogger();
     }
 }

@@ -86,9 +86,9 @@ public sealed partial class RegisterView : IStateObserver<RegisterState>
         });
     }
 
-    private void ShowError(string msg)
+    private void ShowError(string message)
     {
-        this.ErrorInfoBar.Message = msg;
+        this.ErrorInfoBar.Message = message;
         this.ErrorInfoBar.IsOpen = true;
     }
 

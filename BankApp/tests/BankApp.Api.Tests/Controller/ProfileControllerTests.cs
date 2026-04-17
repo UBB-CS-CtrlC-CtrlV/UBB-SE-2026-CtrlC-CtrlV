@@ -3,7 +3,7 @@
 // </copyright>
 
 using BankApp.Api.Controllers;
-using BankApp.Application.DTOs.Profile;
+using BankApp.Application.DataTransferObjects.Profile;
 using BankApp.Application.Services.Profile;
 using BankApp.Domain.Enums;
 using ErrorOr;
@@ -124,7 +124,7 @@ public sealed class ProfileControllerTests
     public void GetSessions_WhenSuccess_ReturnsOk()
     {
         // Arrange
-        var sessions = new List<SessionDto>();
+        var sessions = new List<SessionDataTransferObject>();
         this.profileService.Setup(service => service.GetActiveSessions(1)).Returns(sessions);
         ProfileController controller = this.CreateController(1);
 
@@ -159,7 +159,7 @@ public sealed class ProfileControllerTests
     public void GetOAuthLinks_WhenSuccess_ReturnsOk()
     {
         // Arrange
-        var links = new List<OAuthLinkDto>();
+        var links = new List<OAuthLinkDataTransferObject>();
         this.profileService.Setup(service => service.GetOAuthLinks(1)).Returns(links);
         ProfileController controller = this.CreateController(1);
 
@@ -177,8 +177,8 @@ public sealed class ProfileControllerTests
     public void GetNotificationPreferences_WhenSuccess_ReturnsOk()
     {
         // Arrange
-        var prefs = new List<NotificationPreferenceDto>();
-        this.profileService.Setup(service => service.GetNotificationPreferences(1)).Returns(prefs);
+        var preferences = new List<NotificationPreferenceDataTransferObject>();
+        this.profileService.Setup(service => service.GetNotificationPreferences(1)).Returns(preferences);
         ProfileController controller = this.CreateController(1);
 
         // Act
@@ -195,12 +195,12 @@ public sealed class ProfileControllerTests
     public void UpdateNotificationPreferences_WhenSuccess_ReturnsNoContent()
     {
         // Arrange
-        var prefs = new List<NotificationPreferenceDto>();
-        this.profileService.Setup(service => service.UpdateNotificationPreferences(1, prefs)).Returns(Result.Success);
+        var preferences = new List<NotificationPreferenceDataTransferObject>();
+        this.profileService.Setup(service => service.UpdateNotificationPreferences(1, preferences)).Returns(Result.Success);
         ProfileController controller = this.CreateController(1);
 
         // Act
-        IActionResult result = controller.UpdateNotificationPreferences(prefs);
+        IActionResult result = controller.UpdateNotificationPreferences(preferences);
 
         // Assert
         result.Should().BeOfType<NoContentResult>();
@@ -217,7 +217,7 @@ public sealed class ProfileControllerTests
         ProfileController controller = this.CreateController(1);
 
         // Act
-        IActionResult result = controller.Enable2FA(new Enable2FARequest { Method = TwoFactorMethod.Email });
+        IActionResult result = controller.Enable2FA(new Enable2FactorAuthentificationRequest { Method = TwoFactorMethod.Email });
 
         // Assert
         result.Should().BeOfType<NoContentResult>();

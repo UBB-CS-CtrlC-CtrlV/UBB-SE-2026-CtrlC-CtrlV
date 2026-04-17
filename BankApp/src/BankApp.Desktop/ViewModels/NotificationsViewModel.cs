@@ -6,7 +6,7 @@ using System;
 using System.Collections.Generic;
 using System.Threading.Tasks;
 using BankApp.Desktop.Utilities;
-using BankApp.Application.DTOs.Profile;
+using BankApp.Application.DataTransferObjects.Profile;
 using BankApp.Desktop.Enums;
 using ErrorOr;
 using Microsoft.Extensions.Logging;
@@ -27,7 +27,7 @@ public class NotificationsViewModel
     /// <param name="preference"></param>
     /// <param name="enabled"></param>
     /// <returns>A <see cref="Task{TResult}"/> representing the result of the asynchronous operation.</returns>
-    public async Task<bool> ToggleNotificationPreference(NotificationPreferenceDto preference, bool enabled)
+    public async Task<bool> ToggleNotificationPreference(NotificationPreferenceDataTransferObject preference, bool enabled)
     {
         bool previousValue = preference.EmailEnabled;
         preference.EmailEnabled = enabled;
@@ -50,7 +50,7 @@ public class NotificationsViewModel
         this.apiClient = apiClient ?? throw new ArgumentNullException(nameof(apiClient));
         this.logger = logger ?? throw new ArgumentNullException(nameof(logger));
         this.State = new ObservableState<ProfileState>(ProfileState.Idle);
-        this.NotificationPreferences = new List<NotificationPreferenceDto>();
+        this.NotificationPreferences = new List<NotificationPreferenceDataTransferObject>();
     }
 
     /// <summary>
@@ -61,7 +61,7 @@ public class NotificationsViewModel
     /// <summary>
     /// Gets the notification preferences for the current user.
     /// </summary>
-    public List<NotificationPreferenceDto> NotificationPreferences { get; private set; }
+    public List<NotificationPreferenceDataTransferObject> NotificationPreferences { get; private set; }
 
     /// <summary>
     /// Loads notification preferences for the current user from the server.
@@ -69,7 +69,7 @@ public class NotificationsViewModel
     /// <returns><see langword="true"/> if loaded successfully; otherwise, <see langword="false"/>.</returns>
     public async Task<bool> LoadNotificationPreferences()
     {
-        var prefsResult = await this.apiClient.GetAsync<List<NotificationPreferenceDto>>(ApiEndpoints.NotificationPreferences);
+        var prefsResult = await this.apiClient.GetAsync<List<NotificationPreferenceDataTransferObject>>(ApiEndpoints.NotificationPreferences);
         if (prefsResult.IsError)
         {
             this.logger.LogError("LoadNotificationPreferences: request failed: {Errors}", prefsResult.Errors);
@@ -85,16 +85,16 @@ public class NotificationsViewModel
     /// </summary>
     /// <param name="preferences">The preferences to persist.</param>
     /// <returns><see langword="true"/> if the preferences were updated; otherwise, <see langword="false"/>.</returns>
-    public async Task<bool> UpdateNotificationPreferences(List<NotificationPreferenceDto> preferences)
+    public async Task<bool> UpdateNotificationPreferences(List<NotificationPreferenceDataTransferObject> preferences)
     {
-        if (preferences.Count == 0)
+        if (preferences.Count == default)
         {
             return false;
         }
 
         this.State.SetValue(ProfileState.Loading);
 
-        ErrorOr<Success> result = await this.apiClient.PutAsync<List<NotificationPreferenceDto>>(ApiEndpoints.NotificationPreferences, preferences);
+        ErrorOr<Success> result = await this.apiClient.PutAsync<List<NotificationPreferenceDataTransferObject>>(ApiEndpoints.NotificationPreferences, preferences);
 
         return result.Match(
             _ =>

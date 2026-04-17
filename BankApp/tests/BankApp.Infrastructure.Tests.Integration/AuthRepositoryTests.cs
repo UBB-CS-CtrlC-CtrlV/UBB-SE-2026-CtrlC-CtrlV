@@ -39,47 +39,47 @@ public sealed class AuthRepositoryTests : IAsyncLifetime
 
     public Task DisposeAsync() => Task.CompletedTask;
 
-    private AppDbContext MakeDb() => this.fixture.CreateDbContext();
+    private AppDatabaseContext MakeDatabaseContext() => this.fixture.CreateDatabaseContext();
 
-    private User SeedUser(AppDbContext db)
+    private User SeedUser(AppDatabaseContext databaseContext)
     {
-        var userDa = new UserDataAccess(db);
+        var userDataAccess = new UserDataAccess(databaseContext);
         var user = this.userFaker.Generate();
-        userDa.Create(user).IsError.Should().BeFalse();
+        userDataAccess.Create(user).IsError.Should().BeFalse();
 
-        var findResult = userDa.FindByEmail(user.Email);
+        var findResult = userDataAccess.FindByEmail(user.Email);
         findResult.IsError.Should().BeFalse(findResult.IsError ? findResult.FirstError.Description : string.Empty);
         return findResult.Value;
     }
 
-    private AuthRepository MakeAuthRepo(AppDbContext db)
+    private AuthRepository MakeAuthenticationRepository(AppDatabaseContext databaseContext)
     {
-        var userDa = new UserDataAccess(db);
-        var sessionDa = new SessionDataAccess(db);
-        var oauthDa = new OAuthLinkDataAccess(db);
-        var tokenDa = new PasswordResetTokenDataAccess(db);
-        var notifDa = new NotificationPreferenceDataAccess(db);
-        return new AuthRepository(userDa, sessionDa, oauthDa, tokenDa, notifDa);
+        var userDataAccess = new UserDataAccess(databaseContext);
+        var sessionDataAccess = new SessionDataAccess(databaseContext);
+        var oauthDataAccess = new OAuthLinkDataAccess(databaseContext);
+        var tokenDataAccess = new PasswordResetTokenDataAccess(databaseContext);
+        var notificationPreferenceDataAccess = new NotificationPreferenceDataAccess(databaseContext);
+        return new AuthRepository(userDataAccess, sessionDataAccess, oauthDataAccess, tokenDataAccess, notificationPreferenceDataAccess);
     }
 
     [Fact]
     public void CreateUser_WhenCalled_AutomaticallyCreatesNotificationPreferences()
     {
         // Arrange
-        using var db = MakeDb();
-        var userDa = new UserDataAccess(db);
-        var repo = MakeAuthRepo(db);
+        using var databaseContext = MakeDatabaseContext();
+        var userDataAccess = new UserDataAccess(databaseContext);
+        var repository = MakeAuthenticationRepository(databaseContext);
         var newUser = this.userFaker.Generate();
 
         // Act
-        var result = repo.CreateUser(newUser);
+        var result = repository.CreateUser(newUser);
 
         // Assert
         result.IsError.Should().BeFalse(result.IsError ? result.FirstError.Description : string.Empty);
-        var user = userDa.FindByEmail(newUser.Email).Value;
-        var countResult = db.Query<int>(conn =>
+        var user = userDataAccess.FindByEmail(newUser.Email).Value;
+        var countResult = databaseContext.Query<int>(connection =>
             SqlMapper.QueryFirst<int>(
-                conn,
+                connection,
                 "SELECT COUNT(*) FROM NotificationPreference WHERE UserId = @UserId",
                 new { UserId = user.Id }));
         countResult.IsError.Should().BeFalse();
@@ -90,12 +90,12 @@ public sealed class AuthRepositoryTests : IAsyncLifetime
     public void CreateSession_WhenUserExists_ReturnsSessionWithPositiveId()
     {
         // Arrange
-        using var db = MakeDb();
-        var user = SeedUser(db);
-        var repo = MakeAuthRepo(db);
+        using var databaseContext = MakeDatabaseContext();
+        var user = SeedUser(databaseContext);
+        var repository = MakeAuthenticationRepository(databaseContext);
 
         // Act
-        var result = repo.CreateSession(user.Id, "token-abc", "Chrome", "Chrome 120", "127.0.0.1");
+        var result = repository.CreateSession(user.Id, "token-abc", "Chrome", "Chrome 120", "127.0.0.1");
 
         // Assert
         result.IsError.Should().BeFalse(result.IsError ? result.FirstError.Description : string.Empty);
@@ -108,13 +108,13 @@ public sealed class AuthRepositoryTests : IAsyncLifetime
     public void FindSessionByToken_WhenTokenIsActive_ReturnsSession()
     {
         // Arrange
-        using var db = MakeDb();
-        var user = SeedUser(db);
-        var repo = MakeAuthRepo(db);
-        repo.CreateSession(user.Id, "valid-token-123", null, null, null);
+        using var databaseContext = MakeDatabaseContext();
+        var user = SeedUser(databaseContext);
+        var repository = MakeAuthenticationRepository(databaseContext);
+        repository.CreateSession(user.Id, "valid-token-123", null, null, null);
 
         // Act
-        var result = repo.FindSessionByToken("valid-token-123");
+        var result = repository.FindSessionByToken("valid-token-123");
 
         // Assert
         result.IsError.Should().BeFalse(result.IsError ? result.FirstError.Description : string.Empty);
@@ -125,15 +125,15 @@ public sealed class AuthRepositoryTests : IAsyncLifetime
     public void FindSessionByToken_WhenTokenIsRevoked_ReturnsNotFound()
     {
         // Arrange
-        using var db = MakeDb();
-        var user = SeedUser(db);
-        var repo = MakeAuthRepo(db);
-        var sessionResult = repo.CreateSession(user.Id, "revoke-me", null, null, null);
+        using var databaseContext = MakeDatabaseContext();
+        var user = SeedUser(databaseContext);
+        var repository = MakeAuthenticationRepository(databaseContext);
+        var sessionResult = repository.CreateSession(user.Id, "revoke-me", null, null, null);
         sessionResult.IsError.Should().BeFalse();
-        repo.UpdateSessionToken(sessionResult.Value.Id);
+        repository.UpdateSessionToken(sessionResult.Value.Id);
 
         // Act
-        var result = repo.FindSessionByToken("revoke-me");
+        var result = repository.FindSessionByToken("revoke-me");
 
         // Assert
         result.IsError.Should().BeTrue("A revoked session should not be retrievable.");
@@ -143,19 +143,19 @@ public sealed class AuthRepositoryTests : IAsyncLifetime
     public void FindPasswordResetToken_AfterSavingToken_ReturnsPersistedToken()
     {
         // Arrange
-        using var db = MakeDb();
-        var user = SeedUser(db);
-        var repo = MakeAuthRepo(db);
+        using var databaseContext = MakeDatabaseContext();
+        var user = SeedUser(databaseContext);
+        var repository = MakeAuthenticationRepository(databaseContext);
         var token = new PasswordResetToken
         {
             UserId = user.Id,
             TokenHash = "sha256-hash-xyz",
             ExpiresAt = DateTime.UtcNow.AddHours(1),
         };
-        repo.SavePasswordResetToken(token).IsError.Should().BeFalse();
+        repository.SavePasswordResetToken(token).IsError.Should().BeFalse();
 
         // Act
-        var result = repo.FindPasswordResetToken("sha256-hash-xyz");
+        var result = repository.FindPasswordResetToken("sha256-hash-xyz");
 
         // Assert
         result.IsError.Should().BeFalse();
@@ -168,25 +168,25 @@ public sealed class AuthRepositoryTests : IAsyncLifetime
     public void MarkPasswordResetTokenAsUsed_WhenTokenExists_SetsUsedAtTimestamp()
     {
         // Arrange
-        using var db = MakeDb();
-        var user = SeedUser(db);
-        var repo = MakeAuthRepo(db);
+        using var databaseContext = MakeDatabaseContext();
+        var user = SeedUser(databaseContext);
+        var repository = MakeAuthenticationRepository(databaseContext);
         var token = new PasswordResetToken
         {
             UserId = user.Id,
             TokenHash = "mark-used-hash",
             ExpiresAt = DateTime.UtcNow.AddHours(1),
         };
-        repo.SavePasswordResetToken(token).IsError.Should().BeFalse();
-        var created = repo.FindPasswordResetToken("mark-used-hash");
+        repository.SavePasswordResetToken(token).IsError.Should().BeFalse();
+        var created = repository.FindPasswordResetToken("mark-used-hash");
         created.IsError.Should().BeFalse();
 
         // Act
-        var markResult = repo.MarkPasswordResetTokenAsUsed(created.Value.Id);
+        var markResult = repository.MarkPasswordResetTokenAsUsed(created.Value.Id);
 
         // Assert
         markResult.IsError.Should().BeFalse(markResult.IsError ? markResult.FirstError.Description : string.Empty);
-        var afterMark = repo.FindPasswordResetToken("mark-used-hash");
+        var afterMark = repository.FindPasswordResetToken("mark-used-hash");
         afterMark.IsError.Should().BeFalse();
         afterMark.Value.UsedAt.Should().NotBeNull();
     }

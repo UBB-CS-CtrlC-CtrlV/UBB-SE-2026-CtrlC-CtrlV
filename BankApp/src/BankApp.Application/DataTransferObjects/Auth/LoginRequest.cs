@@ -1,4 +1,4 @@
-namespace BankApp.Application.DTOs.Auth;
+namespace BankApp.Application.DataTransferObjects.Auth;
 
 /// <summary>
 /// Represents a login request with email and password credentials.

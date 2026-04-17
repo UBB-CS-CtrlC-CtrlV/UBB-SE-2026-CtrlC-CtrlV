@@ -1,11 +1,11 @@
 using BankApp.Domain.Enums;
 
-namespace BankApp.Application.DTOs.Profile;
+namespace BankApp.Application.DataTransferObjects.Profile;
 
 /// <summary>
 /// Represents a request to enable two-factor authentication.
 /// </summary>
-public class Enable2FARequest
+public class Enable2FactorAuthentificationRequest
 {
     /// <summary>
     /// Gets or sets the two-factor authentication method to enable.

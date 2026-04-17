@@ -11,27 +11,27 @@ namespace BankApp.Infrastructure.DataAccess.Implementations;
 /// </summary>
 internal class NotificationPreferenceDataAccess : INotificationPreferenceDataAccess
 {
-    private readonly AppDbContext db;
+    private readonly AppDatabaseContext databaseContext;
 
     /// <summary>
     /// Initializes a new instance of the <see cref="NotificationPreferenceDataAccess"/> class.
     /// </summary>
-    /// <param name="db">The database context used for executing queries.</param>
-    public NotificationPreferenceDataAccess(AppDbContext db)
+    /// <param name="databaseContext">The database context used for executing queries.</param>
+    public NotificationPreferenceDataAccess(AppDatabaseContext databaseContext)
     {
-        this.db = db;
+        this.databaseContext = databaseContext;
     }
 
     /// <inheritdoc />
     public ErrorOr<Success> Create(int userId, string category)
     {
-        const string sql = """
+        const string databaseCommandText = """
             INSERT INTO NotificationPreference (UserId, Category, PushEnabled, EmailEnabled, SmsEnabled)
             VALUES (@UserId, @Category, 0, 0, 0)
             """;
 
-        return this.db.Query(conn => conn.Execute(sql, new { UserId = userId, Category = category }))
-            .Then(rows => rows > 0 ? Result.Success : (ErrorOr<Success>)Error.Failure(description: "Failed to create notification preference."));
+        return this.databaseContext.Query(connection => connection.Execute(databaseCommandText, new { UserId = userId, Category = category }))
+            .Then(rows => rows > default(int) ? Result.Success : (ErrorOr<Success>)Error.Failure(description: "Failed to create notification preference."));
     }
 
     /// <inheritdoc />
@@ -43,13 +43,13 @@ internal class NotificationPreferenceDataAccess : INotificationPreferenceDataAcc
             WHERE UserId = @UserId
             """;
 
-        return this.db.Query(conn => conn.Query<NotificationPreference>(query, new { UserId = userId }).AsList());
+        return this.databaseContext.Query(connection => connection.Query<NotificationPreference>(query, new { UserId = userId }).AsList());
     }
 
     /// <inheritdoc />
     public ErrorOr<Success> Update(int userId, List<NotificationPreference> preferences)
     {
-        const string sql = """
+        const string databaseCommandText = """
             UPDATE NotificationPreference
             SET PushEnabled        = @PushEnabled,
                 EmailEnabled       = @EmailEnabled,
@@ -59,14 +59,14 @@ internal class NotificationPreferenceDataAccess : INotificationPreferenceDataAcc
               AND Category = @Category
             """;
 
-        return this.db.Query(conn => conn.Execute(sql, preferences.Select(p => new
+        return this.databaseContext.Query(connection => connection.Execute(databaseCommandText, preferences.Select(preference => new
         {
-            p.UserId,
-            Category = p.Category.ToDisplayName(),
-            p.PushEnabled,
-            p.EmailEnabled,
-            p.SmsEnabled,
-            p.MinAmountThreshold,
+            preference.UserId,
+            Category = preference.Category.ToDisplayName(),
+            preference.PushEnabled,
+            preference.EmailEnabled,
+            preference.SmsEnabled,
+            preference.MinAmountThreshold,
         })))
         .Then(_ => (ErrorOr<Success>)Result.Success);
     }

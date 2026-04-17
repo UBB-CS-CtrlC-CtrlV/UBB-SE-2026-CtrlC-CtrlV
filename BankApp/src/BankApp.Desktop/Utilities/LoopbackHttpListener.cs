@@ -1,4 +1,4 @@
-﻿// <copyright file="LoopbackHttpListener.cs" company="CtrlC CtrlV">
+// <copyright file="LoopbackHttpListener.cs" company="CtrlC CtrlV">
 // Copyright (c) CtrlC CtrlV. All rights reserved.
 // </copyright>
 
@@ -15,7 +15,11 @@ namespace BankApp.Desktop.Utilities;
 /// </summary>
 public partial class LoopbackHttpListener : IDisposable
 {
-    private const int DefaultTimeout = 60 * 5;
+    private const int SecondsPerMinute = 60;
+    private const int DefaultTimeoutMinutes = 5;
+    private const int FirstPathCharacterStartIndex = 1;
+    private const int BufferWriteStartOffset = 0;
+    private const int DefaultTimeout = SecondsPerMinute * DefaultTimeoutMinutes;
     private readonly HttpListener listener;
 
     /// <summary>
@@ -28,7 +32,7 @@ public partial class LoopbackHttpListener : IDisposable
         path = path ?? string.Empty;
         if (path.StartsWith("/"))
         {
-            path = path[1..];
+            path = path[FirstPathCharacterStartIndex..];
         }
 
         var primaryListenerUrl = $"http://127.0.0.1:{port}/{path}";
@@ -47,7 +51,7 @@ public partial class LoopbackHttpListener : IDisposable
     /// Waits for the first callback request received by the loopback listener.
     /// </summary>
     /// <param name="timeoutInSeconds">Timeout period in seconds.</param>
-    /// <returns>The callback URL received from the browser.</returns>
+    /// <returns>The callback address received from the browser.</returns>
     public async Task<string> WaitForCallbackAsync(int timeoutInSeconds = DefaultTimeout)
     {
         using var cancellationTokenSource = new CancellationTokenSource(TimeSpan.FromSeconds(timeoutInSeconds));
@@ -75,11 +79,11 @@ public partial class LoopbackHttpListener : IDisposable
 
     private async Task WriteCompletionResponseAsync(HttpListenerResponse response)
     {
-        const string responseString = "<html><head><style>body{font-family:sans-serif;display:flex;justify-content:center;align-items:center;height:100vh;margin:0;background:#f0f2f5;} .card{background:white;padding:2rem;border-radius:8px;box-shadow:0 4px 12px rgba(0,0,0,0.1);text-align:center;}</style></head><body><div class='card'><h2>Authentication Complete!</h2><p>You can now safely close this browser tab and return to the Bank App.</p></div></body></html>";
+        const string responseString = "<html><head><style>body{font-family:sans-serif;display:flex;justify-content:center;align-items:center;height:100vh;margin:0;background:#f0f2f5;} .card{background:white;padding:2rem;border-radius:8px;box-shadow:0 4px 12px rgba(0,0,0,0.1);text-align:center;}</style></head><body><div class='card'><h2>Authentication Complete!</h2><p>You can now safely close this browser tab and return to the Bank application.</p></div></body></html>";
         var buffer = Encoding.UTF8.GetBytes(responseString);
         response.ContentLength64 = buffer.Length;
 
-        await response.OutputStream.WriteAsync(buffer, 0, buffer.Length);
+        await response.OutputStream.WriteAsync(buffer, BufferWriteStartOffset, buffer.Length);
         response.OutputStream.Close();
     }
 }

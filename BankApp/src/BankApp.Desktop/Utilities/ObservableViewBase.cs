@@ -26,8 +26,8 @@ public abstract class ObservableViewBase<T> : IStateObserver<T>
     /// <summary>
     /// Shows an error message to the user.
     /// </summary>
-    /// <param name="msg">The error message to display.</param>
-    public abstract void ShowError(string msg);
+    /// <param name="message">The error message to display.</param>
+    public abstract void ShowError(string message);
 
     /// <summary>
     /// Shows a loading indicator to the user, indicating that a background operation is in progress.

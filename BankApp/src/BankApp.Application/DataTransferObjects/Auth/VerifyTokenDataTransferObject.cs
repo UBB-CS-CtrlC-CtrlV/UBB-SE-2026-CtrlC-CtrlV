@@ -1,13 +1,13 @@
-﻿// <copyright file="VerifyTokenDto.cs" company="CtrlC CtrlV">
+// <copyright file="VerifyTokenDataTransferObject.cs" company="CtrlC CtrlV">
 // Copyright (c) CtrlC CtrlV. All rights reserved.
 // </copyright>
 
-namespace BankApp.Application.DTOs.Auth;
+namespace BankApp.Application.DataTransferObjects.Auth;
 
 /// <summary>
 /// Data transfer object used for reset token verification requests.
 /// </summary>
-public class VerifyTokenDto
+public class VerifyTokenDataTransferObject
 {
     /// <summary>
     /// Gets or sets the reset token to be verified.

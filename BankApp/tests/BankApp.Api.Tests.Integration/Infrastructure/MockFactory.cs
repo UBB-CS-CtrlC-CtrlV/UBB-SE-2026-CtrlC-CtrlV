@@ -9,7 +9,6 @@ using BankApp.Application.Services.PasswordRecovery;
 using BankApp.Application.Services.Profile;
 using BankApp.Application.Services.Registration;
 using BankApp.Application.Services.Security;
-using Moq;
 
 namespace BankApp.Api.Tests.Integration.Infrastructure;
 

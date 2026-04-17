@@ -7,6 +7,7 @@ using BankApp.Infrastructure.DataAccess.Implementations;
 using BankApp.Infrastructure.Repositories.Implementations;
 using BankApp.Infrastructure.Tests.Integration.Infrastructure;
 using Bogus;
+using ErrorOr;
 using FluentAssertions;
 using Xunit;
 
@@ -42,13 +43,13 @@ public sealed class UserRepositoryTests : IAsyncLifetime
     public void FindByEmail_AfterCreatingUser_ReturnsUserWithMatchingFields()
     {
         // Arrange
-        using var db = this.fixture.CreateDbContext();
-        var userDa = new UserDataAccess(db);
-        var user = this.userFaker.Generate();
-        userDa.Create(user).IsError.Should().BeFalse();
+        using AppDatabaseContext databaseContext = this.fixture.CreateDatabaseContext();
+        var userDataAccess = new UserDataAccess(databaseContext);
+        User? user = this.userFaker.Generate();
+        userDataAccess.Create(user).IsError.Should().BeFalse();
 
         // Act
-        var result = userDa.FindByEmail(user.Email);
+        ErrorOr<User> result = userDataAccess.FindByEmail(user.Email);
 
         // Assert
         result.IsError.Should().BeFalse(result.IsError ? result.FirstError.Description : string.Empty);
@@ -61,15 +62,15 @@ public sealed class UserRepositoryTests : IAsyncLifetime
     public void FindById_WhenUserExists_ReturnsUser()
     {
         // Arrange
-        using var db = this.fixture.CreateDbContext();
-        var userDa = new UserDataAccess(db);
-        var user = this.userFaker.Generate();
-        userDa.Create(user).IsError.Should().BeFalse();
-        var byEmail = userDa.FindByEmail(user.Email);
+        using AppDatabaseContext databaseContext = this.fixture.CreateDatabaseContext();
+        var userDataAccess = new UserDataAccess(databaseContext);
+        User? user = this.userFaker.Generate();
+        userDataAccess.Create(user).IsError.Should().BeFalse();
+        ErrorOr<User> byEmail = userDataAccess.FindByEmail(user.Email);
         byEmail.IsError.Should().BeFalse(byEmail.IsError ? byEmail.FirstError.Description : string.Empty);
 
         // Act
-        var result = userDa.FindById(byEmail.Value.Id);
+        ErrorOr<User> result = userDataAccess.FindById(byEmail.Value.Id);
 
         // Assert
         result.IsError.Should().BeFalse(result.IsError ? result.FirstError.Description : string.Empty);
@@ -81,11 +82,11 @@ public sealed class UserRepositoryTests : IAsyncLifetime
     public void FindById_WhenUserDoesNotExist_ReturnsNotFoundError()
     {
         // Arrange
-        using var db = this.fixture.CreateDbContext();
-        var userDa = new UserDataAccess(db);
+        using AppDatabaseContext databaseContext = this.fixture.CreateDatabaseContext();
+        var userDataAccess = new UserDataAccess(databaseContext);
 
         // Act
-        var result = userDa.FindById(99999);
+        ErrorOr<User> result = userDataAccess.FindById(99999);
 
         // Assert
         result.IsError.Should().BeTrue();
@@ -95,22 +96,22 @@ public sealed class UserRepositoryTests : IAsyncLifetime
     public void Update_WhenFieldsAreChanged_PersistsChanges()
     {
         // Arrange
-        using var db = this.fixture.CreateDbContext();
-        var userDa = new UserDataAccess(db);
-        var user = this.userFaker.Generate();
-        userDa.Create(user).IsError.Should().BeFalse();
-        var savedUser = userDa.FindByEmail(user.Email);
+        using AppDatabaseContext databaseContext = this.fixture.CreateDatabaseContext();
+        var userDataAccess = new UserDataAccess(databaseContext);
+        User? user = this.userFaker.Generate();
+        userDataAccess.Create(user).IsError.Should().BeFalse();
+        ErrorOr<User> savedUser = userDataAccess.FindByEmail(user.Email);
         savedUser.IsError.Should().BeFalse(savedUser.IsError ? savedUser.FirstError.Description : string.Empty);
-        var userToUpdate = savedUser.Value;
+        User userToUpdate = savedUser.Value;
         userToUpdate.FullName = "Diana Updated";
         userToUpdate.PhoneNumber = "+40700000000";
 
         // Act
-        var updateResult = userDa.Update(userToUpdate);
+        ErrorOr<Success> updateResult = userDataAccess.Update(userToUpdate);
 
         // Assert
         updateResult.IsError.Should().BeFalse(updateResult.IsError ? updateResult.FirstError.Description : string.Empty);
-        var refreshed = userDa.FindById(userToUpdate.Id);
+        ErrorOr<User> refreshed = userDataAccess.FindById(userToUpdate.Id);
         refreshed.IsError.Should().BeFalse(refreshed.IsError ? refreshed.FirstError.Description : string.Empty);
         refreshed.Value.FullName.Should().Be("Diana Updated");
         refreshed.Value.PhoneNumber.Should().Be("+40700000000");
@@ -120,19 +121,19 @@ public sealed class UserRepositoryTests : IAsyncLifetime
     public void IncrementFailedAttempts_WhenCalledTwice_CounterIncreasesBy2()
     {
         // Arrange
-        using var db = this.fixture.CreateDbContext();
-        var userDa = new UserDataAccess(db);
-        var user = this.userFaker.Generate();
-        userDa.Create(user).IsError.Should().BeFalse();
-        var savedUser = userDa.FindByEmail(user.Email);
+        using AppDatabaseContext databaseContext = this.fixture.CreateDatabaseContext();
+        var userDataAccess = new UserDataAccess(databaseContext);
+        User? user = this.userFaker.Generate();
+        userDataAccess.Create(user).IsError.Should().BeFalse();
+        ErrorOr<User> savedUser = userDataAccess.FindByEmail(user.Email);
         savedUser.IsError.Should().BeFalse(savedUser.IsError ? savedUser.FirstError.Description : string.Empty);
 
         // Act
-        userDa.IncrementFailedAttempts(savedUser.Value.Id);
-        userDa.IncrementFailedAttempts(savedUser.Value.Id);
+        userDataAccess.IncrementFailedAttempts(savedUser.Value.Id);
+        userDataAccess.IncrementFailedAttempts(savedUser.Value.Id);
 
         // Assert
-        var updated = userDa.FindById(savedUser.Value.Id);
+        ErrorOr<User> updated = userDataAccess.FindById(savedUser.Value.Id);
         updated.IsError.Should().BeFalse(updated.IsError ? updated.FirstError.Description : string.Empty);
         updated.Value.FailedLoginAttempts.Should().Be(2);
     }
@@ -141,20 +142,20 @@ public sealed class UserRepositoryTests : IAsyncLifetime
     public void LockAccount_WhenUserExists_SetsIsLockedTrue()
     {
         // Arrange
-        using var db = this.fixture.CreateDbContext();
-        var userDa = new UserDataAccess(db);
-        var user = this.userFaker.Generate();
-        userDa.Create(user).IsError.Should().BeFalse();
-        var savedUser = userDa.FindByEmail(user.Email);
+        using AppDatabaseContext databaseContext = this.fixture.CreateDatabaseContext();
+        var userDataAccess = new UserDataAccess(databaseContext);
+        User? user = this.userFaker.Generate();
+        userDataAccess.Create(user).IsError.Should().BeFalse();
+        ErrorOr<User> savedUser = userDataAccess.FindByEmail(user.Email);
         savedUser.IsError.Should().BeFalse(savedUser.IsError ? savedUser.FirstError.Description : string.Empty);
-        var lockoutEnd = DateTime.UtcNow.AddMinutes(30);
+        DateTime lockoutEnd = DateTime.UtcNow.AddMinutes(30);
 
         // Act
-        var lockResult = userDa.LockAccount(savedUser.Value.Id, lockoutEnd);
+        ErrorOr<Success> lockResult = userDataAccess.LockAccount(savedUser.Value.Id, lockoutEnd);
 
         // Assert
         lockResult.IsError.Should().BeFalse(lockResult.IsError ? lockResult.FirstError.Description : string.Empty);
-        var locked = userDa.FindById(savedUser.Value.Id);
+        ErrorOr<User> locked = userDataAccess.FindById(savedUser.Value.Id);
         locked.IsError.Should().BeFalse(locked.IsError ? locked.FirstError.Description : string.Empty);
         locked.Value.IsLocked.Should().BeTrue();
     }

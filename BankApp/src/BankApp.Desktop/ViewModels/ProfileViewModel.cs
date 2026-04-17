@@ -5,7 +5,7 @@
 using System;
 using System.Threading.Tasks;
 using BankApp.Desktop.Utilities;
-using BankApp.Application.DTOs.Profile;
+using BankApp.Application.DataTransferObjects.Profile;
 using BankApp.Desktop.Enums;
 using BankApp.Domain.Enums;
 using Microsoft.Extensions.Logging;
@@ -192,7 +192,7 @@ public class ProfileViewModel
     /// <param name="preference">The preference to toggle.</param>
     /// <param name="enabled">The new enabled value.</param>
     /// <returns><see langword="true"/> if the preference was saved; otherwise, <see langword="false"/>.</returns>
-    public Task<bool> ToggleNotificationPreference(NotificationPreferenceDto preference, bool enabled)
+    public Task<bool> ToggleNotificationPreference(NotificationPreferenceDataTransferObject preference, bool enabled)
     {
         return this.Notifications.ToggleNotificationPreference(preference, enabled);
     }

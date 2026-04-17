@@ -14,13 +14,10 @@ using Microsoft.UI.Xaml.Controls;
 namespace BankApp.Desktop.Views;
 
 /// <summary>
-/// Displays the OTP verification step of the login flow.
-/// This file contains only UI-layer concerns: navigation, dialog management, and
-/// the Visibility conversion helper used by compiled <c>{x:Bind}</c> expressions.
-/// All business logic (timer countdown, OTP validation, state transitions) lives in
+/// Displays the One Time Password verification step of the login flow.
 /// <see cref="TwoFactorViewModel"/>.
 /// </summary>
-public sealed partial class TwoFactorView : Page, IStateObserver<TwoFactorState>
+public sealed partial class TwoFactorView : IStateObserver<TwoFactorState>
 {
     private readonly TwoFactorViewModel viewModel;
     private readonly IAppNavigationService navigationService;

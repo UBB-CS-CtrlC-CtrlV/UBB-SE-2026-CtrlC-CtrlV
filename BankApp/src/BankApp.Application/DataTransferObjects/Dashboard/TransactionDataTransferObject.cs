@@ -1,16 +1,16 @@
-// <copyright file="TransactionDto.cs" company="CtrlC CtrlV">
+// <copyright file="TransactionDataTransferObject.cs" company="CtrlC CtrlV">
 // Copyright (c) CtrlC CtrlV. All rights reserved.
 // </copyright>
 
 using System.Text.Json.Serialization;
 using BankApp.Domain.Enums;
 
-namespace BankApp.Application.DTOs.Dashboard;
+namespace BankApp.Application.DataTransferObjects.Dashboard;
 
 /// <summary>
 /// Data transfer object representing a recent transaction on the dashboard.
 /// </summary>
-public class TransactionDto
+public class TransactionDataTransferObject
 {
     /// <summary>
     /// Gets or sets the unique identifier for the transaction.

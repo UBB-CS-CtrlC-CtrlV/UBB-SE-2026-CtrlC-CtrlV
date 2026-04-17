@@ -2,7 +2,7 @@
 // Copyright (c) CtrlC CtrlV. All rights reserved.
 // </copyright>
 
-using BankApp.Application.DTOs.Profile;
+using BankApp.Application.DataTransferObjects.Profile;
 using BankApp.Application.Repositories.Interfaces;
 using BankApp.Application.Services.Profile;
 using BankApp.Application.Services.Security;
@@ -507,7 +507,7 @@ public class ProfileServiceTests
             .Returns(Error.NotFound());
 
         // Act
-        ErrorOr<List<NotificationPreferenceDto>> result = this.service.GetNotificationPreferences(99);
+        ErrorOr<List<NotificationPreferenceDataTransferObject>> result = this.service.GetNotificationPreferences(99);
 
         // Assert
         result.IsError.Should().BeTrue();
@@ -535,12 +535,12 @@ public class ProfileServiceTests
                 });
 
         // Act
-        ErrorOr<List<NotificationPreferenceDto>> result = this.service.GetNotificationPreferences(userId);
+        ErrorOr<List<NotificationPreferenceDataTransferObject>> result = this.service.GetNotificationPreferences(userId);
 
         // Assert
         result.IsError.Should().BeFalse();
         result.Value.Should().ContainSingle();
-        result.Value[0].EmailEnabled.Should().BeTrue();
+        result.Value.First().EmailEnabled.Should().BeTrue();
     }
 
     /// <summary>
@@ -555,7 +555,7 @@ public class ProfileServiceTests
             .Returns(Error.NotFound());
 
         // Act
-        ErrorOr<List<SessionDto>> result = this.service.GetActiveSessions(99);
+        ErrorOr<List<SessionDataTransferObject>> result = this.service.GetActiveSessions(99);
 
         // Assert
         result.IsError.Should().BeTrue();
@@ -582,13 +582,13 @@ public class ProfileServiceTests
                 });
 
         // Act
-        ErrorOr<List<SessionDto>> result = this.service.GetActiveSessions(userId);
+        ErrorOr<List<SessionDataTransferObject>> result = this.service.GetActiveSessions(userId);
 
         // Assert
         result.IsError.Should().BeFalse();
         result.Value.Should().ContainSingle();
-        result.Value[0].Id.Should().Be(1);
-        result.Value[0].DeviceInfo.Should().Be("Chrome/Windows");
+        result.Value.First().Id.Should().Be(1);
+        result.Value.First().DeviceInfo.Should().Be("Chrome/Windows");
     }
 
     /// <summary>
