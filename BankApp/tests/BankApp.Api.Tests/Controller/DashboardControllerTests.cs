@@ -21,11 +21,11 @@ namespace BankApp.Api.Tests.Controller;
 [Trait("Category", "Unit")]
 public sealed class DashboardControllerTests
 {
-    private readonly Mock<IDashboardService> dashService = MockFactory.CreateDashboardService();
+    private readonly Mock<IDashboardService> dashboardService = MockFactory.CreateDashboardService();
 
     private DashboardController CreateController(int authenticatedUserId)
     {
-        var controller = new DashboardController(this.dashService.Object);
+        var controller = new DashboardController(this.dashboardService.Object);
         var httpContext = new DefaultHttpContext();
         httpContext.Items["UserId"] = authenticatedUserId;
         controller.ControllerContext = new ControllerContext { HttpContext = httpContext };
@@ -36,9 +36,10 @@ public sealed class DashboardControllerTests
     public void GetDashboard_WhenSuccess_ReturnsOkWithData()
     {
         // Arrange
+        var validUserId = 1;
         var response = new DashboardResponse();
-        this.dashService.Setup(service => service.GetDashboardData(1)).Returns(response);
-        var controller = this.CreateController(1);
+        this.dashboardService.Setup(service => service.GetDashboardData(validUserId)).Returns(response);
+        var controller = this.CreateController(validUserId);
 
         // Act
         var result = controller.GetDashboard();
@@ -52,11 +53,12 @@ public sealed class DashboardControllerTests
     public void GetDashboard_WhenUserNotFound_ReturnsNotFound()
     {
         // Arrange
-        this.dashService
-            .Setup(service => service.GetDashboardData(99))
+        var nonExistentUserId = 99;
+        this.dashboardService
+            .Setup(service => service.GetDashboardData(nonExistentUserId))
             .Returns(Error.NotFound("user_not_found", "User not found."));
 
-        var controller = this.CreateController(99);
+        var controller = this.CreateController(nonExistentUserId);
 
         // Act
         var result = controller.GetDashboard();

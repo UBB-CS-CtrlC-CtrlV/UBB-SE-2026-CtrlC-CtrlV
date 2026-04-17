@@ -24,17 +24,10 @@ namespace BankApp.Infrastructure.Tests.Integration;
 public sealed class DashboardRepositoryTests : IAsyncLifetime
 {
     private readonly DatabaseFixture fixture;
-    private readonly Faker<User> userFaker;
 
     public DashboardRepositoryTests(DatabaseFixture fixture)
     {
         this.fixture = fixture;
-
-        this.userFaker = new Faker<User>()
-            .RuleFor(u => u.Email, f => f.Internet.Email())
-            .RuleFor(u => u.PasswordHash, f => f.Internet.Password())
-            .RuleFor(u => u.FullName, f => f.Person.FullName)
-            .RuleFor(u => u.PreferredLanguage, f => "en");
     }
 
     public Task InitializeAsync() => this.fixture.ResetAsync();
@@ -45,8 +38,16 @@ public sealed class DashboardRepositoryTests : IAsyncLifetime
 
     private User SeedUser(AppDatabaseContext databaseContext)
     {
+        var faker = new Faker();
         var dataAccess = new UserDataAccess(databaseContext);
-        User? user = this.userFaker.Generate();
+        var user = new User
+        {
+            Email = faker.Internet.Email(),
+            PasswordHash = faker.Internet.Password(),
+            FullName = faker.Person.FullName,
+            PreferredLanguage = "en",
+        };
+
         dataAccess.Create(user).IsError.Should().BeFalse();
 
         ErrorOr<User> findResult = dataAccess.FindByEmail(user.Email);
