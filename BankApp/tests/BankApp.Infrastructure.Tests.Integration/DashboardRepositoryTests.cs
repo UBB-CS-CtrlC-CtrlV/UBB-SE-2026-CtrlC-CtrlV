@@ -11,7 +11,6 @@ using BankApp.Infrastructure.Tests.Integration.Infrastructure;
 using Bogus;
 using Dapper;
 using ErrorOr;
-using FluentAssertions;
 
 namespace BankApp.Infrastructure.Tests.Integration;
 
@@ -25,13 +24,19 @@ public sealed class DashboardRepositoryTests : IAsyncLifetime
 {
     private readonly DatabaseFixture fixture;
 
+    /// <summary>
+    /// Initializes a new instance of the <see cref="DashboardRepositoryTests"/> class.
+    /// </summary>
+    /// <param name="fixture">Database fixture.</param>
     public DashboardRepositoryTests(DatabaseFixture fixture)
     {
         this.fixture = fixture;
     }
 
+    /// <inheritdoc/>
     public Task InitializeAsync() => this.fixture.ResetAsync();
 
+    /// <inheritdoc/>
     public Task DisposeAsync() => Task.CompletedTask;
 
     private AppDatabaseContext MakeDatabaseContext() => this.fixture.CreateDatabaseContext();

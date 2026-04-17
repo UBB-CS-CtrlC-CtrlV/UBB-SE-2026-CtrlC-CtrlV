@@ -217,7 +217,7 @@ public sealed class ProfileControllerTests
         ProfileController controller = this.CreateController(1);
 
         // Act
-        IActionResult result = controller.Enable2FA(new Enable2FactorAuthentificationRequest { Method = TwoFactorMethod.Email });
+        IActionResult result = controller.Enable2FA(new Enable2FactorAuthenticationRequest { Method = TwoFactorMethod.Email });
 
         // Assert
         result.Should().BeOfType<NoContentResult>();

@@ -13,7 +13,7 @@ namespace BankApp.Infrastructure.Services.Security;
 /// <summary>
 /// Provides HMAC-based TOTP and in-memory SMS OTP generation and verification.
 /// </summary>
-public class OneTimePasswordService : IOtpService
+public class OneTimePasswordService : IOneTimePasswordService
 {
     private static readonly Dictionary<int, (string Code, DateTime ExpiryTime)> TemporarySmsStorage = new Dictionary<int, (string Code, DateTime ExpiryTime)>();
     private const int SmsOtpExpiryMinutes = 5;

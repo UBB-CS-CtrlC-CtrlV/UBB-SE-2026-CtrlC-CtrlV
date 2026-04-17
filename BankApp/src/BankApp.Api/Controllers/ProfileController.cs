@@ -172,7 +172,7 @@ public class ProfileController : ApiControllerBase
     /// or 400/404 if enabling 2FA fails.
     /// </returns>
     [HttpPut("2fa/enable")]
-    public IActionResult Enable2FA([FromBody] Enable2FactorAuthentificationRequest request)
+    public IActionResult Enable2FA([FromBody] Enable2FactorAuthenticationRequest request)
     {
         int userId = this.GetAuthenticatedUserId();
         return this.ToActionResult(this.profileService.Enable2FactorAuthentication(userId, request.Method));
