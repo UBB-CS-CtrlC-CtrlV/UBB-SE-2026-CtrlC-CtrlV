@@ -102,7 +102,8 @@ public sealed class SessionValidationMiddlewareTests
     public async Task Invoke_ProtectedEndpoint_ValidTokenButNoSession_Returns401()
     {
         // Arrange
-        this.jwtService.Setup(service => service.ExtractUserId("good-token")).Returns(1);
+        var validUserId = 1;
+        this.jwtService.Setup(service => service.ExtractUserId("good-token")).Returns(validUserId);
         this.authenticationRepository
             .Setup(repository => repository.FindSessionByToken("good-token"))
             .Returns(Error.NotFound("session_not_found", "Session not found."));
@@ -126,10 +127,12 @@ public sealed class SessionValidationMiddlewareTests
     public async Task Invoke_ProtectedEndpoint_ValidTokenAndSession_CallsNextAndSetsUserId()
     {
         // Arrange
-        this.jwtService.Setup(service => service.ExtractUserId("good-token")).Returns(42);
+        var validUserId = 42;
+        var validSessionId = 1;
+        this.jwtService.Setup(service => service.ExtractUserId("good-token")).Returns(validUserId);
         this.authenticationRepository
             .Setup(repository => repository.FindSessionByToken("good-token"))
-            .Returns(new Session { Id = 1, UserId = 42, Token = "good-token" });
+            .Returns(new Session { Id = validSessionId, UserId = validUserId, Token = "good-token" });
 
         SessionValidationMiddleware middleware = this.CreateMiddleware();
         HttpContext context = CreateHttpContext("/api/profile", "Bearer good-token");
@@ -139,7 +142,7 @@ public sealed class SessionValidationMiddlewareTests
 
         // Assert
         this.nextWasCalled.Should().BeTrue();
-        context.Items["UserId"].Should().Be(42);
+        context.Items["UserId"].Should().Be(validUserId);
     }
 
     /// <summary>
