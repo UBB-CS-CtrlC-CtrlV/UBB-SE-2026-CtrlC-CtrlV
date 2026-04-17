@@ -175,7 +175,7 @@ public class ProfileController : ApiControllerBase
     public IActionResult Enable2FA([FromBody] Enable2FactorAuthentificationRequest request)
     {
         int userId = this.GetAuthenticatedUserId();
-        return this.ToActionResult(this.profileService.Enable2FA(userId, request.Method));
+        return this.ToActionResult(this.profileService.Enable2FactorAuthentication(userId, request.Method));
     }
 
     /// <summary>
@@ -189,7 +189,7 @@ public class ProfileController : ApiControllerBase
     public IActionResult Disable2FA()
     {
         int userId = this.GetAuthenticatedUserId();
-        return this.ToActionResult(this.profileService.Disable2FA(userId));
+        return this.ToActionResult(this.profileService.Disable2FactorAuthentication(userId));
     }
 
     /// <summary>

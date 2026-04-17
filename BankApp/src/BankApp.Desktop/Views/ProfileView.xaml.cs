@@ -118,7 +118,7 @@ public sealed partial class ProfileView : IStateObserver<ProfileState>
         this.TwoFactorEmailDisplay.Text = user.Email ?? string.Empty;
 
         this.viewModel.IsInitializingView = true;
-        this.TwoFactorToggle.IsOn = user.Is2FAEnabled;
+        this.TwoFactorToggle.IsOn = user.Is2FactorAuthentificationEnabled;
         this.viewModel.IsInitializingView = false;
 
         this.PopulateOAuthLinks(this.viewModel.OAuth.OAuthLinks);

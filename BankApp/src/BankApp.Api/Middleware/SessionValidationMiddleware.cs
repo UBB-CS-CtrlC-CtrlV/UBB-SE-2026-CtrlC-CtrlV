@@ -29,10 +29,10 @@ public class SessionValidationMiddleware
     /// </summary>
     /// <param name="context">The current HTTP context.</param>
     /// <param name="authRepository">The authentication repository used to verify sessions.</param>
-    /// <param name="jwtService">The JWT service used to extract and validate tokens.</param>
+    /// <param name="jsonWebTokenService">The JWT service used to extract and validate tokens.</param>
     /// <param name="logger">Logger for validation errors.</param>
     /// <returns>A <see cref="Task"/> representing the asynchronous operation.</returns>
-    public async Task Invoke(HttpContext context, IAuthRepository authRepository, IJwtService jwtService, ILogger<SessionValidationMiddleware> logger)
+    public async Task Invoke(HttpContext context, IAuthRepository authRepository, IJsonWebTokenService jsonWebTokenService, ILogger<SessionValidationMiddleware> logger)
     {
         string? path = context.Request.Path.Value?.ToLower();
 
@@ -55,7 +55,7 @@ public class SessionValidationMiddleware
         string token = authHeader[BearerPrefix.Length..];
 
         // Check if JWT valid
-        ErrorOr<int> userIdResult = jwtService.ExtractUserId(token);
+        ErrorOr<int> userIdResult = jsonWebTokenService.ExtractUserId(token);
         if (userIdResult.IsError)
         {
             logger.LogWarning("Token validation failed [{Code}]: {Description}", userIdResult.FirstError.Code, userIdResult.FirstError.Description);

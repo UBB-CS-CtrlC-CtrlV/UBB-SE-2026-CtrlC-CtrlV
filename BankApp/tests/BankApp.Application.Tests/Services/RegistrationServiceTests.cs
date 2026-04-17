@@ -92,7 +92,7 @@ public class RegistrationServiceTests
                     user.FullName == request.FullName &&
                     user.PasswordHash == "hashed-password" &&
                     user.PreferredLanguage == "en" &&
-                    !user.Is2FAEnabled &&
+                    !user.Is2FactorAuthenticationEnabled &&
                     !user.IsLocked &&
                     user.FailedLoginAttempts == 0)),
             Times.Once);

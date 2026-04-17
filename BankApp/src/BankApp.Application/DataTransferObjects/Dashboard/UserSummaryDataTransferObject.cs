@@ -27,5 +27,5 @@ public class UserSummaryDataTransferObject
     /// <summary>
     /// Gets or sets a value indicating whether two-factor authentication is enabled.
     /// </summary>
-    public bool Is2FAEnabled { get; set; }     // To Do: Change to 2FA
+    public bool Is2FactorAuthentificationEnabled { get; set; }
 }

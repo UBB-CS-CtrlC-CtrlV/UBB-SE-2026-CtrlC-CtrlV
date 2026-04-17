@@ -20,8 +20,8 @@ public class LoginServiceTests
 {
     private readonly Mock<IAuthRepository> authRepository = MockFactory.CreateAuthRepository();
     private readonly Mock<IHashService> hashService = MockFactory.CreateHashService();
-    private readonly Mock<IJwtService> jwtService = MockFactory.CreateJwtService();
-    private readonly Mock<IOtpService> otpService = MockFactory.CreateOtpService();
+    private readonly Mock<IJsonWebTokenService> jwtService = MockFactory.CreateJwtService();
+    private readonly Mock<IOneTimePasswordService> otpService = MockFactory.CreateOtpService();
     private readonly Mock<IEmailService> emailService = MockFactory.CreateEmailService();
     private readonly LoginService service;
 
@@ -118,7 +118,7 @@ public class LoginServiceTests
             Id = 1,
             Email = request.Email,
             PasswordHash = "hash",
-            Is2FAEnabled = true,
+            Is2FactorAuthenticationEnabled = true,
             Preferred2FAMethod = "Authenticator",
         };
 
@@ -135,7 +135,7 @@ public class LoginServiceTests
         // Assert
         result.IsError.Should().BeFalse();
         result.Value.Should().BeOfType<RequiresTwoFactor>();
-        this.emailService.Verify(service => service.SendOTPCode(It.IsAny<string>(), It.IsAny<string>()), Times.Never);
+        this.emailService.Verify(service => service.SendOneTimePasswordCode(It.IsAny<string>(), It.IsAny<string>()), Times.Never);
     }
 
     /// <summary>
@@ -186,7 +186,7 @@ public class LoginServiceTests
             Id = 1,
             Email = request.Email,
             PasswordHash = "hash",
-            Is2FAEnabled = true,
+            Is2FactorAuthenticationEnabled = true,
             Preferred2FAMethod = "Email",
         };
 
@@ -203,7 +203,7 @@ public class LoginServiceTests
         // Assert
         result.IsError.Should().BeFalse();
         result.Value.Should().BeOfType<RequiresTwoFactor>();
-        this.emailService.Verify(service => service.SendOTPCode(user.Email, "123456"), Times.Once);
+        this.emailService.Verify(service => service.SendOneTimePasswordCode(user.Email, "123456"), Times.Once);
     }
 
     /// <summary>

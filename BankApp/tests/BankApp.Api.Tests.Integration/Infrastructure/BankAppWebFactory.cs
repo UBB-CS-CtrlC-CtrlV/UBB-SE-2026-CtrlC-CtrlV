@@ -26,7 +26,7 @@ public class BankAppWebFactory : WebApplicationFactory<Program>
     /// <summary>
     /// Gets the mock JWT service that controls token validation behaviour.
     /// </summary>
-    public Mock<IJwtService> JwtServiceMock { get; } = MockFactory.CreateJwtService();
+    public Mock<IJsonWebTokenService> JwtServiceMock { get; } = MockFactory.CreateJwtService();
 
     /// <summary>
     /// Gets the mock auth repository that controls session lookup behaviour.

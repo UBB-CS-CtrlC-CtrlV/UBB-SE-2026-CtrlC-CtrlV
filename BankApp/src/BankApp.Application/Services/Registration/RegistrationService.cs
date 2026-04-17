@@ -124,7 +124,7 @@ public class RegistrationService : IRegistrationService
                 PasswordHash = hashResult.Value,
                 FullName = request.FullName,
                 PreferredLanguage = DefaultLanguage,
-                Is2FAEnabled = false,
+                Is2FactorAuthenticationEnabled = false,
                 IsLocked = false,
                 FailedLoginAttempts = default,
             };
@@ -194,7 +194,7 @@ public class RegistrationService : IRegistrationService
             PasswordHash = hashResult.Value,
             FullName = request.FullName,
             PreferredLanguage = DefaultLanguage,
-            Is2FAEnabled = false,
+            Is2FactorAuthenticationEnabled = false,
             IsLocked = false,
             FailedLoginAttempts = default,
         };

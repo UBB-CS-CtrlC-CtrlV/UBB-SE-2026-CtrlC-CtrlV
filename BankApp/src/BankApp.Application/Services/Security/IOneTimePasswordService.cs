@@ -9,7 +9,7 @@ namespace BankApp.Application.Services.Security;
 /// <summary>
 /// Defines operations for generating and verifying one-time passwords.
 /// </summary>
-public interface IOtpService   // To Do: Change to OTP
+public interface IOneTimePasswordService
 {
     /// <summary>
     /// Generates a time-based one-time password for the specified user.

@@ -10,7 +10,7 @@ namespace BankApp.Infrastructure.Services.Security;
 /// <summary>
 /// Provides JWT generation, validation, and claim extraction using HMAC-SHA256.
 /// </summary>
-public class JsonWebTokenService : IJwtService
+public class JsonWebTokenService : IJsonWebTokenService
 {
     private readonly string secret;
     private const int TokenExpirationDays = 7;

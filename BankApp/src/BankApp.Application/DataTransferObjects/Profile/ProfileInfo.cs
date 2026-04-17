@@ -50,7 +50,7 @@ public class ProfileInfo
     /// <summary>
     /// Gets or sets a value indicating whether two-factor authentication is enabled.
     /// </summary>
-    public bool Is2FAEnabled { get; set; }   // To Do: Change to 2FA
+    public bool Is2FactorAuthentificationEnabled { get; set; }
 
     /// <summary>
     /// Gets or sets the preferred two-factor authentication method.
@@ -81,7 +81,7 @@ public class ProfileInfo
             Address = user.Address;
             Nationality = user.Nationality;
             PreferredLanguage = user.PreferredLanguage;
-            Is2FAEnabled = user.Is2FAEnabled;
+            Is2FactorAuthentificationEnabled = user.Is2FactorAuthenticationEnabled;
             Preferred2FAMethod = user.Preferred2FAMethod;
         }
     }

@@ -53,7 +53,7 @@ public class User
     /// <summary>
     /// Gets or sets a value indicating whether two-factor authentication is enabled.
     /// </summary>
-    public bool Is2FAEnabled { get; set; }
+    public bool Is2FactorAuthenticationEnabled { get; set; }
 
     /// <summary>
     /// Gets or sets the preferred two-factor authentication method.

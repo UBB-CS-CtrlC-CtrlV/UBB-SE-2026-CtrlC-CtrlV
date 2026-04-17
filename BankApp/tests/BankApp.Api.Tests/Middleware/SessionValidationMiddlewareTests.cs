@@ -23,7 +23,7 @@ namespace BankApp.Api.Tests.Middleware;
 public sealed class SessionValidationMiddlewareTests
 {
     private readonly Mock<IAuthRepository> authenticationRepository = MockFactory.CreateAuthRepository();
-    private readonly Mock<IJwtService> jwtService = MockFactory.CreateJwtService();
+    private readonly Mock<IJsonWebTokenService> jwtService = MockFactory.CreateJwtService();
     private readonly Mock<ILogger<SessionValidationMiddleware>> logger = new Mock<ILogger<SessionValidationMiddleware>>();
 
     private bool nextWasCalled;

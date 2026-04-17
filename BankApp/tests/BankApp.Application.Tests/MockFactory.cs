@@ -85,9 +85,9 @@ internal static class MockFactory
     /// Creates the configured CreateJwtService mock.
     /// </summary>
     /// <returns>The configured mock instance.</returns>
-    internal static Mock<IJwtService> CreateJwtService()
+    internal static Mock<IJsonWebTokenService> CreateJwtService()
     {
-        var mock = new Mock<IJwtService>(MockBehavior.Strict);
+        var mock = new Mock<IJsonWebTokenService>(MockBehavior.Strict);
 
         mock.Setup(service => service.GenerateToken(It.IsAny<int>()))
             .Returns("jwt-token");
@@ -103,9 +103,9 @@ internal static class MockFactory
     /// Creates the configured CreateOtpService mock.
     /// </summary>
     /// <returns>The configured mock instance.</returns>
-    internal static Mock<IOtpService> CreateOtpService()
+    internal static Mock<IOneTimePasswordService> CreateOtpService()
     {
-        var mock = new Mock<IOtpService>(MockBehavior.Strict);
+        var mock = new Mock<IOneTimePasswordService>(MockBehavior.Strict);
 
         mock.Setup(service => service.GenerateTOTP(It.IsAny<int>()))
             .Returns("123456");
@@ -130,7 +130,7 @@ internal static class MockFactory
     {
         var mock = new Mock<IEmailService>(MockBehavior.Strict);
 
-        mock.Setup(service => service.SendOTPCode(It.IsAny<string>(), It.IsAny<string>()));
+        mock.Setup(service => service.SendOneTimePasswordCode(It.IsAny<string>(), It.IsAny<string>()));
         mock.Setup(service => service.SendPasswordResetLink(It.IsAny<string>(), It.IsAny<string>()));
         mock.Setup(service => service.SendLockNotification(It.IsAny<string>()));
         mock.Setup(service => service.SendLoginAlert(It.IsAny<string>()));

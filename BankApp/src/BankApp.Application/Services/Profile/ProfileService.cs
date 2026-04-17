@@ -171,7 +171,7 @@ public class ProfileService : IProfileService
     }
 
     /// <inheritdoc />
-    public ErrorOr<Success> Enable2FA(int userId, TwoFactorMethod method)           // To Do: Change to 2FA
+    public ErrorOr<Success> Enable2FactorAuthentication(int userId, TwoFactorMethod method)
     {
         ErrorOr<User> userResult = userRepository.FindById(userId);
         if (userResult.IsError)
@@ -181,7 +181,7 @@ public class ProfileService : IProfileService
         }
 
         User user = userResult.Value;
-        user.Is2FAEnabled = true;
+        user.Is2FactorAuthenticationEnabled = true;
         user.Preferred2FAMethod = method.ToString();
 
         if (userRepository.UpdateUser(user).IsError)
@@ -195,7 +195,7 @@ public class ProfileService : IProfileService
     }
 
     /// <inheritdoc />
-    public ErrorOr<Success> Disable2FA(int userId)
+    public ErrorOr<Success> Disable2FactorAuthentication(int userId)
     {
         ErrorOr<User> userResult = userRepository.FindById(userId);
         if (userResult.IsError)
@@ -205,7 +205,7 @@ public class ProfileService : IProfileService
         }
 
         User user = userResult.Value;
-        user.Is2FAEnabled = false;
+        user.Is2FactorAuthenticationEnabled = false;
         user.Preferred2FAMethod = null;
 
         if (userRepository.UpdateUser(user).IsError)

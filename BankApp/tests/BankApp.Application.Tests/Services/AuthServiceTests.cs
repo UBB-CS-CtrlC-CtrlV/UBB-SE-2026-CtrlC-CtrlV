@@ -13,8 +13,8 @@ public sealed class AuthServiceTests
 {
     private readonly Mock<IAuthRepository> mockAuthRepository = MockFactory.CreateAuthRepository();
     private readonly Mock<IHashService> mockHashService = MockFactory.CreateHashService();
-    private readonly Mock<IJwtService> mockJwtService = MockFactory.CreateJwtService();
-    private readonly Mock<IOtpService> mockOtpService = MockFactory.CreateOtpService();
+    private readonly Mock<IJsonWebTokenService> mockJwtService = MockFactory.CreateJwtService();
+    private readonly Mock<IOneTimePasswordService> mockOtpService = MockFactory.CreateOtpService();
     private readonly Mock<IEmailService> mockEmailService = MockFactory.CreateEmailService();
     private readonly AuthService authService;
 
@@ -158,7 +158,7 @@ public sealed class AuthServiceTests
     {
         // Arrange
         var request = new LoginRequest { Email = "2fa@user.com", Password = "ValidPassword123!" };
-        var user = new User { Id = 1, Email = request.Email, PasswordHash = "hash", Is2FAEnabled = true, Preferred2FAMethod = "Email" };
+        var user = new User { Id = 1, Email = request.Email, PasswordHash = "hash", Is2FactorAuthenticationEnabled = true, Preferred2FAMethod = "Email" };
         this.mockAuthRepository.Setup(m => m.FindUserByEmail(request.Email)).Returns((ErrorOr<User>)user);
         this.mockHashService.Setup(m => m.Verify(request.Password, user.PasswordHash)).Returns((ErrorOr<bool>)true);
         this.mockOtpService.Setup(m => m.GenerateTOTP(user.Id)).Returns((ErrorOr<string>)Error.Failure("otp_failed"));
@@ -176,7 +176,7 @@ public sealed class AuthServiceTests
     {
         // Arrange
         var request = new LoginRequest { Email = "2fa@user.com", Password = "ValidPassword123!" };
-        var user = new User { Id = 1, Email = request.Email, PasswordHash = "hash", Is2FAEnabled = true, Preferred2FAMethod = "Email" };
+        var user = new User { Id = 1, Email = request.Email, PasswordHash = "hash", Is2FactorAuthenticationEnabled = true, Preferred2FAMethod = "Email" };
         this.mockAuthRepository.Setup(m => m.FindUserByEmail(request.Email)).Returns((ErrorOr<User>)user);
         this.mockHashService.Setup(m => m.Verify(request.Password, user.PasswordHash)).Returns((ErrorOr<bool>)true);
         this.mockOtpService.Setup(m => m.GenerateTOTP(user.Id)).Returns((ErrorOr<string>)"123456");
@@ -187,7 +187,7 @@ public sealed class AuthServiceTests
         // Assert
         result.IsError.Should().BeFalse();
         result.Value.Should().BeOfType<RequiresTwoFactor>();
-        this.mockEmailService.Verify(m => m.SendOTPCode(user.Email, "123456"), Times.Once);
+        this.mockEmailService.Verify(m => m.SendOneTimePasswordCode(user.Email, "123456"), Times.Once);
     }
 
     [Fact]
@@ -195,7 +195,7 @@ public sealed class AuthServiceTests
     {
         // Arrange
         var request = new LoginRequest { Email = "ok@user.com", Password = "ValidPassword123!" };
-        var user = new User { Id = 1, Email = request.Email, PasswordHash = "hash", Is2FAEnabled = false };
+        var user = new User { Id = 1, Email = request.Email, PasswordHash = "hash", Is2FactorAuthenticationEnabled = false };
         this.mockAuthRepository.Setup(m => m.FindUserByEmail(request.Email)).Returns((ErrorOr<User>)user);
         this.mockHashService.Setup(m => m.Verify(request.Password, user.PasswordHash)).Returns((ErrorOr<bool>)true);
         this.mockAuthRepository.Setup(m => m.ResetFailedAttempts(user.Id)).Returns(Result.Success);
@@ -214,7 +214,7 @@ public sealed class AuthServiceTests
     {
         // Arrange
         var request = new LoginRequest { Email = "ok@user.com", Password = "ValidPassword123!" };
-        var user = new User { Id = 1, Email = request.Email, PasswordHash = "hash", Is2FAEnabled = false };
+        var user = new User { Id = 1, Email = request.Email, PasswordHash = "hash", Is2FactorAuthenticationEnabled = false };
         this.mockAuthRepository.Setup(m => m.FindUserByEmail(request.Email)).Returns((ErrorOr<User>)user);
         this.mockHashService.Setup(m => m.Verify(request.Password, user.PasswordHash)).Returns((ErrorOr<bool>)true);
         this.mockAuthRepository.Setup(m => m.ResetFailedAttempts(user.Id)).Returns(Result.Success);
@@ -234,7 +234,7 @@ public sealed class AuthServiceTests
     {
         // Arrange
         var request = new LoginRequest { Email = "ok@user.com", Password = "ValidPassword123!" };
-        var user = new User { Id = 1, Email = request.Email, PasswordHash = "hash", Is2FAEnabled = false };
+        var user = new User { Id = 1, Email = request.Email, PasswordHash = "hash", Is2FactorAuthenticationEnabled = false };
         var token = "jwt-token";
         this.mockAuthRepository.Setup(m => m.FindUserByEmail(request.Email)).Returns((ErrorOr<User>)user);
         this.mockHashService.Setup(m => m.Verify(request.Password, user.PasswordHash)).Returns((ErrorOr<bool>)true);
@@ -639,7 +639,7 @@ public sealed class AuthServiceTests
 
         // Assert
         result.IsError.Should().BeFalse();
-        this.mockEmailService.Verify(m => m.SendOTPCode(user.Email, "123456"), Times.Once);
+        this.mockEmailService.Verify(m => m.SendOneTimePasswordCode(user.Email, "123456"), Times.Once);
     }
 
     [Fact]
@@ -655,7 +655,7 @@ public sealed class AuthServiceTests
 
         // Assert
         result.IsError.Should().BeFalse();
-        this.mockEmailService.Verify(m => m.SendOTPCode(It.IsAny<string>(), It.IsAny<string>()), Times.Never);
+        this.mockEmailService.Verify(m => m.SendOneTimePasswordCode(It.IsAny<string>(), It.IsAny<string>()), Times.Never);
     }
 
     [Fact]

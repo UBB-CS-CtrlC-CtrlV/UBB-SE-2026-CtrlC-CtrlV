@@ -22,8 +22,8 @@ public class AuthService : IAuthService
 {
     private readonly IAuthRepository authRepository;
     private readonly IHashService hashService;
-    private readonly IJwtService jwtService;
-    private readonly IOtpService otpService;
+    private readonly IJsonWebTokenService jsonWebTokenService;
+    private readonly IOneTimePasswordService oneTimePasswordService;
     private readonly IEmailService emailService;
     private readonly ILogger<AuthService> logger;
 
@@ -43,17 +43,17 @@ public class AuthService : IAuthService
     /// </summary>
     /// <param name="authRepository">The authentication repository.</param>
     /// <param name="hashService">The password hashing service.</param>
-    /// <param name="jwtService">The JWT token service.</param>
-    /// <param name="otpService">The one-time password service.</param>
+    /// <param name="jsonWebTokenService">The JWT token service.</param>
+    /// <param name="oneTimePasswordService">The one-time password service.</param>
     /// <param name="emailService">The email delivery service.</param>
     /// <param name="logger">The logger.</param>
-    public AuthService(IAuthRepository authRepository, IHashService hashService, IJwtService jwtService,
-        IOtpService otpService, IEmailService emailService, ILogger<AuthService> logger)
+    public AuthService(IAuthRepository authRepository, IHashService hashService, IJsonWebTokenService jsonWebTokenService,
+        IOneTimePasswordService oneTimePasswordService, IEmailService emailService, ILogger<AuthService> logger)
     {
         this.authRepository = authRepository;
         this.hashService = hashService;
-        this.jwtService = jwtService;
-        this.otpService = otpService;
+        this.jsonWebTokenService = jsonWebTokenService;
+        this.oneTimePasswordService = oneTimePasswordService;
         this.emailService = emailService;
         this.logger = logger;
     }
@@ -93,7 +93,7 @@ public class AuthService : IAuthService
             return HandleFailedPassword(user);
         }
 
-        return user.Is2FAEnabled ? Handle2FA(user) : CompleteLogin(user);
+        return user.Is2FactorAuthenticationEnabled ? Handle2FactorAuthentication(user) : CompleteLogin(user);
     }
 
     /// <inheritdoc />
@@ -185,7 +185,7 @@ public class AuthService : IAuthService
                     PasswordHash = hashResult.Value,
                     FullName = fullName,
                     PreferredLanguage = DefaultLanguage,
-                    Is2FAEnabled = false,
+                    Is2FactorAuthenticationEnabled = false,
                     IsLocked = false,
                     FailedLoginAttempts = default,
                 };
@@ -227,7 +227,7 @@ public class AuthService : IAuthService
             return lockError.Value;
         }
 
-        return user.Is2FAEnabled ? Handle2FA(user) : CompleteLogin(user);     // To Do: Change to 2FA
+        return user.Is2FactorAuthenticationEnabled ? Handle2FactorAuthentication(user) : CompleteLogin(user);
     }
 
     /// <inheritdoc />
@@ -265,7 +265,7 @@ public class AuthService : IAuthService
                 PasswordHash = hashResult.Value,
                 FullName = request.FullName,
                 PreferredLanguage = DefaultLanguage,
-                Is2FAEnabled = false,
+                Is2FactorAuthenticationEnabled = false,
                 IsLocked = false,
                 FailedLoginAttempts = default,
             };
@@ -312,7 +312,7 @@ public class AuthService : IAuthService
 
         User user = userResult.Value;
 
-        ErrorOr<bool> verifyResult = otpService.VerifyTOTP(request.UserId, request.OTPCode);
+        ErrorOr<bool> verifyResult = oneTimePasswordService.VerifyTOTP(request.UserId, request.OTPCode);
         if (verifyResult.IsError)
         {
             logger.LogError("TOTP verification threw for user {UserId}: {Error}", user.Id, verifyResult.FirstError.Description);
@@ -325,7 +325,7 @@ public class AuthService : IAuthService
             return Error.Unauthorized(code: "invalid_otp", description: "Invalid or expired OTP code.");
         }
 
-        otpService.InvalidateOTP(user.Id);
+        oneTimePasswordService.InvalidateOTP(user.Id);
         return CompleteLogin(user);
     }
 
@@ -341,7 +341,7 @@ public class AuthService : IAuthService
 
         User user = userResult.Value;
 
-        ErrorOr<string> otpResult = otpService.GenerateTOTP(user.Id);
+        ErrorOr<string> otpResult = oneTimePasswordService.GenerateTOTP(user.Id);
         if (otpResult.IsError)
         {
             logger.LogError("TOTP generation failed during resend for user {UserId}: {Error}", user.Id, otpResult.FirstError.Description);
@@ -351,7 +351,7 @@ public class AuthService : IAuthService
         if (string.Equals(method, EmailTwoFactorMethod, StringComparison.OrdinalIgnoreCase)
             || string.Equals(user.Preferred2FAMethod, EmailTwoFactorMethod, StringComparison.OrdinalIgnoreCase))
         {
-            emailService.SendOTPCode(user.Email, otpResult.Value);
+            emailService.SendOneTimePasswordCode(user.Email, otpResult.Value);
         }
 
         return Result.Success;
@@ -372,7 +372,7 @@ public class AuthService : IAuthService
 
         byte[] randomBytes = System.Security.Cryptography.RandomNumberGenerator.GetBytes(PasswordResetTokenByteLength);
         string rawToken = Convert.ToBase64String(randomBytes);
-        string tokenHashForDb = ComputeSha256Hash(rawToken);        // To Do: Change to Sha256
+        string tokenHashForDb = ComputeSha256Hash(rawToken);
 
         PasswordResetToken resetToken = new PasswordResetToken
         {
@@ -401,7 +401,7 @@ public class AuthService : IAuthService
             return Error.Validation(code: "token_invalid", description: "The reset token is invalid.");
         }
 
-        string tokenHash = ComputeSha256Hash(token);            // To Do: Change to Sha256
+        string tokenHash = ComputeSha256Hash(token);
         ErrorOr<PasswordResetToken> tokenResult = authRepository.FindPasswordResetToken(tokenHash);
         if (tokenResult.IsError)
         {
@@ -454,7 +454,7 @@ public class AuthService : IAuthService
             return Error.Validation(code: "token_invalid", description: "The reset token is invalid.");
         }
 
-        string tokenHash = ComputeSha256Hash(token);         // To Do: Change to Sha256
+        string tokenHash = ComputeSha256Hash(token);
         ErrorOr<PasswordResetToken> tokenResult = authRepository.FindPasswordResetToken(tokenHash);
         if (tokenResult.IsError)
         {
@@ -518,9 +518,9 @@ public class AuthService : IAuthService
         return Error.Forbidden(code: "account_locked", description: "Account locked due to too many failed attempts.");
     }
 
-    private ErrorOr<LoginSuccess> Handle2FA(User user)  // To Do: Change to 2FA
+    private ErrorOr<LoginSuccess> Handle2FactorAuthentication(User user)
     {
-        ErrorOr<string> otpResult = otpService.GenerateTOTP(user.Id);
+        ErrorOr<string> otpResult = oneTimePasswordService.GenerateTOTP(user.Id);
         if (otpResult.IsError)
         {
             logger.LogError("TOTP generation failed for user {UserId}: {Error}", user.Id, otpResult.FirstError.Description);
@@ -529,7 +529,7 @@ public class AuthService : IAuthService
 
         if (string.Equals(user.Preferred2FAMethod, EmailTwoFactorMethod, StringComparison.OrdinalIgnoreCase))
         {
-            emailService.SendOTPCode(user.Email, otpResult.Value);
+            emailService.SendOneTimePasswordCode(user.Email, otpResult.Value);
         }
 
         logger.LogInformation("2FA required for user {UserId} via {Method}.", user.Id, user.Preferred2FAMethod);
@@ -540,7 +540,7 @@ public class AuthService : IAuthService
     {
         _ = authRepository.ResetFailedAttempts(user.Id);
 
-        ErrorOr<string> tokenResult = jwtService.GenerateToken(user.Id);
+        ErrorOr<string> tokenResult = jsonWebTokenService.GenerateToken(user.Id);
         if (tokenResult.IsError)
         {
             logger.LogError("Token generation failed for user {UserId}: {Error}", user.Id, tokenResult.FirstError.Description);
@@ -595,7 +595,7 @@ public class AuthService : IAuthService
             PasswordHash = hashResult.Value,
             FullName = request.FullName,
             PreferredLanguage = DefaultLanguage,
-            Is2FAEnabled = false,
+            Is2FactorAuthenticationEnabled = false,
             IsLocked = false,
             FailedLoginAttempts = default,
         };
@@ -616,7 +616,7 @@ public class AuthService : IAuthService
         return Result.Success;
     }
 
-    private static string ComputeSha256Hash(string rawData)  // To Do: Change to Sha256
+    private static string ComputeSha256Hash(string rawData)
     {
         byte[] bytes = System.Security.Cryptography.SHA256.HashData(System.Text.Encoding.UTF8.GetBytes(rawData));
         return Convert.ToHexString(bytes).ToLowerInvariant();
