@@ -45,8 +45,8 @@ public sealed class DashboardControllerTests
         var result = controller.GetDashboard();
 
         // Assert
-        var ok = result.Should().BeOfType<OkObjectResult>().Subject;
-        ok.Value.Should().Be(response);
+        var okResult = result.Should().BeOfType<OkObjectResult>().Subject;
+        okResult.Value.Should().Be(response);
     }
 
     [Fact]
