@@ -92,7 +92,7 @@ public class DashboardService : IDashboardService
                 FullName = userResult.Value.FullName,
                 Email = userResult.Value.Email,
                 PhoneNumber = userResult.Value.PhoneNumber,
-                Is2FactorAuthentificationEnabled = userResult.Value.Is2FactorAuthenticationEnabled,
+                Is2FactorAuthenticationEnabled = userResult.Value.Is2FactorAuthenticationEnabled,
             },
             Cards = cardsResult.IsError ? new List<CardDataTransferObject>() : cardsResult.Value
                 .Select(card => new CardDataTransferObject

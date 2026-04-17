@@ -1,4 +1,4 @@
-// <copyright file="IOTPService.cs" company="CtrlC CtrlV">
+// <copyright file="IOneTimePasswordService.cs" company="CtrlC CtrlV">
 // Copyright (c) CtrlC CtrlV. All rights reserved.
 // </copyright>
 

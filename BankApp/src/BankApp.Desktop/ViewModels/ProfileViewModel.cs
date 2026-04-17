@@ -92,14 +92,14 @@ public class ProfileViewModel
     /// Gets a value indicating whether phone-based two-factor authentication is active.
     /// </summary>
     public bool IsPhoneTwoFactorActive =>
-        this.ProfileInfo.Is2FactorAuthentificationEnabled &&
+        this.ProfileInfo.Is2FactorAuthenticationEnabled &&
         string.Equals(this.ProfileInfo.Preferred2FAMethod, nameof(TwoFactorMethod.Phone), StringComparison.OrdinalIgnoreCase);
 
     /// <summary>
     /// Gets a value indicating whether email-based two-factor authentication is active.
     /// </summary>
     public bool IsEmailTwoFactorActive =>
-        this.ProfileInfo.Is2FactorAuthentificationEnabled &&
+        this.ProfileInfo.Is2FactorAuthenticationEnabled &&
         string.Equals(this.ProfileInfo.Preferred2FAMethod, nameof(TwoFactorMethod.Email), StringComparison.OrdinalIgnoreCase);
 
     /// <summary>
@@ -146,7 +146,7 @@ public class ProfileViewModel
             return false;
         }
 
-        this.ProfileInfo.Is2FactorAuthentificationEnabled = true;
+        this.ProfileInfo.Is2FactorAuthenticationEnabled = true;
         this.ProfileInfo.Preferred2FAMethod = method.ToString();
         return true;
     }
@@ -163,7 +163,7 @@ public class ProfileViewModel
             return false;
         }
 
-        this.ProfileInfo.Is2FactorAuthentificationEnabled = false;
+        this.ProfileInfo.Is2FactorAuthenticationEnabled = false;
         this.ProfileInfo.Preferred2FAMethod = null;
         return true;
     }
@@ -181,7 +181,7 @@ public class ProfileViewModel
             return false;
         }
 
-        this.ProfileInfo.Is2FactorAuthentificationEnabled = enabled;
+        this.ProfileInfo.Is2FactorAuthenticationEnabled = enabled;
         this.ProfileInfo.Preferred2FAMethod = enabled ? nameof(TwoFactorMethod.Email) : null;
         return true;
     }

@@ -5,7 +5,7 @@ namespace BankApp.Application.DataTransferObjects.Profile;
 /// <summary>
 /// Represents a request to enable two-factor authentication.
 /// </summary>
-public class Enable2FactorAuthentificationRequest
+public class Enable2FactorAuthenticationRequest
 {
     /// <summary>
     /// Gets or sets the two-factor authentication method to enable.
