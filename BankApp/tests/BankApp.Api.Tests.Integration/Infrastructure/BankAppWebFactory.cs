@@ -96,7 +96,7 @@ public class BankAppWebFactory : WebApplicationFactory<Program>
     private static void ReplaceService<TService>(IServiceCollection services, TService implementation)
         where TService : class
     {
-        ServiceDescriptor? existing = services.FirstOrDefault(d => d.ServiceType == typeof(TService));
+        ServiceDescriptor? existing = services.FirstOrDefault(descriptor => descriptor.ServiceType == typeof(TService));
         if (existing != null)
         {
             services.Remove(existing);

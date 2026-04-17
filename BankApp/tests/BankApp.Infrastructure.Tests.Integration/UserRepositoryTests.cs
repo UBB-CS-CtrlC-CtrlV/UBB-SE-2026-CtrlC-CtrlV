@@ -21,6 +21,10 @@ namespace BankApp.Infrastructure.Tests.Integration;
 [Collection("Integration")]
 public sealed class UserRepositoryTests : IAsyncLifetime
 {
+    private const int NonExistentUserId = 99999;
+    private const int ExpectedFailedAttemptCount = 2;
+    private const int LockoutDurationMinutes = 30;
+
     private readonly DatabaseFixture fixture;
     private readonly Faker<User> userFaker;
 
@@ -86,7 +90,7 @@ public sealed class UserRepositoryTests : IAsyncLifetime
         var userDataAccess = new UserDataAccess(databaseContext);
 
         // Act
-        ErrorOr<User> result = userDataAccess.FindById(99999);
+        ErrorOr<User> result = userDataAccess.FindById(NonExistentUserId);
 
         // Assert
         result.IsError.Should().BeTrue();
@@ -135,7 +139,7 @@ public sealed class UserRepositoryTests : IAsyncLifetime
         // Assert
         ErrorOr<User> updated = userDataAccess.FindById(savedUser.Value.Id);
         updated.IsError.Should().BeFalse(updated.IsError ? updated.FirstError.Description : string.Empty);
-        updated.Value.FailedLoginAttempts.Should().Be(2);
+        updated.Value.FailedLoginAttempts.Should().Be(ExpectedFailedAttemptCount);
     }
 
     [Fact]
@@ -148,7 +152,7 @@ public sealed class UserRepositoryTests : IAsyncLifetime
         userDataAccess.Create(user).IsError.Should().BeFalse();
         ErrorOr<User> savedUser = userDataAccess.FindByEmail(user.Email);
         savedUser.IsError.Should().BeFalse(savedUser.IsError ? savedUser.FirstError.Description : string.Empty);
-        DateTime lockoutEnd = DateTime.UtcNow.AddMinutes(30);
+        DateTime lockoutEnd = DateTime.UtcNow.AddMinutes(LockoutDurationMinutes);
 
         // Act
         ErrorOr<Success> lockResult = userDataAccess.LockAccount(savedUser.Value.Id, lockoutEnd);

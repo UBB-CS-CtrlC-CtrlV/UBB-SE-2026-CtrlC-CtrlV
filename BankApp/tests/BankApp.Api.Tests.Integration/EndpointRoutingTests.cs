@@ -19,6 +19,7 @@ namespace BankApp.Api.Tests.Integration;
 public class EndpointRoutingTests : IClassFixture<BankAppWebFactory>
 {
     private const string ValidToken = "valid-test-token";
+    private const int TestUserId = 1;
 
     private readonly HttpClient client;
     private readonly BankAppWebFactory factory;
@@ -35,11 +36,11 @@ public class EndpointRoutingTests : IClassFixture<BankAppWebFactory>
         // By default, configure the substitutes so that a valid token is accepted.
         factory.JwtServiceMock
             .Setup(service => service.ExtractUserId(ValidToken))
-            .Returns(1);
+            .Returns(TestUserId);
 
         factory.AuthRepositoryMock
             .Setup(repository => repository.FindSessionByToken(ValidToken))
-            .Returns(new Session { UserId = 1, Token = ValidToken });
+            .Returns(new Session { UserId = TestUserId, Token = ValidToken });
     }
 
     /// <summary>
@@ -161,7 +162,7 @@ public class EndpointRoutingTests : IClassFixture<BankAppWebFactory>
 
         this.factory.JwtServiceMock
             .Setup(service => service.ExtractUserId(orphanToken))
-            .Returns(1);
+            .Returns(TestUserId);
 
         this.factory.AuthRepositoryMock
             .Setup(repository => repository.FindSessionByToken(orphanToken))

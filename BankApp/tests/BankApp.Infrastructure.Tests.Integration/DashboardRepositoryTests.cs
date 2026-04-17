@@ -22,6 +22,10 @@ namespace BankApp.Infrastructure.Tests.Integration;
 [Collection("Integration")]
 public sealed class DashboardRepositoryTests : IAsyncLifetime
 {
+    private const int SeedTransactionCount = 5;
+    private const int TransactionQueryLimit = 3;
+    private const int SeedNotificationCount = 4;
+
     private readonly DatabaseFixture fixture;
 
     /// <summary>
@@ -168,15 +172,15 @@ public sealed class DashboardRepositoryTests : IAsyncLifetime
         using var databaseContext = MakeDatabaseContext();
         var user = SeedUser(databaseContext);
         var account = SeedAccount(databaseContext, user.Id);
-        SeedTransactions(databaseContext, account.Id, 5);
+        SeedTransactions(databaseContext, account.Id, SeedTransactionCount);
         var repository = MakeDashboardRepository(databaseContext);
 
         // Act
-        var result = repository.GetRecentTransactions(account.Id, limit: 3);
+        var result = repository.GetRecentTransactions(account.Id, limit: TransactionQueryLimit);
 
         // Assert
         result.IsError.Should().BeFalse(result.IsError ? result.FirstError.Description : string.Empty);
-        result.Value.Should().HaveCount(3);
+        result.Value.Should().HaveCount(TransactionQueryLimit);
     }
 
     [Fact]
@@ -185,7 +189,7 @@ public sealed class DashboardRepositoryTests : IAsyncLifetime
         // Arrange
         using var databaseContext = MakeDatabaseContext();
         var user = SeedUser(databaseContext);
-        SeedNotifications(databaseContext, user.Id, 4);
+        SeedNotifications(databaseContext, user.Id, SeedNotificationCount);
         var repository = MakeDashboardRepository(databaseContext);
 
         // Act
@@ -193,7 +197,7 @@ public sealed class DashboardRepositoryTests : IAsyncLifetime
 
         // Assert
         result.IsError.Should().BeFalse(result.IsError ? result.FirstError.Description : string.Empty);
-        result.Value.Should().Be(4);
+        result.Value.Should().Be(SeedNotificationCount);
     }
 
     [Fact]
