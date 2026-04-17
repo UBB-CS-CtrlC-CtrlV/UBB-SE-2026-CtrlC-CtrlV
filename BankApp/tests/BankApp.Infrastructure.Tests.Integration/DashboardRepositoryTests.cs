@@ -45,7 +45,7 @@ public sealed class DashboardRepositoryTests : IAsyncLifetime
             Email = faker.Internet.Email(),
             PasswordHash = faker.Internet.Password(),
             FullName = faker.Person.FullName,
-            PreferredLanguage = "en"
+            PreferredLanguage = "en",
         };
 
         dataAccess.Create(user).IsError.Should().BeFalse();
