@@ -74,8 +74,15 @@ public partial class TwoFactorViewModel : INotifyPropertyChanged
     /// </summary>
     public string OtpCode
     {
-        get => this.otpCode;
-        set => this.SetField(ref this.otpCode, value);
+        get
+        {
+            return this.otpCode;
+        }
+
+        set
+        {
+            this.SetField(ref this.otpCode, value);
+        }
     }
 
     // ─── Loading / Lock ───────────────────────────────────────────────────────
@@ -85,7 +92,11 @@ public partial class TwoFactorViewModel : INotifyPropertyChanged
     /// </summary>
     public bool IsLoading
     {
-        get => this.isLoading;
+        get
+        {
+            return this.isLoading;
+        }
+
         private set
         {
             if (this.SetField(ref this.isLoading, value))
@@ -101,7 +112,11 @@ public partial class TwoFactorViewModel : INotifyPropertyChanged
     /// </summary>
     public bool IsLocked
     {
-        get => this.isLocked;
+        get
+        {
+            return this.isLocked;
+        }
+
         private set
         {
             if (this.SetField(ref this.isLocked, value))
@@ -115,7 +130,13 @@ public partial class TwoFactorViewModel : INotifyPropertyChanged
     /// Gets a value indicating whether the OTP input and verify button are enabled.
     /// Binds to both <c>OtpBox.IsEnabled</c> and <c>VerifyButton.IsEnabled</c>.
     /// </summary>
-    public bool IsInputEnabled => !this.isLoading && !this.isLocked;
+    public bool IsInputEnabled
+    {
+        get
+        {
+            return !this.isLoading && !this.isLocked;
+        }
+    }
 
     // ─── Error ────────────────────────────────────────────────────────────────
 
@@ -124,8 +145,15 @@ public partial class TwoFactorViewModel : INotifyPropertyChanged
     /// </summary>
     public string ErrorMessage
     {
-        get => this.errorMessage;
-        private set => this.SetField(ref this.errorMessage, value);
+        get
+        {
+            return this.errorMessage;
+        }
+
+        private set
+        {
+            this.SetField(ref this.errorMessage, value);
+        }
     }
 
     /// <summary>
@@ -134,8 +162,15 @@ public partial class TwoFactorViewModel : INotifyPropertyChanged
     /// </summary>
     public bool HasError
     {
-        get => this.hasError;
-        private set => this.SetField(ref this.hasError, value);
+        get
+        {
+            return this.hasError;
+        }
+
+        private set
+        {
+            this.SetField(ref this.hasError, value);
+        }
     }
 
     // ─── Countdown ────────────────────────────────────────────────────────────
@@ -145,7 +180,11 @@ public partial class TwoFactorViewModel : INotifyPropertyChanged
     /// </summary>
     public int SecondsRemaining
     {
-        get => this.secondsRemaining;
+        get
+        {
+            return this.secondsRemaining;
+        }
+
         internal set
         {
             if (this.SetField(ref this.secondsRemaining, value))
@@ -161,18 +200,36 @@ public partial class TwoFactorViewModel : INotifyPropertyChanged
     /// Gets a value indicating whether the user is allowed to request a new code.
     /// Becomes <see langword="true"/> once the countdown reaches zero.
     /// </summary>
-    public bool CanResend => this.secondsRemaining <= default(int);
+    public bool CanResend
+    {
+        get
+        {
+            return this.secondsRemaining <= default(int);
+        }
+    }
 
     /// <summary>
     /// Gets a value indicating whether the countdown label should be displayed.
     /// </summary>
-    public bool IsCountdownVisible => this.secondsRemaining > default(int);
+    public bool IsCountdownVisible
+    {
+        get
+        {
+            return this.secondsRemaining > default(int);
+        }
+    }
 
     /// <summary>
     /// Gets the formatted countdown string shown next to the resend button,
     /// e.g. <c>"Available in 27s"</c>.
     /// </summary>
-    public string CountdownDisplayText => $"Available in {this.secondsRemaining}s";
+    public string CountdownDisplayText
+    {
+        get
+        {
+            return $"Available in {this.secondsRemaining}s";
+        }
+    }
 
     // ─── Commands ─────────────────────────────────────────────────────────────
 
@@ -298,8 +355,10 @@ public partial class TwoFactorViewModel : INotifyPropertyChanged
         this.ErrorMessage = string.Empty;
     }
 
-    private void OnPropertyChanged([CallerMemberName] string propertyName = "") =>
+    private void OnPropertyChanged([CallerMemberName] string propertyName = "")
+    {
         this.PropertyChanged?.Invoke(this, new PropertyChangedEventArgs(propertyName));
+    }
 
     /// <summary>
     /// Sets <paramref name="field"/> to <paramref name="value"/> and raises

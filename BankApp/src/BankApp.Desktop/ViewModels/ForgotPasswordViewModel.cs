@@ -50,12 +50,24 @@ public class ForgotPasswordViewModel
     /// <summary>
     /// Gets a value indicating whether the user is currently allowed to resend a recovery code.
     /// </summary>
-    public bool CanResendCode => this.recoveryManager.CanResendCode;
+    public bool CanResendCode
+    {
+        get
+        {
+            return this.recoveryManager.CanResendCode;
+        }
+    }
 
     /// <summary>
     /// Gets the seconds remaining before the user may request another recovery code.
     /// </summary>
-    public int SecondsUntilResendAllowed => this.recoveryManager.SecondsUntilResendAllowed;
+    public int SecondsUntilResendAllowed
+    {
+        get
+        {
+            return this.recoveryManager.SecondsUntilResendAllowed;
+        }
+    }
 
     /// <summary>
     /// Gets any pending validation error message.  Set before transitioning state so the

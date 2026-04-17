@@ -86,21 +86,37 @@ public class ProfileViewModel
     /// <summary>
     /// Gets the current user's profile details (convenience accessor).
     /// </summary>
-    public ProfileInfo ProfileInfo => this.PersonalInfo.ProfileInfo;
+    public ProfileInfo ProfileInfo
+    {
+        get
+        {
+            return this.PersonalInfo.ProfileInfo;
+        }
+    }
 
     /// <summary>
     /// Gets a value indicating whether phone-based two-factor authentication is active.
     /// </summary>
-    public bool IsPhoneTwoFactorActive =>
-        this.ProfileInfo.Is2FactorAuthenticationEnabled &&
-        string.Equals(this.ProfileInfo.Preferred2FAMethod, nameof(TwoFactorMethod.Phone), StringComparison.OrdinalIgnoreCase);
+    public bool IsPhoneTwoFactorActive
+    {
+        get
+        {
+            return this.ProfileInfo.Is2FactorAuthenticationEnabled &&
+                string.Equals(this.ProfileInfo.Preferred2FAMethod, nameof(TwoFactorMethod.Phone), StringComparison.OrdinalIgnoreCase);
+        }
+    }
 
     /// <summary>
     /// Gets a value indicating whether email-based two-factor authentication is active.
     /// </summary>
-    public bool IsEmailTwoFactorActive =>
-        this.ProfileInfo.Is2FactorAuthenticationEnabled &&
-        string.Equals(this.ProfileInfo.Preferred2FAMethod, nameof(TwoFactorMethod.Email), StringComparison.OrdinalIgnoreCase);
+    public bool IsEmailTwoFactorActive
+    {
+        get
+        {
+            return this.ProfileInfo.Is2FactorAuthenticationEnabled &&
+                string.Equals(this.ProfileInfo.Preferred2FAMethod, nameof(TwoFactorMethod.Email), StringComparison.OrdinalIgnoreCase);
+        }
+    }
 
     /// <summary>
     /// Loads the current user's profile, OAuth links, and notification preferences.

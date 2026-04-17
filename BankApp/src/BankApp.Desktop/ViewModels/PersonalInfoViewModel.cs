@@ -46,14 +46,25 @@ public class PersonalInfoViewModel
     /// <summary>
     /// Gets a value indicating whether the user has a phone number on file.
     /// </summary>
-    public bool HasPhoneNumber => !string.IsNullOrEmpty(this.ProfileInfo.PhoneNumber);
+    public bool HasPhoneNumber
+    {
+        get
+        {
+            return !string.IsNullOrEmpty(this.ProfileInfo.PhoneNumber);
+        }
+    }
 
     /// <summary>
     /// Gets the display text for the two-factor phone field.
     /// Returns a placeholder when no phone number has been set.
     /// </summary>
-    public string TwoFactorPhoneDisplay =>
-        this.HasPhoneNumber ? this.ProfileInfo.PhoneNumber! : UserMessages.Profile.NoPhoneNumber;
+    public string TwoFactorPhoneDisplay
+    {
+        get
+        {
+            return this.HasPhoneNumber ? this.ProfileInfo.PhoneNumber! : UserMessages.Profile.NoPhoneNumber;
+        }
+    }
 
     /// <summary>
     /// Loads the current user's profile information from the server.
