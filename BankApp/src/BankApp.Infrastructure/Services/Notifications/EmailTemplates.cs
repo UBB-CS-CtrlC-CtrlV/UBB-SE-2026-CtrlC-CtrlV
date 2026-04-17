@@ -11,8 +11,10 @@ namespace BankApp.Infrastructure.Services.Notifications;
 /// </summary>
 public static class EmailTemplates
 {
+    private const int SecondsPerMinute = 60;
+
     /// <summary>OTP validity period in minutes, derived from <see cref="OneTimePasswordService.TotpWindowSeconds"/>.</summary>
-    internal const int OtpValidityMinutes = OneTimePasswordService.TotpWindowSeconds / 60;
+    internal const int OtpValidityMinutes = OneTimePasswordService.TotpWindowSeconds / SecondsPerMinute;
 
     /// <summary>Subject for the account-locked notification.</summary>
     public const string AccountLockedSubject = "BankApp - Account Locked";

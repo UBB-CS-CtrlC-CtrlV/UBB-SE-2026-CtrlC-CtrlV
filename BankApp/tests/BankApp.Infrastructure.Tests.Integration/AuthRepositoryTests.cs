@@ -21,6 +21,8 @@ namespace BankApp.Infrastructure.Tests.Integration;
 [Collection("Integration")]
 public sealed class AuthRepositoryTests : IAsyncLifetime
 {
+    private const int PasswordResetTokenExpiryHours = 1;
+
     private readonly DatabaseFixture fixture;
     private readonly Faker<User> userFaker;
 
@@ -56,10 +58,10 @@ public sealed class AuthRepositoryTests : IAsyncLifetime
     {
         var userDataAccess = new UserDataAccess(databaseContext);
         var sessionDataAccess = new SessionDataAccess(databaseContext);
-        var oauthDataAccess = new OAuthLinkDataAccess(databaseContext);
-        var tokenDataAccess = new PasswordResetTokenDataAccess(databaseContext);
+        var oAuthLinkDataAccess = new OAuthLinkDataAccess(databaseContext);
+        var passwordResetTokenDataAccess = new PasswordResetTokenDataAccess(databaseContext);
         var notificationPreferenceDataAccess = new NotificationPreferenceDataAccess(databaseContext);
-        return new AuthRepository(userDataAccess, sessionDataAccess, oauthDataAccess, tokenDataAccess, notificationPreferenceDataAccess);
+        return new AuthRepository(userDataAccess, sessionDataAccess, oAuthLinkDataAccess, passwordResetTokenDataAccess, notificationPreferenceDataAccess);
     }
 
     [Fact]
@@ -150,7 +152,7 @@ public sealed class AuthRepositoryTests : IAsyncLifetime
         {
             UserId = user.Id,
             TokenHash = "sha256-hash-xyz",
-            ExpiresAt = DateTime.UtcNow.AddHours(1),
+            ExpiresAt = DateTime.UtcNow.AddHours(PasswordResetTokenExpiryHours),
         };
         repository.SavePasswordResetToken(token).IsError.Should().BeFalse();
 
@@ -175,7 +177,7 @@ public sealed class AuthRepositoryTests : IAsyncLifetime
         {
             UserId = user.Id,
             TokenHash = "mark-used-hash",
-            ExpiresAt = DateTime.UtcNow.AddHours(1),
+            ExpiresAt = DateTime.UtcNow.AddHours(PasswordResetTokenExpiryHours),
         };
         repository.SavePasswordResetToken(token).IsError.Should().BeFalse();
         var created = repository.FindPasswordResetToken("mark-used-hash");

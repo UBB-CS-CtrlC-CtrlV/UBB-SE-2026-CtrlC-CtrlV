@@ -59,10 +59,10 @@ public class AuthRepository : IAuthRepository
 
         foreach (NotificationType type in Enum.GetValues(typeof(NotificationType)))
         {
-            var prefResult = notificationPreferenceDataAccess.Create(createdUser.Value.Id, type.ToDisplayName());
-            if (prefResult.IsError)
+            var preferenceResult = notificationPreferenceDataAccess.Create(createdUser.Value.Id, type.ToDisplayName());
+            if (preferenceResult.IsError)
             {
-                return prefResult.FirstError;
+                return preferenceResult.FirstError;
             }
         }
 
