@@ -18,6 +18,7 @@ namespace BankApp.Application.Tests.Services;
 /// </summary>
 public class ProfileServiceTests
 {
+    private const int NonExistentUserId = 99;
     private readonly Mock<IUserRepository> userRepository = new Mock<IUserRepository>(MockBehavior.Strict);
     private readonly Mock<IHashService> hashService = new Mock<IHashService>(MockBehavior.Strict);
     private readonly ProfileService service;
@@ -76,11 +77,11 @@ public class ProfileServiceTests
     {
         // Arrange
         this.userRepository
-            .Setup(repository => repository.FindById(99))
+            .Setup(repository => repository.FindById(NonExistentUserId))
             .Returns(Error.NotFound());
 
         // Act
-        ErrorOr<ProfileInfo> result = this.service.GetProfile(99);
+        ErrorOr<ProfileInfo> result = this.service.GetProfile(NonExistentUserId);
 
         // Assert
         result.IsError.Should().BeTrue();
@@ -112,9 +113,9 @@ public class ProfileServiceTests
     {
         // Arrange
         this.userRepository
-            .Setup(repository => repository.FindById(99))
+            .Setup(repository => repository.FindById(NonExistentUserId))
             .Returns(Error.NotFound());
-        var request = new UpdateProfileRequest(99, "0712345678", "123 Main St");
+        var request = new UpdateProfileRequest(NonExistentUserId, "0712345678", "123 Main St");
 
         // Act
         ErrorOr<Success> result = this.service.UpdatePersonalInfo(request);
@@ -268,9 +269,9 @@ public class ProfileServiceTests
     {
         // Arrange
         this.userRepository
-            .Setup(repository => repository.FindById(99))
+            .Setup(repository => repository.FindById(NonExistentUserId))
             .Returns(Error.NotFound());
-        var request = new ChangePasswordRequest(99, "old", "NewPass1!");
+        var request = new ChangePasswordRequest(NonExistentUserId, "old", "NewPass1!");
 
         // Act
         ErrorOr<Success> result = this.service.ChangePassword(request);
@@ -365,11 +366,11 @@ public class ProfileServiceTests
     {
         // Arrange
         this.userRepository
-            .Setup(repository => repository.FindById(99))
+            .Setup(repository => repository.FindById(NonExistentUserId))
             .Returns(Error.NotFound());
 
         // Act
-        ErrorOr<Success> result = this.service.Enable2FactorAuthentication(99, TwoFactorMethod.Email);
+        ErrorOr<Success> result = this.service.Enable2FactorAuthentication(NonExistentUserId, TwoFactorMethod.Email);
 
         // Assert
         result.IsError.Should().BeTrue();
@@ -438,11 +439,11 @@ public class ProfileServiceTests
     {
         // Arrange
         this.userRepository
-            .Setup(repository => repository.FindById(99))
+            .Setup(repository => repository.FindById(NonExistentUserId))
             .Returns(Error.NotFound());
 
         // Act
-        ErrorOr<bool> result = this.service.VerifyPassword(99, "anypassword");
+        ErrorOr<bool> result = this.service.VerifyPassword(NonExistentUserId, "anypassword");
 
         // Assert
         result.IsError.Should().BeTrue();
@@ -503,11 +504,11 @@ public class ProfileServiceTests
     {
         // Arrange
         this.userRepository
-            .Setup(repository => repository.FindById(99))
+            .Setup(repository => repository.FindById(NonExistentUserId))
             .Returns(Error.NotFound());
 
         // Act
-        ErrorOr<List<NotificationPreferenceDataTransferObject>> result = this.service.GetNotificationPreferences(99);
+        ErrorOr<List<NotificationPreferenceDataTransferObject>> result = this.service.GetNotificationPreferences(NonExistentUserId);
 
         // Assert
         result.IsError.Should().BeTrue();
@@ -551,11 +552,11 @@ public class ProfileServiceTests
     {
         // Arrange
         this.userRepository
-            .Setup(repository => repository.FindById(99))
+            .Setup(repository => repository.FindById(NonExistentUserId))
             .Returns(Error.NotFound());
 
         // Act
-        ErrorOr<List<SessionDataTransferObject>> result = this.service.GetActiveSessions(99);
+        ErrorOr<List<SessionDataTransferObject>> result = this.service.GetActiveSessions(NonExistentUserId);
 
         // Assert
         result.IsError.Should().BeTrue();
@@ -599,11 +600,11 @@ public class ProfileServiceTests
     {
         // Arrange
         this.userRepository
-            .Setup(repository => repository.FindById(99))
+            .Setup(repository => repository.FindById(NonExistentUserId))
             .Returns(Error.NotFound());
 
         // Act
-        ErrorOr<Success> result = this.service.RevokeSession(99, 1);
+        ErrorOr<Success> result = this.service.RevokeSession(NonExistentUserId, 1);
 
         // Assert
         result.IsError.Should().BeTrue();

@@ -1,4 +1,4 @@
-using BankApp.Application.DataTransferObjects.Auth;
+﻿using BankApp.Application.DataTransferObjects.Auth;
 using BankApp.Application.Repositories.Interfaces;
 using BankApp.Application.Services.Auth;
 using BankApp.Application.Services.Notifications;
@@ -11,6 +11,10 @@ namespace BankApp.Application.Tests.Services;
 
 public sealed class AuthServiceTests
 {
+    private const int TokenStillValidMinutes = 5;
+    private const int TokenAlreadyExpiredMinutes = -5;
+    private const int LockoutDurationMinutes = 10;
+    private const int AttemptsBeforeLockout = 4;
     private readonly Mock<IAuthRepository> mockAuthRepository = MockFactory.CreateAuthRepository();
     private readonly Mock<IHashService> mockHashService = MockFactory.CreateHashService();
     private readonly Mock<IJsonWebTokenService> mockJwtService = MockFactory.CreateJwtService();
@@ -48,7 +52,7 @@ public sealed class AuthServiceTests
     {
         // Arrange
         var request = new LoginRequest { Email = "fake@user.com", Password = "fake_password" };
-        this.mockAuthRepository.Setup(m => m.FindUserByEmail(request.Email)).Returns((ErrorOr<User>)Error.Failure());
+        this.mockAuthRepository.Setup(mock => mock.FindUserByEmail(request.Email)).Returns((ErrorOr<User>)Error.Failure());
 
         // Act
         var result = this.authService.Login(request);
@@ -64,8 +68,8 @@ public sealed class AuthServiceTests
     {
         // Arrange
         var request = new LoginRequest { Email = "locked@user.com", Password = "password" };
-        var user = new User { Id = 1, Email = request.Email, IsLocked = true, LockoutEnd = DateTime.UtcNow.AddMinutes(10) };
-        this.mockAuthRepository.Setup(m => m.FindUserByEmail(request.Email)).Returns((ErrorOr<User>)user);
+        var user = new User { Id = 1, Email = request.Email, IsLocked = true, LockoutEnd = DateTime.UtcNow.AddMinutes(LockoutDurationMinutes) };
+        this.mockAuthRepository.Setup(mock => mock.FindUserByEmail(request.Email)).Returns((ErrorOr<User>)user);
 
         // Act
         var result = this.authService.Login(request);
@@ -82,8 +86,8 @@ public sealed class AuthServiceTests
         // Arrange
         var request = new LoginRequest { Email = "test@test.com", Password = "ValidPassword1!" };
         var user = new User { Id = 1, Email = request.Email, PasswordHash = "hash", IsLocked = false };
-        this.mockAuthRepository.Setup(m => m.FindUserByEmail(request.Email)).Returns((ErrorOr<User>)user);
-        this.mockHashService.Setup(m => m.Verify(request.Password, user.PasswordHash)).Returns((ErrorOr<bool>)Error.Failure("verify_failed"));
+        this.mockAuthRepository.Setup(mock => mock.FindUserByEmail(request.Email)).Returns((ErrorOr<User>)user);
+        this.mockHashService.Setup(mock => mock.Verify(request.Password, user.PasswordHash)).Returns((ErrorOr<bool>)Error.Failure("verify_failed"));
 
         // Act
         var result = this.authService.Login(request);
@@ -99,9 +103,9 @@ public sealed class AuthServiceTests
         // Arrange
         var request = new LoginRequest { Email = "wrongpass@user.com", Password = "WrongPassword1!" };
         var user = new User { Id = 1, Email = request.Email, PasswordHash = "hash", FailedLoginAttempts = 1 };
-        this.mockAuthRepository.Setup(m => m.FindUserByEmail(request.Email)).Returns((ErrorOr<User>)user);
-        this.mockHashService.Setup(m => m.Verify(request.Password, user.PasswordHash)).Returns((ErrorOr<bool>)false);
-        this.mockAuthRepository.Setup(m => m.IncrementFailedAttempts(user.Id)).Returns(Result.Success);
+        this.mockAuthRepository.Setup(mock => mock.FindUserByEmail(request.Email)).Returns((ErrorOr<User>)user);
+        this.mockHashService.Setup(mock => mock.Verify(request.Password, user.PasswordHash)).Returns((ErrorOr<bool>)false);
+        this.mockAuthRepository.Setup(mock => mock.IncrementFailedAttempts(user.Id)).Returns(Result.Success);
 
         // Act
         var result = this.authService.Login(request);
@@ -109,7 +113,7 @@ public sealed class AuthServiceTests
         // Assert
         result.IsError.Should().BeTrue();
         result.FirstError.Code.Should().Be("invalid_credentials");
-        this.mockAuthRepository.Verify(m => m.IncrementFailedAttempts(user.Id), Times.Once);
+        this.mockAuthRepository.Verify(mock => mock.IncrementFailedAttempts(user.Id), Times.Once);
     }
 
     [Fact]
@@ -117,11 +121,11 @@ public sealed class AuthServiceTests
     {
         // Arrange
         var request = new LoginRequest { Email = "lockme@user.com", Password = "WrongPassword1!" };
-        var user = new User { Id = 1, Email = request.Email, PasswordHash = "hash", FailedLoginAttempts = 4 };
-        this.mockAuthRepository.Setup(m => m.FindUserByEmail(request.Email)).Returns((ErrorOr<User>)user);
-        this.mockHashService.Setup(m => m.Verify(request.Password, user.PasswordHash)).Returns((ErrorOr<bool>)false);
-        this.mockAuthRepository.Setup(m => m.IncrementFailedAttempts(user.Id)).Returns(Result.Success);
-        this.mockAuthRepository.Setup(m => m.LockAccount(user.Id, It.IsAny<DateTime>())).Returns((ErrorOr<Success>)Error.Failure("lock_failed"));
+        var user = new User { Id = 1, Email = request.Email, PasswordHash = "hash", FailedLoginAttempts = AttemptsBeforeLockout };
+        this.mockAuthRepository.Setup(mock => mock.FindUserByEmail(request.Email)).Returns((ErrorOr<User>)user);
+        this.mockHashService.Setup(mock => mock.Verify(request.Password, user.PasswordHash)).Returns((ErrorOr<bool>)false);
+        this.mockAuthRepository.Setup(mock => mock.IncrementFailedAttempts(user.Id)).Returns(Result.Success);
+        this.mockAuthRepository.Setup(mock => mock.LockAccount(user.Id, It.IsAny<DateTime>())).Returns((ErrorOr<Success>)Error.Failure("lock_failed"));
 
         // Act
         var result = this.authService.Login(request);
@@ -137,11 +141,11 @@ public sealed class AuthServiceTests
     {
         // Arrange
         var request = new LoginRequest { Email = "lockme@user.com", Password = "WrongPassword1!" };
-        var user = new User { Id = 1, Email = request.Email, PasswordHash = "hash", FailedLoginAttempts = 4 };
-        this.mockAuthRepository.Setup(m => m.FindUserByEmail(request.Email)).Returns((ErrorOr<User>)user);
-        this.mockHashService.Setup(m => m.Verify(request.Password, user.PasswordHash)).Returns((ErrorOr<bool>)false);
-        this.mockAuthRepository.Setup(m => m.IncrementFailedAttempts(user.Id)).Returns(Result.Success);
-        this.mockAuthRepository.Setup(m => m.LockAccount(user.Id, It.IsAny<DateTime>())).Returns(Result.Success);
+        var user = new User { Id = 1, Email = request.Email, PasswordHash = "hash", FailedLoginAttempts = AttemptsBeforeLockout };
+        this.mockAuthRepository.Setup(mock => mock.FindUserByEmail(request.Email)).Returns((ErrorOr<User>)user);
+        this.mockHashService.Setup(mock => mock.Verify(request.Password, user.PasswordHash)).Returns((ErrorOr<bool>)false);
+        this.mockAuthRepository.Setup(mock => mock.IncrementFailedAttempts(user.Id)).Returns(Result.Success);
+        this.mockAuthRepository.Setup(mock => mock.LockAccount(user.Id, It.IsAny<DateTime>())).Returns(Result.Success);
 
         // Act
         var result = this.authService.Login(request);
@@ -149,8 +153,8 @@ public sealed class AuthServiceTests
         // Assert
         result.IsError.Should().BeTrue();
         result.FirstError.Type.Should().Be(ErrorType.Forbidden);
-        this.mockAuthRepository.Verify(m => m.LockAccount(user.Id, It.IsAny<DateTime>()), Times.Once);
-        this.mockEmailService.Verify(m => m.SendLockNotification(user.Email), Times.Once);
+        this.mockAuthRepository.Verify(mock => mock.LockAccount(user.Id, It.IsAny<DateTime>()), Times.Once);
+        this.mockEmailService.Verify(mock => mock.SendLockNotification(user.Email), Times.Once);
     }
 
     [Fact]
@@ -159,9 +163,9 @@ public sealed class AuthServiceTests
         // Arrange
         var request = new LoginRequest { Email = "2fa@user.com", Password = "ValidPassword123!" };
         var user = new User { Id = 1, Email = request.Email, PasswordHash = "hash", Is2FactorAuthenticationEnabled = true, Preferred2FAMethod = "Email" };
-        this.mockAuthRepository.Setup(m => m.FindUserByEmail(request.Email)).Returns((ErrorOr<User>)user);
-        this.mockHashService.Setup(m => m.Verify(request.Password, user.PasswordHash)).Returns((ErrorOr<bool>)true);
-        this.mockOtpService.Setup(m => m.GenerateTOTP(user.Id)).Returns((ErrorOr<string>)Error.Failure("otp_failed"));
+        this.mockAuthRepository.Setup(mock => mock.FindUserByEmail(request.Email)).Returns((ErrorOr<User>)user);
+        this.mockHashService.Setup(mock => mock.Verify(request.Password, user.PasswordHash)).Returns((ErrorOr<bool>)true);
+        this.mockOtpService.Setup(mock => mock.GenerateTOTP(user.Id)).Returns((ErrorOr<string>)Error.Failure("otp_failed"));
 
         // Act
         var result = this.authService.Login(request);
@@ -177,9 +181,9 @@ public sealed class AuthServiceTests
         // Arrange
         var request = new LoginRequest { Email = "2fa@user.com", Password = "ValidPassword123!" };
         var user = new User { Id = 1, Email = request.Email, PasswordHash = "hash", Is2FactorAuthenticationEnabled = true, Preferred2FAMethod = "Email" };
-        this.mockAuthRepository.Setup(m => m.FindUserByEmail(request.Email)).Returns((ErrorOr<User>)user);
-        this.mockHashService.Setup(m => m.Verify(request.Password, user.PasswordHash)).Returns((ErrorOr<bool>)true);
-        this.mockOtpService.Setup(m => m.GenerateTOTP(user.Id)).Returns((ErrorOr<string>)"123456");
+        this.mockAuthRepository.Setup(mock => mock.FindUserByEmail(request.Email)).Returns((ErrorOr<User>)user);
+        this.mockHashService.Setup(mock => mock.Verify(request.Password, user.PasswordHash)).Returns((ErrorOr<bool>)true);
+        this.mockOtpService.Setup(mock => mock.GenerateTOTP(user.Id)).Returns((ErrorOr<string>)"123456");
 
         // Act
         var result = this.authService.Login(request);
@@ -187,7 +191,7 @@ public sealed class AuthServiceTests
         // Assert
         result.IsError.Should().BeFalse();
         result.Value.Should().BeOfType<RequiresTwoFactor>();
-        this.mockEmailService.Verify(m => m.SendOneTimePasswordCode(user.Email, "123456"), Times.Once);
+        this.mockEmailService.Verify(mock => mock.SendOneTimePasswordCode(user.Email, "123456"), Times.Once);
     }
 
     [Fact]
@@ -196,10 +200,10 @@ public sealed class AuthServiceTests
         // Arrange
         var request = new LoginRequest { Email = "ok@user.com", Password = "ValidPassword123!" };
         var user = new User { Id = 1, Email = request.Email, PasswordHash = "hash", Is2FactorAuthenticationEnabled = false };
-        this.mockAuthRepository.Setup(m => m.FindUserByEmail(request.Email)).Returns((ErrorOr<User>)user);
-        this.mockHashService.Setup(m => m.Verify(request.Password, user.PasswordHash)).Returns((ErrorOr<bool>)true);
-        this.mockAuthRepository.Setup(m => m.ResetFailedAttempts(user.Id)).Returns(Result.Success);
-        this.mockJwtService.Setup(m => m.GenerateToken(user.Id)).Returns((ErrorOr<string>)Error.Failure("jwt_failed"));
+        this.mockAuthRepository.Setup(mock => mock.FindUserByEmail(request.Email)).Returns((ErrorOr<User>)user);
+        this.mockHashService.Setup(mock => mock.Verify(request.Password, user.PasswordHash)).Returns((ErrorOr<bool>)true);
+        this.mockAuthRepository.Setup(mock => mock.ResetFailedAttempts(user.Id)).Returns(Result.Success);
+        this.mockJwtService.Setup(mock => mock.GenerateToken(user.Id)).Returns((ErrorOr<string>)Error.Failure("jwt_failed"));
 
         // Act
         var result = this.authService.Login(request);
@@ -215,11 +219,11 @@ public sealed class AuthServiceTests
         // Arrange
         var request = new LoginRequest { Email = "ok@user.com", Password = "ValidPassword123!" };
         var user = new User { Id = 1, Email = request.Email, PasswordHash = "hash", Is2FactorAuthenticationEnabled = false };
-        this.mockAuthRepository.Setup(m => m.FindUserByEmail(request.Email)).Returns((ErrorOr<User>)user);
-        this.mockHashService.Setup(m => m.Verify(request.Password, user.PasswordHash)).Returns((ErrorOr<bool>)true);
-        this.mockAuthRepository.Setup(m => m.ResetFailedAttempts(user.Id)).Returns(Result.Success);
-        this.mockJwtService.Setup(m => m.GenerateToken(user.Id)).Returns((ErrorOr<string>)"jwt-token");
-        this.mockAuthRepository.Setup(m => m.CreateSession(user.Id, "jwt-token", null, null, null)).Returns((ErrorOr<Session>)Error.Failure("session_failed"));
+        this.mockAuthRepository.Setup(mock => mock.FindUserByEmail(request.Email)).Returns((ErrorOr<User>)user);
+        this.mockHashService.Setup(mock => mock.Verify(request.Password, user.PasswordHash)).Returns((ErrorOr<bool>)true);
+        this.mockAuthRepository.Setup(mock => mock.ResetFailedAttempts(user.Id)).Returns(Result.Success);
+        this.mockJwtService.Setup(mock => mock.GenerateToken(user.Id)).Returns((ErrorOr<string>)"jwt-token");
+        this.mockAuthRepository.Setup(mock => mock.CreateSession(user.Id, "jwt-token", null, null, null)).Returns((ErrorOr<Session>)Error.Failure("session_failed"));
 
         // Act
         var result = this.authService.Login(request);
@@ -236,11 +240,11 @@ public sealed class AuthServiceTests
         var request = new LoginRequest { Email = "ok@user.com", Password = "ValidPassword123!" };
         var user = new User { Id = 1, Email = request.Email, PasswordHash = "hash", Is2FactorAuthenticationEnabled = false };
         var token = "jwt-token";
-        this.mockAuthRepository.Setup(m => m.FindUserByEmail(request.Email)).Returns((ErrorOr<User>)user);
-        this.mockHashService.Setup(m => m.Verify(request.Password, user.PasswordHash)).Returns((ErrorOr<bool>)true);
-        this.mockAuthRepository.Setup(m => m.ResetFailedAttempts(user.Id)).Returns(Result.Success);
-        this.mockJwtService.Setup(m => m.GenerateToken(user.Id)).Returns((ErrorOr<string>)token);
-        this.mockAuthRepository.Setup(m => m.CreateSession(user.Id, token, null, null, null)).Returns((ErrorOr<Session>)new Session());
+        this.mockAuthRepository.Setup(mock => mock.FindUserByEmail(request.Email)).Returns((ErrorOr<User>)user);
+        this.mockHashService.Setup(mock => mock.Verify(request.Password, user.PasswordHash)).Returns((ErrorOr<bool>)true);
+        this.mockAuthRepository.Setup(mock => mock.ResetFailedAttempts(user.Id)).Returns(Result.Success);
+        this.mockJwtService.Setup(mock => mock.GenerateToken(user.Id)).Returns((ErrorOr<string>)token);
+        this.mockAuthRepository.Setup(mock => mock.CreateSession(user.Id, token, null, null, null)).Returns((ErrorOr<Session>)new Session());
 
         // Act
         var result = this.authService.Login(request);
@@ -299,7 +303,7 @@ public sealed class AuthServiceTests
     {
         // Arrange
         var request = new RegisterRequest { Email = "existing@user.com", Password = "ValidPassword123!", FullName = "John Doe" };
-        this.mockAuthRepository.Setup(m => m.FindUserByEmail(request.Email)).Returns((ErrorOr<User>)new User());
+        this.mockAuthRepository.Setup(mock => mock.FindUserByEmail(request.Email)).Returns((ErrorOr<User>)new User());
 
         // Act
         var result = this.authService.Register(request);
@@ -314,8 +318,8 @@ public sealed class AuthServiceTests
     {
         // Arrange
         var request = new RegisterRequest { Email = "new@user.com", Password = "ValidPassword123!", FullName = "John Doe" };
-        this.mockAuthRepository.Setup(m => m.FindUserByEmail(request.Email)).Returns((ErrorOr<User>)Error.NotFound());
-        this.mockHashService.Setup(m => m.GetHash(request.Password)).Returns((ErrorOr<string>)Error.Failure("hash_failed"));
+        this.mockAuthRepository.Setup(mock => mock.FindUserByEmail(request.Email)).Returns((ErrorOr<User>)Error.NotFound());
+        this.mockHashService.Setup(mock => mock.GetHash(request.Password)).Returns((ErrorOr<string>)Error.Failure("hash_failed"));
 
         // Act
         var result = this.authService.Register(request);
@@ -330,9 +334,9 @@ public sealed class AuthServiceTests
     {
         // Arrange
         var request = new RegisterRequest { Email = "new@user.com", Password = "ValidPassword123!", FullName = "John Doe" };
-        this.mockAuthRepository.Setup(m => m.FindUserByEmail(request.Email)).Returns((ErrorOr<User>)Error.NotFound());
-        this.mockHashService.Setup(m => m.GetHash(request.Password)).Returns((ErrorOr<string>)"hashed_pass");
-        this.mockAuthRepository.Setup(m => m.CreateUser(It.IsAny<User>())).Returns((ErrorOr<Success>)Error.Failure("create_failed"));
+        this.mockAuthRepository.Setup(mock => mock.FindUserByEmail(request.Email)).Returns((ErrorOr<User>)Error.NotFound());
+        this.mockHashService.Setup(mock => mock.GetHash(request.Password)).Returns((ErrorOr<string>)"hashed_pass");
+        this.mockAuthRepository.Setup(mock => mock.CreateUser(It.IsAny<User>())).Returns((ErrorOr<Success>)Error.Failure("create_failed"));
 
         // Act
         var result = this.authService.Register(request);
@@ -347,16 +351,16 @@ public sealed class AuthServiceTests
     {
         // Arrange
         var request = new RegisterRequest { Email = "new@user.com", Password = "ValidPassword123!", FullName = "John Doe" };
-        this.mockAuthRepository.Setup(m => m.FindUserByEmail(request.Email)).Returns((ErrorOr<User>)Error.NotFound());
-        this.mockHashService.Setup(m => m.GetHash(request.Password)).Returns((ErrorOr<string>)"hashed_pass");
-        this.mockAuthRepository.Setup(m => m.CreateUser(It.IsAny<User>())).Returns(Result.Success);
+        this.mockAuthRepository.Setup(mock => mock.FindUserByEmail(request.Email)).Returns((ErrorOr<User>)Error.NotFound());
+        this.mockHashService.Setup(mock => mock.GetHash(request.Password)).Returns((ErrorOr<string>)"hashed_pass");
+        this.mockAuthRepository.Setup(mock => mock.CreateUser(It.IsAny<User>())).Returns(Result.Success);
 
         // Act
         var result = this.authService.Register(request);
 
         // Assert
         result.IsError.Should().BeFalse();
-        this.mockAuthRepository.Verify(m => m.CreateUser(It.Is<User>(u => u.Email == request.Email && u.FullName == request.FullName)), Times.Once);
+        this.mockAuthRepository.Verify(mock => mock.CreateUser(It.Is<User>(user => user.Email == request.Email && user.FullName == request.FullName)), Times.Once);
     }
 
     [Fact]
@@ -406,7 +410,7 @@ public sealed class AuthServiceTests
     {
         // Arrange
         var request = new OAuthRegisterRequest { Email = "test@test.com", Provider = "Google", ProviderToken = "token", FullName = "Name" };
-        this.mockAuthRepository.Setup(m => m.FindOAuthLink(request.Provider, request.ProviderToken)).Returns((ErrorOr<OAuthLink>)new OAuthLink());
+        this.mockAuthRepository.Setup(mock => mock.FindOAuthLink(request.Provider, request.ProviderToken)).Returns((ErrorOr<OAuthLink>)new OAuthLink());
 
         // Act
         var result = this.authService.OAuthRegister(request);
@@ -422,9 +426,9 @@ public sealed class AuthServiceTests
         // Arrange
         var request = new OAuthRegisterRequest { Email = "test@test.com", Provider = "Google", ProviderToken = "token", FullName = "Name" };
         var user = new User { Id = 1, Email = request.Email };
-        this.mockAuthRepository.Setup(m => m.FindOAuthLink(request.Provider, request.ProviderToken)).Returns((ErrorOr<OAuthLink>)Error.NotFound());
-        this.mockAuthRepository.Setup(m => m.FindUserByEmail(request.Email)).Returns((ErrorOr<User>)user);
-        this.mockAuthRepository.Setup(m => m.CreateOAuthLink(It.IsAny<OAuthLink>())).Returns((ErrorOr<Success>)Error.Failure("link_failed"));
+        this.mockAuthRepository.Setup(mock => mock.FindOAuthLink(request.Provider, request.ProviderToken)).Returns((ErrorOr<OAuthLink>)Error.NotFound());
+        this.mockAuthRepository.Setup(mock => mock.FindUserByEmail(request.Email)).Returns((ErrorOr<User>)user);
+        this.mockAuthRepository.Setup(mock => mock.CreateOAuthLink(It.IsAny<OAuthLink>())).Returns((ErrorOr<Success>)Error.Failure("link_failed"));
 
         // Act
         var result = this.authService.OAuthRegister(request);
@@ -440,9 +444,9 @@ public sealed class AuthServiceTests
         // Arrange
         var request = new OAuthRegisterRequest { Email = "test@test.com", Provider = "Google", ProviderToken = "token", FullName = "Name" };
         var user = new User { Id = 1, Email = request.Email };
-        this.mockAuthRepository.Setup(m => m.FindOAuthLink(request.Provider, request.ProviderToken)).Returns((ErrorOr<OAuthLink>)Error.NotFound());
-        this.mockAuthRepository.Setup(m => m.FindUserByEmail(request.Email)).Returns((ErrorOr<User>)user);
-        this.mockAuthRepository.Setup(m => m.CreateOAuthLink(It.IsAny<OAuthLink>())).Returns(Result.Success);
+        this.mockAuthRepository.Setup(mock => mock.FindOAuthLink(request.Provider, request.ProviderToken)).Returns((ErrorOr<OAuthLink>)Error.NotFound());
+        this.mockAuthRepository.Setup(mock => mock.FindUserByEmail(request.Email)).Returns((ErrorOr<User>)user);
+        this.mockAuthRepository.Setup(mock => mock.CreateOAuthLink(It.IsAny<OAuthLink>())).Returns(Result.Success);
 
         // Act
         var result = this.authService.OAuthRegister(request);
@@ -456,9 +460,9 @@ public sealed class AuthServiceTests
     {
         // Arrange
         var request = new OAuthRegisterRequest { Email = "test@test.com", Provider = "Google", ProviderToken = "token", FullName = "Name" };
-        this.mockAuthRepository.Setup(m => m.FindOAuthLink(request.Provider, request.ProviderToken)).Returns((ErrorOr<OAuthLink>)Error.NotFound());
-        this.mockAuthRepository.Setup(m => m.FindUserByEmail(request.Email)).Returns((ErrorOr<User>)Error.NotFound());
-        this.mockHashService.Setup(m => m.GetHash(It.IsAny<string>())).Returns((ErrorOr<string>)Error.Failure("hash_failed"));
+        this.mockAuthRepository.Setup(mock => mock.FindOAuthLink(request.Provider, request.ProviderToken)).Returns((ErrorOr<OAuthLink>)Error.NotFound());
+        this.mockAuthRepository.Setup(mock => mock.FindUserByEmail(request.Email)).Returns((ErrorOr<User>)Error.NotFound());
+        this.mockHashService.Setup(mock => mock.GetHash(It.IsAny<string>())).Returns((ErrorOr<string>)Error.Failure("hash_failed"));
 
         // Act
         var result = this.authService.OAuthRegister(request);
@@ -473,10 +477,10 @@ public sealed class AuthServiceTests
     {
         // Arrange
         var request = new OAuthRegisterRequest { Email = "test@test.com", Provider = "Google", ProviderToken = "token", FullName = "Name" };
-        this.mockAuthRepository.Setup(m => m.FindOAuthLink(request.Provider, request.ProviderToken)).Returns((ErrorOr<OAuthLink>)Error.NotFound());
-        this.mockAuthRepository.Setup(m => m.FindUserByEmail(request.Email)).Returns((ErrorOr<User>)Error.NotFound());
-        this.mockHashService.Setup(m => m.GetHash(It.IsAny<string>())).Returns((ErrorOr<string>)"hash");
-        this.mockAuthRepository.Setup(m => m.CreateUser(It.IsAny<User>())).Returns((ErrorOr<Success>)Error.Failure("create_user_failed"));
+        this.mockAuthRepository.Setup(mock => mock.FindOAuthLink(request.Provider, request.ProviderToken)).Returns((ErrorOr<OAuthLink>)Error.NotFound());
+        this.mockAuthRepository.Setup(mock => mock.FindUserByEmail(request.Email)).Returns((ErrorOr<User>)Error.NotFound());
+        this.mockHashService.Setup(mock => mock.GetHash(It.IsAny<string>())).Returns((ErrorOr<string>)"hash");
+        this.mockAuthRepository.Setup(mock => mock.CreateUser(It.IsAny<User>())).Returns((ErrorOr<Success>)Error.Failure("create_user_failed"));
 
         // Act
         var result = this.authService.OAuthRegister(request);
@@ -491,12 +495,12 @@ public sealed class AuthServiceTests
     {
         // Arrange
         var request = new OAuthRegisterRequest { Email = "test@test.com", Provider = "Google", ProviderToken = "token", FullName = "Name" };
-        this.mockAuthRepository.Setup(m => m.FindOAuthLink(request.Provider, request.ProviderToken)).Returns((ErrorOr<OAuthLink>)Error.NotFound());
+        this.mockAuthRepository.Setup(mock => mock.FindOAuthLink(request.Provider, request.ProviderToken)).Returns((ErrorOr<OAuthLink>)Error.NotFound());
         this.mockAuthRepository.SetupSequence(m => m.FindUserByEmail(request.Email))
             .Returns((ErrorOr<User>)Error.NotFound())
             .Returns((ErrorOr<User>)Error.Failure("retrieval_failed"));
-        this.mockHashService.Setup(m => m.GetHash(It.IsAny<string>())).Returns((ErrorOr<string>)"hash");
-        this.mockAuthRepository.Setup(m => m.CreateUser(It.IsAny<User>())).Returns(Result.Success);
+        this.mockHashService.Setup(mock => mock.GetHash(It.IsAny<string>())).Returns((ErrorOr<string>)"hash");
+        this.mockAuthRepository.Setup(mock => mock.CreateUser(It.IsAny<User>())).Returns(Result.Success);
 
         // Act
         var result = this.authService.OAuthRegister(request);
@@ -512,13 +516,13 @@ public sealed class AuthServiceTests
         // Arrange
         var request = new OAuthRegisterRequest { Email = "test@test.com", Provider = "Google", ProviderToken = "token", FullName = "Name" };
         var user = new User { Id = 1, Email = request.Email };
-        this.mockAuthRepository.Setup(m => m.FindOAuthLink(request.Provider, request.ProviderToken)).Returns((ErrorOr<OAuthLink>)Error.NotFound());
+        this.mockAuthRepository.Setup(mock => mock.FindOAuthLink(request.Provider, request.ProviderToken)).Returns((ErrorOr<OAuthLink>)Error.NotFound());
         this.mockAuthRepository.SetupSequence(m => m.FindUserByEmail(request.Email))
             .Returns((ErrorOr<User>)Error.NotFound())
             .Returns((ErrorOr<User>)user);
-        this.mockHashService.Setup(m => m.GetHash(It.IsAny<string>())).Returns((ErrorOr<string>)"hash");
-        this.mockAuthRepository.Setup(m => m.CreateUser(It.IsAny<User>())).Returns(Result.Success);
-        this.mockAuthRepository.Setup(m => m.CreateOAuthLink(It.IsAny<OAuthLink>())).Returns(Result.Success);
+        this.mockHashService.Setup(mock => mock.GetHash(It.IsAny<string>())).Returns((ErrorOr<string>)"hash");
+        this.mockAuthRepository.Setup(mock => mock.CreateUser(It.IsAny<User>())).Returns(Result.Success);
+        this.mockAuthRepository.Setup(mock => mock.CreateOAuthLink(It.IsAny<OAuthLink>())).Returns(Result.Success);
 
         // Act
         var result = this.authService.OAuthRegister(request);
@@ -532,7 +536,7 @@ public sealed class AuthServiceTests
     {
         // Arrange
         var request = new VerifyOTPRequest { UserId = 1, OTPCode = "123456" };
-        this.mockAuthRepository.Setup(m => m.FindUserById(request.UserId)).Returns((ErrorOr<User>)Error.NotFound("user_not_found"));
+        this.mockAuthRepository.Setup(mock => mock.FindUserById(request.UserId)).Returns((ErrorOr<User>)Error.NotFound("user_not_found"));
 
         // Act
         var result = this.authService.VerifyOTP(request);
@@ -548,8 +552,8 @@ public sealed class AuthServiceTests
         // Arrange
         var request = new VerifyOTPRequest { UserId = 1, OTPCode = "123456" };
         var user = new User { Id = 1 };
-        this.mockAuthRepository.Setup(m => m.FindUserById(request.UserId)).Returns((ErrorOr<User>)user);
-        this.mockOtpService.Setup(m => m.VerifyTOTP(request.UserId, request.OTPCode)).Returns((ErrorOr<bool>)Error.Failure("totp_failed"));
+        this.mockAuthRepository.Setup(mock => mock.FindUserById(request.UserId)).Returns((ErrorOr<User>)user);
+        this.mockOtpService.Setup(mock => mock.VerifyTOTP(request.UserId, request.OTPCode)).Returns((ErrorOr<bool>)Error.Failure("totp_failed"));
 
         // Act
         var result = this.authService.VerifyOTP(request);
@@ -565,8 +569,8 @@ public sealed class AuthServiceTests
         // Arrange
         var request = new VerifyOTPRequest { UserId = 1, OTPCode = "000000" };
         var user = new User { Id = 1 };
-        this.mockAuthRepository.Setup(m => m.FindUserById(request.UserId)).Returns((ErrorOr<User>)user);
-        this.mockOtpService.Setup(m => m.VerifyTOTP(request.UserId, request.OTPCode)).Returns((ErrorOr<bool>)false);
+        this.mockAuthRepository.Setup(mock => mock.FindUserById(request.UserId)).Returns((ErrorOr<User>)user);
+        this.mockOtpService.Setup(mock => mock.VerifyTOTP(request.UserId, request.OTPCode)).Returns((ErrorOr<bool>)false);
 
         // Act
         var result = this.authService.VerifyOTP(request);
@@ -582,11 +586,11 @@ public sealed class AuthServiceTests
         // Arrange
         var request = new VerifyOTPRequest { UserId = 1, OTPCode = "123456" };
         var user = new User { Id = 1, Email = "test@user.com" };
-        this.mockAuthRepository.Setup(m => m.FindUserById(request.UserId)).Returns((ErrorOr<User>)user);
-        this.mockOtpService.Setup(m => m.VerifyTOTP(request.UserId, request.OTPCode)).Returns((ErrorOr<bool>)true);
-        this.mockAuthRepository.Setup(m => m.ResetFailedAttempts(user.Id)).Returns(Result.Success);
-        this.mockJwtService.Setup(m => m.GenerateToken(user.Id)).Returns((ErrorOr<string>)"token");
-        this.mockAuthRepository.Setup(m => m.CreateSession(user.Id, "token", null, null, null)).Returns((ErrorOr<Session>)new Session());
+        this.mockAuthRepository.Setup(mock => mock.FindUserById(request.UserId)).Returns((ErrorOr<User>)user);
+        this.mockOtpService.Setup(mock => mock.VerifyTOTP(request.UserId, request.OTPCode)).Returns((ErrorOr<bool>)true);
+        this.mockAuthRepository.Setup(mock => mock.ResetFailedAttempts(user.Id)).Returns(Result.Success);
+        this.mockJwtService.Setup(mock => mock.GenerateToken(user.Id)).Returns((ErrorOr<string>)"token");
+        this.mockAuthRepository.Setup(mock => mock.CreateSession(user.Id, "token", null, null, null)).Returns((ErrorOr<Session>)new Session());
 
         // Act
         var result = this.authService.VerifyOTP(request);
@@ -594,14 +598,14 @@ public sealed class AuthServiceTests
         // Assert
         result.IsError.Should().BeFalse();
         result.Value.Should().BeOfType<FullLogin>();
-        this.mockOtpService.Verify(m => m.InvalidateOTP(user.Id), Times.Once);
+        this.mockOtpService.Verify(mock => mock.InvalidateOTP(user.Id), Times.Once);
     }
 
     [Fact]
     public void ResendOTP_WhenUserNotFound_ReturnsError()
     {
         // Arrange
-        this.mockAuthRepository.Setup(m => m.FindUserById(1)).Returns((ErrorOr<User>)Error.NotFound("user_not_found"));
+        this.mockAuthRepository.Setup(mock => mock.FindUserById(1)).Returns((ErrorOr<User>)Error.NotFound("user_not_found"));
 
         // Act
         var result = this.authService.ResendOTP(1, "Email");
@@ -615,8 +619,8 @@ public sealed class AuthServiceTests
     {
         // Arrange
         var user = new User { Id = 1 };
-        this.mockAuthRepository.Setup(m => m.FindUserById(1)).Returns((ErrorOr<User>)user);
-        this.mockOtpService.Setup(m => m.GenerateTOTP(1)).Returns((ErrorOr<string>)Error.Failure("totp_failed"));
+        this.mockAuthRepository.Setup(mock => mock.FindUserById(1)).Returns((ErrorOr<User>)user);
+        this.mockOtpService.Setup(mock => mock.GenerateTOTP(1)).Returns((ErrorOr<string>)Error.Failure("totp_failed"));
 
         // Act
         var result = this.authService.ResendOTP(1, "Email");
@@ -631,15 +635,15 @@ public sealed class AuthServiceTests
     {
         // Arrange
         var user = new User { Id = 1, Email = "test@user.com", Preferred2FAMethod = "Email" };
-        this.mockAuthRepository.Setup(m => m.FindUserById(user.Id)).Returns((ErrorOr<User>)user);
-        this.mockOtpService.Setup(m => m.GenerateTOTP(user.Id)).Returns((ErrorOr<string>)"123456");
+        this.mockAuthRepository.Setup(mock => mock.FindUserById(user.Id)).Returns((ErrorOr<User>)user);
+        this.mockOtpService.Setup(mock => mock.GenerateTOTP(user.Id)).Returns((ErrorOr<string>)"123456");
 
         // Act
         var result = this.authService.ResendOTP(user.Id, "Email");
 
         // Assert
         result.IsError.Should().BeFalse();
-        this.mockEmailService.Verify(m => m.SendOneTimePasswordCode(user.Email, "123456"), Times.Once);
+        this.mockEmailService.Verify(mock => mock.SendOneTimePasswordCode(user.Email, "123456"), Times.Once);
     }
 
     [Fact]
@@ -647,22 +651,22 @@ public sealed class AuthServiceTests
     {
         // Arrange
         var user = new User { Id = 1, Email = "test@test.com", Preferred2FAMethod = "SMS" };
-        this.mockAuthRepository.Setup(m => m.FindUserById(user.Id)).Returns((ErrorOr<User>)user);
-        this.mockOtpService.Setup(m => m.GenerateTOTP(user.Id)).Returns((ErrorOr<string>)"123456");
+        this.mockAuthRepository.Setup(mock => mock.FindUserById(user.Id)).Returns((ErrorOr<User>)user);
+        this.mockOtpService.Setup(mock => mock.GenerateTOTP(user.Id)).Returns((ErrorOr<string>)"123456");
 
         // Act
         var result = this.authService.ResendOTP(user.Id, "SMS");
 
         // Assert
         result.IsError.Should().BeFalse();
-        this.mockEmailService.Verify(m => m.SendOneTimePasswordCode(It.IsAny<string>(), It.IsAny<string>()), Times.Never);
+        this.mockEmailService.Verify(mock => mock.SendOneTimePasswordCode(It.IsAny<string>(), It.IsAny<string>()), Times.Never);
     }
 
     [Fact]
     public void RequestPasswordReset_WhenUserNotFound_ReturnsError()
     {
         // Arrange
-        this.mockAuthRepository.Setup(m => m.FindUserByEmail("test@test.com")).Returns((ErrorOr<User>)Error.NotFound("user_not_found"));
+        this.mockAuthRepository.Setup(mock => mock.FindUserByEmail("test@test.com")).Returns((ErrorOr<User>)Error.NotFound("user_not_found"));
 
         // Act
         var result = this.authService.RequestPasswordReset("test@test.com");
@@ -676,8 +680,8 @@ public sealed class AuthServiceTests
     {
         // Arrange
         var user = new User { Id = 1, Email = "test@test.com" };
-        this.mockAuthRepository.Setup(m => m.FindUserByEmail(user.Email)).Returns((ErrorOr<User>)user);
-        this.mockAuthRepository.Setup(m => m.SavePasswordResetToken(It.IsAny<PasswordResetToken>())).Returns((ErrorOr<Success>)Error.Failure("save_failed"));
+        this.mockAuthRepository.Setup(mock => mock.FindUserByEmail(user.Email)).Returns((ErrorOr<User>)user);
+        this.mockAuthRepository.Setup(mock => mock.SavePasswordResetToken(It.IsAny<PasswordResetToken>())).Returns((ErrorOr<Success>)Error.Failure("save_failed"));
 
         // Act
         var result = this.authService.RequestPasswordReset(user.Email);
@@ -692,16 +696,16 @@ public sealed class AuthServiceTests
     {
         // Arrange
         var user = new User { Id = 1, Email = "test@test.com" };
-        this.mockAuthRepository.Setup(m => m.FindUserByEmail(user.Email)).Returns((ErrorOr<User>)user);
-        this.mockAuthRepository.Setup(m => m.DeleteExpiredPasswordResetTokens()).Returns(Result.Success);
-        this.mockAuthRepository.Setup(m => m.SavePasswordResetToken(It.IsAny<PasswordResetToken>())).Returns(Result.Success);
+        this.mockAuthRepository.Setup(mock => mock.FindUserByEmail(user.Email)).Returns((ErrorOr<User>)user);
+        this.mockAuthRepository.Setup(mock => mock.DeleteExpiredPasswordResetTokens()).Returns(Result.Success);
+        this.mockAuthRepository.Setup(mock => mock.SavePasswordResetToken(It.IsAny<PasswordResetToken>())).Returns(Result.Success);
 
         // Act
         var result = this.authService.RequestPasswordReset(user.Email);
 
         // Assert
         result.IsError.Should().BeFalse();
-        this.mockEmailService.Verify(m => m.SendPasswordResetLink(It.Is<string>(e => e == user.Email), It.IsAny<string>()), Times.Once);
+        this.mockEmailService.Verify(mock => mock.SendPasswordResetLink(It.Is<string>(email => email == user.Email), It.IsAny<string>()), Times.Once);
     }
 
     [Fact]
@@ -719,7 +723,7 @@ public sealed class AuthServiceTests
     public void ResetPassword_WhenTokenNotFound_ReturnsError()
     {
         // Arrange
-        this.mockAuthRepository.Setup(m => m.FindPasswordResetToken(It.IsAny<string>())).Returns((ErrorOr<PasswordResetToken>)Error.NotFound("token_not_found"));
+        this.mockAuthRepository.Setup(mock => mock.FindPasswordResetToken(It.IsAny<string>())).Returns((ErrorOr<PasswordResetToken>)Error.NotFound("token_not_found"));
 
         // Act
         var result = this.authService.ResetPassword("token", "ValidPassword123!");
@@ -734,7 +738,7 @@ public sealed class AuthServiceTests
     {
         // Arrange
         var token = new PasswordResetToken { UsedAt = DateTime.UtcNow };
-        this.mockAuthRepository.Setup(m => m.FindPasswordResetToken(It.IsAny<string>())).Returns((ErrorOr<PasswordResetToken>)token);
+        this.mockAuthRepository.Setup(mock => mock.FindPasswordResetToken(It.IsAny<string>())).Returns((ErrorOr<PasswordResetToken>)token);
 
         // Act
         var result = this.authService.ResetPassword("token", "ValidPassword123!");
@@ -748,8 +752,8 @@ public sealed class AuthServiceTests
     public void ResetPassword_WhenTokenExpired_ReturnsValidationError()
     {
         // Arrange
-        var token = new PasswordResetToken { UserId = 1, ExpiresAt = DateTime.UtcNow.AddMinutes(-5) };
-        this.mockAuthRepository.Setup(m => m.FindPasswordResetToken(It.IsAny<string>())).Returns((ErrorOr<PasswordResetToken>)token);
+        var token = new PasswordResetToken { UserId = 1, ExpiresAt = DateTime.UtcNow.AddMinutes(TokenAlreadyExpiredMinutes) };
+        this.mockAuthRepository.Setup(mock => mock.FindPasswordResetToken(It.IsAny<string>())).Returns((ErrorOr<PasswordResetToken>)token);
 
         // Act
         var result = this.authService.ResetPassword("raw_token", "NewValidPassword123!");
@@ -763,9 +767,9 @@ public sealed class AuthServiceTests
     public void ResetPassword_WhenHashGenerationFails_ReturnsError()
     {
         // Arrange
-        var token = new PasswordResetToken { ExpiresAt = DateTime.UtcNow.AddMinutes(5) };
-        this.mockAuthRepository.Setup(m => m.FindPasswordResetToken(It.IsAny<string>())).Returns((ErrorOr<PasswordResetToken>)token);
-        this.mockHashService.Setup(m => m.GetHash(It.IsAny<string>())).Returns((ErrorOr<string>)Error.Failure("hash_failed"));
+        var token = new PasswordResetToken { ExpiresAt = DateTime.UtcNow.AddMinutes(TokenStillValidMinutes) };
+        this.mockAuthRepository.Setup(mock => mock.FindPasswordResetToken(It.IsAny<string>())).Returns((ErrorOr<PasswordResetToken>)token);
+        this.mockHashService.Setup(mock => mock.GetHash(It.IsAny<string>())).Returns((ErrorOr<string>)Error.Failure("hash_failed"));
 
         // Act
         var result = this.authService.ResetPassword("token", "ValidPassword123!");
@@ -779,10 +783,10 @@ public sealed class AuthServiceTests
     public void ResetPassword_WhenUpdatePasswordFails_ReturnsError()
     {
         // Arrange
-        var token = new PasswordResetToken { UserId = 1, ExpiresAt = DateTime.UtcNow.AddMinutes(5) };
-        this.mockAuthRepository.Setup(m => m.FindPasswordResetToken(It.IsAny<string>())).Returns((ErrorOr<PasswordResetToken>)token);
-        this.mockHashService.Setup(m => m.GetHash(It.IsAny<string>())).Returns((ErrorOr<string>)"hash");
-        this.mockAuthRepository.Setup(m => m.UpdatePassword(token.UserId, "hash")).Returns((ErrorOr<Success>)Error.Failure("update_failed"));
+        var token = new PasswordResetToken { UserId = 1, ExpiresAt = DateTime.UtcNow.AddMinutes(TokenStillValidMinutes) };
+        this.mockAuthRepository.Setup(mock => mock.FindPasswordResetToken(It.IsAny<string>())).Returns((ErrorOr<PasswordResetToken>)token);
+        this.mockHashService.Setup(mock => mock.GetHash(It.IsAny<string>())).Returns((ErrorOr<string>)"hash");
+        this.mockAuthRepository.Setup(mock => mock.UpdatePassword(token.UserId, "hash")).Returns((ErrorOr<Success>)Error.Failure("update_failed"));
 
         // Act
         var result = this.authService.ResetPassword("token", "ValidPassword123!");
@@ -796,11 +800,11 @@ public sealed class AuthServiceTests
     public void ResetPassword_WhenMarkTokenAsUsedFails_ReturnsError()
     {
         // Arrange
-        var token = new PasswordResetToken { Id = 1, UserId = 1, ExpiresAt = DateTime.UtcNow.AddMinutes(5) };
-        this.mockAuthRepository.Setup(m => m.FindPasswordResetToken(It.IsAny<string>())).Returns((ErrorOr<PasswordResetToken>)token);
-        this.mockHashService.Setup(m => m.GetHash(It.IsAny<string>())).Returns((ErrorOr<string>)"new_hash");
-        this.mockAuthRepository.Setup(m => m.UpdatePassword(token.UserId, "new_hash")).Returns(Result.Success);
-        this.mockAuthRepository.Setup(m => m.MarkPasswordResetTokenAsUsed(token.Id)).Returns((ErrorOr<Success>)Error.Failure("mark_failed"));
+        var token = new PasswordResetToken { Id = 1, UserId = 1, ExpiresAt = DateTime.UtcNow.AddMinutes(TokenStillValidMinutes) };
+        this.mockAuthRepository.Setup(mock => mock.FindPasswordResetToken(It.IsAny<string>())).Returns((ErrorOr<PasswordResetToken>)token);
+        this.mockHashService.Setup(mock => mock.GetHash(It.IsAny<string>())).Returns((ErrorOr<string>)"new_hash");
+        this.mockAuthRepository.Setup(mock => mock.UpdatePassword(token.UserId, "new_hash")).Returns(Result.Success);
+        this.mockAuthRepository.Setup(mock => mock.MarkPasswordResetTokenAsUsed(token.Id)).Returns((ErrorOr<Success>)Error.Failure("mark_failed"));
 
         // Act
         var result = this.authService.ResetPassword("raw_token", "ValidPassword123!");
@@ -814,12 +818,12 @@ public sealed class AuthServiceTests
     public void ResetPassword_WhenInvalidateSessionsFails_ReturnsError()
     {
         // Arrange
-        var token = new PasswordResetToken { Id = 1, UserId = 1, ExpiresAt = DateTime.UtcNow.AddMinutes(5) };
-        this.mockAuthRepository.Setup(m => m.FindPasswordResetToken(It.IsAny<string>())).Returns((ErrorOr<PasswordResetToken>)token);
-        this.mockHashService.Setup(m => m.GetHash(It.IsAny<string>())).Returns((ErrorOr<string>)"new_hash");
-        this.mockAuthRepository.Setup(m => m.UpdatePassword(token.UserId, "new_hash")).Returns(Result.Success);
-        this.mockAuthRepository.Setup(m => m.MarkPasswordResetTokenAsUsed(token.Id)).Returns(Result.Success);
-        this.mockAuthRepository.Setup(m => m.InvalidateAllSessions(token.UserId)).Returns((ErrorOr<Success>)Error.Failure("invalidate_failed"));
+        var token = new PasswordResetToken { Id = 1, UserId = 1, ExpiresAt = DateTime.UtcNow.AddMinutes(TokenStillValidMinutes) };
+        this.mockAuthRepository.Setup(mock => mock.FindPasswordResetToken(It.IsAny<string>())).Returns((ErrorOr<PasswordResetToken>)token);
+        this.mockHashService.Setup(mock => mock.GetHash(It.IsAny<string>())).Returns((ErrorOr<string>)"new_hash");
+        this.mockAuthRepository.Setup(mock => mock.UpdatePassword(token.UserId, "new_hash")).Returns(Result.Success);
+        this.mockAuthRepository.Setup(mock => mock.MarkPasswordResetTokenAsUsed(token.Id)).Returns(Result.Success);
+        this.mockAuthRepository.Setup(mock => mock.InvalidateAllSessions(token.UserId)).Returns((ErrorOr<Success>)Error.Failure("invalidate_failed"));
 
         // Act
         var result = this.authService.ResetPassword("raw_token", "ValidPassword123!");
@@ -833,21 +837,21 @@ public sealed class AuthServiceTests
     public void ResetPassword_WhenValid_UpdatesPasswordAndReturnsSuccess()
     {
         // Arrange
-        var token = new PasswordResetToken { Id = 1, UserId = 1, ExpiresAt = DateTime.UtcNow.AddMinutes(5), UsedAt = null };
+        var token = new PasswordResetToken { Id = 1, UserId = 1, ExpiresAt = DateTime.UtcNow.AddMinutes(TokenStillValidMinutes), UsedAt = null };
         var newPassword = "NewValidPassword123!";
-        this.mockAuthRepository.Setup(m => m.FindPasswordResetToken(It.IsAny<string>())).Returns((ErrorOr<PasswordResetToken>)token);
-        this.mockHashService.Setup(m => m.GetHash(newPassword)).Returns((ErrorOr<string>)"new_hash");
-        this.mockAuthRepository.Setup(m => m.UpdatePassword(token.UserId, "new_hash")).Returns(Result.Success);
-        this.mockAuthRepository.Setup(m => m.MarkPasswordResetTokenAsUsed(token.Id)).Returns(Result.Success);
-        this.mockAuthRepository.Setup(m => m.InvalidateAllSessions(token.UserId)).Returns(Result.Success);
+        this.mockAuthRepository.Setup(mock => mock.FindPasswordResetToken(It.IsAny<string>())).Returns((ErrorOr<PasswordResetToken>)token);
+        this.mockHashService.Setup(mock => mock.GetHash(newPassword)).Returns((ErrorOr<string>)"new_hash");
+        this.mockAuthRepository.Setup(mock => mock.UpdatePassword(token.UserId, "new_hash")).Returns(Result.Success);
+        this.mockAuthRepository.Setup(mock => mock.MarkPasswordResetTokenAsUsed(token.Id)).Returns(Result.Success);
+        this.mockAuthRepository.Setup(mock => mock.InvalidateAllSessions(token.UserId)).Returns(Result.Success);
 
         // Act
         var result = this.authService.ResetPassword("raw_token", newPassword);
 
         // Assert
         result.IsError.Should().BeFalse();
-        this.mockAuthRepository.Verify(m => m.UpdatePassword(token.UserId, "new_hash"), Times.Once);
-        this.mockAuthRepository.Verify(m => m.InvalidateAllSessions(token.UserId), Times.Once);
+        this.mockAuthRepository.Verify(mock => mock.UpdatePassword(token.UserId, "new_hash"), Times.Once);
+        this.mockAuthRepository.Verify(mock => mock.InvalidateAllSessions(token.UserId), Times.Once);
     }
 
     [Fact]
@@ -865,7 +869,7 @@ public sealed class AuthServiceTests
     public void VerifyResetToken_WhenTokenNotFound_ReturnsError()
     {
         // Arrange
-        this.mockAuthRepository.Setup(m => m.FindPasswordResetToken(It.IsAny<string>())).Returns((ErrorOr<PasswordResetToken>)Error.NotFound("not_found"));
+        this.mockAuthRepository.Setup(mock => mock.FindPasswordResetToken(It.IsAny<string>())).Returns((ErrorOr<PasswordResetToken>)Error.NotFound("not_found"));
 
         // Act
         var result = this.authService.VerifyResetToken("token");
@@ -879,8 +883,8 @@ public sealed class AuthServiceTests
     public void VerifyResetToken_WhenTokenValid_ReturnsSuccess()
     {
         // Arrange
-        var token = new PasswordResetToken { ExpiresAt = DateTime.UtcNow.AddMinutes(5) };
-        this.mockAuthRepository.Setup(m => m.FindPasswordResetToken(It.IsAny<string>())).Returns((ErrorOr<PasswordResetToken>)token);
+        var token = new PasswordResetToken { ExpiresAt = DateTime.UtcNow.AddMinutes(TokenStillValidMinutes) };
+        this.mockAuthRepository.Setup(mock => mock.FindPasswordResetToken(It.IsAny<string>())).Returns((ErrorOr<PasswordResetToken>)token);
 
         // Act
         var result = this.authService.VerifyResetToken("token");
@@ -893,7 +897,7 @@ public sealed class AuthServiceTests
     public void Logout_WhenSessionNotFound_ReturnsError()
     {
         // Arrange
-        this.mockAuthRepository.Setup(m => m.FindSessionByToken("invalid")).Returns((ErrorOr<Session>)Error.NotFound());
+        this.mockAuthRepository.Setup(mock => mock.FindSessionByToken("invalid")).Returns((ErrorOr<Session>)Error.NotFound());
 
         // Act
         var result = this.authService.Logout("invalid");
@@ -907,14 +911,14 @@ public sealed class AuthServiceTests
     {
         // Arrange
         var session = new Session { Id = 1, UserId = 1 };
-        this.mockAuthRepository.Setup(m => m.FindSessionByToken("valid_token")).Returns((ErrorOr<Session>)session);
-        this.mockAuthRepository.Setup(m => m.UpdateSessionToken(session.Id)).Returns(Result.Success);
+        this.mockAuthRepository.Setup(mock => mock.FindSessionByToken("valid_token")).Returns((ErrorOr<Session>)session);
+        this.mockAuthRepository.Setup(mock => mock.UpdateSessionToken(session.Id)).Returns(Result.Success);
 
         // Act
         var result = this.authService.Logout("valid_token");
 
         // Assert
         result.IsError.Should().BeFalse();
-        this.mockAuthRepository.Verify(m => m.UpdateSessionToken(session.Id), Times.Once);
+        this.mockAuthRepository.Verify(mock => mock.UpdateSessionToken(session.Id), Times.Once);
     }
 }

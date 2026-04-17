@@ -333,14 +333,14 @@ public class ProfileService : IProfileService
             return userResult.FirstError;
         }
 
-        ErrorOr<List<NotificationPreference>> prefsResult = userRepository.GetNotificationPreferences(userId);
-        if (prefsResult.IsError)
+        ErrorOr<List<NotificationPreference>> preferencesResult = userRepository.GetNotificationPreferences(userId);
+        if (preferencesResult.IsError)
         {
-            logger.LogError("Failed to fetch notification preferences for user {UserId}: {Error}", userId, prefsResult.FirstError.Description);
-            return prefsResult.FirstError;
+            logger.LogError("Failed to fetch notification preferences for user {UserId}: {Error}", userId, preferencesResult.FirstError.Description);
+            return preferencesResult.FirstError;
         }
 
-        return prefsResult.Value
+        return preferencesResult.Value
             .Select(preference => new NotificationPreferenceDataTransferObject
             {
                 Id = preference.Id,

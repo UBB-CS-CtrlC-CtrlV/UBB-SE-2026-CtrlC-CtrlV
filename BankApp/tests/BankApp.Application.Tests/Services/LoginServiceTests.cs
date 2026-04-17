@@ -18,6 +18,9 @@ namespace BankApp.Application.Tests.Services;
 /// </summary>
 public class LoginServiceTests
 {
+    private const int AttemptsBeforeLockout = 4;
+    private const int LockoutLowerBoundMinutes = 14;
+    private const int LockoutUpperBoundMinutes = 16;
     private readonly Mock<IAuthRepository> authRepository = MockFactory.CreateAuthRepository();
     private readonly Mock<IHashService> hashService = MockFactory.CreateHashService();
     private readonly Mock<IJsonWebTokenService> jwtService = MockFactory.CreateJwtService();
@@ -151,9 +154,9 @@ public class LoginServiceTests
             Id = 1,
             Email = request.Email,
             PasswordHash = "hash",
-            FailedLoginAttempts = 4,
+            FailedLoginAttempts = AttemptsBeforeLockout,
         };
-        DateTime before = DateTime.UtcNow.AddMinutes(14);
+        DateTime before = DateTime.UtcNow.AddMinutes(LockoutLowerBoundMinutes);
 
         this.authRepository.Setup(repository => repository.FindUserByEmail(request.Email))
             .Returns((ErrorOr<User>)user);
@@ -169,7 +172,7 @@ public class LoginServiceTests
             repository => repository.LockAccount(
                 user.Id,
                 It.Is<DateTime>(lockoutEnd =>
-                    lockoutEnd >= before && lockoutEnd <= DateTime.UtcNow.AddMinutes(16))),
+                    lockoutEnd >= before && lockoutEnd <= DateTime.UtcNow.AddMinutes(LockoutUpperBoundMinutes))),
             Times.Once);
     }
 
