@@ -14,6 +14,8 @@ public class CategoryTests
     /// <summary>
     /// Verifies the default values assigned to a new category.
     /// </summary>
+    private const int DefaultCategoryId = 0;
+
     [Fact]
     public void Constructor_WhenCreated_SetsExpectedDefaults()
     {
@@ -21,7 +23,7 @@ public class CategoryTests
         var category = new Category();
 
         // Assert
-        category.Id.Should().Be(0);
+        category.Id.Should().Be(DefaultCategoryId);
         category.Name.Should().BeEmpty();
         category.Icon.Should().BeNull();
         category.IsSystem.Should().BeTrue();
@@ -34,18 +36,23 @@ public class CategoryTests
     public void Properties_WhenAssigned_ReturnAssignedValues()
     {
         // Arrange
+        const int expectedCategoryId = 7;
+        const string expectedCategoryName = "Groceries";
+        const string expectedCategoryIcon = "shopping-cart";
+        const bool expectedIsSystemCategory = false;
+
         var category = new Category
         {
-            Id = 7,
-            Name = "Groceries",
-            Icon = "shopping-cart",
-            IsSystem = false,
+            Id = expectedCategoryId,
+            Name = expectedCategoryName,
+            Icon = expectedCategoryIcon,
+            IsSystem = expectedIsSystemCategory,
         };
 
         // Assert
-        category.Id.Should().Be(7);
-        category.Name.Should().Be("Groceries");
-        category.Icon.Should().Be("shopping-cart");
-        category.IsSystem.Should().BeFalse();
+        category.Id.Should().Be(expectedCategoryId);
+        category.Name.Should().Be(expectedCategoryName);
+        category.Icon.Should().Be(expectedCategoryIcon);
+        category.IsSystem.Should().Be(expectedIsSystemCategory);
     }
 }

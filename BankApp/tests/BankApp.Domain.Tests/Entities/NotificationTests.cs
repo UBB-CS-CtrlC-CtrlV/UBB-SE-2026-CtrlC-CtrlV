@@ -7,17 +7,20 @@ namespace BankApp.Domain.Tests.Entities;
 /// </summary>
 public class NotificationTests
 {
+    private const int DefaultNotificationId = 0;
+    private const int DefaultUserId = 0;
+
     [Fact]
     public void Constructor_WhenCreated_SetsExpectedDefaults()
     {
         // Act
-        DateTime before = DateTime.UtcNow; // for test
+        DateTime timestampBeforeCreation = DateTime.UtcNow;
         var notification = new Notification();
-        DateTime after = DateTime.UtcNow; // for test
+        DateTime timestampAfterCreation = DateTime.UtcNow;
 
         // Assert
-        notification.Id.Should().Be(0);
-        notification.UserId.Should().Be(0);
+        notification.Id.Should().Be(DefaultNotificationId);
+        notification.UserId.Should().Be(DefaultUserId);
         notification.Title.Should().BeEmpty();
         notification.Message.Should().BeEmpty();
         notification.Type.Should().BeEmpty();
@@ -25,8 +28,8 @@ public class NotificationTests
         notification.IsRead.Should().BeFalse();
         notification.RelatedEntityType.Should().BeNull();
         notification.RelatedEntityId.Should().BeNull();
-        notification.CreatedAt.Should().BeOnOrAfter(before);
-        notification.CreatedAt.Should().BeOnOrBefore(after);
+        notification.CreatedAt.Should().BeOnOrAfter(timestampBeforeCreation);
+        notification.CreatedAt.Should().BeOnOrBefore(timestampAfterCreation);
     }
 
     /// <summary>
