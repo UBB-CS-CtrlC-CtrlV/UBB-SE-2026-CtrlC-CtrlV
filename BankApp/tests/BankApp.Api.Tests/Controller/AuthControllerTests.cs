@@ -8,11 +8,8 @@ using BankApp.Application.Services.Login;
 using BankApp.Application.Services.PasswordRecovery;
 using BankApp.Application.Services.Registration;
 using ErrorOr;
-using FluentAssertions;
 using Microsoft.AspNetCore.Http;
 using Microsoft.AspNetCore.Mvc;
-using Moq;
-using Xunit;
 
 namespace BankApp.Api.Tests.Controller;
 
@@ -25,12 +22,13 @@ public sealed class AuthControllerTests
 {
     private readonly Mock<ILoginService> loginService = MockFactory.CreateLoginService();
     private readonly Mock<IRegistrationService> registrationService = MockFactory.CreateRegistrationService();
-    private readonly Mock<IPasswordRecoveryService> passwordRecoveryService = MockFactory.CreatePasswordRecoveryService();
+
+    private readonly Mock<IPasswordRecoveryService> passwordRecoveryService =
+        MockFactory.CreatePasswordRecoveryService();
 
     private AuthController CreateController()
     {
-        var controller = new AuthController(
-            this.loginService.Object,
+        var controller = new AuthController(this.loginService.Object,
             this.registrationService.Object,
             this.passwordRecoveryService.Object);
 
@@ -50,13 +48,13 @@ public sealed class AuthControllerTests
         this.loginService
             .Setup(service => service.Login(request, It.IsAny<SessionMetadata?>()))
             .Returns((ErrorOr<LoginSuccess>)new FullLogin(1, "jwt-token"));
-        var controller = this.CreateController();
+        AuthController controller = this.CreateController();
 
         // Act
-        var result = controller.Login(request);
+        IActionResult result = controller.Login(request);
 
         // Assert
-        var ok = result.Should().BeOfType<OkObjectResult>().Subject;
+        OkObjectResult? ok = result.Should().BeOfType<OkObjectResult>().Subject;
         ok.StatusCode.Should().Be(200);
     }
 
@@ -68,10 +66,10 @@ public sealed class AuthControllerTests
         this.loginService
             .Setup(service => service.Login(request, It.IsAny<SessionMetadata?>()))
             .Returns((ErrorOr<LoginSuccess>)new RequiresTwoFactor(1));
-        var controller = this.CreateController();
+        AuthController controller = this.CreateController();
 
         // Act
-        var result = controller.Login(request);
+        IActionResult result = controller.Login(request);
 
         // Assert
         result.Should().BeOfType<OkObjectResult>();
@@ -85,13 +83,13 @@ public sealed class AuthControllerTests
         this.loginService
             .Setup(service => service.Login(request, It.IsAny<SessionMetadata?>()))
             .Returns(Error.Unauthorized("invalid_credentials", "Invalid credentials."));
-        var controller = this.CreateController();
+        AuthController controller = this.CreateController();
 
         // Act
-        var result = controller.Login(request);
+        IActionResult result = controller.Login(request);
 
         // Assert
-        var unauthorized = result.Should().BeOfType<UnauthorizedObjectResult>().Subject;
+        UnauthorizedObjectResult? unauthorized = result.Should().BeOfType<UnauthorizedObjectResult>().Subject;
         unauthorized.StatusCode.Should().Be(401);
     }
 
@@ -103,14 +101,32 @@ public sealed class AuthControllerTests
         this.loginService
             .Setup(service => service.Login(request, It.IsAny<SessionMetadata?>()))
             .Returns(Error.Forbidden("account_locked", "Account is locked."));
-        var controller = this.CreateController();
+        AuthController controller = this.CreateController();
 
         // Act
-        var result = controller.Login(request);
+        IActionResult result = controller.Login(request);
 
         // Assert
-        var obj = result.Should().BeOfType<ObjectResult>().Subject;
+        ObjectResult? obj = result.Should().BeOfType<ObjectResult>().Subject;
         obj.StatusCode.Should().Be(403);
+    }
+
+    [Fact]
+    public void Login_WhenUnexpectedSuccessType_ReturnsInternalServerError()
+    {
+        // Arrange
+        var request = new LoginRequest { Email = "user@test.com", Password = "Pass123!" };
+        this.loginService
+            .Setup(service => service.Login(request, It.IsAny<SessionMetadata?>()))
+            .Returns((ErrorOr<LoginSuccess>)new UnexpectedLoginSuccess(1));
+        AuthController controller = this.CreateController();
+
+        // Act
+        IActionResult result = controller.Login(request);
+
+        // Assert
+        ObjectResult? obj = result.Should().BeOfType<ObjectResult>().Subject;
+        obj.StatusCode.Should().Be(500);
     }
 
     [Fact]
@@ -119,10 +135,10 @@ public sealed class AuthControllerTests
         // Arrange
         var request = new RegisterRequest { Email = "new@test.com", Password = "Pass123!", FullName = "Test User" };
         this.registrationService.Setup(service => service.Register(request)).Returns(Result.Success);
-        var controller = this.CreateController();
+        AuthController controller = this.CreateController();
 
         // Act
-        var result = controller.Register(request);
+        IActionResult result = controller.Register(request);
 
         // Assert
         result.Should().BeOfType<NoContentResult>();
@@ -136,13 +152,31 @@ public sealed class AuthControllerTests
         this.registrationService
             .Setup(service => service.Register(request))
             .Returns(Error.Conflict("email_registered", "Email already registered."));
-        var controller = this.CreateController();
+        AuthController controller = this.CreateController();
 
         // Act
-        var result = controller.Register(request);
+        IActionResult result = controller.Register(request);
 
         // Assert
         result.Should().BeOfType<ConflictObjectResult>();
+    }
+
+    [Fact]
+    public void Register_WhenServiceFails_ReturnsInternalServerError()
+    {
+        // Arrange
+        var request = new RegisterRequest { Email = "new@test.com", Password = "Pass123!", FullName = "Test" };
+        this.registrationService
+            .Setup(service => service.Register(request))
+            .Returns(Error.Failure("database_error", "Service unavailable."));
+        AuthController controller = this.CreateController();
+
+        // Act
+        IActionResult result = controller.Register(request);
+
+        // Assert
+        ObjectResult? obj = result.Should().BeOfType<ObjectResult>().Subject;
+        obj.StatusCode.Should().Be(500);
     }
 
     [Fact]
@@ -153,10 +187,10 @@ public sealed class AuthControllerTests
         this.loginService
             .Setup(service => service.VerifyOTP(request, It.IsAny<SessionMetadata?>()))
             .Returns((ErrorOr<LoginSuccess>)new FullLogin(1, "jwt-token"));
-        var controller = this.CreateController();
+        AuthController controller = this.CreateController();
 
         // Act
-        var result = controller.VerifyOTP(request);
+        IActionResult result = controller.VerifyOTP(request);
 
         // Assert
         result.Should().BeOfType<OkObjectResult>();
@@ -170,10 +204,10 @@ public sealed class AuthControllerTests
         this.loginService
             .Setup(service => service.VerifyOTP(request, It.IsAny<SessionMetadata?>()))
             .Returns(Error.Unauthorized("invalid_otp", "Invalid OTP."));
-        var controller = this.CreateController();
+        AuthController controller = this.CreateController();
 
         // Act
-        var result = controller.VerifyOTP(request);
+        IActionResult result = controller.VerifyOTP(request);
 
         // Assert
         result.Should().BeOfType<UnauthorizedObjectResult>();
@@ -186,10 +220,10 @@ public sealed class AuthControllerTests
         this.passwordRecoveryService
             .Setup(service => service.RequestPasswordReset("user@test.com"))
             .Returns(Result.Success);
-        var controller = this.CreateController();
+        AuthController controller = this.CreateController();
 
         // Act
-        var result = controller.ForgotPassword(new ForgotPasswordRequest { Email = "user@test.com" });
+        IActionResult result = controller.ForgotPassword(new ForgotPasswordRequest { Email = "user@test.com" });
 
         // Assert
         result.Should().BeOfType<OkObjectResult>();
@@ -199,10 +233,10 @@ public sealed class AuthControllerTests
     public void ForgotPassword_WhenEmailEmpty_ReturnsBadRequest()
     {
         // Arrange
-        var controller = this.CreateController();
+        AuthController controller = this.CreateController();
 
         // Act
-        var result = controller.ForgotPassword(new ForgotPasswordRequest { Email = string.Empty });
+        IActionResult result = controller.ForgotPassword(new ForgotPasswordRequest { Email = string.Empty });
 
         // Assert
         result.Should().BeOfType<BadRequestObjectResult>();
@@ -215,10 +249,11 @@ public sealed class AuthControllerTests
         this.passwordRecoveryService
             .Setup(service => service.ResetPassword("valid-token", "NewPass123!"))
             .Returns(Result.Success);
-        var controller = this.CreateController();
+        AuthController controller = this.CreateController();
 
         // Act
-        var result = controller.ResetPassword(new ResetPasswordRequest { Token = "valid-token", NewPassword = "NewPass123!" });
+        IActionResult result = controller.ResetPassword(new ResetPasswordRequest
+            { Token = "valid-token", NewPassword = "NewPass123!" });
 
         // Assert
         result.Should().BeOfType<NoContentResult>();
@@ -228,10 +263,11 @@ public sealed class AuthControllerTests
     public void ResetPassword_WhenTokenMissing_ReturnsBadRequest()
     {
         // Arrange
-        var controller = this.CreateController();
+        AuthController controller = this.CreateController();
 
         // Act
-        var result = controller.ResetPassword(new ResetPasswordRequest { Token = string.Empty, NewPassword = "Pass123!" });
+        IActionResult result = controller.ResetPassword(new ResetPasswordRequest
+            { Token = string.Empty, NewPassword = "Pass123!" });
 
         // Assert
         result.Should().BeOfType<BadRequestObjectResult>();
@@ -241,10 +277,11 @@ public sealed class AuthControllerTests
     public void ResetPassword_WhenWeakPassword_ReturnsBadRequest()
     {
         // Arrange
-        var controller = this.CreateController();
+        AuthController controller = this.CreateController();
 
         // Act
-        var result = controller.ResetPassword(new ResetPasswordRequest { Token = "token", NewPassword = "weak" });
+        IActionResult result = controller.ResetPassword(new ResetPasswordRequest
+            { Token = "token", NewPassword = "weak" });
 
         // Assert
         result.Should().BeOfType<BadRequestObjectResult>();
@@ -257,10 +294,11 @@ public sealed class AuthControllerTests
         this.passwordRecoveryService
             .Setup(service => service.ResetPassword("bad-token", "NewPass123!"))
             .Returns(Error.Validation("token_expired", "Token has expired."));
-        var controller = this.CreateController();
+        AuthController controller = this.CreateController();
 
         // Act
-        var result = controller.ResetPassword(new ResetPasswordRequest { Token = "bad-token", NewPassword = "NewPass123!" });
+        IActionResult result = controller.ResetPassword(new ResetPasswordRequest
+            { Token = "bad-token", NewPassword = "NewPass123!" });
 
         // Assert
         result.Should().BeOfType<BadRequestObjectResult>();
@@ -271,10 +309,10 @@ public sealed class AuthControllerTests
     {
         // Arrange
         this.loginService.Setup(service => service.Logout("jwt-token")).Returns(Result.Success);
-        var controller = this.CreateController();
+        AuthController controller = this.CreateController();
 
         // Act
-        var result = controller.Logout("Bearer jwt-token");
+        IActionResult result = controller.Logout("Bearer jwt-token");
 
         // Assert
         result.Should().BeOfType<NoContentResult>();
@@ -284,10 +322,10 @@ public sealed class AuthControllerTests
     public void Logout_WhenNoAuthorizationHeader_ReturnsBadRequest()
     {
         // Arrange
-        var controller = this.CreateController();
+        AuthController controller = this.CreateController();
 
         // Act
-        var result = controller.Logout(string.Empty);
+        IActionResult result = controller.Logout(string.Empty);
 
         // Assert
         result.Should().BeOfType<BadRequestObjectResult>();
@@ -298,10 +336,10 @@ public sealed class AuthControllerTests
     {
         // Arrange
         this.loginService.Setup(service => service.ResendOTP(1, "email")).Returns(Result.Success);
-        var controller = this.CreateController();
+        AuthController controller = this.CreateController();
 
         // Act
-        var result = controller.ResendOTP(1, "email");
+        IActionResult result = controller.ResendOTP(1, "email");
 
         // Assert
         result.Should().BeOfType<OkObjectResult>();
@@ -314,10 +352,10 @@ public sealed class AuthControllerTests
         this.passwordRecoveryService
             .Setup(service => service.VerifyResetToken("valid-token"))
             .Returns(Result.Success);
-        var controller = this.CreateController();
+        AuthController controller = this.CreateController();
 
         // Act
-        var result = controller.VerifyResetToken(new VerifyTokenDto { Token = "valid-token" });
+        IActionResult result = controller.VerifyResetToken(new VerifyTokenDto { Token = "valid-token" });
 
         // Assert
         result.Should().BeOfType<NoContentResult>();
@@ -327,10 +365,10 @@ public sealed class AuthControllerTests
     public void VerifyResetToken_WhenTokenEmpty_ReturnsBadRequest()
     {
         // Arrange
-        var controller = this.CreateController();
+        AuthController controller = this.CreateController();
 
         // Act
-        var result = controller.VerifyResetToken(new VerifyTokenDto { Token = string.Empty });
+        IActionResult result = controller.VerifyResetToken(new VerifyTokenDto { Token = string.Empty });
 
         // Assert
         result.Should().BeOfType<BadRequestObjectResult>();
@@ -344,10 +382,10 @@ public sealed class AuthControllerTests
         this.loginService
             .Setup(service => service.OAuthLoginAsync(request, It.IsAny<SessionMetadata?>()))
             .ReturnsAsync((ErrorOr<LoginSuccess>)new FullLogin(1, "jwt-token"));
-        var controller = this.CreateController();
+        AuthController controller = this.CreateController();
 
         // Act
-        var result = await controller.OAuthLogin(request);
+        IActionResult result = await controller.OAuthLogin(request);
 
         // Assert
         result.Should().BeOfType<OkObjectResult>();
@@ -358,10 +396,24 @@ public sealed class AuthControllerTests
     {
         // Arrange
         var request = new OAuthLoginRequest { Provider = string.Empty, ProviderToken = "token" };
-        var controller = this.CreateController();
+        AuthController controller = this.CreateController();
 
         // Act
-        var result = await controller.OAuthLogin(request);
+        IActionResult result = await controller.OAuthLogin(request);
+
+        // Assert
+        result.Should().BeOfType<BadRequestObjectResult>();
+    }
+
+    [Fact]
+    public async Task OAuthLogin_WhenProviderTokenMissing_ReturnsBadRequest()
+    {
+        // Arrange
+        var request = new OAuthLoginRequest { Provider = "Google", ProviderToken = string.Empty };
+        AuthController controller = this.CreateController();
+
+        // Act
+        IActionResult result = await controller.OAuthLogin(request);
 
         // Assert
         result.Should().BeOfType<BadRequestObjectResult>();
@@ -375,13 +427,21 @@ public sealed class AuthControllerTests
         this.loginService
             .Setup(service => service.OAuthLoginAsync(request, It.IsAny<SessionMetadata?>()))
             .ReturnsAsync(Error.Forbidden("account_locked", "Account is locked."));
-        var controller = this.CreateController();
+        AuthController controller = this.CreateController();
 
         // Act
-        var result = await controller.OAuthLogin(request);
+        IActionResult result = await controller.OAuthLogin(request);
 
         // Assert
-        var obj = result.Should().BeOfType<ObjectResult>().Subject;
+        ObjectResult? obj = result.Should().BeOfType<ObjectResult>().Subject;
         obj.StatusCode.Should().Be(403);
+    }
+
+    private sealed class UnexpectedLoginSuccess : LoginSuccess
+    {
+        public UnexpectedLoginSuccess(int userId)
+            : base(userId)
+        {
+        }
     }
 }

@@ -9,11 +9,7 @@ using BankApp.Application.Services.Notifications;
 using BankApp.Application.Services.Security;
 using BankApp.Domain.Entities;
 using ErrorOr;
-using FluentAssertions;
 using Microsoft.Extensions.Logging.Abstractions;
-using Moq;
-using Xunit;
-using MockFactory = BankApp.Application.Tests.MockFactory;
 
 namespace BankApp.Application.Tests.Services;
 
@@ -41,6 +37,105 @@ public class LoginServiceTests
             this.otpService.Object,
             this.emailService.Object,
             NullLogger<LoginService>.Instance);
+    }
+
+    /// <summary>
+    /// Verifies the Login_WhenEmailIsInvalid_ReturnsValidationError scenario.
+    /// </summary>
+    [Fact]
+    public void Login_WhenEmailIsInvalid_ReturnsValidationError()
+    {
+        // Arrange
+        var request = new LoginRequest { Email = "not-an-email", Password = "ValidPass1!" };
+
+        // Act
+        ErrorOr<LoginSuccess> result = this.service.Login(request);
+
+        // Assert
+        result.IsError.Should().BeTrue();
+        result.FirstError.Code.Should().Be("invalid_email");
+    }
+
+    /// <summary>
+    /// Verifies the Login_WhenValid_CreatesSessionWithMetadata scenario.
+    /// </summary>
+    [Fact]
+    public void Login_WhenValid_CreatesSessionWithMetadata()
+    {
+        // Arrange
+        var request = new LoginRequest { Email = "ada@test.com", Password = "ValidPass1!" };
+        var metadata = new SessionMetadata
+        {
+            DeviceInfo = "Windows",
+            Browser = "Edge",
+            IpAddress = "127.0.0.1",
+        };
+        var user = new User
+        {
+            Id = 1,
+            Email = request.Email,
+            PasswordHash = "hash",
+        };
+
+        this.authRepository.Setup(repository => repository.FindUserByEmail(request.Email))
+            .Returns((ErrorOr<User>)user);
+        this.hashService.Setup(service => service.Verify(request.Password, user.PasswordHash))
+            .Returns((ErrorOr<bool>)true);
+        this.jwtService.Setup(service => service.GenerateToken(user.Id))
+            .Returns((ErrorOr<string>)"jwt-token");
+        this.authRepository.Setup(repository => repository.CreateSession(
+                user.Id,
+                "jwt-token",
+                metadata.DeviceInfo,
+                metadata.Browser,
+                metadata.IpAddress))
+            .Returns(new Session());
+
+        // Act
+        ErrorOr<LoginSuccess> result = this.service.Login(request, metadata);
+
+        // Assert
+        result.IsError.Should().BeFalse();
+        result.Value.Should().BeOfType<FullLogin>();
+        this.authRepository.Verify(repository => repository.CreateSession(
+            user.Id,
+            "jwt-token",
+            metadata.DeviceInfo,
+            metadata.Browser,
+            metadata.IpAddress), Times.Once);
+    }
+
+    /// <summary>
+    /// Verifies the Login_WhenAuthenticatorTwoFactorIsEnabled_GeneratesTotp scenario.
+    /// </summary>
+    [Fact]
+    public void Login_WhenAuthenticatorTwoFactorIsEnabled_GeneratesTotp()
+    {
+        // Arrange
+        var request = new LoginRequest { Email = "ada@test.com", Password = "ValidPass1!" };
+        var user = new User
+        {
+            Id = 1,
+            Email = request.Email,
+            PasswordHash = "hash",
+            Is2FAEnabled = true,
+            Preferred2FAMethod = "Authenticator",
+        };
+
+        this.authRepository.Setup(repository => repository.FindUserByEmail(request.Email))
+            .Returns((ErrorOr<User>)user);
+        this.hashService.Setup(service => service.Verify(request.Password, user.PasswordHash))
+            .Returns((ErrorOr<bool>)true);
+        this.otpService.Setup(service => service.GenerateTOTP(user.Id))
+            .Returns((ErrorOr<string>)"123456");
+
+        // Act
+        ErrorOr<LoginSuccess> result = this.service.Login(request);
+
+        // Assert
+        result.IsError.Should().BeFalse();
+        result.Value.Should().BeOfType<RequiresTwoFactor>();
+        this.emailService.Verify(service => service.SendOTPCode(It.IsAny<string>(), It.IsAny<string>()), Times.Never);
     }
 
     /// <summary>
