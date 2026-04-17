@@ -6,7 +6,7 @@ namespace BankApp.Application.Services.Security;
 /// <summary>
 /// Defines operations for generating, validating, and extracting data from JSON Web Tokens.
 /// </summary>
-public interface IJwtService
+public interface IJwtService    // To Do: Change to JWT
 {
     /// <summary>
     /// Generates a signed JWT for the specified user.

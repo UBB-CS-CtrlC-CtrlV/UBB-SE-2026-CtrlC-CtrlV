@@ -36,7 +36,7 @@ public interface IAuthService
     /// a forbidden error with code <c>account_locked</c> if the account is locked,
     /// or a failure error if user or link creation fails.
     /// </returns>
-    Task<ErrorOr<LoginSuccess>> OAuthLoginAsync(OAuthLoginRequest request);
+    Task<ErrorOr<LoginSuccess>> OAuthLoginAsync(OAuthLoginRequest request);   // To Do: Change to OAuth
 
     /// <summary>
     /// Registers a new user with email and password.

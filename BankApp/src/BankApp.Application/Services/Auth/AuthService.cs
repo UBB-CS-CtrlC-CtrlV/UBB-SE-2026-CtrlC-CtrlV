@@ -227,7 +227,7 @@ public class AuthService : IAuthService
             return lockError.Value;
         }
 
-        return user.Is2FAEnabled ? Handle2FA(user) : CompleteLogin(user);
+        return user.Is2FAEnabled ? Handle2FA(user) : CompleteLogin(user);     // To Do: Change to 2FA
     }
 
     /// <inheritdoc />
@@ -372,7 +372,7 @@ public class AuthService : IAuthService
 
         byte[] randomBytes = System.Security.Cryptography.RandomNumberGenerator.GetBytes(PasswordResetTokenByteLength);
         string rawToken = Convert.ToBase64String(randomBytes);
-        string tokenHashForDb = ComputeSha256Hash(rawToken);
+        string tokenHashForDb = ComputeSha256Hash(rawToken);        // To Do: Change to Sha256
 
         PasswordResetToken resetToken = new PasswordResetToken
         {
@@ -401,7 +401,7 @@ public class AuthService : IAuthService
             return Error.Validation(code: "token_invalid", description: "The reset token is invalid.");
         }
 
-        string tokenHash = ComputeSha256Hash(token);
+        string tokenHash = ComputeSha256Hash(token);            // To Do: Change to Sha256
         ErrorOr<PasswordResetToken> tokenResult = authRepository.FindPasswordResetToken(tokenHash);
         if (tokenResult.IsError)
         {
@@ -454,7 +454,7 @@ public class AuthService : IAuthService
             return Error.Validation(code: "token_invalid", description: "The reset token is invalid.");
         }
 
-        string tokenHash = ComputeSha256Hash(token);
+        string tokenHash = ComputeSha256Hash(token);         // To Do: Change to Sha256
         ErrorOr<PasswordResetToken> tokenResult = authRepository.FindPasswordResetToken(tokenHash);
         if (tokenResult.IsError)
         {
@@ -518,7 +518,7 @@ public class AuthService : IAuthService
         return Error.Forbidden(code: "account_locked", description: "Account locked due to too many failed attempts.");
     }
 
-    private ErrorOr<LoginSuccess> Handle2FA(User user)
+    private ErrorOr<LoginSuccess> Handle2FA(User user)  // To Do: Change to 2FA
     {
         ErrorOr<string> otpResult = otpService.GenerateTOTP(user.Id);
         if (otpResult.IsError)
@@ -616,7 +616,7 @@ public class AuthService : IAuthService
         return Result.Success;
     }
 
-    private static string ComputeSha256Hash(string rawData)
+    private static string ComputeSha256Hash(string rawData)  // To Do: Change to Sha256
     {
         byte[] bytes = System.Security.Cryptography.SHA256.HashData(System.Text.Encoding.UTF8.GetBytes(rawData));
         return Convert.ToHexString(bytes).ToLowerInvariant();

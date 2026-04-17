@@ -23,8 +23,8 @@ public class LoginService : ILoginService
     private static readonly Dictionary<int, int> FailedOtpAttempts = new Dictionary<int, int>();
     private readonly IAuthRepository authRepository;
     private readonly IHashService hashService;
-    private readonly IJwtService jwtService;
-    private readonly IOtpService otpService;
+    private readonly IJwtService jwtService;  // To Do: Change to JWT
+    private readonly IOtpService otpService;  // To Do: Change to OTP
     private readonly IEmailService emailService;
     private readonly ILogger<LoginService> logger;
 
@@ -42,8 +42,8 @@ public class LoginService : ILoginService
     /// </summary>
     /// <param name="authRepository">The authentication repository.</param>
     /// <param name="hashService">The password hashing service.</param>
-    /// <param name="jwtService">The JWT token service.</param>
-    /// <param name="otpService">The one-time password service.</param>
+    /// <param name="jwtService">The JWT token service.</param>   // To Do: Change to JWT
+    /// <param name="otpService">The one-time password service.</param>  // To Do: Change to OTP
     /// <param name="emailService">The email delivery service.</param>
     /// <param name="logger">The logger.</param>
     public LoginService(IAuthRepository authRepository, IHashService hashService, IJwtService jwtService,

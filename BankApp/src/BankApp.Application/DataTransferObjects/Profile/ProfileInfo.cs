@@ -50,12 +50,12 @@ public class ProfileInfo
     /// <summary>
     /// Gets or sets a value indicating whether two-factor authentication is enabled.
     /// </summary>
-    public bool Is2FAEnabled { get; set; }
+    public bool Is2FAEnabled { get; set; }   // To Do: Change to 2FA
 
     /// <summary>
     /// Gets or sets the preferred two-factor authentication method.
     /// </summary>
-    public string? Preferred2FAMethod { get; set; }
+    public string? Preferred2FAMethod { get; set; } // To Do: Change to 2FA
 
     /// <summary>
     /// Initializes a new instance of the <see cref="ProfileInfo"/> class.

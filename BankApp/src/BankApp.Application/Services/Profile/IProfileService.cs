@@ -59,7 +59,7 @@ public interface IProfileService
     /// a not-found error if the user does not exist,
     /// or a failure error if the database update fails.
     /// </returns>
-    ErrorOr<Success> Enable2FA(int userId, TwoFactorMethod method);
+    ErrorOr<Success> Enable2FA(int userId, TwoFactorMethod method);  // To Do: Change to 2FA
 
     /// <summary>
     /// Disables two-factor authentication for the specified user.
@@ -70,7 +70,7 @@ public interface IProfileService
     /// a not-found error if the user does not exist,
     /// or a failure error if the database update fails.
     /// </returns>
-    ErrorOr<Success> Disable2FA(int userId);
+    ErrorOr<Success> Disable2FA(int userId);  // To Do: Change to 2FA
 
     /// <summary>
     /// Retrieves all OAuth provider links for the specified user.

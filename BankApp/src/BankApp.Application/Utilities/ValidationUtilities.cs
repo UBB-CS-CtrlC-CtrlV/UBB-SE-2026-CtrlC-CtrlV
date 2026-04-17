@@ -101,7 +101,7 @@ public static class ValidationUtilities
         {
             PhoneNumber parsedNumber = phoneUtil.Parse(phone.Trim(), defaultRegion);
             return phoneUtil.IsValidNumber(parsedNumber)
-                ? phoneUtil.Format(parsedNumber, PhoneNumberFormat.E164)
+                ? phoneUtil.Format(parsedNumber, PhoneNumberFormat.E164) // ?
                 : null;
         }
         catch (NumberParseException)

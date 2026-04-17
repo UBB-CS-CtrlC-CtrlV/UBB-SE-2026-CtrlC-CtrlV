@@ -171,7 +171,7 @@ public class ProfileService : IProfileService
     }
 
     /// <inheritdoc />
-    public ErrorOr<Success> Enable2FA(int userId, TwoFactorMethod method)
+    public ErrorOr<Success> Enable2FA(int userId, TwoFactorMethod method)           // To Do: Change to 2FA
     {
         ErrorOr<User> userResult = userRepository.FindById(userId);
         if (userResult.IsError)

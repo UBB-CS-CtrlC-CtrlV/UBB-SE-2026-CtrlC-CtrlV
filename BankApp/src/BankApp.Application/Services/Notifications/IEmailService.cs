@@ -17,7 +17,7 @@ public interface IEmailService
     /// </summary>
     /// <param name="email">The recipient email address.</param>
     /// <param name="code">The OTP code to send.</param>
-    void SendOTPCode(string email, string code);
+    void SendOTPCode(string email, string code);   // To Do: Change to OTP
 
     /// <summary>
     /// Sends a login alert notification to the specified email address.
