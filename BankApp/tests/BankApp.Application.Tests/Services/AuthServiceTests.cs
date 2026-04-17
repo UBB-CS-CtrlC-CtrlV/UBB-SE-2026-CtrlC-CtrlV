@@ -496,7 +496,7 @@ public sealed class AuthServiceTests
         // Arrange
         var request = new OAuthRegisterRequest { Email = "test@test.com", Provider = "Google", ProviderToken = "token", FullName = "Name" };
         this.mockAuthRepository.Setup(mock => mock.FindOAuthLink(request.Provider, request.ProviderToken)).Returns((ErrorOr<OAuthLink>)Error.NotFound());
-        this.mockAuthRepository.SetupSequence(m => m.FindUserByEmail(request.Email))
+        this.mockAuthRepository.SetupSequence(mock => mock.FindUserByEmail(request.Email))
             .Returns((ErrorOr<User>)Error.NotFound())
             .Returns((ErrorOr<User>)Error.Failure("retrieval_failed"));
         this.mockHashService.Setup(mock => mock.GetHash(It.IsAny<string>())).Returns((ErrorOr<string>)"hash");
@@ -517,7 +517,7 @@ public sealed class AuthServiceTests
         var request = new OAuthRegisterRequest { Email = "test@test.com", Provider = "Google", ProviderToken = "token", FullName = "Name" };
         var user = new User { Id = 1, Email = request.Email };
         this.mockAuthRepository.Setup(mock => mock.FindOAuthLink(request.Provider, request.ProviderToken)).Returns((ErrorOr<OAuthLink>)Error.NotFound());
-        this.mockAuthRepository.SetupSequence(m => m.FindUserByEmail(request.Email))
+        this.mockAuthRepository.SetupSequence(mock => mock.FindUserByEmail(request.Email))
             .Returns((ErrorOr<User>)Error.NotFound())
             .Returns((ErrorOr<User>)user);
         this.mockHashService.Setup(mock => mock.GetHash(It.IsAny<string>())).Returns((ErrorOr<string>)"hash");

@@ -74,8 +74,8 @@ public class OAuthViewModel
             return false;
         }
 
-        bool alreadyLinked = this.OAuthLinks.Exists(o =>
-            string.Equals(o.Provider, provider, StringComparison.OrdinalIgnoreCase));
+        bool alreadyLinked = this.OAuthLinks.Exists(link =>
+            string.Equals(link.Provider, provider, StringComparison.OrdinalIgnoreCase));
         if (alreadyLinked)
         {
             return false;
@@ -114,8 +114,8 @@ public class OAuthViewModel
             return false;
         }
 
-        OAuthLinkDataTransferObject? existing = this.OAuthLinks.Find(o =>
-            string.Equals(o.Provider, provider, StringComparison.OrdinalIgnoreCase));
+        OAuthLinkDataTransferObject? existing = this.OAuthLinks.Find(link =>
+            string.Equals(link.Provider, provider, StringComparison.OrdinalIgnoreCase));
         if (existing == null)
         {
             return false;

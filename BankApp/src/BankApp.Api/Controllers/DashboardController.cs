@@ -16,15 +16,15 @@ namespace BankApp.Api.Controllers;
 [Route("api/[controller]")]
 public class DashboardController : ApiControllerBase
 {
-    private readonly IDashboardService dashService;
+    private readonly IDashboardService dashboardService;
 
     /// <summary>
     /// Initializes a new instance of the <see cref="DashboardController"/> class.
     /// </summary>
-    /// <param name="dashService">The dashboard service used to handle business logic.</param>
-    public DashboardController(IDashboardService dashService)
+    /// <param name="dashboardService">The dashboard service used to handle business logic.</param>
+    public DashboardController(IDashboardService dashboardService)
     {
-        this.dashService = dashService;
+        this.dashboardService = dashboardService;
     }
 
     /// <summary>
@@ -39,6 +39,6 @@ public class DashboardController : ApiControllerBase
     public IActionResult GetDashboard()
     {
         int userId = this.GetAuthenticatedUserId();
-        return this.ToActionResult(this.dashService.GetDashboardData(userId), data => this.Ok(data));
+        return this.ToActionResult(this.dashboardService.GetDashboardData(userId), data => this.Ok(data));
     }
 }
