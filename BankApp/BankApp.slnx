@@ -5,17 +5,21 @@
     <Platform Name="x86" />
   </Configurations>
   <Folder Name="/src/">
-    <Project Path="src/BankApp.Client/BankApp.Client.csproj">
+    <Project Path="src/BankApp.Domain/BankApp.Domain.csproj" />
+    <Project Path="src/BankApp.Application/BankApp.Application.csproj" />
+    <Project Path="src/BankApp.Infrastructure/BankApp.Infrastructure.csproj" />
+    <Project Path="src/BankApp.Api/BankApp.Api.csproj" />
+    <Project Path="src/BankApp.Desktop/BankApp.Desktop.csproj">
       <Platform Solution="*|Any CPU" Project="x64" />
       <Platform Solution="*|x64" Project="x64" />
       <Platform Solution="*|x86" Project="x86" />
     </Project>
-    <Project Path="src/BankApp.Contracts/BankApp.Contracts.csproj" />
-    <Project Path="src/BankApp.Server/BankApp.Server.csproj" />
   </Folder>
   <Folder Name="/tests/">
-    <Project Path="tests/BankApp.Client.Tests/BankApp.Client.Tests.csproj" />
-    <Project Path="tests/BankApp.Contracts.Tests/BankApp.Contracts.Tests.csproj" />
-    <Project Path="tests/BankApp.Server.Tests/BankApp.Server.Tests.csproj" />
+    <Project Path="tests/BankApp.Domain.Tests/BankApp.Domain.Tests.csproj" />
+    <Project Path="tests/BankApp.Application.Tests/BankApp.Application.Tests.csproj" />
+    <Project Path="tests/BankApp.Infrastructure.Tests/BankApp.Infrastructure.Tests.csproj" />
+    <Project Path="tests/BankApp.Api.Tests/BankApp.Api.Tests.csproj" />
+    <Project Path="tests/BankApp.Desktop.Tests/BankApp.Desktop.Tests.csproj" />
   </Folder>
 </Solution>

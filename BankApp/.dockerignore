@@ -14,8 +14,8 @@
 # Claude
 .claude/
 
-# Client project — not needed for server builds
-src/BankApp.Client/
+# Desktop project — not needed for server builds
+src/BankApp.Desktop/
 
 # Tests
 tests/

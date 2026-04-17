@@ -25,7 +25,7 @@ import subprocess
 import sys
 from pathlib import Path
 
-SERVER_PROJECT = "src/BankApp.Server"
+SERVER_PROJECT = "src/BankApp.Api"
 REPO_ROOT = Path(__file__).resolve().parent.parent.parent
 ENV_FILE = REPO_ROOT / ".env"
 
@@ -67,7 +67,7 @@ def read_env_value(key: str) -> str | None:
 
 def main() -> None:
     parser = argparse.ArgumentParser(
-        description="Set dotnet user-secrets for local BankApp.Server development.",
+        description="Set dotnet user-secrets for local BankApp.Api development.",
         formatter_class=argparse.RawDescriptionHelpFormatter,
         epilog=(
             "examples:\n"
@@ -102,7 +102,7 @@ def main() -> None:
     parser.add_argument("--smtp-from", default=None, metavar="FROM", help="From address (default: same as --smtp-user).")
     args = parser.parse_args()
 
-    print("\nBankApp.Server — dev secrets setup\n------------------------------------")
+    print("\nBankApp.Api — dev secrets setup\n------------------------------------")
 
     # --- JWT (always generated fresh) ---
     jwt_secret = base64.b64encode(secrets.token_bytes(48)).decode()
@@ -163,7 +163,7 @@ def main() -> None:
 
     print(
         "\nAll secrets configured.\n"
-        "Run 'dotnet user-secrets list --project src/BankApp.Server' to verify.\n"
+        "Run 'dotnet user-secrets list --project src/BankApp.Api' to verify.\n"
     )
 
 
