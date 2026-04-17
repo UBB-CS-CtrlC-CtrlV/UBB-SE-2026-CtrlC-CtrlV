@@ -29,9 +29,9 @@ public sealed class SessionValidationMiddlewareTests
     private bool nextWasCalled;
 
     /// <summary>
-    /// TODO: add docs.
+    /// Verifies the Invoke_PublicEndpoint_CallsNextWithoutToken scenario.
     /// </summary>
-    /// <param name="path">TODO: add other docs.</param>
+    /// <param name="path">The request path that should bypass session validation.</param>
     /// <returns>A <see cref="Task"/> representing the asynchronous unit test.</returns>
     [Theory]
     [InlineData("/auth/login")]
@@ -53,7 +53,7 @@ public sealed class SessionValidationMiddlewareTests
     }
 
     /// <summary>
-    /// TODO: add docs.
+    /// Verifies the Invoke_ProtectedEndpoint_NoToken_Returns401 scenario.
     /// </summary>
     /// <returns>A <see cref="Task"/> representing the asynchronous unit test.</returns>
     [Fact]
@@ -72,7 +72,7 @@ public sealed class SessionValidationMiddlewareTests
     }
 
     /// <summary>
-    /// TODO: add docs.
+    /// Verifies the Invoke_ProtectedEndpoint_InvalidToken_Returns401 scenario.
     /// </summary>
     /// <returns>A <see cref="Task"/> representing the asynchronous unit test.</returns>
     [Fact]
@@ -95,7 +95,7 @@ public sealed class SessionValidationMiddlewareTests
     }
 
     /// <summary>
-    /// TODO: add docs.
+    /// Verifies the Invoke_ProtectedEndpoint_ValidTokenButNoSession_Returns401 scenario.
     /// </summary>
     /// <returns>A <see cref="Task"/> representing the asynchronous unit test.</returns>
     [Fact]
@@ -119,7 +119,7 @@ public sealed class SessionValidationMiddlewareTests
     }
 
     /// <summary>
-    /// TODO: add docs.
+    /// Verifies the Invoke_ProtectedEndpoint_ValidTokenAndSession_CallsNextAndSetsUserId scenario.
     /// </summary>
     /// <returns>A <see cref="Task"/> representing the asynchronous unit test.</returns>
     [Fact]
@@ -143,7 +143,7 @@ public sealed class SessionValidationMiddlewareTests
     }
 
     /// <summary>
-    /// TODO: add docs.
+    /// Verifies the Invoke_ProtectedEndpoint_MalformedAuthHeader_Returns401 scenario.
     /// </summary>
     /// <returns>A <see cref="Task"/> representing the asynchronous unit test.</returns>
     [Fact]

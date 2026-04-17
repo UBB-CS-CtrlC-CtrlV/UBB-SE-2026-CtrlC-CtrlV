@@ -22,7 +22,7 @@ namespace BankApp.Application.Tests.Services;
 public class PasswordRecoveryServiceTests
 {
     /// <summary>
-    /// TODO: add docs.
+    /// Verifies the RequestPasswordReset_WhenUserExists_CreatesThirtyMinuteToken scenario.
     /// </summary>
     [Fact]
     public void RequestPasswordReset_WhenUserExists_CreatesThirtyMinuteToken()

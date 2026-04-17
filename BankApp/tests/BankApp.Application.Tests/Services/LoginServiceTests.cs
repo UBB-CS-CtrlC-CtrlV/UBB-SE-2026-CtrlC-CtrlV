@@ -44,7 +44,7 @@ public class LoginServiceTests
     }
 
     /// <summary>
-    /// TODO: add docs.
+    /// Verifies the Login_WhenMaxFailedAttemptsReached_LocksForFifteenMinutes scenario.
     /// </summary>
     [Fact]
     public void Login_WhenMaxFailedAttemptsReached_LocksForFifteenMinutes()
@@ -79,7 +79,7 @@ public class LoginServiceTests
     }
 
     /// <summary>
-    /// TODO: add docs.
+    /// Verifies the Login_WhenEmailTwoFactorIsEnabled_GeneratesEmailOtp scenario.
     /// </summary>
     [Fact]
     public void Login_WhenEmailTwoFactorIsEnabled_GeneratesEmailOtp()
@@ -112,7 +112,7 @@ public class LoginServiceTests
     }
 
     /// <summary>
-    /// TODO: add docs.
+    /// Verifies the VerifyOtp_WhenThreeInvalidAttempts_InvalidatesOtpAndRequiresRestart scenario.
     /// </summary>
     [Fact]
     public void VerifyOtp_WhenThreeInvalidAttempts_InvalidatesOtpAndRequiresRestart()

@@ -72,7 +72,7 @@ public static class ValidationUtilities
     /// </summary>
     /// <param name="phone">The phone number string to validate.</param>
     /// <param name="defaultRegion">
-    /// The default country code to fall back to. (set to RO for the time being, TODO: change based on user data)
+    /// The default country code to fall back to. Defaults to RO until callers can supply a user-specific region.
     /// </param>
     /// <returns><see langword="true"/> if the phone number is valid; otherwise, <see langword="false"/>.</returns>
     public static bool IsValidPhoneNumber(string phone, string defaultRegion = "RO")
@@ -85,7 +85,7 @@ public static class ValidationUtilities
     /// </summary>
     /// <param name="phone">The phone number string to normalize.</param>
     /// <param name="defaultRegion">
-    /// The default country code to fall back to. (set to RO for the time being, TODO: change based on user data)
+    /// The default country code to fall back to. Defaults to RO until callers can supply a user-specific region.
     /// </param>
     /// <returns>The normalized E.164 phone number if valid; otherwise, <see langword="null"/>.</returns>
     public static string? NormalizePhoneNumber(string phone, string defaultRegion = "RO")

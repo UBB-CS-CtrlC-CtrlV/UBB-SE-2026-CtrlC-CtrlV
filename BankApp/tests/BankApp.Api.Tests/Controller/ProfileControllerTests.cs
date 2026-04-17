@@ -25,7 +25,7 @@ public sealed class ProfileControllerTests
     private readonly Mock<IProfileService> profileService = MockFactory.CreateProfileService();
 
     /// <summary>
-    /// TODO: add docs.
+    /// Verifies the GetProfile_WhenSuccess_ReturnsOk scenario.
     /// </summary>
     [Fact]
     public void GetProfile_WhenSuccess_ReturnsOk()
@@ -44,7 +44,7 @@ public sealed class ProfileControllerTests
     }
 
     /// <summary>
-    /// TODO: add docs.
+    /// Verifies the GetProfile_WhenUserNotFound_ReturnsNotFound scenario.
     /// </summary>
     [Fact]
     public void GetProfile_WhenUserNotFound_ReturnsNotFound()
@@ -64,7 +64,7 @@ public sealed class ProfileControllerTests
     }
 
     /// <summary>
-    /// TODO: add docs.
+    /// Verifies the UpdateProfile_WhenSuccess_ReturnsNoContent scenario.
     /// </summary>
     [Fact]
     public void UpdateProfile_WhenSuccess_ReturnsNoContent()
@@ -82,7 +82,7 @@ public sealed class ProfileControllerTests
     }
 
     /// <summary>
-    /// TODO: add docs.
+    /// Verifies the ChangePassword_WhenSuccess_ReturnsNoContent scenario.
     /// </summary>
     [Fact]
     public void ChangePassword_WhenSuccess_ReturnsNoContent()
@@ -100,7 +100,7 @@ public sealed class ProfileControllerTests
     }
 
     /// <summary>
-    /// TODO: add docs.
+    /// Verifies the VerifyPassword_WhenCorrect_ReturnsOkWithTrue scenario.
     /// </summary>
     [Fact]
     public void VerifyPassword_WhenCorrect_ReturnsOkWithTrue()
@@ -118,7 +118,7 @@ public sealed class ProfileControllerTests
     }
 
     /// <summary>
-    /// TODO: add docs.
+    /// Verifies the GetSessions_WhenSuccess_ReturnsOk scenario.
     /// </summary>
     [Fact]
     public void GetSessions_WhenSuccess_ReturnsOk()
@@ -136,7 +136,7 @@ public sealed class ProfileControllerTests
     }
 
     /// <summary>
-    /// TODO: add docs.
+    /// Verifies the RevokeSession_WhenSuccess_ReturnsNoContent scenario.
     /// </summary>
     [Fact]
     public void RevokeSession_WhenSuccess_ReturnsNoContent()
@@ -153,7 +153,7 @@ public sealed class ProfileControllerTests
     }
 
     /// <summary>
-    /// TODO: add docs.
+    /// Verifies the GetOAuthLinks_WhenSuccess_ReturnsOk scenario.
     /// </summary>
     [Fact]
     public void GetOAuthLinks_WhenSuccess_ReturnsOk()
@@ -171,7 +171,7 @@ public sealed class ProfileControllerTests
     }
 
     /// <summary>
-    /// TODO: add docs.
+    /// Verifies the GetNotificationPreferences_WhenSuccess_ReturnsOk scenario.
     /// </summary>
     [Fact]
     public void GetNotificationPreferences_WhenSuccess_ReturnsOk()
@@ -189,7 +189,7 @@ public sealed class ProfileControllerTests
     }
 
     /// <summary>
-    /// TODO: add docs.
+    /// Verifies the UpdateNotificationPreferences_WhenSuccess_ReturnsNoContent scenario.
     /// </summary>
     [Fact]
     public void UpdateNotificationPreferences_WhenSuccess_ReturnsNoContent()
@@ -207,7 +207,7 @@ public sealed class ProfileControllerTests
     }
 
     /// <summary>
-    /// TODO: add docs.
+    /// Verifies the Enable2FA_WhenSuccess_ReturnsNoContent scenario.
     /// </summary>
     [Fact]
     public void Enable2FA_WhenSuccess_ReturnsNoContent()
@@ -224,7 +224,7 @@ public sealed class ProfileControllerTests
     }
 
     /// <summary>
-    /// TODO: add docs.
+    /// Verifies the Disable2FA_WhenSuccess_ReturnsNoContent scenario.
     /// </summary>
     [Fact]
     public void Disable2FA_WhenSuccess_ReturnsNoContent()

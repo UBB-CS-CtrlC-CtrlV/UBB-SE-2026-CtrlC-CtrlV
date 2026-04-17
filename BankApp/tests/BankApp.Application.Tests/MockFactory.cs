@@ -18,9 +18,9 @@ namespace BankApp.Application.Tests;
 internal static class MockFactory
 {
     /// <summary>
-    /// TODO: add docs.
+    /// Creates the configured CreateAuthRepository mock.
     /// </summary>
-    /// <returns>TODO: returns something.</returns>
+    /// <returns>The configured mock instance.</returns>
     internal static Mock<IAuthRepository> CreateAuthRepository()
     {
         var mock = new Mock<IAuthRepository>(MockBehavior.Strict);
@@ -66,9 +66,9 @@ internal static class MockFactory
     }
 
     /// <summary>
-    /// TODO: add docs.
+    /// Creates the configured CreateHashService mock.
     /// </summary>
-    /// <returns>TODO: returns something.</returns>
+    /// <returns>The configured mock instance.</returns>
     internal static Mock<IHashService> CreateHashService()
     {
         var mock = new Mock<IHashService>(MockBehavior.Strict);
@@ -82,9 +82,9 @@ internal static class MockFactory
     }
 
     /// <summary>
-    /// TODO: add docs.
+    /// Creates the configured CreateJwtService mock.
     /// </summary>
-    /// <returns>TODO: returns something.</returns>
+    /// <returns>The configured mock instance.</returns>
     internal static Mock<IJwtService> CreateJwtService()
     {
         var mock = new Mock<IJwtService>(MockBehavior.Strict);
@@ -100,9 +100,9 @@ internal static class MockFactory
     }
 
     /// <summary>
-    /// TODO: add docs.
+    /// Creates the configured CreateOtpService mock.
     /// </summary>
-    /// <returns>TODO: returns something.</returns>
+    /// <returns>The configured mock instance.</returns>
     internal static Mock<IOtpService> CreateOtpService()
     {
         var mock = new Mock<IOtpService>(MockBehavior.Strict);
@@ -123,9 +123,9 @@ internal static class MockFactory
     }
 
     /// <summary>
-    /// TODO: add docs.
+    /// Creates the configured CreateEmailService mock.
     /// </summary>
-    /// <returns>TODO: returns something.</returns>
+    /// <returns>The configured mock instance.</returns>
     internal static Mock<IEmailService> CreateEmailService()
     {
         var mock = new Mock<IEmailService>(MockBehavior.Strict);

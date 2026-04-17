@@ -25,9 +25,9 @@ namespace BankApp.Api.Tests;
 internal static class MockFactory
 {
     /// <summary>
-    /// TODO: add docs.
+    /// Creates the configured CreateLoginService mock.
     /// </summary>
-    /// <returns>TODO: add other docs.</returns>
+    /// <returns>The configured mock instance.</returns>
     internal static Mock<ILoginService> CreateLoginService()
     {
         var mock = new Mock<ILoginService>(MockBehavior.Strict);
@@ -45,9 +45,9 @@ internal static class MockFactory
     }
 
     /// <summary>
-    /// TODO: add docs.
+    /// Creates the configured CreateRegistrationService mock.
     /// </summary>
-    /// <returns>TODO: add other docs.</returns>
+    /// <returns>The configured mock instance.</returns>
     internal static Mock<IRegistrationService> CreateRegistrationService()
     {
         var mock = new Mock<IRegistrationService>(MockBehavior.Strict);
@@ -59,9 +59,9 @@ internal static class MockFactory
     }
 
     /// <summary>
-    /// TODO: add docs.
+    /// Creates the configured CreatePasswordRecoveryService mock.
     /// </summary>
-    /// <returns>TODO: add other docs.</returns>
+    /// <returns>The configured mock instance.</returns>
     internal static Mock<IPasswordRecoveryService> CreatePasswordRecoveryService()
     {
         var mock = new Mock<IPasswordRecoveryService>(MockBehavior.Strict);
@@ -75,9 +75,9 @@ internal static class MockFactory
     }
 
     /// <summary>
-    /// TODO: add docs.
+    /// Creates the configured CreateDashboardService mock.
     /// </summary>
-    /// <returns>TODO: add other docs.</returns>
+    /// <returns>The configured mock instance.</returns>
     internal static Mock<IDashboardService> CreateDashboardService()
     {
         var mock = new Mock<IDashboardService>(MockBehavior.Strict);
@@ -87,9 +87,9 @@ internal static class MockFactory
     }
 
     /// <summary>
-    /// TODO: add docs.
+    /// Creates the configured CreateProfileService mock.
     /// </summary>
-    /// <returns>TODO: add other docs.</returns>
+    /// <returns>The configured mock instance.</returns>
     internal static Mock<IProfileService> CreateProfileService()
     {
         var mock = new Mock<IProfileService>(MockBehavior.Strict);
@@ -123,9 +123,9 @@ internal static class MockFactory
     }
 
     /// <summary>
-    /// TODO: add docs.
+    /// Creates the configured CreateJwtService mock.
     /// </summary>
-    /// <returns>TODO: add other docs.</returns>
+    /// <returns>The configured mock instance.</returns>
     internal static Mock<IJwtService> CreateJwtService()
     {
         var mock = new Mock<IJwtService>(MockBehavior.Strict);
@@ -135,9 +135,9 @@ internal static class MockFactory
     }
 
     /// <summary>
-    /// TODO: add docs.
+    /// Creates the configured CreateAuthRepository mock.
     /// </summary>
-    /// <returns>TODO: add other docs.</returns>
+    /// <returns>The configured mock instance.</returns>
     internal static Mock<IAuthRepository> CreateAuthRepository()
     {
         var mock = new Mock<IAuthRepository>(MockBehavior.Strict);
@@ -147,9 +147,9 @@ internal static class MockFactory
     }
 
     /// <summary>
-    /// TODO: add docs.
+    /// Creates the configured CreateHashService mock.
     /// </summary>
-    /// <returns>TODO: add other docs.</returns>
+    /// <returns>The configured mock instance.</returns>
     internal static Mock<IHashService> CreateHashService()
     {
         var mock = new Mock<IHashService>(MockBehavior.Strict);
@@ -164,9 +164,9 @@ internal static class MockFactory
     }
 
     /// <summary>
-    /// TODO: add docs.
+    /// Creates the configured CreateOtpService mock.
     /// </summary>
-    /// <returns>TODO: add other docs.</returns>
+    /// <returns>The configured mock instance.</returns>
     internal static Mock<IOtpService> CreateOtpService()
     {
         var mock = new Mock<IOtpService>(MockBehavior.Strict);
@@ -183,9 +183,9 @@ internal static class MockFactory
     }
 
     /// <summary>
-    /// TODO: add docs.
+    /// Creates the configured CreateEmailService mock.
     /// </summary>
-    /// <returns>TODO: add other docs.</returns>
+    /// <returns>The configured mock instance.</returns>
     internal static Mock<IEmailService> CreateEmailService()
     {
         var mock = new Mock<IEmailService>(MockBehavior.Strict);

@@ -55,7 +55,7 @@ public class DashboardServiceTests
     }
 
     /// <summary>
-    /// TODO: add docs.
+    /// Verifies the GetDashboardData_WhenUserDoesNotExist_ReturnsNotFoundError scenario.
     /// </summary>
     [Fact]
     public void GetDashboardData_WhenUserDoesNotExist_ReturnsNotFoundError()
@@ -74,7 +74,7 @@ public class DashboardServiceTests
     }
 
     /// <summary>
-    /// TODO: add docs.
+    /// Verifies the GetDashboardData_WhenUserExists_ReturnsResponseWithUserSummary scenario.
     /// </summary>
     [Fact]
     public void GetDashboardData_WhenUserExists_ReturnsResponseWithUserSummary()
@@ -97,7 +97,7 @@ public class DashboardServiceTests
     }
 
     /// <summary>
-    /// TODO: add docs.
+    /// Verifies the GetDashboardData_WhenCardsExist_ReturnsMappedCards scenario.
     /// </summary>
     [Fact]
     public void GetDashboardData_WhenCardsExist_ReturnsMappedCards()
@@ -145,7 +145,7 @@ public class DashboardServiceTests
     }
 
     /// <summary>
-    /// TODO: add docs.
+    /// Verifies the GetDashboardData_WhenCardsQueryFails_ReturnsEmptyCardList scenario.
     /// </summary>
     [Fact]
     public void GetDashboardData_WhenCardsQueryFails_ReturnsEmptyCardList()
@@ -168,7 +168,7 @@ public class DashboardServiceTests
     }
 
     /// <summary>
-    /// TODO: add docs.
+    /// Verifies the GetDashboardData_WhenTransactionsExist_ReturnsMappedTransactions scenario.
     /// </summary>
     [Fact]
     public void GetDashboardData_WhenTransactionsExist_ReturnsMappedTransactions()
@@ -215,7 +215,7 @@ public class DashboardServiceTests
     }
 
     /// <summary>
-    /// TODO: add docs.
+    /// Verifies the GetDashboardData_WhenAccountsQueryFails_ReturnsEmptyTransactionList scenario.
     /// </summary>
     [Fact]
     public void GetDashboardData_WhenAccountsQueryFails_ReturnsEmptyTransactionList()
@@ -238,7 +238,7 @@ public class DashboardServiceTests
     }
 
     /// <summary>
-    /// TODO: add docs.
+    /// Verifies the GetDashboardData_WhenNotificationCountQueryFails_ReturnsZeroCount scenario.
     /// </summary>
     [Fact]
     public void GetDashboardData_WhenNotificationCountQueryFails_ReturnsZeroCount()
@@ -261,7 +261,7 @@ public class DashboardServiceTests
     }
 
     /// <summary>
-    /// TODO: add docs.
+    /// Verifies the GetDashboardData_WhenMultipleAccountsExist_MergesAndLimitsTransactions scenario.
     /// </summary>
     [Fact]
     public void GetDashboardData_WhenMultipleAccountsExist_MergesAndLimitsTransactions()
@@ -318,7 +318,7 @@ public class DashboardServiceTests
     }
 
     /// <summary>
-    /// TODO: add docs.
+    /// Verifies the GetDashboardData_WhenUnreadNotificationsExist_ReturnsCorrectCount scenario.
     /// </summary>
     [Fact]
     public void GetDashboardData_WhenUnreadNotificationsExist_ReturnsCorrectCount()

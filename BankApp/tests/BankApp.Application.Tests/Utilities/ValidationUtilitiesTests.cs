@@ -5,12 +5,12 @@ using Xunit;
 namespace BankApp.Application.Tests.Utilities;
 
 /// <summary>
-/// TODO: add docs.
+/// Unit tests for <see cref="ValidationUtilities"/>.
 /// </summary>
 public class ValidationUtilitiesTests
 {
     /// <summary>
-    /// TODO: add docs.
+    /// Verifies the IsValidEmail_WhenEmailIsInvalid_ShouldReturnFalse scenario.
     /// </summary>
     [Theory]
     [InlineData("")]
@@ -37,7 +37,7 @@ public class ValidationUtilitiesTests
     }
 
     /// <summary>
-    /// TODO: add docs.
+    /// Verifies the IsValidEmail_WhenEmailIsValid_ShouldReturnTrue scenario.
     /// </summary>
     [Theory]
     [InlineData("name@provider.com")]
@@ -55,7 +55,7 @@ public class ValidationUtilitiesTests
     }
 
     /// <summary>
-    /// TODO: add docs.
+    /// Verifies the IsStrongPassword_WhenPasswordIsStrong_ShouldReturnTrue scenario.
     /// </summary>
     [Theory]
     [InlineData("Password1!")]
@@ -68,7 +68,7 @@ public class ValidationUtilitiesTests
     }
 
     /// <summary>
-    /// TODO: add docs.
+    /// Verifies the IsStrongPassword_WhenPasswordIsWeak_ShouldReturnFalse scenario.
     /// </summary>
     [Theory]
     [InlineData("")]
@@ -86,7 +86,7 @@ public class ValidationUtilitiesTests
     }
 
     /// <summary>
-    /// TODO: add docs.
+    /// Verifies the IsValidOTP_WhenOtpIsValid_ShouldReturnTrue scenario.
     /// </summary>
     [Theory]
     [InlineData("000000")]
@@ -99,7 +99,7 @@ public class ValidationUtilitiesTests
     }
 
     /// <summary>
-    /// TODO: add docs.
+    /// Verifies the IsValidOTP_WhenOtpIsInvalid_ShouldReturnFalse scenario.
     /// </summary>
     [Theory]
     [InlineData("")]
@@ -115,7 +115,7 @@ public class ValidationUtilitiesTests
     }
 
     /// <summary>
-    /// TODO: add docs.
+    /// Verifies the IsValidPhoneNumber_WhenPhoneNumberIsValid_ShouldReturnTrue scenario.
     /// </summary>
     [Theory]
     [InlineData("0712345678")]
@@ -128,7 +128,7 @@ public class ValidationUtilitiesTests
     }
 
     /// <summary>
-    /// TODO: add docs.
+    /// Verifies the IsValidPhoneNumber_WhenPhoneNumberIsInvalid_ShouldReturnFalse scenario.
     /// </summary>
     [Theory]
     [InlineData("")]
@@ -143,7 +143,7 @@ public class ValidationUtilitiesTests
     }
 
     /// <summary>
-    /// TODO: add docs.
+    /// Verifies the NormalizePhoneNumber_WhenPhoneNumberIsValid_ShouldReturnE164Format scenario.
     /// </summary>
     [Theory]
     [InlineData("0712345678", "+40712345678")]
@@ -156,7 +156,7 @@ public class ValidationUtilitiesTests
     }
 
     /// <summary>
-    /// TODO: add docs.
+    /// Verifies the NormalizePhoneNumber_WhenPhoneNumberIsInvalid_ShouldReturnNull scenario.
     /// </summary>
     [Theory]
     [InlineData("")]
@@ -171,7 +171,7 @@ public class ValidationUtilitiesTests
     }
 
     /// <summary>
-    /// TODO: add docs.
+    /// Verifies the NormalizePhoneNumber_WhenDefaultRegionIsProvided_ShouldUseRegion scenario.
     /// </summary>
     [Fact]
     public void NormalizePhoneNumber_WhenDefaultRegionIsProvided_ShouldUseRegion()
@@ -181,7 +181,7 @@ public class ValidationUtilitiesTests
     }
 
     /// <summary>
-    /// TODO: add docs.
+    /// Verifies the PasswordsMatch_ShouldReturnExpectedResult scenario.
     /// </summary>
     [Theory]
     [InlineData("abc", "abc", true)]
