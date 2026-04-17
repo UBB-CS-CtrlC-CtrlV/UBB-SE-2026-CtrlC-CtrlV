@@ -369,7 +369,7 @@ public class ProfileServiceTests
             .Returns(Error.NotFound());
 
         // Act
-        ErrorOr<Success> result = this.service.Enable2FA(99, TwoFactorMethod.Email);
+        ErrorOr<Success> result = this.service.Enable2FactorAuthentication(99, TwoFactorMethod.Email);
 
         // Assert
         result.IsError.Should().BeTrue();
@@ -392,14 +392,14 @@ public class ProfileServiceTests
             .Returns(Result.Success);
 
         // Act
-        ErrorOr<Success> result = this.service.Enable2FA(userId, TwoFactorMethod.Email);
+        ErrorOr<Success> result = this.service.Enable2FactorAuthentication(userId, TwoFactorMethod.Email);
 
         // Assert
         result.IsError.Should().BeFalse();
         this.userRepository.Verify(
             repository => repository.UpdateUser(
                 It.Is<User>(user =>
-                    user.Is2FAEnabled && user.Preferred2FAMethod == "Email")),
+                    user.Is2FactorAuthenticationEnabled && user.Preferred2FAMethod == "Email")),
             Times.Once);
     }
 
@@ -413,20 +413,20 @@ public class ProfileServiceTests
         const int userId = 1;
         this.userRepository
             .Setup(repository => repository.FindById(userId))
-            .Returns(new User { Id = userId, Email = "ada@test.com", FullName = "Ada", Is2FAEnabled = true });
+            .Returns(new User { Id = userId, Email = "ada@test.com", FullName = "Ada", Is2FactorAuthenticationEnabled = true });
         this.userRepository
             .Setup(repository => repository.UpdateUser(It.IsAny<User>()))
             .Returns(Result.Success);
 
         // Act
-        ErrorOr<Success> result = this.service.Disable2FA(userId);
+        ErrorOr<Success> result = this.service.Disable2FactorAuthentication(userId);
 
         // Assert
         result.IsError.Should().BeFalse();
         this.userRepository.Verify(
             repository => repository.UpdateUser(
                 It.Is<User>(user =>
-                    !user.Is2FAEnabled && user.Preferred2FAMethod == null)),
+                    !user.Is2FactorAuthenticationEnabled && user.Preferred2FAMethod == null)),
             Times.Once);
     }
 

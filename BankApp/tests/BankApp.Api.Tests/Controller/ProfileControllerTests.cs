@@ -213,7 +213,7 @@ public sealed class ProfileControllerTests
     public void Enable2FA_WhenSuccess_ReturnsNoContent()
     {
         // Arrange
-        this.profileService.Setup(service => service.Enable2FA(1, TwoFactorMethod.Email)).Returns(Result.Success);
+        this.profileService.Setup(service => service.Enable2FactorAuthentication(1, TwoFactorMethod.Email)).Returns(Result.Success);
         ProfileController controller = this.CreateController(1);
 
         // Act
@@ -230,7 +230,7 @@ public sealed class ProfileControllerTests
     public void Disable2FA_WhenSuccess_ReturnsNoContent()
     {
         // Arrange
-        this.profileService.Setup(service => service.Disable2FA(1)).Returns(Result.Success);
+        this.profileService.Setup(service => service.Disable2FactorAuthentication(1)).Returns(Result.Success);
         ProfileController controller = this.CreateController(1);
 
         // Act

@@ -23,8 +23,8 @@ public class LoginService : ILoginService
     private static readonly Dictionary<int, int> FailedOtpAttempts = new Dictionary<int, int>();
     private readonly IAuthRepository authRepository;
     private readonly IHashService hashService;
-    private readonly IJwtService jwtService;
-    private readonly IOtpService otpService;
+    private readonly IJsonWebTokenService jsonWebTokenService;
+    private readonly IOneTimePasswordService oneTimePasswordService;
     private readonly IEmailService emailService;
     private readonly ILogger<LoginService> logger;
 
@@ -42,17 +42,17 @@ public class LoginService : ILoginService
     /// </summary>
     /// <param name="authRepository">The authentication repository.</param>
     /// <param name="hashService">The password hashing service.</param>
-    /// <param name="jwtService">The JWT token service.</param>
-    /// <param name="otpService">The one-time password service.</param>
+    /// <param name="jsonWebTokenService">The JWT token service.</param>   // To Do: Change to JWT
+    /// <param name="oneTimePasswordService">The one-time password service.</param>  // To Do: Change to OTP
     /// <param name="emailService">The email delivery service.</param>
     /// <param name="logger">The logger.</param>
-    public LoginService(IAuthRepository authRepository, IHashService hashService, IJwtService jwtService,
-        IOtpService otpService, IEmailService emailService, ILogger<LoginService> logger)
+    public LoginService(IAuthRepository authRepository, IHashService hashService, IJsonWebTokenService jsonWebTokenService,
+        IOneTimePasswordService oneTimePasswordService, IEmailService emailService, ILogger<LoginService> logger)
     {
         this.authRepository = authRepository;
         this.hashService = hashService;
-        this.jwtService = jwtService;
-        this.otpService = otpService;
+        this.jsonWebTokenService = jsonWebTokenService;
+        this.oneTimePasswordService = oneTimePasswordService;
         this.emailService = emailService;
         this.logger = logger;
     }
@@ -92,7 +92,7 @@ public class LoginService : ILoginService
             return HandleFailedPassword(user);
         }
 
-        return user.Is2FAEnabled ? Handle2FA(user) : CompleteLogin(user, metadata);
+        return user.Is2FactorAuthenticationEnabled ? Handle2FA(user) : CompleteLogin(user, metadata);
     }
 
     /// <inheritdoc />
@@ -153,7 +153,7 @@ public class LoginService : ILoginService
                     PasswordHash = hashResult.Value,
                     FullName = fullName,
                     PreferredLanguage = DefaultLanguage,
-                    Is2FAEnabled = false,
+                    Is2FactorAuthenticationEnabled = false,
                     IsLocked = false,
                     FailedLoginAttempts = default,
                 };
@@ -195,7 +195,7 @@ public class LoginService : ILoginService
             return lockError.Value;
         }
 
-        return user.Is2FAEnabled ? Handle2FA(user) : CompleteLogin(user, metadata);
+        return user.Is2FactorAuthenticationEnabled ? Handle2FA(user) : CompleteLogin(user, metadata);
     }
 
     /// <inheritdoc />
@@ -222,7 +222,7 @@ public class LoginService : ILoginService
             logger.LogWarning("OTP verification failed for user {UserId}: invalid or expired code.", user.Id);
             if (TrackFailedOtpAttempt(user.Id) >= MaxFailedOtpAttempts)
             {
-                otpService.InvalidateOTP(user.Id);
+                oneTimePasswordService.InvalidateOTP(user.Id);
                 FailedOtpAttempts.Remove(user.Id);
                 logger.LogWarning("OTP challenge invalidated for user {UserId} after {MaxAttempts} failed attempts.", user.Id, MaxFailedOtpAttempts);
                 return Error.Unauthorized(code: "otp_attempts_exceeded", description: "Too many incorrect OTP entries. Please restart login.");
@@ -232,7 +232,7 @@ public class LoginService : ILoginService
         }
 
         FailedOtpAttempts.Remove(user.Id);
-        otpService.InvalidateOTP(user.Id);
+        oneTimePasswordService.InvalidateOTP(user.Id);
         return CompleteLogin(user, metadata);
     }
 
@@ -258,7 +258,7 @@ public class LoginService : ILoginService
         if (string.Equals(method, EmailTwoFactorMethod, StringComparison.OrdinalIgnoreCase)
             || string.Equals(user.Preferred2FAMethod, EmailTwoFactorMethod, StringComparison.OrdinalIgnoreCase))
         {
-            emailService.SendOTPCode(user.Email, otpResult.Value);
+            emailService.SendOneTimePasswordCode(user.Email, otpResult.Value);
         }
 
         FailedOtpAttempts.Remove(user.Id);
@@ -330,7 +330,7 @@ public class LoginService : ILoginService
 
         if (string.Equals(user.Preferred2FAMethod, EmailTwoFactorMethod, StringComparison.OrdinalIgnoreCase))
         {
-            emailService.SendOTPCode(user.Email, otpResult.Value);
+            emailService.SendOneTimePasswordCode(user.Email, otpResult.Value);
         }
 
         FailedOtpAttempts.Remove(user.Id);
@@ -341,15 +341,15 @@ public class LoginService : ILoginService
     private ErrorOr<string> GenerateOtpForMethod(User user)
     {
         return string.Equals(user.Preferred2FAMethod, nameof(TwoFactorMethod.Authenticator), StringComparison.OrdinalIgnoreCase)
-            ? otpService.GenerateTOTP(user.Id)
-            : otpService.GenerateSMSOTP(user.Id);
+            ? oneTimePasswordService.GenerateTOTP(user.Id)
+            : oneTimePasswordService.GenerateSMSOTP(user.Id);
     }
 
     private ErrorOr<bool> VerifyOtpForPreferredMethod(User user, string code)
     {
         return string.Equals(user.Preferred2FAMethod, nameof(TwoFactorMethod.Authenticator), StringComparison.OrdinalIgnoreCase)
-            ? otpService.VerifyTOTP(user.Id, code)
-            : otpService.VerifySMSOTP(user.Id, code);
+            ? oneTimePasswordService.VerifyTOTP(user.Id, code)
+            : oneTimePasswordService.VerifySMSOTP(user.Id, code);
     }
 
     private static int TrackFailedOtpAttempt(int userId)
@@ -364,7 +364,7 @@ public class LoginService : ILoginService
     {
         _ = authRepository.ResetFailedAttempts(user.Id);
 
-        ErrorOr<string> tokenResult = jwtService.GenerateToken(user.Id);
+        ErrorOr<string> tokenResult = jsonWebTokenService.GenerateToken(user.Id);
         if (tokenResult.IsError)
         {
             logger.LogError("Token generation failed for user {UserId}: {Error}", user.Id, tokenResult.FirstError.Description);

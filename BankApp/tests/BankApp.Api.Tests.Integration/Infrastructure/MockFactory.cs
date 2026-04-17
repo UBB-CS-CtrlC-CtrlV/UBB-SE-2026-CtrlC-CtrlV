@@ -19,9 +19,9 @@ namespace BankApp.Api.Tests.Integration.Infrastructure;
 /// </summary>
 public static class MockFactory
 {
-    /// <summary>Creates a loose mock for <see cref="IJwtService"/>.</summary>
-    /// <returns>A new <see cref="Mock{T}"/> of <see cref="IJwtService"/>.</returns>
-    public static Mock<IJwtService> CreateJwtService() => new Mock<IJwtService>();
+    /// <summary>Creates a loose mock for <see cref="IJsonWebTokenService"/>.</summary>
+    /// <returns>A new <see cref="Mock{T}"/> of <see cref="IJsonWebTokenService"/>.</returns>
+    public static Mock<IJsonWebTokenService> CreateJwtService() => new Mock<IJsonWebTokenService>();
 
     /// <summary>Creates a loose mock for <see cref="IAuthRepository"/>.</summary>
     /// <returns>A new <see cref="Mock{T}"/> of <see cref="IAuthRepository"/>.</returns>

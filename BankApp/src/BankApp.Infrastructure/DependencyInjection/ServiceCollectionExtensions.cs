@@ -51,8 +51,8 @@ public static class ServiceCollectionExtensions
         services.AddScoped<INotificationDataAccess, NotificationDataAccess>();
 
         services.AddScoped<IHashService, HashService>();
-        services.AddScoped<IJwtService>(_ => new JsonWebTokenService(jwtSecret));
-        services.AddScoped<IOtpService, OneTimePasswordService>();
+        services.AddScoped<IJsonWebTokenService>(_ => new JsonWebTokenService(jwtSecret));
+        services.AddScoped<IOneTimePasswordService, OneTimePasswordService>();
         services.AddScoped<IEmailService, EmailService>();
 
         services.AddScoped<IAuthRepository, AuthRepository>();

@@ -39,7 +39,7 @@ public class EmailService : IEmailService
     }
 
     /// <inheritdoc />
-    public void SendOTPCode(string email, string code)
+    public void SendOneTimePasswordCode(string email, string code)
     {
         SendEmail(email, EmailTemplates.OtpSubject, EmailTemplates.GetOtpBody(code));
     }

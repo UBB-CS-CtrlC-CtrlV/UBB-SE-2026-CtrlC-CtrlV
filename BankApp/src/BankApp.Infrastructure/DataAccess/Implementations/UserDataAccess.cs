@@ -12,7 +12,7 @@ public class UserDataAccess : IUserDataAccess
 {
     private const string SelectAllColumns = """
         SELECT Id, Email, PasswordHash, FullName, PhoneNumber, DateOfBirth,
-               [Address], Nationality, PreferredLanguage, Is2FAEnabled, Preferred2FAMethod,
+               [Address], Nationality, PreferredLanguage, Is2FactorAuthentificationEnabled, Preferred2FAMethod,
                IsLocked, LockoutEnd, FailedLoginAttempts, CreatedAt, UpdatedAt
         FROM [User]
         """;
@@ -49,9 +49,9 @@ public class UserDataAccess : IUserDataAccess
     {
         const string databaseCommandText = """
             INSERT INTO [User] (Email, PasswordHash, FullName, PhoneNumber, DateOfBirth,
-                [Address], Nationality, PreferredLanguage, Is2FAEnabled, Preferred2FAMethod)
+                [Address], Nationality, PreferredLanguage, Is2FactorAuthentificationEnabled, Preferred2FAMethod)
             VALUES (@Email, @PasswordHash, @FullName, @PhoneNumber, @DateOfBirth,
-                @Address, @Nationality, @PreferredLanguage, @Is2FAEnabled, @Preferred2FAMethod)
+                @Address, @Nationality, @PreferredLanguage, @Is2FactorAuthentificationEnabled, @Preferred2FAMethod)
             """;
 
         return this.databaseContext.Query(connection => connection.Execute(databaseCommandText, user))
@@ -70,7 +70,7 @@ public class UserDataAccess : IUserDataAccess
                 [Address]          = @Address,
                 Nationality        = @Nationality,
                 PreferredLanguage  = @PreferredLanguage,
-                Is2FAEnabled       = @Is2FAEnabled,
+                Is2FactorAuthentificationEnabled       = @Is2FactorAuthentificationEnabled,
                 Preferred2FAMethod = @Preferred2FAMethod,
                 UpdatedAt          = GETUTCDATE()
             WHERE Id = @Id
