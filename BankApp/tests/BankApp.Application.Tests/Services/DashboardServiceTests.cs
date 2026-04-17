@@ -17,6 +17,11 @@ namespace BankApp.Application.Tests.Services;
 /// </summary>
 public class DashboardServiceTests
 {
+    private const int NonExistentUserId = 99;
+    private const int FirstAccountTransactionCount = 8;
+    private const int SecondAccountTransactionCount = 5;
+    private const int AmountMultiplier = 10;
+    private const int MergedTransactionLimit = 5;
     private readonly Mock<IUserRepository> userRepository = new Mock<IUserRepository>(MockBehavior.Strict);
 
     private readonly Mock<IDashboardRepository> dashboardRepository =
@@ -59,11 +64,11 @@ public class DashboardServiceTests
     {
         // Arrange
         this.userRepository
-            .Setup(repository => repository.FindById(99))
+            .Setup(repository => repository.FindById(NonExistentUserId))
             .Returns(Error.NotFound());
 
         // Act
-        ErrorOr<DashboardResponse> result = this.service.GetDashboardData(99);
+        ErrorOr<DashboardResponse> result = this.service.GetDashboardData(NonExistentUserId);
 
         // Assert
         result.IsError.Should().BeTrue();
@@ -279,22 +284,22 @@ public class DashboardServiceTests
                     new Account { Id = accountId2, UserId = userId },
                 });
 
-        List<Transaction> transactions1 = Enumerable.Range(1, 8).Select(index => new Transaction
+        List<Transaction> transactions1 = Enumerable.Range(1, FirstAccountTransactionCount).Select(index => new Transaction
         {
             Id = index,
             AccountId = accountId1,
             Direction = TransactionDirection.In,
-            Amount = index * 10,
+            Amount = index * AmountMultiplier,
             Currency = "RON",
             Status = TransactionStatus.Completed,
             CreatedAt = DateTime.UtcNow.AddMinutes(-index),
         }).ToList();
-        List<Transaction> transactions2 = Enumerable.Range(9, 5).Select(index => new Transaction
+        List<Transaction> transactions2 = Enumerable.Range(9, SecondAccountTransactionCount).Select(index => new Transaction
         {
             Id = index,
             AccountId = accountId2,
             Direction = TransactionDirection.Out,
-            Amount = index * 10,
+            Amount = index * AmountMultiplier,
             Currency = "RON",
             Status = TransactionStatus.Completed,
             CreatedAt = DateTime.UtcNow.AddMinutes(-index),
@@ -311,7 +316,7 @@ public class DashboardServiceTests
 
         // Assert
         result.IsError.Should().BeFalse();
-        result.Value.RecentTransactions.Should().HaveCount(5);
+        result.Value.RecentTransactions.Should().HaveCount(MergedTransactionLimit);
     }
 
     /// <summary>

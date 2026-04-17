@@ -17,6 +17,10 @@ namespace BankApp.Application.Tests.Services;
 /// </summary>
 public class PasswordRecoveryServiceTests
 {
+    private const int TokenExpiryLowerBoundMinutes = 29;
+    private const int TokenExpiryUpperBoundMinutes = 31;
+    private const int TokenStillValidMinutes = 5;
+    private const int TokenAlreadyExpiredMinutes = -1;
     /// <summary>
     /// Verifies the RequestPasswordReset_WhenUserDoesNotExist_ReturnsRepositoryError scenario.
     /// </summary>
@@ -57,7 +61,7 @@ public class PasswordRecoveryServiceTests
         Mock<IEmailService> emailService = MockFactory.CreateEmailService();
         var user = new User { Id = 1, Email = "ada@test.com" };
         PasswordResetToken? savedToken = null;
-        DateTime before = DateTime.UtcNow.AddMinutes(29);
+        DateTime before = DateTime.UtcNow.AddMinutes(TokenExpiryLowerBoundMinutes);
 
         authRepository.Setup(repository => repository.FindUserByEmail(user.Email))
             .Returns((ErrorOr<User>)user);
@@ -78,7 +82,7 @@ public class PasswordRecoveryServiceTests
         result.IsError.Should().BeFalse();
         savedToken.Should().NotBeNull();
         savedToken!.ExpiresAt.Should().BeOnOrAfter(before);
-        savedToken.ExpiresAt.Should().BeOnOrBefore(DateTime.UtcNow.AddMinutes(31));
+        savedToken.ExpiresAt.Should().BeOnOrBefore(DateTime.UtcNow.AddMinutes(TokenExpiryUpperBoundMinutes));
     }
 
     /// <summary>
@@ -128,7 +132,7 @@ public class PasswordRecoveryServiceTests
             {
                 Id = 1,
                 UserId = 1,
-                ExpiresAt = DateTime.UtcNow.AddMinutes(5),
+                ExpiresAt = DateTime.UtcNow.AddMinutes(TokenStillValidMinutes),
                 UsedAt = DateTime.UtcNow,
             });
 
@@ -161,7 +165,7 @@ public class PasswordRecoveryServiceTests
             {
                 Id = 1,
                 UserId = 1,
-                ExpiresAt = DateTime.UtcNow.AddMinutes(-1),
+                ExpiresAt = DateTime.UtcNow.AddMinutes(TokenAlreadyExpiredMinutes),
             });
 
         var service = new PasswordRecoveryService(
