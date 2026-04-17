@@ -1,5 +1,6 @@
-// Copyright (c) BankApp. All rights reserved.
-// Licensed under the MIT license.
+// <copyright file="MockFactory.cs" company="CtrlC CtrlV">
+// Copyright (c) CtrlC CtrlV. All rights reserved.
+// </copyright>
 
 using BankApp.Application.DTOs.Auth;
 using BankApp.Application.DTOs.Dashboard;
@@ -23,7 +24,11 @@ namespace BankApp.Api.Tests;
 /// </summary>
 internal static class MockFactory
 {
-    public static Mock<ILoginService> CreateLoginService()
+    /// <summary>
+    /// Creates the configured CreateLoginService mock.
+    /// </summary>
+    /// <returns>The configured mock instance.</returns>
+    internal static Mock<ILoginService> CreateLoginService()
     {
         var mock = new Mock<ILoginService>(MockBehavior.Strict);
         mock.Setup(service => service.Login(It.IsAny<LoginRequest>(), It.IsAny<SessionMetadata?>()))
@@ -39,7 +44,11 @@ internal static class MockFactory
         return mock;
     }
 
-    public static Mock<IRegistrationService> CreateRegistrationService()
+    /// <summary>
+    /// Creates the configured CreateRegistrationService mock.
+    /// </summary>
+    /// <returns>The configured mock instance.</returns>
+    internal static Mock<IRegistrationService> CreateRegistrationService()
     {
         var mock = new Mock<IRegistrationService>(MockBehavior.Strict);
         mock.Setup(service => service.Register(It.IsAny<RegisterRequest>()))
@@ -49,7 +58,11 @@ internal static class MockFactory
         return mock;
     }
 
-    public static Mock<IPasswordRecoveryService> CreatePasswordRecoveryService()
+    /// <summary>
+    /// Creates the configured CreatePasswordRecoveryService mock.
+    /// </summary>
+    /// <returns>The configured mock instance.</returns>
+    internal static Mock<IPasswordRecoveryService> CreatePasswordRecoveryService()
     {
         var mock = new Mock<IPasswordRecoveryService>(MockBehavior.Strict);
         mock.Setup(service => service.RequestPasswordReset(It.IsAny<string>()))
@@ -61,7 +74,11 @@ internal static class MockFactory
         return mock;
     }
 
-    public static Mock<IDashboardService> CreateDashboardService()
+    /// <summary>
+    /// Creates the configured CreateDashboardService mock.
+    /// </summary>
+    /// <returns>The configured mock instance.</returns>
+    internal static Mock<IDashboardService> CreateDashboardService()
     {
         var mock = new Mock<IDashboardService>(MockBehavior.Strict);
         mock.Setup(service => service.GetDashboardData(It.IsAny<int>()))
@@ -69,7 +86,11 @@ internal static class MockFactory
         return mock;
     }
 
-    public static Mock<IProfileService> CreateProfileService()
+    /// <summary>
+    /// Creates the configured CreateProfileService mock.
+    /// </summary>
+    /// <returns>The configured mock instance.</returns>
+    internal static Mock<IProfileService> CreateProfileService()
     {
         var mock = new Mock<IProfileService>(MockBehavior.Strict);
         mock.Setup(service => service.GetProfile(It.IsAny<int>()))
@@ -101,7 +122,11 @@ internal static class MockFactory
         return mock;
     }
 
-    public static Mock<IJwtService> CreateJwtService()
+    /// <summary>
+    /// Creates the configured CreateJwtService mock.
+    /// </summary>
+    /// <returns>The configured mock instance.</returns>
+    internal static Mock<IJwtService> CreateJwtService()
     {
         var mock = new Mock<IJwtService>(MockBehavior.Strict);
         mock.Setup(service => service.ExtractUserId(It.IsAny<string>()))
@@ -109,7 +134,11 @@ internal static class MockFactory
         return mock;
     }
 
-    public static Mock<IAuthRepository> CreateAuthRepository()
+    /// <summary>
+    /// Creates the configured CreateAuthRepository mock.
+    /// </summary>
+    /// <returns>The configured mock instance.</returns>
+    internal static Mock<IAuthRepository> CreateAuthRepository()
     {
         var mock = new Mock<IAuthRepository>(MockBehavior.Strict);
         mock.Setup(repository => repository.FindSessionByToken(It.IsAny<string>()))
@@ -117,7 +146,11 @@ internal static class MockFactory
         return mock;
     }
 
-    public static Mock<IHashService> CreateHashService()
+    /// <summary>
+    /// Creates the configured CreateHashService mock.
+    /// </summary>
+    /// <returns>The configured mock instance.</returns>
+    internal static Mock<IHashService> CreateHashService()
     {
         var mock = new Mock<IHashService>(MockBehavior.Strict);
 
@@ -129,7 +162,12 @@ internal static class MockFactory
 
         return mock;
     }
-    public static Mock<IOtpService> CreateOtpService()
+
+    /// <summary>
+    /// Creates the configured CreateOtpService mock.
+    /// </summary>
+    /// <returns>The configured mock instance.</returns>
+    internal static Mock<IOtpService> CreateOtpService()
     {
         var mock = new Mock<IOtpService>(MockBehavior.Strict);
 
@@ -143,7 +181,12 @@ internal static class MockFactory
 
         return mock;
     }
-    public static Mock<IEmailService> CreateEmailService()
+
+    /// <summary>
+    /// Creates the configured CreateEmailService mock.
+    /// </summary>
+    /// <returns>The configured mock instance.</returns>
+    internal static Mock<IEmailService> CreateEmailService()
     {
         var mock = new Mock<IEmailService>(MockBehavior.Strict);
 

@@ -27,7 +27,7 @@ public class AuthService : IAuthService
     private readonly IEmailService emailService;
     private readonly ILogger<AuthService> logger;
 
-    // TODO: Consider changing or removing default constants
+    // Default security settings used when no per-environment policy is supplied.
     private const int MaxFailedAttempts = 5;
     private const int LockoutMinutes = 15;
     private const int PasswordResetTokenExpiryMinutes = 30;

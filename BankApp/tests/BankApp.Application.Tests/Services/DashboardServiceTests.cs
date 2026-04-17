@@ -1,17 +1,19 @@
 // <copyright file="DashboardServiceTests.cs" company="CtrlC CtrlV">
 // Copyright (c) CtrlC CtrlV. All rights reserved.
 // </copyright>
+
 using BankApp.Application.DTOs.Dashboard;
-using BankApp.Domain.Entities;
-using BankApp.Domain.Enums;
 using BankApp.Application.Repositories.Interfaces;
 using BankApp.Application.Services.Dashboard;
+using BankApp.Domain.Entities;
+using BankApp.Domain.Enums;
 using ErrorOr;
 using FluentAssertions;
 using Microsoft.Extensions.Logging.Abstractions;
 using Moq;
+using Xunit;
 
-namespace BankApp.Application.Tests.Unit;
+namespace BankApp.Application.Tests.Services;
 
 /// <summary>
 /// Unit tests for <see cref="DashboardService"/>.
@@ -19,7 +21,10 @@ namespace BankApp.Application.Tests.Unit;
 public class DashboardServiceTests
 {
     private readonly Mock<IUserRepository> userRepository = new Mock<IUserRepository>(MockBehavior.Strict);
-    private readonly Mock<IDashboardRepository> dashboardRepository = new Mock<IDashboardRepository>(MockBehavior.Strict);
+
+    private readonly Mock<IDashboardRepository> dashboardRepository =
+        new Mock<IDashboardRepository>(MockBehavior.Strict);
+
     private readonly DashboardService service;
 
     /// <summary>
@@ -49,6 +54,9 @@ public class DashboardServiceTests
             NullLogger<DashboardService>.Instance);
     }
 
+    /// <summary>
+    /// Verifies the GetDashboardData_WhenUserDoesNotExist_ReturnsNotFoundError scenario.
+    /// </summary>
     [Fact]
     public void GetDashboardData_WhenUserDoesNotExist_ReturnsNotFoundError()
     {
@@ -65,6 +73,9 @@ public class DashboardServiceTests
         result.FirstError.Type.Should().Be(ErrorType.NotFound);
     }
 
+    /// <summary>
+    /// Verifies the GetDashboardData_WhenUserExists_ReturnsResponseWithUserSummary scenario.
+    /// </summary>
     [Fact]
     public void GetDashboardData_WhenUserExists_ReturnsResponseWithUserSummary()
     {
@@ -85,6 +96,9 @@ public class DashboardServiceTests
         result.Value.CurrentUser!.Email.Should().Be(email);
     }
 
+    /// <summary>
+    /// Verifies the GetDashboardData_WhenCardsExist_ReturnsMappedCards scenario.
+    /// </summary>
     [Fact]
     public void GetDashboardData_WhenCardsExist_ReturnsMappedCards()
     {
@@ -95,25 +109,27 @@ public class DashboardServiceTests
             .Returns(new User { Id = userId, FullName = "Ada", Email = "ada@test.com" });
         this.dashboardRepository
             .Setup(repository => repository.GetCardsByUser(userId))
-            .Returns(new List<Card>
-            {
-                new Card
+            .Returns(
+                new List<Card>
                 {
-                    Id = 1,
-                    UserId = userId,
-                    CardNumber = "1234567890123456",
-                    CardholderName = "Ada Lovelace",
-                    CardType = CardType.Debit,
-                    ExpiryDate = new DateTime(2027, 12, 1),
-                    Status = CardStatus.Active,
-                },
-            });
+                    new Card
+                    {
+                        Id = 1,
+                        UserId = userId,
+                        CardNumber = "1234567890123456",
+                        CardholderName = "Ada Lovelace",
+                        CardType = CardType.Debit,
+                        ExpiryDate = new DateTime(2027, 12, 1),
+                        Status = CardStatus.Active,
+                    },
+                });
         this.dashboardRepository
             .Setup(repository => repository.GetAccountsByUser(userId))
-            .Returns(new List<Account>
-            {
-                new Account { Id = 0, AccountName = "Checking", Balance = 2500 },
-            });
+            .Returns(
+                new List<Account>
+                {
+                    new Account { Id = 0, AccountName = "Checking", Balance = 2500 },
+                });
 
         // Act
         ErrorOr<DashboardResponse> result = this.service.GetDashboardData(userId);
@@ -128,6 +144,9 @@ public class DashboardServiceTests
         result.Value.Cards[0].AccountBalance.Should().Be(2500);
     }
 
+    /// <summary>
+    /// Verifies the GetDashboardData_WhenCardsQueryFails_ReturnsEmptyCardList scenario.
+    /// </summary>
     [Fact]
     public void GetDashboardData_WhenCardsQueryFails_ReturnsEmptyCardList()
     {
@@ -148,6 +167,9 @@ public class DashboardServiceTests
         result.Value.Cards.Should().BeEmpty();
     }
 
+    /// <summary>
+    /// Verifies the GetDashboardData_WhenTransactionsExist_ReturnsMappedTransactions scenario.
+    /// </summary>
     [Fact]
     public void GetDashboardData_WhenTransactionsExist_ReturnsMappedTransactions()
     {
@@ -159,26 +181,28 @@ public class DashboardServiceTests
             .Returns(new User { Id = userId, FullName = "Ada", Email = "ada@test.com" });
         this.dashboardRepository
             .Setup(repository => repository.GetAccountsByUser(userId))
-            .Returns(new List<Account>
-            {
-                new Account { Id = accountId, UserId = userId },
-            });
+            .Returns(
+                new List<Account>
+                {
+                    new Account { Id = accountId, UserId = userId },
+                });
         this.dashboardRepository
             .Setup(repository => repository.GetRecentTransactions(accountId, It.IsAny<int>()))
-            .Returns(new List<Transaction>
-            {
-                new Transaction
+            .Returns(
+                new List<Transaction>
                 {
-                    Id = 1,
-                    AccountId = accountId,
-                    Direction = TransactionDirection.Out,
-                    Amount = 100,
-                    Currency = "RON",
-                    Status = TransactionStatus.Completed,
-                    MerchantName = "Shop",
-                    CreatedAt = DateTime.UtcNow,
-                },
-            });
+                    new Transaction
+                    {
+                        Id = 1,
+                        AccountId = accountId,
+                        Direction = TransactionDirection.Out,
+                        Amount = 100,
+                        Currency = "RON",
+                        Status = TransactionStatus.Completed,
+                        MerchantName = "Shop",
+                        CreatedAt = DateTime.UtcNow,
+                    },
+                });
 
         // Act
         ErrorOr<DashboardResponse> result = this.service.GetDashboardData(userId);
@@ -190,6 +214,9 @@ public class DashboardServiceTests
         result.Value.RecentTransactions[0].Amount.Should().Be(100);
     }
 
+    /// <summary>
+    /// Verifies the GetDashboardData_WhenAccountsQueryFails_ReturnsEmptyTransactionList scenario.
+    /// </summary>
     [Fact]
     public void GetDashboardData_WhenAccountsQueryFails_ReturnsEmptyTransactionList()
     {
@@ -210,6 +237,9 @@ public class DashboardServiceTests
         result.Value.RecentTransactions.Should().BeEmpty();
     }
 
+    /// <summary>
+    /// Verifies the GetDashboardData_WhenNotificationCountQueryFails_ReturnsZeroCount scenario.
+    /// </summary>
     [Fact]
     public void GetDashboardData_WhenNotificationCountQueryFails_ReturnsZeroCount()
     {
@@ -230,6 +260,9 @@ public class DashboardServiceTests
         result.Value.UnreadNotificationCount.Should().Be(0);
     }
 
+    /// <summary>
+    /// Verifies the GetDashboardData_WhenMultipleAccountsExist_MergesAndLimitsTransactions scenario.
+    /// </summary>
     [Fact]
     public void GetDashboardData_WhenMultipleAccountsExist_MergesAndLimitsTransactions()
     {
@@ -242,11 +275,12 @@ public class DashboardServiceTests
             .Returns(new User { Id = userId, FullName = "Ada", Email = "ada@test.com" });
         this.dashboardRepository
             .Setup(repository => repository.GetAccountsByUser(userId))
-            .Returns(new List<Account>
-            {
-                new Account { Id = accountId1, UserId = userId },
-                new Account { Id = accountId2, UserId = userId },
-            });
+            .Returns(
+                new List<Account>
+                {
+                    new Account { Id = accountId1, UserId = userId },
+                    new Account { Id = accountId2, UserId = userId },
+                });
 
         List<Transaction> transactions1 = Enumerable.Range(1, 8).Select(i => new Transaction
         {
@@ -283,6 +317,9 @@ public class DashboardServiceTests
         result.Value.RecentTransactions.Should().HaveCount(5);
     }
 
+    /// <summary>
+    /// Verifies the GetDashboardData_WhenUnreadNotificationsExist_ReturnsCorrectCount scenario.
+    /// </summary>
     [Fact]
     public void GetDashboardData_WhenUnreadNotificationsExist_ReturnsCorrectCount()
     {

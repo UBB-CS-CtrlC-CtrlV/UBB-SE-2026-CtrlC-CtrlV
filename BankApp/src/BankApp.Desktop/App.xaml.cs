@@ -18,17 +18,10 @@ namespace BankApp.Desktop;
 /// </summary>
 public partial class App
 {
-    /// <summary>
-    /// Gets the application-wide DI container.
-    /// Only resolve services at the composition root boundary (i.e. in <see cref="OnLaunched"/>).
-    /// All other classes must receive their dependencies via constructor injection.
-    /// </summary>
-    private IServiceProvider Services { get; }
-
     private Window? window;
 
     /// <summary>
-    /// Initializes a new instance of the <see cref="App"/> class
+    /// Initializes a new instance of the <see cref="App" /> class
     /// and builds the dependency injection container.
     /// </summary>
     public App()
@@ -38,10 +31,12 @@ public partial class App
         IConfigurationRoot configuration = new ConfigurationBuilder()
             .SetBasePath(AppContext.BaseDirectory)
             .AddJsonFile("appsettings.json", optional: false)
+
             // appsettings.Local.json is `.gitignore`
             // and only exists in dev environments.
             // It overrides appsettings.json locally.
             .AddJsonFile("appsettings.Local.json", optional: true)
+
             // Environment variables are the final override layer for CI/Prod builds.
             .AddEnvironmentVariables()
             .Build();
@@ -57,6 +52,13 @@ public partial class App
         this.Services = serviceCollection.BuildServiceProvider();
         this.InitializeComponent();
     }
+
+    /// <summary>
+    /// Gets the application-wide DI container.
+    /// Only resolve services at the composition root boundary (i.e. in <see cref="OnLaunched"/>).
+    /// All other classes must receive their dependencies via constructor injection.
+    /// </summary>
+    private IServiceProvider Services { get; }
 
     /// <summary>
     /// Invoked when the application is launched. Resolves the navigation service,
@@ -83,8 +85,10 @@ public partial class App
         Log.Logger = new LoggerConfiguration()
             .MinimumLevel.Debug()
             .Enrich.FromLogContext()
+
             // Writes to the Visual Studio Output window during development.
             .WriteTo.Debug()
+
             // Writes to a daily rolling file outside the repo.
             // Log path: %LocalAppData%\BankApp\Logs\bankapp-client-YYYYMMDD.log
             .WriteTo.File(

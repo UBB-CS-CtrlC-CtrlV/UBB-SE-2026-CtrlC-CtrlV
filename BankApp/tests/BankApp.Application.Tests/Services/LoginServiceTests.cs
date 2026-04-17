@@ -12,8 +12,10 @@ using ErrorOr;
 using FluentAssertions;
 using Microsoft.Extensions.Logging.Abstractions;
 using Moq;
+using Xunit;
+using MockFactory = BankApp.Application.Tests.MockFactory;
 
-namespace BankApp.Application.Tests.Unit;
+namespace BankApp.Application.Tests.Services;
 
 /// <summary>
 /// Unit tests for <see cref="LoginService"/>.
@@ -41,6 +43,9 @@ public class LoginServiceTests
             NullLogger<LoginService>.Instance);
     }
 
+    /// <summary>
+    /// Verifies the Login_WhenMaxFailedAttemptsReached_LocksForFifteenMinutes scenario.
+    /// </summary>
     [Fact]
     public void Login_WhenMaxFailedAttemptsReached_LocksForFifteenMinutes()
     {
@@ -65,13 +70,17 @@ public class LoginServiceTests
 
         // Assert
         result.IsError.Should().BeTrue();
-        this.authRepository.Verify(repository => repository.LockAccount(
-            user.Id,
-            It.Is<DateTime>(lockoutEnd =>
-                lockoutEnd >= before && lockoutEnd <= DateTime.UtcNow.AddMinutes(16))),
+        this.authRepository.Verify(
+            repository => repository.LockAccount(
+                user.Id,
+                It.Is<DateTime>(lockoutEnd =>
+                    lockoutEnd >= before && lockoutEnd <= DateTime.UtcNow.AddMinutes(16))),
             Times.Once);
     }
 
+    /// <summary>
+    /// Verifies the Login_WhenEmailTwoFactorIsEnabled_GeneratesEmailOtp scenario.
+    /// </summary>
     [Fact]
     public void Login_WhenEmailTwoFactorIsEnabled_GeneratesEmailOtp()
     {
@@ -102,6 +111,9 @@ public class LoginServiceTests
         this.emailService.Verify(service => service.SendOTPCode(user.Email, "123456"), Times.Once);
     }
 
+    /// <summary>
+    /// Verifies the VerifyOtp_WhenThreeInvalidAttempts_InvalidatesOtpAndRequiresRestart scenario.
+    /// </summary>
     [Fact]
     public void VerifyOtp_WhenThreeInvalidAttempts_InvalidatesOtpAndRequiresRestart()
     {

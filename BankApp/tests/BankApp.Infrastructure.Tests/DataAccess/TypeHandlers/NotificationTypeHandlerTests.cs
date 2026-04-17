@@ -7,6 +7,7 @@ using System.Diagnostics.CodeAnalysis;
 using BankApp.Domain.Enums;
 using BankApp.Infrastructure.DataAccess.TypeHandlers;
 using FluentAssertions;
+using Xunit;
 
 namespace BankApp.Infrastructure.Tests.DataAccess.TypeHandlers;
 
@@ -81,14 +82,23 @@ public class NotificationTypeHandlerTests
     private sealed class FakeDbParameter : IDbDataParameter
     {
         public object? Value { get; set; }
+
         public DbType DbType { get; set; }
+
         public ParameterDirection Direction { get; set; }
+
         public bool IsNullable => false;
+
         [AllowNull] public string ParameterName { get; set; } = string.Empty;
+
         [AllowNull] public string SourceColumn { get; set; } = string.Empty;
+
         public DataRowVersion SourceVersion { get; set; }
+
         public byte Precision { get; set; }
+
         public byte Scale { get; set; }
+
         public int Size { get; set; }
     }
 }

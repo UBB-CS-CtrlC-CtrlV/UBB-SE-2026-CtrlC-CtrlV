@@ -1,10 +1,17 @@
 using BankApp.Application.Utilities;
 using FluentAssertions;
+using Xunit;
 
-namespace BankApp.Application.Tests.Unit.Utilities;
+namespace BankApp.Application.Tests.Utilities;
 
+/// <summary>
+/// Unit tests for <see cref="ValidationUtilities"/>.
+/// </summary>
 public class ValidationUtilitiesTests
 {
+    /// <summary>
+    /// Verifies the IsValidEmail_WhenEmailIsInvalid_ShouldReturnFalse scenario.
+    /// </summary>
     [Theory]
     [InlineData("")]
     [InlineData(" ")]
@@ -29,6 +36,9 @@ public class ValidationUtilitiesTests
         ValidationUtilities.IsValidEmail(email).Should().BeFalse();
     }
 
+    /// <summary>
+    /// Verifies the IsValidEmail_WhenEmailIsValid_ShouldReturnTrue scenario.
+    /// </summary>
     [Theory]
     [InlineData("name@provider.com")]
     [InlineData("john.doe@example.org")]
@@ -44,6 +54,9 @@ public class ValidationUtilitiesTests
         ValidationUtilities.IsValidEmail(email).Should().BeTrue();
     }
 
+    /// <summary>
+    /// Verifies the IsStrongPassword_WhenPasswordIsStrong_ShouldReturnTrue scenario.
+    /// </summary>
     [Theory]
     [InlineData("Password1!")]
     [InlineData("P@ssw0rd")]
@@ -54,6 +67,9 @@ public class ValidationUtilitiesTests
         ValidationUtilities.IsStrongPassword(password).Should().BeTrue();
     }
 
+    /// <summary>
+    /// Verifies the IsStrongPassword_WhenPasswordIsWeak_ShouldReturnFalse scenario.
+    /// </summary>
     [Theory]
     [InlineData("")]
     [InlineData(" ")]
@@ -69,6 +85,9 @@ public class ValidationUtilitiesTests
         ValidationUtilities.IsStrongPassword(password).Should().BeFalse();
     }
 
+    /// <summary>
+    /// Verifies the IsValidOTP_WhenOtpIsValid_ShouldReturnTrue scenario.
+    /// </summary>
     [Theory]
     [InlineData("000000")]
     [InlineData("123456")]
@@ -79,6 +98,9 @@ public class ValidationUtilitiesTests
         ValidationUtilities.IsValidOTP(otp).Should().BeTrue();
     }
 
+    /// <summary>
+    /// Verifies the IsValidOTP_WhenOtpIsInvalid_ShouldReturnFalse scenario.
+    /// </summary>
     [Theory]
     [InlineData("")]
     [InlineData(" ")]
@@ -92,6 +114,9 @@ public class ValidationUtilitiesTests
         ValidationUtilities.IsValidOTP(otp).Should().BeFalse();
     }
 
+    /// <summary>
+    /// Verifies the IsValidPhoneNumber_WhenPhoneNumberIsValid_ShouldReturnTrue scenario.
+    /// </summary>
     [Theory]
     [InlineData("0712345678")]
     [InlineData("+40712345678")]
@@ -102,6 +127,9 @@ public class ValidationUtilitiesTests
         ValidationUtilities.IsValidPhoneNumber(phone).Should().BeTrue();
     }
 
+    /// <summary>
+    /// Verifies the IsValidPhoneNumber_WhenPhoneNumberIsInvalid_ShouldReturnFalse scenario.
+    /// </summary>
     [Theory]
     [InlineData("")]
     [InlineData(" ")]
@@ -114,6 +142,9 @@ public class ValidationUtilitiesTests
         ValidationUtilities.IsValidPhoneNumber(phone).Should().BeFalse();
     }
 
+    /// <summary>
+    /// Verifies the NormalizePhoneNumber_WhenPhoneNumberIsValid_ShouldReturnE164Format scenario.
+    /// </summary>
     [Theory]
     [InlineData("0712345678", "+40712345678")]
     [InlineData("+40712345678", "+40712345678")]
@@ -124,6 +155,9 @@ public class ValidationUtilitiesTests
         ValidationUtilities.NormalizePhoneNumber(phone).Should().Be(expected);
     }
 
+    /// <summary>
+    /// Verifies the NormalizePhoneNumber_WhenPhoneNumberIsInvalid_ShouldReturnNull scenario.
+    /// </summary>
     [Theory]
     [InlineData("")]
     [InlineData(" ")]
@@ -136,6 +170,9 @@ public class ValidationUtilitiesTests
         ValidationUtilities.NormalizePhoneNumber(phone).Should().BeNull();
     }
 
+    /// <summary>
+    /// Verifies the NormalizePhoneNumber_WhenDefaultRegionIsProvided_ShouldUseRegion scenario.
+    /// </summary>
     [Fact]
     public void NormalizePhoneNumber_WhenDefaultRegionIsProvided_ShouldUseRegion()
     {
@@ -143,6 +180,9 @@ public class ValidationUtilitiesTests
         ValidationUtilities.NormalizePhoneNumber("2025550123", "US").Should().Be("+12025550123");
     }
 
+    /// <summary>
+    /// Verifies the PasswordsMatch_ShouldReturnExpectedResult scenario.
+    /// </summary>
     [Theory]
     [InlineData("abc", "abc", true)]
     [InlineData("abc", "def", false)]
@@ -151,7 +191,8 @@ public class ValidationUtilitiesTests
     [InlineData(null, null, false)]
     [InlineData(null, "abc", false)]
     [InlineData("abc", null, false)]
-    public void PasswordsMatch_ShouldReturnExpectedResult(string? firstPassword,
+    public void PasswordsMatch_ShouldReturnExpectedResult(
+        string? firstPassword,
         string? secondPassword,
         bool expected)
     {

@@ -1,8 +1,13 @@
-using BankApp.Desktop.Utilities;
-using BankApp.Desktop.Enums;
-using FluentAssertions;
+// <copyright file="PasswordRecoveryManagerTests.cs" company="CtrlC CtrlV">
+// Copyright (c) CtrlC CtrlV. All rights reserved.
+// </copyright>
 
-namespace BankApp.Desktop.Tests;
+using BankApp.Desktop.Enums;
+using BankApp.Desktop.Utilities;
+using FluentAssertions;
+using Xunit;
+
+namespace BankApp.Desktop.Tests.Utilities;
 
 /// <summary>
 /// Unit tests for the throttling and validation logic inside <see cref="PasswordRecoveryManager"/>.
@@ -16,6 +21,10 @@ public class PasswordRecoveryManagerTests
     private const int HalfCooldownSeconds = 30;
     private const int JustPastCooldownSeconds = 61;
 
+    /// <summary>
+    /// Before any request has been made, <see cref="IPasswordRecoveryManager.CanResendCode"/>
+    /// should be true and <see cref="IPasswordRecoveryManager.SecondsUntilResendAllowed"/> should be zero.
+    /// </summary>
     [Fact]
     public void CanResendCode_BeforeAnyRequest_ReturnsTrue()
     {
@@ -28,6 +37,11 @@ public class PasswordRecoveryManagerTests
         manager.SecondsUntilResendAllowed.Should().Be(0);
     }
 
+    /// <summary>
+    /// Immediately after the first code request, <see cref="IPasswordRecoveryManager.CanResendCode"/>
+    /// should be false and <see cref="IPasswordRecoveryManager.SecondsUntilResendAllowed"/> should be positive.
+    /// </summary>
+    /// <returns>A <see cref="Task"/> representing the asynchronous unit test.</returns>
     [Fact]
     public async Task CanResendCode_ImmediatelyAfterFirstRequest_ReturnsFalse()
     {
@@ -43,6 +57,11 @@ public class PasswordRecoveryManagerTests
         manager.SecondsUntilResendAllowed.Should().BePositive();
     }
 
+    /// <summary>
+    /// After the full cooldown period has elapsed, <see cref="IPasswordRecoveryManager.CanResendCode"/>
+    /// should return to true and <see cref="IPasswordRecoveryManager.SecondsUntilResendAllowed"/> should be zero.
+    /// </summary>
+    /// <returns>A <see cref="Task"/> representing the asynchronous unit test.</returns>
     [Fact]
     public async Task CanResendCode_AfterCooldownExpires_ReturnsTrue()
     {
@@ -59,6 +78,11 @@ public class PasswordRecoveryManagerTests
         manager.SecondsUntilResendAllowed.Should().Be(0);
     }
 
+    /// <summary>
+    /// When a second request is made within the cooldown window, the underlying API should not be
+    /// called again and the cached <see cref="ForgotPasswordState.EmailSent"/> state should be returned.
+    /// </summary>
+    /// <returns>A <see cref="Task"/> representing the asynchronous unit test.</returns>
     [Fact]
     public async Task RequestCode_CalledTwiceWithinCooldown_ThrottlesSecondCall()
     {
@@ -79,6 +103,11 @@ public class PasswordRecoveryManagerTests
         fake.RequestCount.Should().Be(callsAfterFirst);
     }
 
+    /// <summary>
+    /// When a request is made after the cooldown has expired, a new API call should be issued
+    /// and the request count should increment.
+    /// </summary>
+    /// <returns>A <see cref="Task"/> representing the asynchronous unit test.</returns>
     [Fact]
     public async Task RequestCode_CalledAfterCooldownExpires_IssuesNewApiCall()
     {
@@ -97,6 +126,11 @@ public class PasswordRecoveryManagerTests
         fake.RequestCount.Should().Be(callsAfterFirst + 1);
     }
 
+    /// <summary>
+    /// Passwords that satisfy all complexity rules (minimum length, upper, lower, digit, special character)
+    /// should be considered valid.
+    /// </summary>
+    /// <param name="password">A password that meets all complexity requirements.</param>
     [Theory]
     [InlineData("Password1!")]
     [InlineData("Str0ng#Pass")]
@@ -110,6 +144,10 @@ public class PasswordRecoveryManagerTests
         manager.IsPasswordValid(password).Should().BeTrue();
     }
 
+    /// <summary>
+    /// Passwords that violate at least one complexity rule should be considered invalid.
+    /// </summary>
+    /// <param name="password">A password that fails one or more complexity requirements.</param>
     [Theory]
     [InlineData("short1!")] // fewer than 8 chars
     [InlineData("alllowercase1!")] // no uppercase
@@ -158,6 +196,7 @@ public class PasswordRecoveryManagerTests
     private sealed class FakeApiResponder
     {
         public bool ShouldSucceed { get; init; }
+
         public int RequestCount { get; private set; }
 
         public Task<ForgotPasswordState> HandleRequestCodeAsync()

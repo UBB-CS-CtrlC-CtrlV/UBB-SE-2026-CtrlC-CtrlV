@@ -1,15 +1,20 @@
+// <copyright file="DashboardViewModelTests.cs" company="CtrlC CtrlV">
+// Copyright (c) CtrlC CtrlV. All rights reserved.
+// </copyright>
+
 using System.Globalization;
+using BankApp.Application.DTOs.Dashboard;
 using BankApp.Desktop.Enums;
 using BankApp.Desktop.Utilities;
 using BankApp.Desktop.ViewModels;
-using BankApp.Application.DTOs.Dashboard;
 using BankApp.Domain.Enums;
 using ErrorOr;
 using FluentAssertions;
 using Microsoft.Extensions.Logging.Abstractions;
 using Moq;
+using Xunit;
 
-namespace BankApp.Desktop.Tests;
+namespace BankApp.Desktop.Tests.ViewModels;
 
 /// <summary>
 /// Tests for the <see cref="DashboardViewModel"/>.
@@ -29,6 +34,10 @@ public class DashboardViewModelTests
         this.viewModel = new DashboardViewModel(this.apiClient.Object, NullLogger<DashboardViewModel>.Instance);
     }
 
+    /// <summary>
+    /// In LoadDashboard, when the response is valid the view model should be populated.
+    /// </summary>
+    /// <returns>A <see cref="Task"/> representing the result of the asynchronous operation.</returns>
     [Fact]
     public async Task LoadDashboard_WhenResponseIsValid_PopulatesViewModel()
     {
@@ -90,7 +99,8 @@ public class DashboardViewModelTests
         this.viewModel.ErrorMessage.Should().BeEmpty();
 
         // Assert — current user
-        this.viewModel.CurrentUser.Should().BeEquivalentTo(new UserSummaryDto
+        this.viewModel.CurrentUser.Should().BeEquivalentTo(
+            new UserSummaryDto
         {
             FullName = fullName,
             Email = email,
@@ -104,9 +114,10 @@ public class DashboardViewModelTests
         this.viewModel.SelectedCardExpiryDisplay.Should().Be(cardExpiry.ToString("MM/yy"));
 
         // Assert — transaction item
-        string expectedAmountDisplay = $"-{transactionAmount.ToString("N2", CultureInfo.InvariantCulture)}";
+        var expectedAmountDisplay = $"-{transactionAmount.ToString("N2", CultureInfo.InvariantCulture)}";
         this.viewModel.RecentTransactionItems.Should().ContainSingle()
-            .Which.Should().BeEquivalentTo(new DashboardTransactionItem
+            .Which.Should().BeEquivalentTo(
+                new DashboardTransactionItem
             {
                 MerchantDisplayName = merchantName,
                 AmountDisplay = expectedAmountDisplay,
@@ -117,6 +128,10 @@ public class DashboardViewModelTests
         this.viewModel.UnreadNotificationCount.Should().Be(unreadCount);
     }
 
+    /// <summary>
+    /// In LoadDashboard(), when the current user is missing the error state should be set.
+    /// </summary>
+    /// <returns>A <see cref="Task"/> representing the result of the asynchronous operation.</returns>
     [Fact]
     public async Task LoadDashboard_WhenCurrentUserIsMissing_SetsErrorState()
     {
@@ -134,6 +149,10 @@ public class DashboardViewModelTests
         this.viewModel.ErrorMessage.Should().Be(UserMessages.Dashboard.IncompleteResponse);
     }
 
+    /// <summary>
+    /// In LoadDashboard, when the request is unauthorized the session expired message should be set.
+    /// </summary>
+    /// <returns>A <see cref="Task"/> representing the result of the asynchronous operation.</returns>
     [Fact]
     public async Task LoadDashboard_WhenUnauthorized_SetsSessionExpiredMessage()
     {
@@ -151,6 +170,10 @@ public class DashboardViewModelTests
         this.viewModel.ErrorMessage.Should().Be(UserMessages.Dashboard.SessionExpired);
     }
 
+    /// <summary>
+    /// In LoadDashboard, when the request returns not found the not found message should be set.
+    /// </summary>
+    /// <returns>A <see cref="Task"/> representing the result of the asynchronous operation.</returns>
     [Fact]
     public async Task LoadDashboard_WhenNotFound_SetsNotFoundMessage()
     {
@@ -168,6 +191,10 @@ public class DashboardViewModelTests
         this.viewModel.ErrorMessage.Should().Be(UserMessages.Dashboard.NotFound);
     }
 
+    /// <summary>
+    /// In LoadDashboard, when the API returns a general failure the load failed message should be set.
+    /// </summary>
+    /// <returns>A <see cref="Task"/> representing the result of the asynchronous operation.</returns>
     [Fact]
     public async Task LoadDashboard_WhenApiFailureOccurs_SetsLoadFailedMessage()
     {
@@ -185,6 +212,10 @@ public class DashboardViewModelTests
         this.viewModel.ErrorMessage.Should().Be(UserMessages.Dashboard.LoadFailed);
     }
 
+    /// <summary>
+    /// In NavigatePrevious, when no cards are loaded an error should be returned.
+    /// </summary>
+    /// <returns>A <see cref="Task"/> representing the result of the asynchronous operation.</returns>
     [Fact]
     public async Task NavigatePrevious_WhenNoCardsAreLoaded_ReturnsError()
     {
@@ -198,6 +229,11 @@ public class DashboardViewModelTests
         result.IsError.Should().BeTrue();
     }
 
+    /// <summary>
+    /// In NavigatePrevious, when already at the first card an error should be returned
+    /// and the card index should remain at zero.
+    /// </summary>
+    /// <returns>A <see cref="Task"/> representing the result of the asynchronous operation.</returns>
     [Fact]
     public async Task NavigatePrevious_WhenAtFirstCard_ReturnsError()
     {
@@ -212,6 +248,11 @@ public class DashboardViewModelTests
         this.viewModel.CurrentCardIndex.Should().Be(0);
     }
 
+    /// <summary>
+    /// In NavigatePrevious, when not at the first card the operation should succeed
+    /// and the card index should decrement by one.
+    /// </summary>
+    /// <returns>A <see cref="Task"/> representing the result of the asynchronous operation.</returns>
     [Fact]
     public async Task NavigatePrevious_WhenNotAtFirstCard_SucceedsAndDecrementsIndex()
     {
@@ -227,6 +268,10 @@ public class DashboardViewModelTests
         this.viewModel.CurrentCardIndex.Should().Be(0);
     }
 
+    /// <summary>
+    /// In NavigateNext, when no cards are loaded an error should be returned.
+    /// </summary>
+    /// <returns>A <see cref="Task"/> representing the result of the asynchronous operation.</returns>
     [Fact]
     public async Task NavigateNext_WhenNoCardsAreLoaded_ReturnsError()
     {
@@ -240,6 +285,11 @@ public class DashboardViewModelTests
         result.IsError.Should().BeTrue();
     }
 
+    /// <summary>
+    /// In NavigateNext, when already at the last card an error should be returned
+    /// and the card index should remain unchanged.
+    /// </summary>
+    /// <returns>A <see cref="Task"/> representing the result of the asynchronous operation.</returns>
     [Fact]
     public async Task NavigateNext_WhenAtLastCard_ReturnsError()
     {
@@ -254,6 +304,11 @@ public class DashboardViewModelTests
         this.viewModel.CurrentCardIndex.Should().Be(0);
     }
 
+    /// <summary>
+    /// In NavigateNext, when not at the last card the operation should succeed
+    /// and the card index should increment by one.
+    /// </summary>
+    /// <returns>A <see cref="Task"/> representing the result of the asynchronous operation.</returns>
     [Fact]
     public async Task NavigateNext_WhenNotAtLastCard_SucceedsAndIncrementsIndex()
     {
@@ -268,6 +323,11 @@ public class DashboardViewModelTests
         this.viewModel.CurrentCardIndex.Should().Be(1);
     }
 
+    /// <summary>
+    /// When a card brand is set, <see cref="DashboardViewModel.SelectedCardBrandDisplay"/>
+    /// should return the brand name.
+    /// </summary>
+    /// <returns>A <see cref="Task"/> representing the result of the asynchronous operation.</returns>
     [Fact]
     public async Task SelectedCardBrandDisplay_WhenBrandIsPresent_ReturnsBrand()
     {
@@ -282,6 +342,11 @@ public class DashboardViewModelTests
         display.Should().Be(cardBrand);
     }
 
+    /// <summary>
+    /// When the card brand is empty, <see cref="DashboardViewModel.SelectedCardBrandDisplay"/>
+    /// should fall back to the card type string.
+    /// </summary>
+    /// <returns>A <see cref="Task"/> representing the result of the asynchronous operation.</returns>
     [Fact]
     public async Task SelectedCardBrandDisplay_WhenBrandIsAbsent_FallsBackToCardType()
     {
@@ -296,6 +361,11 @@ public class DashboardViewModelTests
         display.Should().Be(cardType.ToString());
     }
 
+    /// <summary>
+    /// When a cardholder name is set, <see cref="DashboardViewModel.SelectedCardHolderDisplay"/>
+    /// should return the name in upper case.
+    /// </summary>
+    /// <returns>A <see cref="Task"/> representing the result of the asynchronous operation.</returns>
     [Fact]
     public async Task SelectedCardHolderDisplay_WhenNameIsPresent_ReturnsUpperCasedName()
     {
@@ -310,6 +380,11 @@ public class DashboardViewModelTests
         display.Should().Be(cardholderName.ToUpperInvariant());
     }
 
+    /// <summary>
+    /// When the cardholder name is empty, <see cref="DashboardViewModel.SelectedCardHolderDisplay"/>
+    /// should return a placeholder string.
+    /// </summary>
+    /// <returns>A <see cref="Task"/> representing the result of the asynchronous operation.</returns>
     [Fact]
     public async Task SelectedCardHolderDisplay_WhenNameIsAbsent_ReturnsPlaceholder()
     {
@@ -324,12 +399,17 @@ public class DashboardViewModelTests
         display.Should().Be(expectedSelectedCardHolderDisplay);
     }
 
+    /// <summary>
+    /// When a valid card number is set, <see cref="DashboardViewModel.SelectedCardNumberMasked"/>
+    /// should expose only the last four digits and mask the rest.
+    /// </summary>
+    /// <returns>A <see cref="Task"/> representing the result of the asynchronous operation.</returns>
     [Fact]
     public async Task SelectedCardNumberMasked_WhenCardNumberIsValid_ShowsOnlyLastFourDigits()
     {
         // Arrange
         const string cardNumber = "1234567890123456";
-        string expectedMaskedCardNumber = $"**** **** **** {cardNumber[^4..]}";
+        var expectedMaskedCardNumber = $"**** **** **** {cardNumber[^4..]}";
         await this.LoadViewModelWithCards(1, cardNumber: cardNumber);
 
         // Act
@@ -339,6 +419,11 @@ public class DashboardViewModelTests
         masked.Should().Be(expectedMaskedCardNumber);
     }
 
+    /// <summary>
+    /// When the card number is too short to extract four digits,
+    /// <see cref="DashboardViewModel.SelectedCardNumberMasked"/> should return a fully masked string.
+    /// </summary>
+    /// <returns>A <see cref="Task"/> representing the result of the asynchronous operation.</returns>
     [Fact]
     public async Task SelectedCardNumberMasked_WhenCardNumberIsTooShort_ReturnsFullyMasked()
     {
@@ -353,10 +438,14 @@ public class DashboardViewModelTests
         masked.Should().Be(expectedMaskedCardNumber);
     }
 
+    /// <summary>
+    /// When no cards are loaded, <see cref="DashboardViewModel.GetSelectedCardDetails"/>
+    /// should return an empty string.
+    /// </summary>
     [Fact]
     public void GetSelectedCardDetails_WhenNoCardIsSelected_ReturnsEmptyString()
     {
-        // Arrange - viewModel starts with no cards loaded
+        // Arrange — viewModel starts with no cards loaded
 
         // Act
         string details = this.viewModel.GetSelectedCardDetails();
@@ -365,6 +454,11 @@ public class DashboardViewModelTests
         details.Should().BeEmpty();
     }
 
+    /// <summary>
+    /// When a card is selected, <see cref="DashboardViewModel.GetSelectedCardDetails"/> should return
+    /// a string containing the card type, brand, masked number, and cardholder name.
+    /// </summary>
+    /// <returns>A <see cref="Task"/> representing the result of the asynchronous operation.</returns>
     [Fact]
     public async Task GetSelectedCardDetails_WhenCardIsSelected_ReturnsFormattedDetails()
     {
@@ -373,7 +467,7 @@ public class DashboardViewModelTests
         const string cardBrand = "Visa";
         const string cardNumber = "1234567890123456";
         const string cardholderName = "Ada Lovelace";
-        string expectedMaskedCardNumber = $"**** **** **** {cardNumber[^4..]}";
+        var expectedMaskedCardNumber = $"**** **** **** {cardNumber[^4..]}";
         await this.LoadViewModelWithCards(
             cardCount: 1,
             cardType: cardType,
@@ -391,6 +485,10 @@ public class DashboardViewModelTests
                .And.Contain(cardholderName);
     }
 
+    /// <summary>
+    /// When the second card is selected via navigation, only the second card dot should be active.
+    /// </summary>
+    /// <returns>A <see cref="Task"/> representing the result of the asynchronous operation.</returns>
     [Fact]
     public async Task CardDots_WhenNavigatedToSecondCard_SecondDotIsActive()
     {
@@ -402,7 +500,7 @@ public class DashboardViewModelTests
         IReadOnlyList<CardPageIndicatorViewModel> dots = this.viewModel.CardDots;
 
         // Assert
-        dots.Select(d => d.IsActive).Should().Equal(false, true, false);
+        dots.Select(dot => dot.IsActive).Should().Equal(false, true, false);
     }
 
     private async Task LoadViewModelWithCards(
@@ -413,7 +511,7 @@ public class DashboardViewModelTests
         string cardNumber = "1234567812345678")
     {
         List<CardDto> cards = Enumerable.Range(0, cardCount)
-            .Select(_ => new CardDto
+            .Select(index => new CardDto
             {
                 CardBrand = cardBrand,
                 CardType = cardType,

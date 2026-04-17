@@ -81,6 +81,16 @@ jobs:
   desktop:
     name: Desktop tests
     runs-on: windows-latest
+    env:
+      DESKTOP_TEST_PROJECT: BankApp/tests/BankApp.Desktop.Tests/BankApp.Desktop.Tests.csproj
+      DESKTOP_TEST_MSBUILD_PROPS: >
+        /p:RuntimeIdentifier=win-x64
+        /p:PlatformTarget=x64
+        /p:WindowsPackageType=None
+        /p:WindowsAppSDKSelfContained=true
+        /p:WindowsAppSdkUndockedRegFreeWinRTInitialize=false
+        /p:PublishReadyToRun=false
+        /p:PublishTrimmed=false
     permissions:
       checks: write
       pull-requests: write
@@ -94,6 +104,9 @@ jobs:
         with:
           dotnet-version: '10.x'
 
+      - name: Setup MSBuild
+        uses: microsoft/setup-msbuild@v2
+
       - name: Cache NuGet packages
         uses: actions/cache@v4
         with:
@@ -103,12 +116,23 @@ jobs:
             ${{ runner.os }}-nuget-
 
       - name: Restore dependencies
-        run: dotnet restore BankApp/tests/BankApp.Desktop.Tests/BankApp.Desktop.Tests.csproj /p:PublishReadyToRun=false /p:PublishTrimmed=false
+        shell: pwsh
+        run: |
+          $msbuildProps = $env:DESKTOP_TEST_MSBUILD_PROPS -split '\s+'
+          dotnet restore $env:DESKTOP_TEST_PROJECT @msbuildProps
+
+      - name: Build desktop tests
+        shell: pwsh
+        run: |
+          $msbuildProps = $env:DESKTOP_TEST_MSBUILD_PROPS -split '\s+'
+          dotnet build $env:DESKTOP_TEST_PROJECT --no-restore --configuration Debug @msbuildProps
 
       - name: Test
+        shell: pwsh
         run: |
+          $msbuildProps = $env:DESKTOP_TEST_MSBUILD_PROPS -split '\s+'
           New-Item -ItemType Directory -Force -Path BankApp/test-results
-          dotnet test BankApp/tests/BankApp.Desktop.Tests/BankApp.Desktop.Tests.csproj --no-restore --configuration Debug /p:PublishReadyToRun=false /p:PublishTrimmed=false --logger "trx;LogFileName=desktop-tests.trx" --results-directory BankApp/test-results --blame-hang --blame-hang-timeout 2m --blame-hang-dump-type none
+          dotnet test $env:DESKTOP_TEST_PROJECT --no-build --configuration Debug @msbuildProps --logger "trx;LogFileName=desktop-tests.trx" --results-directory BankApp/test-results --blame-hang --blame-hang-timeout 2m --blame-hang-dump-type none
           Get-ChildItem -Path BankApp/test-results -Recurse
 
       - name: Upload desktop test results

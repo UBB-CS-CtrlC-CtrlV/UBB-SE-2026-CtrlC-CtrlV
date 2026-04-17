@@ -2,4 +2,5 @@
 // Copyright (c) CtrlC CtrlV. All rights reserved.
 // </copyright>
 
+global using FluentAssertions;
 global using Xunit;

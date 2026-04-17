@@ -1,9 +1,9 @@
-// Copyright (c) BankApp. All rights reserved.
-// Licensed under the MIT license.
+// <copyright file="AuthControllerTests.cs" company="CtrlC CtrlV">
+// Copyright (c) CtrlC CtrlV. All rights reserved.
+// </copyright>
 
-using BankApp.Application.DTOs;
-using BankApp.Application.DTOs.Auth;
 using BankApp.Api.Controllers;
+using BankApp.Application.DTOs.Auth;
 using BankApp.Application.Services.Login;
 using BankApp.Application.Services.PasswordRecovery;
 using BankApp.Application.Services.Registration;
@@ -14,7 +14,7 @@ using Microsoft.AspNetCore.Mvc;
 using Moq;
 using Xunit;
 
-namespace BankApp.Api.Tests.Unit;
+namespace BankApp.Api.Tests.Controller;
 
 /// <summary>
 /// Unit tests for <see cref="AuthController"/> verifying route contracts,
