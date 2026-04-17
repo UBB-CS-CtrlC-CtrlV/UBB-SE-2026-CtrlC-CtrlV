@@ -1,8 +1,9 @@
-// Copyright (c) BankApp. All rights reserved.
-// Licensed under the MIT license.
+// <copyright file="DashboardControllerTests.cs" company="CtrlC CtrlV">
+// Copyright (c) CtrlC CtrlV. All rights reserved.
+// </copyright>
 
-using BankApp.Application.DTOs.Dashboard;
 using BankApp.Api.Controllers;
+using BankApp.Application.DTOs.Dashboard;
 using BankApp.Application.Services.Dashboard;
 using ErrorOr;
 using FluentAssertions;
@@ -11,7 +12,7 @@ using Microsoft.AspNetCore.Mvc;
 using Moq;
 using Xunit;
 
-namespace BankApp.Api.Tests.Unit;
+namespace BankApp.Api.Tests.Controller;
 
 /// <summary>
 /// Unit tests for <see cref="DashboardController"/> verifying route contracts

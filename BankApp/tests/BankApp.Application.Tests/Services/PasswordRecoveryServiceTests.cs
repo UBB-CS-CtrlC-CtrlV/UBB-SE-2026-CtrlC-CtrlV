@@ -11,21 +11,26 @@ using ErrorOr;
 using FluentAssertions;
 using Microsoft.Extensions.Logging.Abstractions;
 using Moq;
+using Xunit;
+using MockFactory = BankApp.Application.Tests.MockFactory;
 
-namespace BankApp.Application.Tests.Unit;
+namespace BankApp.Application.Tests.Services;
 
 /// <summary>
 /// Unit tests for <see cref="PasswordRecoveryService"/>.
 /// </summary>
 public class PasswordRecoveryServiceTests
 {
+    /// <summary>
+    /// TODO: add docs.
+    /// </summary>
     [Fact]
     public void RequestPasswordReset_WhenUserExists_CreatesThirtyMinuteToken()
     {
         // Arrange
-        var authRepository = MockFactory.CreateAuthRepository();
-        var hashService = MockFactory.CreateHashService();
-        var emailService = MockFactory.CreateEmailService();
+        Mock<IAuthRepository> authRepository = MockFactory.CreateAuthRepository();
+        Mock<IHashService> hashService = MockFactory.CreateHashService();
+        Mock<IEmailService> emailService = MockFactory.CreateEmailService();
         var user = new User { Id = 1, Email = "ada@test.com" };
         PasswordResetToken? savedToken = null;
         DateTime before = DateTime.UtcNow.AddMinutes(29);

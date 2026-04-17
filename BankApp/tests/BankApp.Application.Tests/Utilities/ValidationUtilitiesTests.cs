@@ -1,10 +1,17 @@
 using BankApp.Application.Utilities;
 using FluentAssertions;
+using Xunit;
 
-namespace BankApp.Application.Tests.Unit.Utilities;
+namespace BankApp.Application.Tests.Utilities;
 
+/// <summary>
+/// TODO: add docs.
+/// </summary>
 public class ValidationUtilitiesTests
 {
+    /// <summary>
+    /// TODO: add docs.
+    /// </summary>
     [Theory]
     [InlineData("")]
     [InlineData(" ")]
@@ -29,6 +36,9 @@ public class ValidationUtilitiesTests
         ValidationUtilities.IsValidEmail(email).Should().BeFalse();
     }
 
+    /// <summary>
+    /// TODO: add docs.
+    /// </summary>
     [Theory]
     [InlineData("name@provider.com")]
     [InlineData("john.doe@example.org")]
@@ -44,6 +54,9 @@ public class ValidationUtilitiesTests
         ValidationUtilities.IsValidEmail(email).Should().BeTrue();
     }
 
+    /// <summary>
+    /// TODO: add docs.
+    /// </summary>
     [Theory]
     [InlineData("Password1!")]
     [InlineData("P@ssw0rd")]
@@ -54,6 +67,9 @@ public class ValidationUtilitiesTests
         ValidationUtilities.IsStrongPassword(password).Should().BeTrue();
     }
 
+    /// <summary>
+    /// TODO: add docs.
+    /// </summary>
     [Theory]
     [InlineData("")]
     [InlineData(" ")]
@@ -69,6 +85,9 @@ public class ValidationUtilitiesTests
         ValidationUtilities.IsStrongPassword(password).Should().BeFalse();
     }
 
+    /// <summary>
+    /// TODO: add docs.
+    /// </summary>
     [Theory]
     [InlineData("000000")]
     [InlineData("123456")]
@@ -79,6 +98,9 @@ public class ValidationUtilitiesTests
         ValidationUtilities.IsValidOTP(otp).Should().BeTrue();
     }
 
+    /// <summary>
+    /// TODO: add docs.
+    /// </summary>
     [Theory]
     [InlineData("")]
     [InlineData(" ")]
@@ -92,6 +114,9 @@ public class ValidationUtilitiesTests
         ValidationUtilities.IsValidOTP(otp).Should().BeFalse();
     }
 
+    /// <summary>
+    /// TODO: add docs.
+    /// </summary>
     [Theory]
     [InlineData("0712345678")]
     [InlineData("+40712345678")]
@@ -102,6 +127,9 @@ public class ValidationUtilitiesTests
         ValidationUtilities.IsValidPhoneNumber(phone).Should().BeTrue();
     }
 
+    /// <summary>
+    /// TODO: add docs.
+    /// </summary>
     [Theory]
     [InlineData("")]
     [InlineData(" ")]
@@ -114,6 +142,9 @@ public class ValidationUtilitiesTests
         ValidationUtilities.IsValidPhoneNumber(phone).Should().BeFalse();
     }
 
+    /// <summary>
+    /// TODO: add docs.
+    /// </summary>
     [Theory]
     [InlineData("0712345678", "+40712345678")]
     [InlineData("+40712345678", "+40712345678")]
@@ -124,6 +155,9 @@ public class ValidationUtilitiesTests
         ValidationUtilities.NormalizePhoneNumber(phone).Should().Be(expected);
     }
 
+    /// <summary>
+    /// TODO: add docs.
+    /// </summary>
     [Theory]
     [InlineData("")]
     [InlineData(" ")]
@@ -136,6 +170,9 @@ public class ValidationUtilitiesTests
         ValidationUtilities.NormalizePhoneNumber(phone).Should().BeNull();
     }
 
+    /// <summary>
+    /// TODO: add docs.
+    /// </summary>
     [Fact]
     public void NormalizePhoneNumber_WhenDefaultRegionIsProvided_ShouldUseRegion()
     {
@@ -143,6 +180,9 @@ public class ValidationUtilitiesTests
         ValidationUtilities.NormalizePhoneNumber("2025550123", "US").Should().Be("+12025550123");
     }
 
+    /// <summary>
+    /// TODO: add docs.
+    /// </summary>
     [Theory]
     [InlineData("abc", "abc", true)]
     [InlineData("abc", "def", false)]
@@ -151,7 +191,8 @@ public class ValidationUtilitiesTests
     [InlineData(null, null, false)]
     [InlineData(null, "abc", false)]
     [InlineData("abc", null, false)]
-    public void PasswordsMatch_ShouldReturnExpectedResult(string? firstPassword,
+    public void PasswordsMatch_ShouldReturnExpectedResult(
+        string? firstPassword,
         string? secondPassword,
         bool expected)
     {

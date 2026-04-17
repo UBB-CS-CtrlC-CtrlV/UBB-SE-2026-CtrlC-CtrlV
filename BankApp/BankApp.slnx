@@ -18,7 +18,9 @@
   <Folder Name="/tests/">
     <Project Path="tests/BankApp.Domain.Tests/BankApp.Domain.Tests.csproj" />
     <Project Path="tests/BankApp.Application.Tests/BankApp.Application.Tests.csproj" />
+    <Project Path="tests/BankApp.Infrastructure.Tests.Integration/BankApp.Infrastructure.Tests.Integration.csproj" />
     <Project Path="tests/BankApp.Infrastructure.Tests/BankApp.Infrastructure.Tests.csproj" />
+    <Project Path="tests/BankApp.Api.Tests.Integration/BankApp.Api.Tests.Integration.csproj" />
     <Project Path="tests/BankApp.Api.Tests/BankApp.Api.Tests.csproj" />
     <Project Path="tests/BankApp.Desktop.Tests/BankApp.Desktop.Tests.csproj" />
   </Folder>

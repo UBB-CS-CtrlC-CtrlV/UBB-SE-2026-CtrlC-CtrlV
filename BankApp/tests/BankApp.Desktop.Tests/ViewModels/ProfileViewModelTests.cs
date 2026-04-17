@@ -1,13 +1,18 @@
+// <copyright file="ProfileViewModelTests.cs" company="CtrlC CtrlV">
+// Copyright (c) CtrlC CtrlV. All rights reserved.
+// </copyright>
+
+using BankApp.Application.DTOs.Profile;
+using BankApp.Desktop.Enums;
 using BankApp.Desktop.Utilities;
 using BankApp.Desktop.ViewModels;
-using BankApp.Desktop.Enums;
-using BankApp.Application.DTOs.Profile;
 using ErrorOr;
 using FluentAssertions;
 using Microsoft.Extensions.Logging.Abstractions;
 using Moq;
+using Xunit;
 
-namespace BankApp.Desktop.Tests;
+namespace BankApp.Desktop.Tests.ViewModels;
 
 /// <summary>
 /// Tests for the profile sub-ViewModels: <see cref="ProfileViewModel"/>,
